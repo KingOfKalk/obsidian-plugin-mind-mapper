@@ -1,0 +1,5 @@
+/* Mind Mapper styles */
+.mind-mapper-placeholder {
+  color: var(--text-muted);
+  padding: var(--size-4-4);
+}

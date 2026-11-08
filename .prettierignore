@@ -1,0 +1,7 @@
+main.js
+release/
+package-lock.json
+.superpowers/
+.worktrees/
+test-vault/.obsidian/
+*.md
