@@ -46,6 +46,15 @@
   stroke-width: 1.5;
 }
 
+/* Same-note heading and block links (spec "Links"). */
+.mind-mapper-crosslink {
+  fill: none;
+  stroke: var(--interactive-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.8;
+}
+
 .mind-mapper-node {
   position: absolute;
   box-sizing: border-box;
@@ -212,6 +221,57 @@ button.mind-mapper-collapse.is-collapsed {
   transform: translateX(-50%);
   color: var(--text-muted);
   pointer-events: none;
+}
+
+/* Full screen: a workspace overlay below popovers, modals, notices and menus (spec "Full screen"). */
+.mind-mapper-full-screen {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--layer-popover) - 1);
+  display: flex;
+  background: var(--background-primary);
+}
+
+.mind-mapper-full-screen > .mind-mapper-view {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mind-mapper-exit-full-screen {
+  position: absolute;
+  /* Below the window controls of a frameless window (they stay on top, top right). */
+  top: calc(var(--header-height, 40px) + var(--size-4-2));
+  right: var(--size-4-4);
+  background: var(--background-primary);
+}
+
+.mind-mapper-title-chip {
+  position: absolute;
+  top: var(--size-4-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--size-4-1) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  pointer-events: none;
+}
+
+.mind-mapper-full-screen .mind-mapper-controls,
+.mind-mapper-exit-full-screen,
+.mind-mapper-title-chip {
+  transition: opacity 300ms ease;
+}
+
+.mind-mapper-full-screen.is-idle .mind-mapper-controls,
+.mind-mapper-full-screen.is-idle .mind-mapper-exit-full-screen,
+.mind-mapper-full-screen.is-idle .mind-mapper-title-chip {
+  opacity: 0;
 }
 
 .mind-mapper-controls {

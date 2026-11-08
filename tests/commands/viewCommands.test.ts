@@ -11,6 +11,8 @@ const COMMANDS = [
   ['reset-zoom', 'Reset zoom to 100%', 'resetZoom'],
   ['collapse-all', 'Collapse all', 'collapseAll'],
   ['expand-all', 'Expand all', 'expandAll'],
+  ['back-to-root', 'Back to root', 'backToRoot'],
+  ['toggle-full-screen', 'Toggle full screen', 'toggleFullScreen'],
 ] as const;
 
 async function setup() {

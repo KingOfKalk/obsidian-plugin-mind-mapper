@@ -1,7 +1,7 @@
-import { Notice, Plugin } from 'obsidian';
+import { Notice, Plugin, TFile } from 'obsidian';
 import { isMindMapSource, openMindMap } from './commands/openMindMap';
 import { registerViewCommands } from './commands/viewCommands';
-import { VIEW_TYPE_MIND_MAP } from './constants';
+import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from './constants';
 import { recordFixtures } from './dev/recordFixtures';
 import { HOVER_SOURCE_ID } from './render/linkHandling';
 import { LeafRecency } from './view/leafRecency';
@@ -38,13 +38,30 @@ export default class MindMapperPlugin extends Plugin {
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!isMindMapSource(file)) return false;
-        if (!checking) {
-          openMindMap(this.app.workspace, file).catch((error: unknown) => {
-            console.error('Mind Mapper: failed to open mind map', error);
-          });
-        }
+        if (!checking) this.open(file);
         return true;
       },
+    });
+
+    this.registerEvent(
+      this.app.workspace.on('file-menu', (menu, file) => {
+        if (!(file instanceof TFile) || !isMindMapSource(file)) return;
+        menu.addItem((item) =>
+          item
+            .setTitle('Open as mind map')
+            .setIcon(VIEW_ICON)
+            .onClick(() => this.open(file)),
+        );
+      }),
+    );
+
+    this.addRibbonIcon(VIEW_ICON, 'Open as mind map', () => {
+      const file = this.app.workspace.getActiveFile();
+      if (!isMindMapSource(file)) {
+        new Notice('Open a markdown note first');
+        return;
+      }
+      this.open(file);
     });
 
     registerViewCommands(this);
@@ -76,6 +93,12 @@ export default class MindMapperPlugin extends Plugin {
         },
       });
     }
+  }
+
+  private open(file: TFile): void {
+    openMindMap(this.app.workspace, file).catch((error: unknown) => {
+      console.error('Mind Mapper: failed to open mind map', error);
+    });
   }
 
   private readonly warned = new Set<string>();

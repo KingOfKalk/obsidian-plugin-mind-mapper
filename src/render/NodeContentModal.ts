@@ -16,6 +16,8 @@ export interface ModalLinkContext {
   hoverParent: HoverParent;
   mapLeaf: WorkspaceLeaf | null;
   recency: LeafRecency;
+  /** After an internal link in the overlay opened (e.g. leave full screen). */
+  onNavigate?: () => void;
 }
 
 /** Pop-up overlay with the full content of a clipped node; links work like in the map. */
@@ -37,7 +39,10 @@ export class NodeContentModal extends Modal {
       ...this.link,
       app: this.app,
       events: this.owner,
-      onNavigate: () => this.close(),
+      onNavigate: () => {
+        this.close();
+        this.link.onNavigate?.();
+      },
     });
     MarkdownRenderer.render(
       this.app,

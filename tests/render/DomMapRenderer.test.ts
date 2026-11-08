@@ -59,7 +59,7 @@ test('setTransform writes the CSS transform on the world element', () => {
   expect(world?.style.transform).toBe('translate(10px, 20px) scale(0.5)');
 });
 
-test('long labels keep fixed size and expose the full text as title', () => {
+test('long labels keep fixed size; node elements have no title tooltip', () => {
   const { parent, renderer } = setup();
   const label = 'x'.repeat(300);
   renderer.setLayout({
@@ -71,7 +71,8 @@ test('long labels keep fixed size and expose the full text as title', () => {
   });
   const el = parent.querySelector<HTMLElement>('.mind-mapper-node');
   expect(el?.style.width).toBe('200px');
-  expect(el?.title).toBe(label);
+  // a native tooltip would compete with page preview
+  expect(el?.hasAttribute('title')).toBe(false);
 });
 
 function hooked() {
@@ -345,4 +346,19 @@ test.each([
   expect(toggle?.className.match(/is-side-/g)).toHaveLength(1);
   expect(toggle?.style.left).toBe(left);
   expect(toggle?.style.top).toBe(top);
+});
+
+test('setCrossLinks draws one dashed path per link from layout rects; unknown nodes are skipped', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([
+    { fromId: 'R/A', toId: 'R/B' },
+    { fromId: 'R/A', toId: 'Gone' },
+  ]);
+  const paths = [...parent.querySelectorAll('svg.mind-mapper-edges path.mind-mapper-crosslink')];
+  expect(paths).toHaveLength(1);
+  // R/A (260,-42,200x36) above R/B (260,6,200x36): vertical, bottom of A to top of B
+  expect(paths[0]?.getAttribute('d')).toBe('M 360 -6 C 360 34, 360 -34, 360 6');
+  renderer.setCrossLinks([]);
+  expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(0);
 });

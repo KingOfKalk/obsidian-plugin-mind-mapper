@@ -101,6 +101,7 @@ function sectionNodes(
       sectionType: isParagraph ? null : section.type,
       level: 0,
       line: section.startLine,
+      endLine: section.endLine,
     }),
   ];
 }
@@ -133,6 +134,7 @@ function listNodes(
       sectionType: null,
       level: 0,
       line: item.startLine,
+      endLine: item.endLine,
     });
     byLine.set(item.startLine, itemNode);
     if (parentItem) parentItem.children.push(itemNode);
@@ -192,6 +194,7 @@ function headingNode(id: string, heading: HeadingInput, kind: 'root' | 'heading'
     sectionType: null,
     level: heading.level,
     line: heading.line,
+    endLine: heading.line,
   });
 }
 

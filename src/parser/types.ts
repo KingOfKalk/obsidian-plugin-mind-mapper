@@ -58,6 +58,8 @@ export interface MindMapNode {
   level: number;
   /** Source line; `null` for the virtual root. */
   line: number | null;
+  /** Last source line of the node's own content (cross-link mapping); absent for the virtual root. */
+  endLine?: number;
   children: MindMapNode[];
 }
 

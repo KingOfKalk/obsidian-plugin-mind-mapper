@@ -2,7 +2,7 @@ import type { Command } from 'obsidian';
 import MindMapperPlugin from '../src/main';
 import { MindMapView } from '../src/view/MindMapView';
 import { FakeWorkspace, fakeApp, fakeFile, fakeManifest } from './helpers';
-import { Notice, type Plugin as MockPlugin } from './mocks/obsidian';
+import { Menu, Notice, type Plugin as MockPlugin } from './mocks/obsidian';
 
 async function loadPlugin(ws = new FakeWorkspace()): Promise<MockPlugin> {
   const plugin = new MindMapperPlugin(fakeApp(ws), fakeManifest());
@@ -118,4 +118,40 @@ test('warnOnce shows a notice once per id for the session', async () => {
   plugin.warnOnce('a', 'first again');
   plugin.warnOnce('b', 'second');
   expect(Notice.messages).toEqual(['first', 'second']);
+});
+
+test('file menu offers "Open as mind map" for markdown files only, and it opens the map', async () => {
+  const ws = new FakeWorkspace();
+  await loadPlugin(ws);
+  const image = new Menu();
+  ws.trigger('file-menu', image, fakeFile('pic.png'), 'file-explorer');
+  expect(image.items).toHaveLength(0);
+  const menu = new Menu();
+  ws.trigger('file-menu', menu, fakeFile('Note.md'), 'file-explorer');
+  expect(menu.items.map((i) => [i.title, i.icon])).toEqual([['Open as mind map', 'network']]);
+  await menu.items[0]?.clickHandler?.();
+  await vi.waitFor(() => expect(ws.revealLeaf).toHaveBeenCalled());
+  expect(ws.leaves[0]?.viewState).toMatchObject({ state: { file: 'Note.md' } });
+});
+
+test('ribbon icon opens the active markdown note', async () => {
+  const ws = new FakeWorkspace();
+  const plugin = await loadPlugin(ws);
+  expect(plugin.ribbonIcons.map((r) => [r.icon, r.title])).toEqual([
+    ['network', 'Open as mind map'],
+  ]);
+  ws.activeFile = fakeFile('Note.md');
+  plugin.ribbonIcons[0]?.callback(new MouseEvent('click'));
+  await vi.waitFor(() => expect(ws.revealLeaf).toHaveBeenCalled());
+  expect(ws.leaves[0]?.viewState).toMatchObject({ state: { file: 'Note.md' } });
+});
+
+test('ribbon icon without a markdown note shows a notice', async () => {
+  const ws = new FakeWorkspace();
+  const plugin = await loadPlugin(ws);
+  Notice.messages = [];
+  ws.activeFile = fakeFile('pic.png');
+  plugin.ribbonIcons[0]?.callback(new MouseEvent('click'));
+  expect(Notice.messages).toEqual(['Open a markdown note first']);
+  expect(ws.getLeaf).not.toHaveBeenCalled();
 });

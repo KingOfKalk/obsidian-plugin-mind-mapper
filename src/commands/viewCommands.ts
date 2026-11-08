@@ -8,6 +8,12 @@ const VIEW_COMMANDS = [
   { id: 'reset-zoom', name: 'Reset zoom to 100%', run: (view: MindMapView) => view.resetZoom() },
   { id: 'collapse-all', name: 'Collapse all', run: (view: MindMapView) => view.collapseAll() },
   { id: 'expand-all', name: 'Expand all', run: (view: MindMapView) => view.expandAll() },
+  { id: 'back-to-root', name: 'Back to root', run: (view: MindMapView) => view.backToRoot() },
+  {
+    id: 'toggle-full-screen',
+    name: 'Toggle full screen',
+    run: (view: MindMapView) => view.toggleFullScreen(),
+  },
 ];
 
 /** Commands that act on the active mind map view; hidden when none is active. No default hotkeys. */

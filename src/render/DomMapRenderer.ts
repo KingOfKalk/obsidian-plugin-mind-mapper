@@ -1,6 +1,7 @@
 import { setIcon } from 'obsidian';
-import { edgePath } from '../layout/edgePath';
-import type { MapLayout, PositionedNode, Side } from '../layout/types';
+import type { CrossLink } from '../layout/crossLinks';
+import { crossLinkPath, edgePath } from '../layout/edgePath';
+import type { MapLayout, PositionedNode, Rect, Side } from '../layout/types';
 import type { MindMapNode } from '../parser/types';
 import { type Transform, transformCss } from './viewport';
 
@@ -62,6 +63,8 @@ export class DomMapRenderer implements MapRenderer {
   private readonly nodes = new Map<string, NodeDom>();
   private readonly toggles = new Map<string, HTMLElement>();
   private selectedId: string | null = null;
+  /** Node rects of the last layout (cross-links are drawn from the layout, never from the DOM). */
+  private rects = new Map<string, Rect>();
 
   constructor(
     parentEl: HTMLElement,
@@ -82,6 +85,7 @@ export class DomMapRenderer implements MapRenderer {
 
   setLayout(layout: MapLayout, collapse: CollapseInfo = NO_COLLAPSE): void {
     this.renderEdges(layout);
+    this.rects = new Map(layout.nodes.map((p) => [p.node.id, p]));
     const next = new Map(layout.nodes.map((p) => [p.node.id, p.node]));
     // Content that lost its node or its markdown, by markdown: a node whose ID shifted takes it over
     // without re-rendering (render cache across ID shifts, spec "Node identity").
@@ -100,6 +104,23 @@ export class DomMapRenderer implements MapRenderer {
     for (const positioned of layout.nodes) this.placeNode(positioned, pool);
     for (const list of pool.values()) for (const contentEl of list) this.hooks.release(contentEl);
     this.placeToggles(layout, collapse);
+  }
+
+  /** Dashed lines for same-note links (spec "Links"); replaces the previous ones. */
+  setCrossLinks(links: CrossLink[]): void {
+    const svg = this.edgesEl;
+    if (!svg) return;
+    for (const old of Array.from(svg.querySelectorAll('.mind-mapper-crosslink'))) old.remove();
+    const doc = this.worldEl.doc;
+    for (const { fromId, toId } of links) {
+      const from = this.rects.get(fromId);
+      const to = this.rects.get(toId);
+      if (!from || !to) continue;
+      const path = doc.createElementNS(SVG_NS, 'path');
+      path.classList.add('mind-mapper-crosslink');
+      path.setAttribute('d', crossLinkPath(from, to));
+      svg.appendChild(path);
+    }
   }
 
   /** `is-selected` on the node with this ID (kept for nodes created later). */
@@ -227,7 +248,6 @@ export class DomMapRenderer implements MapRenderer {
     }
     const { el } = dom;
     el.toggleClass('is-root', node.kind === 'root');
-    el.setAttribute('title', node.label);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.style.width = `${width}px`;

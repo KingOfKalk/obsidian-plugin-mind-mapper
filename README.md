@@ -18,6 +18,8 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | Reset zoom to 100% | a mind map is active | `Shift + 0` |
 | Collapse all | a mind map is active | `Ctrl/Cmd + Shift + [` |
 | Expand all | a mind map is active | `Ctrl/Cmd + Shift + ]` |
+| Back to root | a mind map is active | `Shift + H` |
+| Toggle full screen | a mind map is active | `Ctrl/Cmd + Shift + F11` |
 
 ## Map navigation
 
@@ -29,6 +31,10 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Double click a node: jump to its line in the note
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
 - The map follows edits to the note live; pan, zoom, selection and collapsed branches are kept
+- Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
+- Open a map from the command palette, the file menu of a note or the ribbon icon
+- Floating controls also have back to root (centres and selects the root) and full screen
+- Full screen covers the whole Obsidian window (previews, menus and notices stay on top); `Esc` or the button top right exits and restores the previous view; the controls fade after 2 s without mouse movement
 
 ## Layouts
 

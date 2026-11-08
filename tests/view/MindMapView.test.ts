@@ -9,7 +9,11 @@ import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
 import { MindMapView, type ViewServices } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
 import { FakeWorkspace, fakeFile } from '../helpers';
-import { type Component as MockComponent, Modal as MockModal } from '../mocks/obsidian';
+import {
+  type Component as MockComponent,
+  Modal as MockModal,
+  type Scope as MockScope,
+} from '../mocks/obsidian';
 
 function newView(ws = new FakeWorkspace()): { view: MindMapView; ws: FakeWorkspace } {
   // Like Obsidian: setViewState with the same view type passes the state to the view.
@@ -925,4 +929,107 @@ describe('max node size changes', () => {
     expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 298, height: 114 });
     expect(clipped()).toBe(true);
   });
+});
+
+describe('cross-links', () => {
+  test('cross-links of the crosslinks fixture are drawn and follow collapse', async () => {
+    const ws = new FakeWorkspace();
+    const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+    const view = new MindMapView(leaf as unknown as WorkspaceLeaf, {
+      settings: () => LTR_SETTINGS,
+    });
+    ws.addNote('crosslinks.md', 'crosslinks');
+    await setSize(view, 800, 600);
+    await view.setState(...state('crosslinks.md'));
+    const count = () => view.contentEl.querySelectorAll('path.mind-mapper-crosslink').length;
+    expect(count()).toBe(6);
+    view.collapseAll();
+    expect(count()).toBe(3);
+    view.expandAll();
+    expect(count()).toBe(6);
+  });
+});
+
+function escHandlers(view: MindMapView): MockScope['handlers'] {
+  return ((view.scope as unknown as MockScope | null)?.handlers ?? []).filter(
+    (h) => h.key === 'Escape',
+  );
+}
+
+describe('back to root and full screen', () => {
+  afterEach(() => document.body.empty());
+
+  test('back to root selects the root and centres it, zoom unchanged', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    view.setTransform({ x: -700, y: 40, zoom: 0.6 });
+    view.backToRoot();
+    expect(view.selectedId).toBe('Project');
+    const box = nodeBox(view, 'Project');
+    const t = view.getTransform();
+    expect(t.zoom).toBe(0.6);
+    expect((box.x + box.width / 2) * t.zoom + t.x).toBeCloseTo(400);
+    expect((box.y + box.height / 2) * t.zoom + t.y).toBeCloseTo(300);
+  });
+
+  test('entering fits; exiting restores the previous transform; Esc only while in full screen', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    view.setTransform({ x: -700, y: 40, zoom: 0.6 });
+    expect(escHandlers(view)).toHaveLength(0);
+    view.toggleFullScreen();
+    expect(view.isFullScreen).toBe(true);
+    expect(document.body.querySelector('.mind-mapper-full-screen')).not.toBeNull();
+    expect(view.getTransform()).not.toEqual({ x: -700, y: 40, zoom: 0.6 });
+    const [esc] = escHandlers(view);
+    expect(esc).toBeDefined();
+    esc?.func(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(view.isFullScreen).toBe(false);
+    expect(view.getTransform()).toEqual({ x: -700, y: 40, zoom: 0.6 });
+    expect(escHandlers(view)).toHaveLength(0);
+    expect(view.contentEl.parentElement).toBe(view.containerEl);
+  });
+
+  test('closing the view in full screen removes the overlay', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    view.toggleFullScreen();
+    await view.onClose();
+    expect(document.body.querySelector('.mind-mapper-full-screen')).toBeNull();
+  });
+
+  test('a link click in full screen exits first', async () => {
+    const { view } = await openWith('embeds', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    Object.assign(view.app.workspace, {
+      openLinkText: vi.fn(() => Promise.resolve()),
+      setActiveLeaf: vi.fn(),
+    });
+    view.toggleFullScreen();
+    const link = view.contentEl.querySelector('.mind-mapper-node-content')?.createEl('a', {
+      cls: 'internal-link',
+      attr: { 'data-href': 'lists' },
+    });
+    link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(view.isFullScreen).toBe(false);
+  });
+
+  test('double click jump exits full screen first', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    view.toggleFullScreen();
+    contentOf(view, 'Project/Tasks').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(view.isFullScreen).toBe(false);
+  });
+});
+
+test('another leaf becoming active (quick switcher, search, hover link) exits full screen', async () => {
+  const { view, ws } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+  document.body.appendChild(view.containerEl);
+  view.toggleFullScreen();
+  ws.trigger('active-leaf-change', view.leaf);
+  expect(view.isFullScreen).toBe(true);
+  ws.trigger('active-leaf-change', ws.addLeaf({ type: 'markdown' }).asLeaf());
+  expect(view.isFullScreen).toBe(false);
+  expect(document.body.querySelector('.mind-mapper-full-screen')).toBeNull();
+  document.body.empty();
 });

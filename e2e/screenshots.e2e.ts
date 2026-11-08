@@ -48,6 +48,32 @@ describe('screenshots', function () {
     }
   }
 
+  it('crosslinks', async function () {
+    await browser.executeObsidian(async ({ app }) => {
+      const plugins = (
+        app as unknown as {
+          plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
+        }
+      ).plugins.plugins;
+      await plugins['mind-mapper']?.updateSettings({ defaultLayout: 'circle-clockwise' });
+    });
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/crosslinks.png`);
+    await browser.keys('Escape');
+  });
+
+  it('full screen', async function () {
+    await openMindMap('fixtures/lists.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/full-screen.png`);
+    await browser.keys('Escape');
+  });
+
   it('collapsed and selected', async function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();

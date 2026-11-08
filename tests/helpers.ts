@@ -116,6 +116,12 @@ export class FakeMetadataCache {
     ref.off();
   }
 
+  /** Link path to a note in this fake vault (`name` or `name.md`). */
+  getFirstLinkpathDest(linkpath: string, _sourcePath: string): TFile | null {
+    const path = linkpath.endsWith('.md') ? linkpath : `${linkpath}.md`;
+    return this.caches.has(path) ? fakeFile(path) : null;
+  }
+
   get listenerCount(): number {
     return this.listeners.size;
   }
@@ -155,6 +161,10 @@ export class FakeWorkspace {
 
   trigger(name: string, ...args: unknown[]): void {
     for (const listener of [...(this.workspaceListeners.get(name) ?? [])]) listener(...args);
+  }
+
+  offref(ref: { off: () => void }): void {
+    ref.off();
   }
 
   getActiveViewOfType<T>(type: abstract new (...args: never[]) => T): T | null {

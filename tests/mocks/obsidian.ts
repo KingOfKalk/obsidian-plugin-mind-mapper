@@ -99,6 +99,14 @@ export class Plugin extends Component {
     this.settingTabs.push(tab);
   }
 
+  readonly ribbonIcons: { icon: string; title: string; callback: (evt: MouseEvent) => unknown }[] =
+    [];
+
+  addRibbonIcon(icon: string, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement {
+    this.ribbonIcons.push({ icon, title, callback });
+    return document.createElement('div');
+  }
+
   registerHoverLinkSource(id: string, info: { display: string; defaultMod: boolean }): void {
     this.hoverSources.set(id, info);
   }
@@ -108,6 +116,7 @@ export class ItemView extends Component {
   app: App;
   containerEl: HTMLElement;
   contentEl: HTMLElement;
+  scope: Scope | null = null;
 
   constructor(public leaf: WorkspaceLeaf) {
     super();
@@ -282,6 +291,89 @@ export class Setting {
   addText(cb: (text: TextComponent) => unknown): this {
     this.text = new TextComponent();
     cb(this.text);
+    return this;
+  }
+}
+
+export function parseLinktext(linktext: string): { path: string; subpath: string } {
+  const hash = linktext.indexOf('#');
+  return hash < 0
+    ? { path: linktext, subpath: '' }
+    : { path: linktext.slice(0, hash), subpath: linktext.slice(hash) };
+}
+
+interface MockCache {
+  headings?: { heading: string; position: { start: { line: number } } }[];
+  blocks?: Record<string, unknown>;
+}
+
+/**
+ * Approximation of Obsidian's resolver: `#^id` looks up the block, `#A#B` matches heading texts
+ * exactly and in order (B after A). The real one is covered by E2E.
+ */
+export function resolveSubpath(cache: MockCache, subpath: string): unknown {
+  if (subpath.startsWith('#^')) {
+    const block = cache.blocks?.[subpath.slice(2)];
+    return block ? { type: 'block', block } : null;
+  }
+  const parts = subpath.slice(1).split('#');
+  const headings = cache.headings ?? [];
+  let index = -1;
+  for (const part of parts) {
+    index = headings.findIndex((h, i) => i > index && h.heading === part);
+    if (index < 0) return null;
+  }
+  return { type: 'heading', current: headings[index], next: headings[index + 1] };
+}
+
+export interface MockKeyHandler {
+  modifiers: string[] | null;
+  key: string | null;
+  func: (evt: KeyboardEvent) => unknown;
+}
+
+/** Records key handlers; tests call `handlers[i].func` to simulate the key. */
+export class Scope {
+  handlers: MockKeyHandler[] = [];
+  constructor(public parent?: Scope) {}
+  register(
+    modifiers: string[] | null,
+    key: string | null,
+    func: (evt: KeyboardEvent) => unknown,
+  ): MockKeyHandler {
+    const handler = { modifiers, key, func };
+    this.handlers.push(handler);
+    return handler;
+  }
+  unregister(handler: MockKeyHandler): void {
+    this.handlers = this.handlers.filter((h) => h !== handler);
+  }
+}
+
+export class MenuItem {
+  title = '';
+  icon = '';
+  clickHandler: (() => unknown) | null = null;
+  setTitle(title: string): this {
+    this.title = title;
+    return this;
+  }
+  setIcon(icon: string): this {
+    this.icon = icon;
+    return this;
+  }
+  onClick(handler: () => unknown): this {
+    this.clickHandler = handler;
+    return this;
+  }
+}
+
+export class Menu {
+  readonly items: MenuItem[] = [];
+  addItem(cb: (item: MenuItem) => unknown): this {
+    const item = new MenuItem();
+    this.items.push(item);
+    cb(item);
     return this;
   }
 }

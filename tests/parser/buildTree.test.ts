@@ -1,4 +1,6 @@
+import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
+import { loadFixture } from '../fixtures';
 import type { HeadingInput, MindMapNode, ParserInput, SectionInput } from '../../src/parser/types';
 
 function h(text: string, level: number, line: number): HeadingInput {
@@ -239,4 +241,21 @@ test('buildTree title replaces the root label but keeps the root id (virtual roo
   expect(buildTree({ headings: [], firstContentLine: null }, 'Note', null).root.markdown).toBe(
     'Note',
   );
+});
+
+test('endLine is set for headings, sections and list items', () => {
+  const { text, cache } = loadFixture('crosslinks');
+  const tree = buildTree(toParserInput(cache, text), 'crosslinks');
+  const byId = new Map<string, MindMapNode>();
+  const walkAll = (n: MindMapNode): void => {
+    byId.set(n.id, n);
+    n.children.forEach(walkAll);
+  };
+  walkAll(tree.root);
+  const span = (id: string) => [byId.get(id)?.line, byId.get(id)?.endLine];
+  expect(span('Links')).toEqual([0, 0]);
+  expect(span('Links/Alpha')).toEqual([2, 2]);
+  expect(span('Links/Alpha/#1')).toEqual([4, 4]);
+  expect(span('Links/Gamma/#2')).toEqual([16, 16]);
+  expect(span('Links/Gamma/#2/#1')).toEqual([17, 17]);
 });

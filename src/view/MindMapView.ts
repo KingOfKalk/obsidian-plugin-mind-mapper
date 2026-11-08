@@ -4,7 +4,9 @@ import {
   type HoverParent,
   type HoverPopover,
   ItemView,
+  type KeymapEventHandler,
   Notice,
+  Scope,
   type TFile,
   type ViewStateResult,
   type WorkspaceLeaf,
@@ -17,7 +19,9 @@ import { visibleTree } from '../layout/visibleTree';
 import { layoutTree } from '../layout/tidyTree';
 import type { MapLayout, MapLayoutName, PositionedNode, Size } from '../layout/types';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
+import { type CrossLink, crossLinks, visibleCrossLinks } from '../layout/crossLinks';
 import { invalidOptionMessage, readMapOptions } from './frontmatter';
+import { crossLinkInputs } from './linkTargets';
 import { toParserInput } from '../parser/adapter';
 import { buildTree } from '../parser/buildTree';
 import { allNodes } from '../parser/treeWalk';
@@ -38,6 +42,7 @@ import {
 } from '../render/viewport';
 import { jumpToSource } from '../commands/jumpToSource';
 import { CollapseState } from './collapseState';
+import { FullScreen } from './fullScreen';
 import { LeafRecency } from './leafRecency';
 import { fileBasename, parseViewState } from './viewState';
 
@@ -100,6 +105,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private readonly services: ViewServices;
   /** Frontmatter of the shown note (`mind_map_layout` is read per layout). */
   private frontmatter: Record<string, unknown> | undefined = undefined;
+  private readonly fullScreen = new FullScreen({
+    contentEl: this.contentEl,
+    title: () => this.getDisplayText(),
+    onExit: () => this.exitFullScreen(),
+  });
+  /** Transform before entering full screen (restored on exit). */
+  private beforeFullScreen: Transform | null = null;
+  private escHandler: KeymapEventHandler | null = null;
+  /** While in full screen: another active leaf (quick switcher, search, hover link) exits it. */
+  private leafChangeRef: EventRef | null = null;
+  /** Same-note links of the current tree (all nodes, before collapse). */
+  private links: CrossLink[] = [];
   /** Layout of the current map; a different effective layout fits once. */
   private layoutName: MapLayoutName | null = null;
 
@@ -147,7 +164,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         invalidOptionMessage(key, value, file.path, options.layout),
       );
     }
-    return buildTree(toParserInput(cache, text), file.basename, options.title);
+    const tree = buildTree(toParserInput(cache, text), file.basename, options.title);
+    const resolve = (linkpath: string, source: string): string | null =>
+      this.app.metadataCache.getFirstLinkpathDest(linkpath, source)?.path ?? null;
+    this.links = crossLinks(tree, crossLinkInputs(cache, file.path, resolve));
+    return tree;
   }
 
   /** Max node size as CSS custom properties (content caps in styles.css). */
@@ -170,10 +191,65 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.dom?.renderer.setSelected(id);
   }
 
+  get isFullScreen(): boolean {
+    return this.fullScreen.active;
+  }
+
+  toggleFullScreen(): void {
+    if (this.fullScreen.active) this.exitFullScreen();
+    else this.enterFullScreen();
+  }
+
+  /** Spec "Full screen": entering fits, Esc (after modals, via the view scope) exits. */
+  private enterFullScreen(): void {
+    if (this.fullScreen.active || !this.dom) return;
+    this.beforeFullScreen = this.transform;
+    this.fullScreen.enter();
+    this.scope ??= new Scope(this.app.scope);
+    this.escHandler = this.scope.register([], 'Escape', () => {
+      this.exitFullScreen();
+      return false;
+    });
+    // The overlay hides the workspace: a note opened by anything else would end up behind it, and
+    // Esc (this view's scope) only works while this leaf is active.
+    this.leafChangeRef = this.app.workspace.on('active-leaf-change', (leaf) => {
+      if (leaf !== this.leaf) this.exitFullScreen();
+    });
+    this.registerEvent(this.leafChangeRef);
+    this.fitToView();
+  }
+
+  /** Restores the transform from before full screen. */
+  exitFullScreen(): void {
+    if (!this.fullScreen.active) return;
+    this.fullScreen.exit();
+    if (this.escHandler) this.scope?.unregister(this.escHandler);
+    this.escHandler = null;
+    if (this.leafChangeRef) this.app.workspace.offref(this.leafChangeRef);
+    this.leafChangeRef = null;
+    if (this.beforeFullScreen) this.setTransform(this.beforeFullScreen);
+    this.beforeFullScreen = null;
+  }
+
+  /** Selects the root and centres it at the current zoom. */
+  backToRoot(): void {
+    const root = this.tree && this.layout?.nodes.find((p) => p.node.id === this.tree?.root.id);
+    if (!root) return;
+    this.select(root.node.id);
+    const center = this.center();
+    const { zoom } = this.transform;
+    this.setTransform({
+      x: center.x - (root.x + root.width / 2) * zoom,
+      y: center.y - (root.y + root.height / 2) * zoom,
+      zoom,
+    });
+  }
+
   /** Double click: the source line in the editor (spec "Jump to source target"). */
   private jumpTo(line: number | null): void {
     const path = this.pinnedFile;
     if (path === null) return;
+    this.exitFullScreen();
     jumpToSource(this.app, this.recency, this.leaf, path, line).catch((error: unknown) => {
       console.error('Mind Mapper: could not open the note', error);
       new Notice('Could not open the note');
@@ -236,6 +312,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   override async onClose(): Promise<void> {
+    this.exitFullScreen();
     this.generation++;
     this.stopListening();
     this.cancelUpdate();
@@ -484,6 +561,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
           hoverParent: this,
           mapLeaf: this.leaf,
           recency: this.recency,
+          onNavigate: () => this.exitFullScreen(),
         }).open(),
       open: (node) => this.jumpTo(node.line),
       select: (id) => this.select(id),
@@ -504,6 +582,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       mapLeaf: this.leaf,
       recency: this.recency,
       sourcePath: () => this.pinnedFile ?? '',
+      onNavigate: () => this.exitFullScreen(),
     });
     this.registerEvent(
       this.app.workspace.on('css-change', () => this.measure([...this.observed.keys()])),
@@ -528,6 +607,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const dom = this.ensureDom();
     this.layout = layout;
     dom.renderer.setLayout(layout, this.collapseInfo);
+    if (this.tree) {
+      const shown = new Set(layout.nodes.map((p) => p.node.id));
+      dom.renderer.setCrossLinks(visibleCrossLinks(this.tree, this.links, shown));
+    }
     dom.placeholderEl.hidden = true;
     dom.renderer.canvasEl.hidden = false;
     dom.hintEl.hidden = (this.tree?.root.children.length ?? 0) > 0;
