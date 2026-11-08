@@ -98,6 +98,7 @@ export default class MindMapperPlugin extends Plugin {
   private open(file: TFile): void {
     openMindMap(this.app.workspace, file).catch((error: unknown) => {
       console.error('Mind Mapper: failed to open mind map', error);
+      new Notice('Mind Mapper: could not open the mind map');
     });
   }
 

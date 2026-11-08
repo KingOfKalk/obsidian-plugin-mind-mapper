@@ -288,7 +288,7 @@ export class DomMapRenderer implements MapRenderer {
     if (!svg) {
       svg = doc.createElementNS(SVG_NS, 'svg');
       svg.classList.add('mind-mapper-edges');
-      this.worldEl.prepend(svg);
+      insertFirst(this.worldEl, svg);
       this.edgesEl = svg;
       this.edgePaths = [];
     }
@@ -379,7 +379,7 @@ export class DomMapRenderer implements MapRenderer {
       // Old content was pooled (setLayout). Fresh content element: a still running render of the old
       // markdown cannot write into it.
       const reused = pool.get(node.markdown)?.shift();
-      if (reused) dom.el.prepend(reused);
+      if (reused) insertFirst(dom.el, reused);
       dom.contentEl = reused ?? this.createContent(dom.el, node);
       dom.node = node;
     } else {
@@ -400,7 +400,7 @@ export class DomMapRenderer implements MapRenderer {
     });
     let contentEl: HTMLElement;
     if (reused) {
-      el.prepend(reused);
+      insertFirst(el, reused);
       contentEl = reused;
     } else {
       contentEl = this.createContent(el, node);
@@ -423,9 +423,18 @@ export class DomMapRenderer implements MapRenderer {
     // markdown-rendered: Obsidian scopes its reading view styles (task checkboxes, code blocks,
     // copy button, callouts) under this class.
     contentEl.className = 'mind-mapper-node-content markdown-rendered';
-    nodeEl.prepend(contentEl);
+    insertFirst(nodeEl, contentEl);
     nodeEl.removeClass('is-render-error');
     this.hooks.render(node, contentEl);
     return contentEl;
   }
+}
+
+/**
+ * `parent.prepend(child)` without `prepend`: in popout windows of older Obsidian versions (1.7.4)
+ * `prepend` turned the element into the text "[object HTMLDivElement]". `insertBefore` only takes
+ * nodes.
+ */
+function insertFirst(parent: Element, child: Node): void {
+  parent.insertBefore(child, parent.firstChild);
 }

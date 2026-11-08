@@ -86,8 +86,12 @@ describe('node content in real Obsidian', function () {
         document.querySelector<HTMLElement>(
           `.mind-mapper-node[data-node-id="${id}"] .mind-mapper-node-content`,
         );
-      const mask = (el: HTMLElement | null) =>
-        el ? getComputedStyle(el).getPropertyValue('mask-image') : '';
+      // unprefixed mask-image needs Chrome 120+; older Obsidian versions use the -webkit- one
+      const mask = (el: HTMLElement | null) => {
+        if (!el) return '';
+        const style = getComputedStyle(el);
+        return style.getPropertyValue('mask-image') || style.getPropertyValue('-webkit-mask-image');
+      };
       const code = content('Long content/#1');
       const table = content('Long content/#2');
       return {

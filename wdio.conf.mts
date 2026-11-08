@@ -9,10 +9,11 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       browserName: 'obsidian',
-      // Pinned: results must not change with an Obsidian update (M7 checks minAppVersion separately).
-      browserVersion: '1.15.0',
+      // Pinned: results must not change with an Obsidian update. OBSIDIAN_VERSION /
+      // OBSIDIAN_INSTALLER run the suite against another version (e.g. the manifest minAppVersion).
+      browserVersion: process.env.OBSIDIAN_VERSION ?? '1.15.0',
       'wdio:obsidianOptions': {
-        installerVersion: '1.15.0',
+        installerVersion: process.env.OBSIDIAN_INSTALLER ?? '1.15.0',
         plugins: ['.'],
         vault: 'test-vault',
       },

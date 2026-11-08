@@ -155,3 +155,19 @@ test('ribbon icon without a markdown note shows a notice', async () => {
   expect(Notice.messages).toEqual(['Open a markdown note first']);
   expect(ws.getLeaf).not.toHaveBeenCalled();
 });
+
+test('a failure to open the map shows a notice', async () => {
+  const ws = new FakeWorkspace();
+  const command = openCommand(await loadPlugin(ws));
+  ws.activeFile = fakeFile('Note.md');
+  ws.getLeaf.mockImplementation(() => {
+    throw new Error('no leaf');
+  });
+  Notice.messages = [];
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+  command.checkCallback?.(false);
+  await vi.waitFor(() =>
+    expect(Notice.messages).toEqual(['Mind Mapper: could not open the mind map']),
+  );
+  error.mockRestore();
+});

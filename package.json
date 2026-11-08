@@ -1,7 +1,7 @@
 {
   "name": "mind-mapper",
   "version": "0.1.0",
-  "description": "Renders a Markdown note as a mind map.",
+  "description": "Show any Markdown note as a live mind map: headings, lists and blocks become nodes, rendered like reading view.",
   "private": true,
   "type": "module",
   "main": "main.js",
@@ -22,7 +22,8 @@
     "test:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts",
     "fixtures:record": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/recordFixtures.e2e.ts",
     "perf:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/perf/perf.e2e.ts",
-    "screenshots:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/screenshots.e2e.ts"
+    "screenshots:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/screenshots.e2e.ts",
+    "readme:images": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/readmeImages.e2e.ts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
