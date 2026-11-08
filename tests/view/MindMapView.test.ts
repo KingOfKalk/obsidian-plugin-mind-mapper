@@ -1,4 +1,4 @@
-import { MarkdownRenderer, type WorkspaceLeaf } from 'obsidian';
+import { type CachedMetadata, MarkdownRenderer, type WorkspaceLeaf } from 'obsidian';
 import { estimateSize } from '../../src/layout/nodeSize';
 import { DEFAULT_LAYOUT, layoutTree } from '../../src/layout/tidyTree';
 import { toParserInput } from '../../src/parser/adapter';
@@ -878,6 +878,8 @@ describe('layouts, frontmatter and settings', () => {
     view.setTransform({ x: -500, y: 900, zoom: 0.3 });
     settings.defaultLayout = 'right-to-left';
     view.refresh();
+    // culling renders the nodes in view on the next animation frame
+    await vi.advanceTimersByTimeAsync(20);
     expect(centerX(view, 'Project/Notes')).toBeLessThan(centerX(view, 'Project'));
     const t = view.getTransform();
     expect(t).not.toEqual({ x: -500, y: 900, zoom: 0.3 });
@@ -1032,4 +1034,166 @@ test('another leaf becoming active (quick switcher, search, hover link) exits fu
   expect(view.isFullScreen).toBe(false);
   expect(document.body.querySelector('.mind-mapper-full-screen')).toBeNull();
   document.body.empty();
+});
+
+/** Headings-only note: `# Big`, `groups` H2s with `perGroup` H3s each (1 + groups * (1 + perGroup) nodes). */
+function bigNote(groups: number, perGroup: number): { text: string; cache: CachedMetadata } {
+  const lines: string[] = [];
+  const headings: NonNullable<CachedMetadata['headings']> = [];
+  const sections: NonNullable<CachedMetadata['sections']> = [];
+  let offset = 0;
+  const add = (level: number, heading: string): void => {
+    const line = lines.length;
+    const text = `${'#'.repeat(level)} ${heading}`;
+    const position = {
+      start: { line, col: 0, offset },
+      end: { line, col: text.length, offset: offset + text.length },
+    };
+    headings.push({ heading, level, position });
+    sections.push({ type: 'heading', position });
+    lines.push(text);
+    offset += text.length + 1;
+  };
+  add(1, 'Big');
+  for (let g = 0; g < groups; g++) {
+    add(2, `Group ${g}`);
+    for (let i = 0; i < perGroup; i++) add(3, `Item ${g}.${i}`);
+  }
+  return { text: lines.join('\n'), cache: { headings, sections } };
+}
+
+function domNodes(view: MindMapView): number {
+  return view.contentEl.querySelectorAll('.mind-mapper-node').length;
+}
+
+async function openBig(): Promise<{ view: MindMapView; ws: FakeWorkspace }> {
+  const ws = new FakeWorkspace();
+  const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+  const view = new MindMapView(leaf as unknown as WorkspaceLeaf, { settings: () => LTR_SETTINGS });
+  const { text, cache } = bigNote(40, 49);
+  ws.vault.texts.set('Big.md', text);
+  ws.metadataCache.caches.set('Big.md', cache);
+  await setSize(view, 800, 600);
+  await view.setState(...state('Big.md'));
+  await vi.advanceTimersByTimeAsync(20);
+  return { view, ws };
+}
+
+describe('culling at scale', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('a fitted 2,000-node map is a skeleton; at 100 % only nodes in view have DOM', async () => {
+    const { view } = await openBig();
+    expect(view.getTransform().zoom).toBeLessThan(0.2);
+    // at the minimum zoom 245 nodes are in view: skeleton, no node DOM
+    expect(domNodes(view)).toBe(0);
+    expect(view.contentEl.querySelector('path.mind-mapper-skeleton')).not.toBeNull();
+    expect(view.contentEl.querySelectorAll('path.mind-mapper-edge')).toHaveLength(2000);
+    view.resetZoom();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(domNodes(view)).toBeGreaterThan(0);
+    expect(domNodes(view)).toBeLessThanOrEqual(400);
+    expect(view.contentEl.querySelector('path.mind-mapper-skeleton')).toBeNull();
+  });
+
+  test('nodes rendered by panning are measured', async () => {
+    const { view } = await openBig();
+    view.setTransform({ x: 0, y: 0, zoom: 1 });
+    await vi.advanceTimersByTimeAsync(20);
+    const before = new Set(
+      [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node')].map(
+        (el) => el.dataset.nodeId,
+      ),
+    );
+    view.setTransform({ x: -300, y: -3000, zoom: 1 });
+    await vi.advanceTimersByTimeAsync(20);
+    const fresh = [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node')]
+      .map((el) => el.dataset.nodeId ?? '')
+      .find((id) => !before.has(id));
+    expect(fresh).toBeDefined();
+    report(view, fresh ?? '', 250, 90);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(nodeBox(view, fresh ?? '')).toMatchObject({ width: 268, height: 104 });
+  });
+
+  test('measuring nodes rendered by panning keeps the centre node in place, even with an off-screen selection', async () => {
+    const { view } = await openBig();
+    view.setTransform({ x: 0, y: 0, zoom: 1 });
+    await vi.advanceTimersByTimeAsync(20);
+    contentOf(view, 'Big').click();
+    expect(view.selectedId).toBe('Big');
+    view.setTransform({ x: -300, y: -3000, zoom: 1 });
+    await vi.advanceTimersByTimeAsync(20);
+    const shown = [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node')].map(
+      (el) => el.dataset.nodeId ?? '',
+    );
+    const t = view.getTransform();
+    const screenCenter = (id: string) => {
+      const b = nodeBox(view, id);
+      return { x: (b.x + b.width / 2) * t.zoom + t.x, y: (b.y + b.height / 2) * t.zoom + t.y };
+    };
+    const dist = (id: string) => {
+      const c = screenCenter(id);
+      return (c.x - 400) ** 2 + (c.y - 300) ** 2;
+    };
+    const centre = shown.reduce((best, id) => (dist(id) < dist(best) ? id : best));
+    const centreBox = nodeBox(view, centre);
+    const above = shown
+      .filter((id) => {
+        const b = nodeBox(view, id);
+        return b.x === centreBox.x && b.y < centreBox.y;
+      })
+      .reduce((best, id) => (nodeBox(view, id).y > nodeBox(view, best).y ? id : best));
+    const before = screenOf(view, centre);
+    report(view, above, 250, 200);
+    await vi.advanceTimersByTimeAsync(100);
+    const after = screenOf(view, centre);
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('live update and collapse on a culled map keep the DOM bounded and edges complete', async () => {
+    const { view, ws } = await openBig();
+    view.resetZoom();
+    await vi.advanceTimersByTimeAsync(20);
+    const bigger = bigNote(41, 49);
+    ws.metadataCache.caches.set('Big.md', bigger.cache);
+    ws.metadataCache.trigger('Big.md', bigger.text, bigger.cache);
+    await vi.advanceTimersByTimeAsync(320);
+    expect(view.contentEl.querySelectorAll('path.mind-mapper-edge')).toHaveLength(2050);
+    expect(domNodes(view)).toBeLessThanOrEqual(400);
+    view.collapseAll();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(view.contentEl.querySelectorAll('path.mind-mapper-edge')).toHaveLength(41);
+    expect(domNodes(view)).toBeLessThanOrEqual(42);
+  });
+});
+
+test('the first layout after a loading message is culled (the canvas is shown before it is laid out)', async () => {
+  vi.useFakeTimers();
+  const ws = new FakeWorkspace();
+  const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+  const view = new MindMapView(leaf as unknown as WorkspaceLeaf, { settings: () => LTR_SETTINGS });
+  const { text, cache } = bigNote(40, 49);
+  ws.vault.texts.set('Big.md', text);
+  await view.onOpen();
+  const canvas = view.contentEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+  if (!canvas) throw new Error('no canvas');
+  // like a browser: a hidden element has no size
+  for (const [key, value] of [
+    ['clientWidth', 800],
+    ['clientHeight', 600],
+  ] as const) {
+    Object.defineProperty(canvas, key, {
+      configurable: true,
+      get: () => (canvas.hidden ? 0 : value),
+    });
+  }
+  await view.setState(...state('Big.md'));
+  expect(placeholderText(view)).toBe('Loading…');
+  ws.metadataCache.caches.set('Big.md', cache);
+  ws.metadataCache.trigger('Big.md', text, cache);
+  expect(domNodes(view)).toBeLessThanOrEqual(400);
+  vi.useRealTimers();
 });

@@ -46,6 +46,13 @@
   stroke-width: 1.5;
 }
 
+/* The map's shape below 20 % zoom: node rects without content (spec "Performance"). */
+.mind-mapper-skeleton {
+  fill: var(--background-secondary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+}
+
 /* Same-note heading and block links (spec "Links"). */
 .mind-mapper-crosslink {
   fill: none;

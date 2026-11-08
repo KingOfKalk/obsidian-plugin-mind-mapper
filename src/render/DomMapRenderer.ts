@@ -3,9 +3,12 @@ import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Rect, Side } from '../layout/types';
 import type { MindMapNode } from '../parser/types';
-import { type Transform, transformCss } from './viewport';
+import { detailLevel, SpatialIndex, worldViewport } from './culling';
+import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+/** New nodes rendered per culling pass (one pass per frame): keeps panning into new areas smooth. */
+export const RENDER_BUDGET = 40;
 
 /** Renderer boundary from the spec; a three.js renderer is a future implementation. */
 export interface MapRenderer {
@@ -40,6 +43,13 @@ const NO_COLLAPSE: CollapseInfo = { hidden: new Map(), hasChildren: () => false 
 /** Clicks on these inside a node keep their own behavior and are not node clicks. */
 const NOT_A_NODE_CLICK = 'a, button, input, .mind-mapper-node-expand';
 
+type Clip = { x: boolean; y: boolean };
+
+export interface RendererOptions {
+  /** Spec "Performance": DOM only for nodes in the viewport plus a margin; skeleton at tiny zoom. */
+  culling?: boolean;
+}
+
 interface NodeDom {
   el: HTMLElement;
   contentEl: HTMLElement;
@@ -60,16 +70,30 @@ export class DomMapRenderer implements MapRenderer {
   readonly canvasEl: HTMLElement;
   private readonly worldEl: HTMLElement;
   private edgesEl: SVGSVGElement | null = null;
+  private edgePaths: SVGPathElement[] = [];
   private readonly nodes = new Map<string, NodeDom>();
   private readonly toggles = new Map<string, HTMLElement>();
   private selectedId: string | null = null;
   /** Node rects of the last layout (cross-links are drawn from the layout, never from the DOM). */
   private rects = new Map<string, Rect>();
+  private layout: MapLayout | null = null;
+  private collapse: CollapseInfo = NO_COLLAPSE;
+  private index: SpatialIndex | null = null;
+  /** Clip state by node ID, also for nodes without DOM (applied when they are rendered). */
+  private readonly clips = new Map<string, Clip>();
+  private transform: Transform = IDENTITY;
+  private readonly culling: boolean;
+  /** The canvas had a real size once (a renderer never sized renders everything). */
+  private sized = false;
+  private frame: number | null = null;
+  private skeletonD: string | null = null;
 
   constructor(
     parentEl: HTMLElement,
     private readonly hooks: NodeContentHooks = PLAIN_TEXT,
+    options: RendererOptions = {},
   ) {
+    this.culling = options.culling ?? false;
     this.canvasEl = parentEl.createDiv({ cls: 'mind-mapper-canvas' });
     this.worldEl = this.canvasEl.createDiv({ cls: 'mind-mapper-world' });
     this.worldEl.addEventListener('click', (event) => {
@@ -86,7 +110,64 @@ export class DomMapRenderer implements MapRenderer {
   setLayout(layout: MapLayout, collapse: CollapseInfo = NO_COLLAPSE): void {
     this.renderEdges(layout);
     this.rects = new Map(layout.nodes.map((p) => [p.node.id, p]));
-    const next = new Map(layout.nodes.map((p) => [p.node.id, p.node]));
+    this.layout = layout;
+    this.collapse = collapse;
+    this.skeletonD = null;
+    this.index = this.culling ? new SpatialIndex(layout.nodes) : null;
+    this.reconcile();
+  }
+
+  /** Renders the nodes in view (culling) and releases the others; cheap when nothing changed. */
+  updateVisible(): void {
+    if (this.layout) this.reconcile();
+  }
+
+  /** Number of nodes with DOM (tests, benchmark). */
+  renderedCount(): number {
+    return this.nodes.size;
+  }
+
+  /** IDs that should have DOM: all without culling; none at skeleton zoom; else those in view. */
+  private wanted(layout: MapLayout): { ids: Set<string>; skeleton: boolean } {
+    const all = (): Set<string> => new Set(layout.nodes.map((p) => p.node.id));
+    if (!this.culling || !this.index) return { ids: all(), skeleton: false };
+    const size = { width: this.canvasEl.clientWidth, height: this.canvasEl.clientHeight };
+    if (size.width === 0 || size.height === 0) {
+      // Hidden tab: no viewport. Keep what is shown; a renderer never sized renders everything.
+      if (!this.sized) return { ids: all(), skeleton: false };
+      return {
+        ids: new Set([...this.nodes.keys()].filter((id) => this.rects.has(id))),
+        skeleton: false,
+      };
+    }
+    this.sized = true;
+    const ids = this.index.query(worldViewport(this.transform, size));
+    if (detailLevel(this.transform.zoom, ids.size) === 'skeleton') {
+      return { ids: new Set(), skeleton: true };
+    }
+    // Rendering content is the expensive part: at most RENDER_BUDGET new nodes per pass, nearest to
+    // the view centre first; the skeleton shows the rest until a later frame renders them.
+    const missing = [...ids].filter((id) => !this.nodes.has(id));
+    if (missing.length <= RENDER_BUDGET) return { ids, skeleton: false };
+    const cx = (size.width / 2 - this.transform.x) / this.transform.zoom;
+    const cy = (size.height / 2 - this.transform.y) / this.transform.zoom;
+    const distance = (id: string): number => {
+      const r = this.rects.get(id);
+      return r ? (r.x + r.width / 2 - cx) ** 2 + (r.y + r.height / 2 - cy) ** 2 : Infinity;
+    };
+    missing.sort((a, b) => distance(a) - distance(b));
+    for (const id of missing.slice(RENDER_BUDGET)) ids.delete(id);
+    this.scheduleFrame();
+    return { ids, skeleton: true };
+  }
+
+  private reconcile(): void {
+    const layout = this.layout;
+    if (!layout) return;
+    const { ids, skeleton } = this.wanted(layout);
+    const next = new Map(
+      layout.nodes.filter((p) => ids.has(p.node.id)).map((p) => [p.node.id, p.node]),
+    );
     // Content that lost its node or its markdown, by markdown: a node whose ID shifted takes it over
     // without re-rendering (render cache across ID shifts, spec "Node identity").
     const pool = new Map<string, HTMLElement[]>();
@@ -101,9 +182,32 @@ export class DomMapRenderer implements MapRenderer {
       dom.el.remove();
       this.nodes.delete(id);
     }
-    for (const positioned of layout.nodes) this.placeNode(positioned, pool);
+    for (const positioned of layout.nodes) {
+      if (next.has(positioned.node.id)) this.placeNode(positioned, pool);
+    }
     for (const list of pool.values()) for (const contentEl of list) this.hooks.release(contentEl);
-    this.placeToggles(layout, collapse);
+    this.placeToggles(layout, this.collapse);
+    this.drawSkeleton(layout, skeleton);
+  }
+
+  /** All node rects as one path: the map's shape at a zoom where text is unreadable. */
+  private drawSkeleton(layout: MapLayout, show: boolean): void {
+    const svg = this.edgesEl;
+    const existing = svg?.querySelector('.mind-mapper-skeleton');
+    if (!show || !svg) {
+      existing?.remove();
+      return;
+    }
+    if (existing) return;
+    this.skeletonD ??= layout.nodes
+      .map((p) => `M ${p.x} ${p.y} h ${p.width} v ${p.height} h ${-p.width} Z`)
+      .join(' ');
+    const path = this.worldEl.doc.createElementNS(SVG_NS, 'path');
+    path.classList.add('mind-mapper-skeleton');
+    path.setAttribute('d', this.skeletonD);
+    // Above the edges, below cross-links (appended later).
+    const firstCrossLink = svg.querySelector('.mind-mapper-crosslink');
+    svg.insertBefore(path, firstCrossLink);
   }
 
   /** Dashed lines for same-note links (spec "Links"); replaces the previous ones. */
@@ -131,13 +235,28 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   setTransform(t: Transform): void {
+    this.transform = t;
     this.worldEl.style.transform = transformCss(t);
+    if (this.culling) this.scheduleFrame();
+  }
+
+  /** At most one culling pass per animation frame. */
+  private scheduleFrame(): void {
+    if (this.frame !== null) return;
+    this.frame = this.canvasEl.win.requestAnimationFrame(() => {
+      this.frame = null;
+      this.updateVisible();
+    });
   }
 
   /** `is-clipped` shows the expand button; `is-clipped-x` / `-y` fade the overflowing edge. */
-  setClipped(id: string, clip: { x: boolean; y: boolean }): void {
+  setClipped(id: string, clip: Clip): void {
+    this.clips.set(id, clip);
     const el = this.nodes.get(id)?.el;
-    if (!el) return;
+    if (el) this.applyClip(el, clip);
+  }
+
+  private applyClip(el: HTMLElement, clip: Clip): void {
     el.toggleClass('is-clipped', clip.x || clip.y);
     el.toggleClass('is-clipped-x', clip.x);
     el.toggleClass('is-clipped-y', clip.y);
@@ -149,26 +268,44 @@ export class DomMapRenderer implements MapRenderer {
 
   /** Releases all node content (view close). */
   clear(): void {
+    if (this.frame !== null) this.canvasEl.win.cancelAnimationFrame(this.frame);
+    this.frame = null;
+    this.layout = null;
+    this.index = null;
+    this.clips.clear();
     for (const dom of this.nodes.values()) this.hooks.release(dom.contentEl);
     this.nodes.clear();
     this.toggles.clear();
     this.worldEl.empty();
     this.edgesEl = null;
+    this.edgePaths = [];
   }
 
+  /** Edge paths are reused across layouts (a re-layout of a large map only updates `d`). */
   private renderEdges(layout: MapLayout): void {
-    this.edgesEl?.remove();
     const doc = this.worldEl.doc;
-    const svg = doc.createElementNS(SVG_NS, 'svg');
-    svg.classList.add('mind-mapper-edges');
-    for (const edge of layout.edges) {
-      const path = doc.createElementNS(SVG_NS, 'path');
-      path.classList.add('mind-mapper-edge');
-      path.setAttribute('d', edgePath(edge));
-      svg.appendChild(path);
+    let svg = this.edgesEl;
+    if (!svg) {
+      svg = doc.createElementNS(SVG_NS, 'svg');
+      svg.classList.add('mind-mapper-edges');
+      this.worldEl.prepend(svg);
+      this.edgesEl = svg;
+      this.edgePaths = [];
     }
-    this.worldEl.prepend(svg);
-    this.edgesEl = svg;
+    // The skeleton belongs to the previous layout.
+    svg.querySelector('.mind-mapper-skeleton')?.remove();
+    const firstCrossLink = svg.querySelector('.mind-mapper-crosslink');
+    while (this.edgePaths.length > layout.edges.length) this.edgePaths.pop()?.remove();
+    layout.edges.forEach((edge, i) => {
+      let path = this.edgePaths[i];
+      if (!path) {
+        path = doc.createElementNS(SVG_NS, 'path');
+        path.classList.add('mind-mapper-edge');
+        svg.insertBefore(path, firstCrossLink);
+        this.edgePaths.push(path);
+      }
+      path.setAttribute('d', edgePath(edge));
+    });
   }
 
   private nodeIdOf(event: Event): string | null {
@@ -183,8 +320,8 @@ export class DomMapRenderer implements MapRenderer {
   private placeToggles(layout: MapLayout, collapse: CollapseInfo): void {
     const shown = new Set<string>();
     for (const { node, x, y, width, height, childSide } of layout.nodes) {
-      // The root is never collapsed (a circle root grows on both sides).
-      if (node.kind === 'root') continue;
+      // The root is never collapsed (a circle root grows on both sides); culled nodes have none.
+      if (node.kind === 'root' || !this.nodes.has(node.id)) continue;
       const count = collapse.hidden.get(node.id);
       if (count === undefined && !collapse.hasChildren(node.id)) continue;
       shown.add(node.id);
@@ -236,6 +373,8 @@ export class DomMapRenderer implements MapRenderer {
       dom = this.createNode(node, pool.get(node.markdown)?.shift());
       this.nodes.set(node.id, dom);
       dom.el.toggleClass('is-selected', node.id === this.selectedId);
+      const clip = this.clips.get(node.id);
+      if (clip) this.applyClip(dom.el, clip);
     } else if (dom.node.markdown !== node.markdown) {
       // Old content was pooled (setLayout). Fresh content element: a still running render of the old
       // markdown cannot write into it.

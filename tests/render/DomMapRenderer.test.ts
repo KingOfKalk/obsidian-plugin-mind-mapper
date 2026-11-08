@@ -1,6 +1,6 @@
 import type { MapLayout } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
-import { DomMapRenderer } from '../../src/render/DomMapRenderer';
+import { DomMapRenderer, RENDER_BUDGET } from '../../src/render/DomMapRenderer';
 
 function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): MindMapNode {
   return { id, kind, label, markdown: label, sectionType: null, level: 1, line: 0, children: [] };
@@ -361,4 +361,171 @@ test('setCrossLinks draws one dashed path per link from layout rects; unknown no
   expect(paths[0]?.getAttribute('d')).toBe('M 360 -6 C 360 34, 360 -34, 360 6');
   renderer.setCrossLinks([]);
   expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(0);
+});
+
+describe('culling', () => {
+  /** 20 x 20 grid of 100 x 20 nodes, 200 px apart; root at (0,0). */
+  function grid(): MapLayout {
+    const nodes: MapLayout['nodes'] = [];
+    for (let i = 0; i < 400; i++) {
+      const kind = i === 0 ? 'root' : 'heading';
+      nodes.push({
+        node: { ...node(`n${i}`, kind), markdown: `m${i}` },
+        x: (i % 20) * 200,
+        y: Math.floor(i / 20) * 200,
+        width: 100,
+        height: 20,
+        childSide: 'right',
+      });
+    }
+    const edges = nodes.slice(1).map((p) => ({
+      fromId: 'n0',
+      toId: p.node.id,
+      source: { x: 100, y: 10 },
+      target: { x: p.x, y: p.y + 10 },
+      axis: 'x' as const,
+    }));
+    return { nodes, edges, bounds: { x: 0, y: 0, width: 3900, height: 3820 } };
+  }
+
+  function culled() {
+    const parent = document.createElement('div');
+    const hooks = {
+      render: vi.fn((n: MindMapNode, el: HTMLElement) => el.setText(n.markdown)),
+      release: vi.fn(),
+      expand: vi.fn(),
+    };
+    const renderer = new DomMapRenderer(parent, hooks, { culling: true });
+    Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 400 });
+    Object.defineProperty(renderer.canvasEl, 'clientHeight', { configurable: true, value: 400 });
+    return { parent, hooks, renderer };
+  }
+
+  const ids = (parent: HTMLElement) =>
+    [...parent.querySelectorAll<HTMLElement>('.mind-mapper-node')].map((el) => el.dataset.nodeId);
+
+  test('only nodes in the viewport plus margin have DOM; panning renders new ones and releases left ones', () => {
+    const { parent, hooks, renderer } = culled();
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.setLayout(grid());
+    // viewport 0..400 plus 200 margin each side: columns/rows 0..2 (x 0, 200, 400 < 600)
+    expect(renderer.renderedCount()).toBe(9);
+    expect(ids(parent)).toContain('n0');
+    renderer.setTransform({ x: -2000, y: -2000, zoom: 1 });
+    renderer.updateVisible();
+    expect(ids(parent)).not.toContain('n0');
+    expect(ids(parent)).toContain('n210'); // (2000, 2000)
+    expect(renderer.renderedCount()).toBeLessThanOrEqual(16);
+    const released = hooks.release.mock.calls.length;
+    expect(released).toBeGreaterThanOrEqual(9);
+  });
+
+  test('edges and cross-links stay complete when nodes are culled', () => {
+    const { parent, renderer } = culled();
+    renderer.setLayout(grid());
+    renderer.setCrossLinks([{ fromId: 'n1', toId: 'n399' }]);
+    expect(parent.querySelectorAll('path.mind-mapper-edge')).toHaveLength(399);
+    expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(1);
+  });
+
+  test('below 0.2 zoom the map is a skeleton path; all node content released', () => {
+    const { parent, hooks, renderer } = culled();
+    renderer.setLayout(grid());
+    expect(renderer.renderedCount()).toBe(9);
+    renderer.setTransform({ x: 0, y: 0, zoom: 0.1 });
+    renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(0);
+    expect(hooks.release).toHaveBeenCalledTimes(9);
+    const skeleton = parent.querySelector('path.mind-mapper-skeleton');
+    expect(skeleton?.getAttribute('d')?.match(/M /g)).toHaveLength(400);
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.updateVisible();
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+    expect(renderer.renderedCount()).toBe(9);
+  });
+
+  test('a culled clipped and selected node gets its classes back when rendered again', () => {
+    const { parent, renderer } = culled();
+    renderer.setLayout(grid());
+    renderer.setClipped('n1', { x: false, y: true });
+    renderer.setSelected('n1');
+    renderer.setTransform({ x: -2000, y: -2000, zoom: 1 });
+    renderer.updateVisible();
+    expect(parent.querySelector('[data-node-id="n1"]')).toBeNull();
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.updateVisible();
+    const el = parent.querySelector('.mind-mapper-node[data-node-id="n1"]');
+    expect(el?.classList.contains('is-clipped-y')).toBe(true);
+    expect(el?.classList.contains('is-selected')).toBe(true);
+  });
+
+  test('a never sized (0 x 0) canvas renders all nodes on the first layout and keeps the DOM afterwards', () => {
+    const { renderer } = culled();
+    Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });
+    renderer.setLayout(grid());
+    expect(renderer.renderedCount()).toBe(400);
+    Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 400 });
+    renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(9);
+    Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });
+    renderer.setTransform({ x: -2000, y: -2000, zoom: 1 });
+    renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(9);
+  });
+
+  test('a small map below 0.2 zoom keeps its content (no skeleton)', () => {
+    const { parent, renderer } = culled();
+    renderer.setTransform({ x: 0, y: 0, zoom: 0.1 });
+    renderer.setLayout({ ...grid(), nodes: grid().nodes.slice(0, 15), edges: [] });
+    expect(renderer.renderedCount()).toBe(15);
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+  });
+
+  test('new nodes render at most 40 per pass, nearest to the centre first; skeleton until done', () => {
+    const { parent, renderer } = culled();
+    Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 4000 });
+    Object.defineProperty(renderer.canvasEl, 'clientHeight', { configurable: true, value: 4000 });
+    const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
+    // 250 nodes in view (under the 300 content cap)
+    const layout250 = { ...grid(), nodes: grid().nodes.slice(0, 250), edges: [] };
+    renderer.setLayout(layout250);
+    expect(renderer.renderedCount()).toBe(RENDER_BUDGET);
+    expect(RENDER_BUDGET).toBe(40);
+    // the centre of the 4000 x 4000 view is (2000, 2000): node n210 renders first
+    expect(ids(parent)).toContain('n210');
+    expect(ids(parent)).not.toContain('n0');
+    expect(parent.querySelector('path.mind-mapper-skeleton')).not.toBeNull();
+    expect(raf).toHaveBeenCalled();
+    for (let pass = 0; pass < 6; pass++) renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(250);
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+    raf.mockRestore();
+  });
+
+  test('setTransform schedules one culling pass per animation frame', () => {
+    const { renderer } = culled();
+    const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
+    renderer.setLayout(grid());
+    renderer.setTransform({ x: -10, y: 0, zoom: 1 });
+    renderer.setTransform({ x: -20, y: 0, zoom: 1 });
+    expect(raf).toHaveBeenCalledTimes(1);
+    raf.mockRestore();
+  });
+});
+
+test('a new layout reuses the edge path elements', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  const before = [...parent.querySelectorAll('path.mind-mapper-edge')];
+  renderer.setLayout({
+    ...layout,
+    edges: layout.edges.map((e) => ({ ...e, target: { x: e.target.x + 10, y: e.target.y } })),
+  });
+  const after = [...parent.querySelectorAll('path.mind-mapper-edge')];
+  expect(after).toHaveLength(2);
+  expect(after[0]).toBe(before[0]);
+  expect(after[1]).toBe(before[1]);
+  expect(after[0]?.getAttribute('d')).toBe('M 200 0 C 235 0, 235 -24, 270 -24');
+  renderer.setLayout({ ...layout, edges: layout.edges.slice(0, 1) });
+  expect(parent.querySelectorAll('path.mind-mapper-edge')).toHaveLength(1);
 });

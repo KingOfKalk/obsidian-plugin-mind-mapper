@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { browser } from '@wdio/globals';
-import { openMindMap, settle } from './helpers';
+import { openMindMap, settle, waitForCache } from './helpers';
+import { generateNote } from './perf/generateNote';
 
 /**
  * Visual check: saves screenshots of a few maps to SCREENSHOT_DIR (default: e2e/screenshots/).
@@ -72,6 +73,23 @@ describe('screenshots', function () {
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/full-screen.png`);
     await browser.keys('Escape');
+  });
+
+  it('large map at fit and at 100 %', async function () {
+    await browser.executeObsidian(
+      async ({ app }, text) => {
+        await app.vault.adapter.write('large-2000.md', text);
+      },
+      generateNote(2000, 2000),
+    );
+    await waitForCache('large-2000.md');
+    await openMindMap('large-2000.md');
+    await browser.pause(1000);
+    await browser.saveScreenshot(`${dir}/large-fit.png`);
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await browser.pause(1000);
+    await browser.saveScreenshot(`${dir}/large-100.png`);
   });
 
   it('collapsed and selected', async function () {

@@ -1,4 +1,4 @@
-import { crossLinks, nodeAtLine, visibleCrossLinks } from '../../src/layout/crossLinks';
+import { crossLinks, lineIndex, nodeAtLine, visibleCrossLinks } from '../../src/layout/crossLinks';
 import { visibleTree } from '../../src/layout/visibleTree';
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
@@ -57,4 +57,12 @@ test('visibleCrossLinks moves hidden ends to the nearest visible ancestor', () =
     { fromId: 'Links/Gamma', toId: 'Links/Beta' },
     { fromId: 'Links/Alpha/#1', toId: 'Links/Beta' },
   ]);
+});
+
+test('lineIndex matches nodeAtLine on the crosslinks fixture for every line', () => {
+  const t = tree();
+  const find = lineIndex(t);
+  for (let line = -1; line < 20; line++) {
+    expect(find(line)?.id ?? null, `line ${line}`).toBe(nodeAtLine(t, line)?.id ?? null);
+  }
 });

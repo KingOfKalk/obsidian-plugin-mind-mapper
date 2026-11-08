@@ -65,6 +65,13 @@ An unknown layout or a title that is not text falls back to the default and show
 
 Content larger than the max node size is clipped with a fade; the expand icon shows all of it. Changes apply to open maps right away.
 
+## Large notes
+
+- Only nodes in and around the visible area are rendered; panning renders the rest as they come into view (at most 40 new nodes per frame, nearest first)
+- Below 20 % zoom, maps with more than 60 nodes in view are drawn as outlines without text; zoom in to read
+- Edges and link lines are always complete
+- Benchmark (`npm run perf:e2e`, headless): 1,000 nodes open in about 0.1 s and pan and zoom at 60 fps; 5,000 nodes open in about 0.25 s
+
 ## Development
 
 - Requirements: Node.js and npm (the devcontainer has both)

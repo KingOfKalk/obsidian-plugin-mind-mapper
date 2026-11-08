@@ -25,7 +25,8 @@ export async function openMindMap(path: string): Promise<void> {
     await leaf.setViewState({ type: 'mind-mapper-view', active: true, state: { file: notePath } });
     await app.workspace.revealLeaf(leaf);
   }, path);
-  await browser.$('.mind-mapper-node.is-root').waitForExist({
+  // a large map at fit is drawn as a skeleton (no node DOM)
+  await browser.$('.mind-mapper-node.is-root, path.mind-mapper-skeleton').waitForExist({
     timeout: 15000,
     timeoutMsg: `no mind map for ${path}`,
   });

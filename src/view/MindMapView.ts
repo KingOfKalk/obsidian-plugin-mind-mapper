@@ -17,7 +17,8 @@ import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layou
 import { SizeCache } from '../layout/sizeCache';
 import { visibleTree } from '../layout/visibleTree';
 import { layoutTree } from '../layout/tidyTree';
-import type { MapLayout, MapLayoutName, PositionedNode, Size } from '../layout/types';
+import type { MapLayout, MapLayoutName, PositionedNode, Rect, Size } from '../layout/types';
+import { worldViewport } from '../render/culling';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
 import { type CrossLink, crossLinks, visibleCrossLinks } from '../layout/crossLinks';
 import { invalidOptionMessage, readMapOptions } from './frontmatter';
@@ -340,6 +341,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   override onResize(): void {
+    this.dom?.renderer.updateVisible();
     if (this.relayoutOnResize) this.relayout();
     if (this.pendingFit) this.tryFit();
   }
@@ -497,15 +499,31 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.keepInPlace(anchor);
   }
 
-  /** The node to keep in place across a re-layout: the selected node, else the one nearest the view center. */
+  /**
+   * The node to keep in place across a re-layout: the selected node if it is on screen, else the
+   * one nearest the view center (an off-screen selection would let the visible area jump).
+   */
   private anchorIn(layout: MapLayout): PositionedNode | null {
     const selected = layout.nodes.find((p) => p.node.id === this.selected);
-    if (selected) return selected;
+    if (selected && this.onScreen(selected)) return selected;
     const center = this.center();
     return nearestNode(layout, {
       x: (center.x - this.transform.x) / this.transform.zoom,
       y: (center.y - this.transform.y) / this.transform.zoom,
     });
+  }
+
+  private onScreen(rect: Rect): boolean {
+    const current = this.size();
+    const size = current.width > 0 && current.height > 0 ? current : this.lastSize;
+    if (size.width === 0 || size.height === 0) return true;
+    const view = worldViewport(this.transform, size, 0);
+    return (
+      rect.x < view.x + view.width &&
+      view.x < rect.x + rect.width &&
+      rect.y < view.y + view.height &&
+      view.y < rect.y + rect.height
+    );
   }
 
   /** Re-layout after a user action (collapse): no fit, the anchor keeps its screen position. */
@@ -548,25 +566,33 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.contentEl.empty();
     this.contentEl.addClass('mind-mapper-view');
     this.applyCssLimits();
-    const renderer = new DomMapRenderer(this.contentEl, {
-      render: (node, contentEl) => void this.content.render(node, contentEl),
-      release: (contentEl) => {
-        this.observer?.unobserve(contentEl);
-        this.observed.delete(contentEl);
-        this.content.release(contentEl);
+    const renderer = new DomMapRenderer(
+      this.contentEl,
+      {
+        render: (node, contentEl) => {
+          void this.content.render(node, contentEl);
+          // Content created by culling (panning, zooming) is measured like any other.
+          this.observeContent(new Map([[node.id, contentEl]]));
+        },
+        release: (contentEl) => {
+          this.observer?.unobserve(contentEl);
+          this.observed.delete(contentEl);
+          this.content.release(contentEl);
+        },
+        expand: (node) =>
+          new NodeContentModal(this.app, node, {
+            sourcePath: () => this.pinnedFile ?? '',
+            hoverParent: this,
+            mapLeaf: this.leaf,
+            recency: this.recency,
+            onNavigate: () => this.exitFullScreen(),
+          }).open(),
+        open: (node) => this.jumpTo(node.line),
+        select: (id) => this.select(id),
+        toggle: (id) => this.toggleCollapse(id),
       },
-      expand: (node) =>
-        new NodeContentModal(this.app, node, {
-          sourcePath: () => this.pinnedFile ?? '',
-          hoverParent: this,
-          mapLeaf: this.leaf,
-          recency: this.recency,
-          onNavigate: () => this.exitFullScreen(),
-        }).open(),
-      open: (node) => this.jumpTo(node.line),
-      select: (id) => this.select(id),
-      toggle: (id) => this.toggleCollapse(id),
-    });
+      { culling: true },
+    );
     const controls = new MapControls(renderer.canvasEl, this);
     const placeholderEl = this.contentEl.createDiv({ cls: 'mind-mapper-placeholder' });
     const hintEl = renderer.canvasEl.createDiv({
@@ -606,13 +632,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private showLayout(layout: MapLayout): void {
     const dom = this.ensureDom();
     this.layout = layout;
+    // Shown first: culling needs the canvas size (a hidden canvas measures 0 x 0).
+    dom.placeholderEl.hidden = true;
+    dom.renderer.canvasEl.hidden = false;
     dom.renderer.setLayout(layout, this.collapseInfo);
     if (this.tree) {
       const shown = new Set(layout.nodes.map((p) => p.node.id));
       dom.renderer.setCrossLinks(visibleCrossLinks(this.tree, this.links, shown));
     }
-    dom.placeholderEl.hidden = true;
-    dom.renderer.canvasEl.hidden = false;
     dom.hintEl.hidden = (this.tree?.root.children.length ?? 0) > 0;
     for (const { node } of layout.nodes) {
       dom.renderer.setClipped(node.id, this.sizes.get(node)?.clip ?? NO_CLIP);

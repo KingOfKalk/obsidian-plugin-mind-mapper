@@ -28,12 +28,35 @@ export function nodeAtLine(tree: MindMapTree, line: number): MindMapNode | null 
   return best;
 }
 
+/**
+ * `nodeAtLine` as a lookup table built once per tree (cross-links are mapped on every edit).
+ * Larger spans are written first, so the innermost node wins; among equal spans the first in
+ * pre-order wins, like `nodeAtLine`.
+ */
+export function lineIndex(tree: MindMapTree): (line: number) => MindMapNode | null {
+  const nodes: { node: MindMapNode; start: number; end: number }[] = [];
+  walk(tree.root, (node) => {
+    if (node.line !== null && node.endLine !== undefined) {
+      nodes.push({ node, start: node.line, end: node.endLine });
+    }
+  });
+  nodes.reverse();
+  nodes.sort((a, b) => b.end - b.start - (a.end - a.start));
+  const byLine = new Map<number, MindMapNode>();
+  for (const { node, start, end } of nodes) {
+    for (let line = start; line <= end; line++) byLine.set(line, node);
+  }
+  return (line) => byLine.get(line) ?? null;
+}
+
 /** Lines to node IDs; unmapped ends, self links and duplicates are dropped. */
 export function crossLinks(tree: MindMapTree, inputs: CrossLinkInput[]): CrossLink[] {
+  if (inputs.length === 0) return [];
+  const at = lineIndex(tree);
   return unique(
     inputs.map((input) => ({
-      fromId: nodeAtLine(tree, input.fromLine)?.id,
-      toId: nodeAtLine(tree, input.toLine)?.id,
+      fromId: at(input.fromLine)?.id,
+      toId: at(input.toLine)?.id,
     })),
   );
 }
