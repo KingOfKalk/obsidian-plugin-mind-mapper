@@ -16,7 +16,12 @@ const LABEL_LENGTH = 200;
 
 type Item = { line: number; heading: HeadingInput } | { line: number; section: SectionInput };
 
-export function buildTree(input: ParserInput, fileName: string): MindMapTree {
+/** `title` (frontmatter `mind_map_title`) replaces the root's label, never its ID. */
+export function buildTree(
+  input: ParserInput,
+  fileName: string,
+  title: string | null = null,
+): MindMapTree {
   const h1s = input.headings.filter((h) => h.level === 1);
   const onlyH1 = h1s.length === 1 ? h1s[0] : undefined;
   const h1IsRoot =
@@ -34,6 +39,11 @@ export function buildTree(input: ParserInput, fileName: string): MindMapTree {
           level: 0,
           line: null,
         });
+
+  if (title !== null) {
+    root.markdown = escapeBlockStart(title);
+    root.label = root.markdown.slice(0, LABEL_LENGTH);
+  }
 
   const builder = new ChildBuilder();
   const stack: MindMapNode[] = [root];

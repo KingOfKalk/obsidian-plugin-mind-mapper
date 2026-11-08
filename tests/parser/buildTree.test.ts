@@ -218,3 +218,25 @@ test('content before the first heading attaches to the virtual root', () => {
     '  T [heading] T',
   ]);
 });
+
+test('buildTree title replaces the root label but keeps the root id (H1 root)', () => {
+  const tree = buildTree(
+    { headings: headings('# Project', '## Tasks'), firstContentLine: null },
+    'Note',
+    'My *map*',
+  );
+  expect(tree.root.id).toBe('Project');
+  expect(tree.root.markdown).toBe('My *map*');
+  expect(tree.root.label).toBe('My *map*');
+  expect(tree.root.line).toBe(0);
+  expect(tree.root.children[0]?.id).toBe('Project/Tasks');
+});
+
+test('buildTree title replaces the root label but keeps the root id (virtual root)', () => {
+  const tree = buildTree({ headings: headings('## A'), firstContentLine: null }, 'Note', '1. Plan');
+  expect(tree.root.id).toBe('');
+  expect(tree.root.markdown).toBe('1\\. Plan');
+  expect(buildTree({ headings: [], firstContentLine: null }, 'Note', null).root.markdown).toBe(
+    'Note',
+  );
+});

@@ -81,16 +81,16 @@
 /* Natural content size up to the max node size (320 x 240 incl. padding); measured by the view. */
 .mind-mapper-node-content {
   width: max-content;
-  max-width: calc(320px - 16px);
+  max-width: calc(var(--mind-mapper-node-max-width, 320px) - 18px);
   /* Capped at the max node size so the fade sits on the visible edge; scrollWidth/Height still
      report the natural size for measuring. */
-  max-height: calc(240px - 12px);
+  max-height: calc(var(--mind-mapper-node-max-height, 240px) - 14px);
   overflow: hidden;
 }
 
 /* Diagrams scale to their container (max-width: 100%); give them the full node width. */
 .mind-mapper-node-content:has(.mermaid) {
-  width: calc(320px - 16px);
+  width: calc(var(--mind-mapper-node-max-width, 320px) - 18px);
 }
 
 .mind-mapper-node-content > :first-child {
@@ -160,7 +160,7 @@
 }
 
 /* Collapse toggle: a world-level sibling of the node (nodes clip their overflow), just outside the
-   node's child-side edge, on the edge line. `button.` outranks Obsidian's button styles. */
+   node's child-side edge (`is-side-*`), on the edge line. `button.` outranks Obsidian's button styles. */
 button.mind-mapper-collapse {
   position: absolute;
   transform: translate(3px, -50%);
@@ -176,6 +176,18 @@ button.mind-mapper-collapse {
   font-size: var(--font-ui-smaller);
   line-height: 16px;
   cursor: pointer;
+}
+
+button.mind-mapper-collapse.is-side-left {
+  transform: translate(calc(-100% - 3px), -50%);
+}
+
+button.mind-mapper-collapse.is-side-bottom {
+  transform: translate(-50%, 3px);
+}
+
+button.mind-mapper-collapse.is-side-top {
+  transform: translate(-50%, calc(-100% - 3px));
 }
 
 button.mind-mapper-collapse:hover {

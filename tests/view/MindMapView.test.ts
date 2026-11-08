@@ -5,7 +5,8 @@ import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
 import { fitToBounds, IDENTITY } from '../../src/render/viewport';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
-import { MindMapView } from '../../src/view/MindMapView';
+import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
+import { MindMapView, type ViewServices } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
 import { FakeWorkspace, fakeFile } from '../helpers';
 import { type Component as MockComponent, Modal as MockModal } from '../mocks/obsidian';
@@ -18,9 +19,14 @@ function newView(ws = new FakeWorkspace()): { view: MindMapView; ws: FakeWorkspa
       view.setState(viewState.state, { history: false }),
     ),
   };
-  const view = new MindMapView(leaf as unknown as WorkspaceLeaf);
+  // Most tests assert left-to-right geometry; layouts have their own tests below.
+  const view = new MindMapView(leaf as unknown as WorkspaceLeaf, {
+    settings: () => LTR_SETTINGS,
+  });
   return { view, ws };
 }
+
+const LTR_SETTINGS: MindMapSettings = { ...DEFAULT_SETTINGS, defaultLayout: 'left-to-right' };
 
 function setElSize(el: Element | null, width: number, height: number): void {
   if (!el) throw new Error('element missing');
@@ -274,7 +280,7 @@ function nodeBox(view: MindMapView, id: string) {
 function report(view: MindMapView, id: string, width: number, height: number): void {
   const el = contentOf(view, id);
   for (const [key, value] of [
-    ['offsetWidth', Math.min(width, 304)],
+    ['offsetWidth', Math.min(width, 302)],
     ['scrollWidth', width],
     ['offsetHeight', height],
     ['scrollHeight', height],
@@ -298,7 +304,7 @@ describe('measuring', () => {
 
   test('first layout uses estimated sizes', async () => {
     const { view } = await openWorked();
-    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 16 * 8 + 16, height: 36 });
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 16 * 8 + 18, height: 38 });
   });
 
   test('a measured size change re-layouts once after 100 ms and keeps the anchor in place', async () => {
@@ -314,11 +320,11 @@ describe('measuring', () => {
     const screenBefore = { x: tasks.x + t0.x, y: tasks.y + t0.y };
     report(view, 'Project/#1', 300, 200);
     report(view, 'Project/Tasks/#1', 250, 90);
-    expect(nodeBox(view, 'Project/#1').height).toBe(36);
+    expect(nodeBox(view, 'Project/#1').height).toBe(38);
     await vi.advanceTimersByTimeAsync(99);
-    expect(nodeBox(view, 'Project/#1').height).toBe(36);
+    expect(nodeBox(view, 'Project/#1').height).toBe(38);
     await vi.advanceTimersByTimeAsync(1);
-    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 316, height: 212 });
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 318, height: 214 });
     const after = nodeBox(view, 'Project/Tasks');
     expect(after.y).not.toBe(tasks.y);
     const t = view.getTransform();
@@ -371,7 +377,7 @@ describe('measuring', () => {
     }
     ws.trigger('css-change');
     await vi.advanceTimersByTimeAsync(100);
-    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 216, height: 112 });
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 218, height: 114 });
   });
 
   test('measured sizes are reused when the same markdown is shown again', async () => {
@@ -381,7 +387,7 @@ describe('measuring', () => {
     ws.addNote('Other.md', 'skipped-levels');
     await view.setState(...state('Other.md'));
     await view.setState(...state('Note.md'));
-    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 296, height: 62 });
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 298, height: 64 });
   });
 
   test('a hidden tab (0 x 0 reports) changes neither sizes nor the transform', async () => {
@@ -412,11 +418,11 @@ describe('measuring', () => {
     const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
     setElSize(canvas, 0, 0);
     await vi.advanceTimersByTimeAsync(200);
-    expect(nodeBox(view, 'Project/#1').height).toBe(36);
+    expect(nodeBox(view, 'Project/#1').height).toBe(38);
     expect(view.getTransform()).toEqual({ x: 10, y: 300, zoom: 1 });
     setElSize(canvas, 800, 600);
     view.onResize();
-    expect(nodeBox(view, 'Project/#1').height).toBe(212);
+    expect(nodeBox(view, 'Project/#1').height).toBe(214);
   });
 
   test('onClose disconnects the observer and cancels a pending re-layout', async () => {
@@ -784,5 +790,139 @@ describe('re-layouts of a hidden or reloaded map', () => {
     const after = screenOf(view, child);
     expect(after.x).toBeCloseTo(before.x, 1);
     expect(after.y).toBeCloseTo(before.y, 1);
+  });
+});
+
+function centerX(view: MindMapView, id: string): number {
+  const box = nodeBox(view, id);
+  return box.x + box.width / 2;
+}
+
+async function openWith(
+  fixtureName: string,
+  services: Partial<ViewServices>,
+): Promise<{ view: MindMapView; ws: FakeWorkspace }> {
+  const ws = new FakeWorkspace();
+  const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+  const view = new MindMapView(leaf as unknown as WorkspaceLeaf, services);
+  ws.addNote('Note.md', fixtureName);
+  await setSize(view, 800, 600);
+  await view.setState(...state('Note.md'));
+  return { view, ws };
+}
+
+describe('layouts, frontmatter and settings', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('default layout is circle-clockwise: first-level branches on both sides of the root', async () => {
+    const { view } = await openWith('worked-example', {});
+    const root = centerX(view, 'Project');
+    // three branches: two right (#1, Tasks), one left (Notes)
+    expect(centerX(view, 'Project/#1')).toBeGreaterThan(root);
+    expect(centerX(view, 'Project/Tasks')).toBeGreaterThan(root);
+    expect(centerX(view, 'Project/Notes')).toBeLessThan(root);
+    expect(centerX(view, 'Project/Notes/#1')).toBeLessThan(centerX(view, 'Project/Notes'));
+  });
+
+  test('frontmatter mind_map_layout top-to-bottom puts all children below the root', async () => {
+    const { view } = await openWith('fm-layout', {});
+    const root = nodeBox(view, 'Root');
+    for (const id of ['Root/A', 'Root/B', 'Root/A/#1']) {
+      expect(nodeBox(view, id).y).toBeGreaterThan(root.y + root.height);
+    }
+  });
+
+  test('mind_map_title replaces the root label, the root id stays', async () => {
+    const { view } = await openWith('fm-layout', {});
+    expect(contentOf(view, 'Root').textContent).toBe('Custom title');
+  });
+
+  test('an invalid mind_map_layout falls back to the setting and is reported on every load', async () => {
+    const warnOnce = vi.fn();
+    const { view, ws } = await openWith('fm-invalid', {
+      warnOnce,
+      settings: () => LTR_SETTINGS,
+    });
+    expect(centerX(view, 'Root/B')).toBeGreaterThan(centerX(view, 'Root'));
+    expect(warnOnce).toHaveBeenCalledWith(
+      'Note.md\0mind_map_layout\0spiral',
+      'Mind Mapper: unknown mind_map_layout "spiral" in Note.md, using left-to-right',
+    );
+    change(ws, 'Note.md', 'fm-invalid');
+    await vi.advanceTimersByTimeAsync(300);
+    // the plugin's warnOnce keeps it to one notice
+    expect(warnOnce).toHaveBeenCalledTimes(2);
+  });
+
+  test('refresh after a gap change keeps the viewport anchored', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('worked-example', { settings: () => settings });
+    const before = centerOn(view, 'Project/Tasks');
+    const notesBefore = nodeBox(view, 'Project/Notes').x;
+    settings.levelGap = 200;
+    view.refresh();
+    expect(nodeBox(view, 'Project/Notes').x).toBeGreaterThan(notesBefore);
+    const after = screenOf(view, 'Project/Tasks');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('refresh after a default layout change fits the new layout', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('worked-example', { settings: () => settings });
+    view.setTransform({ x: -500, y: 900, zoom: 0.3 });
+    settings.defaultLayout = 'right-to-left';
+    view.refresh();
+    expect(centerX(view, 'Project/Notes')).toBeLessThan(centerX(view, 'Project'));
+    const t = view.getTransform();
+    expect(t).not.toEqual({ x: -500, y: 900, zoom: 0.3 });
+    // fitted: the root is inside the 800 x 600 canvas
+    const root = screenOf(view, 'Project');
+    expect(root.x).toBeGreaterThanOrEqual(0);
+    expect(root.x).toBeLessThan(800);
+  });
+
+  test('a live update that changes the layout fits once', async () => {
+    const { view, ws } = await openWith('live-before', { settings: () => LTR_SETTINGS });
+    view.setTransform({ x: -500, y: 900, zoom: 0.3 });
+    change(ws, 'Note.md', 'fm-layout');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(view.getTransform()).not.toEqual({ x: -500, y: 900, zoom: 0.3 });
+  });
+
+  test('max node size from settings reaches the CSS variables and caps estimates', async () => {
+    const settings = { ...LTR_SETTINGS, maxNodeWidth: 500, maxNodeHeight: 300 };
+    const { view } = await openWith('long-content', { settings: () => settings });
+    expect(view.contentEl.style.getPropertyValue('--mind-mapper-node-max-width')).toBe('500px');
+    expect(view.contentEl.style.getPropertyValue('--mind-mapper-node-max-height')).toBe('300px');
+    expect(nodeBox(view, 'Long content/#2').width).toBe(500);
+    settings.maxNodeWidth = 400;
+    view.refresh();
+    expect(view.contentEl.style.getPropertyValue('--mind-mapper-node-max-width')).toBe('400px');
+    expect(nodeBox(view, 'Long content/#2').width).toBe(400);
+  });
+});
+
+describe('max node size changes', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('changing the max node size re-measures: measured sizes and clip state stay', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('worked-example', { settings: () => settings });
+    report(view, 'Project/#1', 280, 100);
+    report(view, 'Project/Tasks/#1', 250, 900);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 298, height: 114 });
+    const clipped = () =>
+      view.contentEl
+        .querySelector('[data-node-id="Project/Tasks/#1"]')
+        ?.classList.contains('is-clipped-y');
+    expect(clipped()).toBe(true);
+    settings.maxNodeWidth = 400;
+    view.refresh();
+    expect(nodeBox(view, 'Project/#1')).toMatchObject({ width: 298, height: 114 });
+    expect(clipped()).toBe(true);
   });
 });

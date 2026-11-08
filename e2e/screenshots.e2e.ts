@@ -21,6 +21,33 @@ describe('screenshots', function () {
     });
   }
 
+  for (const layout of [
+    'circle-clockwise',
+    'circle-counter-clockwise',
+    'left-to-right',
+    'right-to-left',
+    'top-to-bottom',
+    'bottom-to-top',
+  ]) {
+    for (const note of ['worked-example', 'lists']) {
+      it(`layout ${layout} ${note}`, async function () {
+        await browser.executeObsidian(async ({ app }, name) => {
+          const plugins = (
+            app as unknown as {
+              plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
+            }
+          ).plugins.plugins;
+          await plugins['mind-mapper']?.updateSettings({ defaultLayout: name });
+        }, layout);
+        await openMindMap(`fixtures/${note}.md`);
+        await settle();
+        await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await browser.pause(300);
+        await browser.saveScreenshot(`${dir}/layout-${layout}-${note}.png`);
+      });
+    }
+  }
+
   it('collapsed and selected', async function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();

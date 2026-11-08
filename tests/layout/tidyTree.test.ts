@@ -64,6 +64,7 @@ test('edges run from parent right-center to child left-center', () => {
     toId: 'a',
     source: { x: 100, y: 0 },
     target: { x: 150, y: -30 },
+    axis: 'x',
   });
   expect(layout.edges).toHaveLength(3);
 });

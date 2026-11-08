@@ -1,6 +1,6 @@
 import type { MindMapNode } from '../parser/types';
 import { fnv1a } from '../util/hash';
-import { type Clip, NODE_LIMITS } from './nodeSize';
+import type { Clip, NodeLimits } from './nodeSize';
 import type { Size } from './types';
 
 interface Measured {
@@ -15,20 +15,22 @@ interface Measured {
 export class SizeCache {
   private readonly entries = new Map<string, Measured>();
 
+  constructor(private readonly limits: () => NodeLimits) {}
+
   get(node: MindMapNode): Measured | undefined {
-    return this.entries.get(cacheKey(node));
+    return this.entries.get(cacheKey(node, this.limits()));
   }
 
   /** Keeps only the entries of these nodes (e.g. the current tree after a live update). */
   retain(nodes: Iterable<MindMapNode>): void {
     const keep = new Set<string>();
-    for (const node of nodes) keep.add(cacheKey(node));
+    for (const node of nodes) keep.add(cacheKey(node, this.limits()));
     for (const key of [...this.entries.keys()]) if (!keep.has(key)) this.entries.delete(key);
   }
 
   /** Returns true if the stored size or clip state changed (sub-pixel differences ignored). */
   set(node: MindMapNode, measured: Measured): boolean {
-    const key = cacheKey(node);
+    const key = cacheKey(node, this.limits());
     const previous = this.entries.get(key);
     this.entries.set(key, measured);
     return (
@@ -41,6 +43,8 @@ export class SizeCache {
   }
 }
 
-export function cacheKey(node: MindMapNode): string {
-  return `${fnv1a(node.markdown)}:${NODE_LIMITS.maxWidth}`;
+/** Content hash plus what changes the rendered size: root styling and the max node size. */
+export function cacheKey(node: MindMapNode, limits: NodeLimits): string {
+  const kind = node.kind === 'root' ? 'root' : 'node';
+  return `${fnv1a(node.markdown)}:${kind}:${limits.maxWidth}x${limits.maxHeight}`;
 }

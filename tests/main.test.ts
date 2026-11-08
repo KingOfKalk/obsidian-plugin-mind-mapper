@@ -2,7 +2,7 @@ import type { Command } from 'obsidian';
 import MindMapperPlugin from '../src/main';
 import { MindMapView } from '../src/view/MindMapView';
 import { FakeWorkspace, fakeApp, fakeFile, fakeManifest } from './helpers';
-import type { Plugin as MockPlugin } from './mocks/obsidian';
+import { Notice, type Plugin as MockPlugin } from './mocks/obsidian';
 
 async function loadPlugin(ws = new FakeWorkspace()): Promise<MockPlugin> {
   const plugin = new MindMapperPlugin(fakeApp(ws), fakeManifest());
@@ -109,4 +109,13 @@ test('a rename moves map leaves that are not loaded yet (deferred) to the new pa
   // a loaded view follows the rename itself
   expect(loaded.setViewState).not.toHaveBeenCalled();
   expect(other.setViewState).not.toHaveBeenCalled();
+});
+
+test('warnOnce shows a notice once per id for the session', async () => {
+  const plugin = (await loadPlugin()) as unknown as MindMapperPlugin;
+  Notice.messages = [];
+  plugin.warnOnce('a', 'first');
+  plugin.warnOnce('a', 'first again');
+  plugin.warnOnce('b', 'second');
+  expect(Notice.messages).toEqual(['first', 'second']);
 });

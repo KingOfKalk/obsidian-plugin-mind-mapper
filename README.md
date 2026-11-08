@@ -30,6 +30,35 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
 - The map follows edits to the note live; pan, zoom, selection and collapsed branches are kept
 
+## Layouts
+
+| Layout | Shape |
+|---|---|
+| `circle-clockwise` (default) | Balanced like XMind: the first half of the first-level branches on the right (top to bottom), the rest on the left (bottom to top) |
+| `circle-counter-clockwise` | The same, mirrored |
+| `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | All branches grow in that direction |
+
+## Frontmatter
+
+| Key | Values | Default |
+|---|---|---|
+| `mind_map_title` | any text | the single H1, else the file name |
+| `mind_map_layout` | one of the layouts above | the plugin setting |
+
+An unknown layout or a title that is not text falls back to the default and shows a notice once per note and value (per session).
+
+## Settings
+
+| Setting | Range | Default |
+|---|---|---|
+| Default layout | the layouts above | `circle-clockwise` |
+| Max node width | 160–800 px | 320 px |
+| Max node height | 120–800 px | 240 px |
+| Sibling gap | 0–200 px | 12 px |
+| Level gap | 20–400 px | 60 px |
+
+Content larger than the max node size is clipped with a fade; the expand icon shows all of it. Changes apply to open maps right away.
+
 ## Development
 
 - Requirements: Node.js and npm (the devcontainer has both)

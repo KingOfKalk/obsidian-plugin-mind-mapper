@@ -82,6 +82,22 @@ export class Plugin extends Component {
   }
 
   readonly hoverSources = new Map<string, { display: string; defaultMod: boolean }>();
+  readonly settingTabs: PluginSettingTab[] = [];
+  /** What `loadData` returns; `saveData` stores here. */
+  data: unknown = null;
+
+  loadData(): Promise<unknown> {
+    return Promise.resolve(this.data);
+  }
+
+  saveData(data: unknown): Promise<void> {
+    this.data = data;
+    return Promise.resolve();
+  }
+
+  addSettingTab(tab: PluginSettingTab): void {
+    this.settingTabs.push(tab);
+  }
 
   registerHoverLinkSource(id: string, info: { display: string; defaultMod: boolean }): void {
     this.hoverSources.set(id, info);
@@ -135,7 +151,11 @@ export class TFile {
 }
 
 export class Notice {
-  constructor(public message: string) {}
+  /** Every notice shown, in order (tests reset it). */
+  static messages: string[] = [];
+  constructor(public message: string) {
+    Notice.messages.push(message);
+  }
 }
 
 /** Default: renders the markdown as plain text. Tests replace `render` via vi.spyOn. */
@@ -184,5 +204,84 @@ export class Keymap {
   /** Like Obsidian: Ctrl/Cmd click means "new tab". */
   static isModEvent(evt?: MouseEvent | KeyboardEvent | null): string | boolean {
     return evt?.ctrlKey || evt?.metaKey ? 'tab' : false;
+  }
+}
+
+export class PluginSettingTab {
+  containerEl: HTMLElement = document.createElement('div');
+  constructor(
+    public app: App,
+    public plugin: Plugin,
+  ) {}
+}
+
+type ChangeHandler = (value: string) => unknown;
+
+export class DropdownComponent {
+  readonly options = new Map<string, string>();
+  value = '';
+  changeHandler: ChangeHandler | null = null;
+  addOption(value: string, display: string): this {
+    this.options.set(value, display);
+    return this;
+  }
+  setValue(value: string): this {
+    this.value = value;
+    return this;
+  }
+  onChange(handler: ChangeHandler): this {
+    this.changeHandler = handler;
+    return this;
+  }
+}
+
+export class TextComponent {
+  inputEl: HTMLInputElement = document.createElement('input');
+  value = '';
+  changeHandler: ChangeHandler | null = null;
+  setPlaceholder(_placeholder: string): this {
+    return this;
+  }
+  setValue(value: string): this {
+    this.value = value;
+    return this;
+  }
+  onChange(handler: ChangeHandler): this {
+    this.changeHandler = handler;
+    return this;
+  }
+}
+
+/** Records every created setting row, so tests can find a row by name and drive its control. */
+export class Setting {
+  static rows: Setting[] = [];
+  name = '';
+  desc = '';
+  dropdown: DropdownComponent | null = null;
+  text: TextComponent | null = null;
+
+  constructor(public containerEl: HTMLElement) {
+    Setting.rows.push(this);
+  }
+  setName(name: string): this {
+    this.name = name;
+    return this;
+  }
+  setDesc(desc: string): this {
+    this.desc = desc;
+    return this;
+  }
+  setHeading(): this {
+    return this;
+  }
+  addDropdown(cb: (dropdown: DropdownComponent) => unknown): this {
+    this.dropdown = new DropdownComponent();
+    cb(this.dropdown);
+    return this;
+  }
+  addText(cb: (text: TextComponent) => unknown): this {
+    this.text = new TextComponent();
+    cb(this.text);
+    return this;
   }
 }

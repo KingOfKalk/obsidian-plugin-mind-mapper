@@ -1,0 +1,134 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "---\nmind_map_layout: spiral\n---\n# Root\n\n## A\n\n## B\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 0,
+            "offset": 32
+          },
+          "end": {
+            "line": 3,
+            "col": 6,
+            "offset": 38
+          }
+        },
+        "heading": "Root",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 0,
+            "offset": 40
+          },
+          "end": {
+            "line": 5,
+            "col": 4,
+            "offset": 44
+          }
+        },
+        "heading": "A",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 46
+          },
+          "end": {
+            "line": 7,
+            "col": 4,
+            "offset": 50
+          }
+        },
+        "heading": "B",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "yaml",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 2,
+            "col": 3,
+            "offset": 31
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 0,
+            "offset": 32
+          },
+          "end": {
+            "line": 3,
+            "col": 6,
+            "offset": 38
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 0,
+            "offset": 40
+          },
+          "end": {
+            "line": 5,
+            "col": 4,
+            "offset": 44
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 46
+          },
+          "end": {
+            "line": 7,
+            "col": 4,
+            "offset": 50
+          }
+        }
+      }
+    ],
+    "frontmatter": {
+      "mind_map_layout": "spiral"
+    },
+    "frontmatterPosition": {
+      "start": {
+        "line": 0,
+        "col": 0,
+        "offset": 0
+      },
+      "end": {
+        "line": 2,
+        "col": 3,
+        "offset": 31
+      }
+    },
+    "frontmatterLinks": []
+  }
+}

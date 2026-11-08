@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian';
 import { edgePath } from '../layout/edgePath';
-import type { MapLayout, PositionedNode } from '../layout/types';
+import type { MapLayout, PositionedNode, Side } from '../layout/types';
 import type { MindMapNode } from '../parser/types';
 import { type Transform, transformCss } from './viewport';
 
@@ -31,6 +31,8 @@ export interface CollapseInfo {
   hidden: ReadonlyMap<string, number>;
   hasChildren: (id: string) => boolean;
 }
+
+const SIDES: readonly Side[] = ['right', 'left', 'bottom', 'top'];
 
 const NO_COLLAPSE: CollapseInfo = { hidden: new Map(), hasChildren: () => false };
 
@@ -159,7 +161,9 @@ export class DomMapRenderer implements MapRenderer {
 
   private placeToggles(layout: MapLayout, collapse: CollapseInfo): void {
     const shown = new Set<string>();
-    for (const { node, x, y, width, height } of layout.nodes) {
+    for (const { node, x, y, width, height, childSide } of layout.nodes) {
+      // The root is never collapsed (a circle root grows on both sides).
+      if (node.kind === 'root') continue;
       const count = collapse.hidden.get(node.id);
       if (count === undefined && !collapse.hasChildren(node.id)) continue;
       shown.add(node.id);
@@ -172,8 +176,16 @@ export class DomMapRenderer implements MapRenderer {
       toggle.toggleClass('is-collapsed', collapsed);
       toggle.setText(collapsed ? String(count) : '−');
       toggle.setAttribute('aria-label', collapsed ? 'Expand' : 'Collapse');
-      toggle.style.left = `${x + width}px`;
-      toggle.style.top = `${y + height / 2}px`;
+      // Middle of the child-side edge; CSS moves it just outside the node.
+      const at = {
+        right: { left: x + width, top: y + height / 2 },
+        left: { left: x, top: y + height / 2 },
+        bottom: { left: x + width / 2, top: y + height },
+        top: { left: x + width / 2, top: y },
+      }[childSide];
+      for (const side of SIDES) toggle.toggleClass(`is-side-${side}`, side === childSide);
+      toggle.style.left = `${at.left}px`;
+      toggle.style.top = `${at.top}px`;
     }
     for (const [id, toggle] of this.toggles) {
       if (shown.has(id)) continue;

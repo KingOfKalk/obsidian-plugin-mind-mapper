@@ -8,13 +8,13 @@ function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): Mi
 
 const layout: MapLayout = {
   nodes: [
-    { node: node('R', 'root'), x: 0, y: -18, width: 200, height: 36 },
-    { node: node('R/A'), x: 260, y: -42, width: 200, height: 36 },
-    { node: node('R/B'), x: 260, y: 6, width: 200, height: 36 },
+    { node: node('R', 'root'), x: 0, y: -18, width: 200, height: 36, childSide: 'right' },
+    { node: node('R/A'), x: 260, y: -42, width: 200, height: 36, childSide: 'right' },
+    { node: node('R/B'), x: 260, y: 6, width: 200, height: 36, childSide: 'right' },
   ],
   edges: [
-    { fromId: 'R', toId: 'R/A', source: { x: 200, y: 0 }, target: { x: 260, y: -24 } },
-    { fromId: 'R', toId: 'R/B', source: { x: 200, y: 0 }, target: { x: 260, y: 24 } },
+    { fromId: 'R', toId: 'R/A', source: { x: 200, y: 0 }, target: { x: 260, y: -24 }, axis: 'x' },
+    { fromId: 'R', toId: 'R/B', source: { x: 200, y: 0 }, target: { x: 260, y: 24 }, axis: 'x' },
   ],
   bounds: { x: 0, y: -42, width: 460, height: 84 },
 };
@@ -64,7 +64,9 @@ test('long labels keep fixed size and expose the full text as title', () => {
   const label = 'x'.repeat(300);
   renderer.setLayout({
     ...layout,
-    nodes: [{ node: node('L', 'heading', label), x: 0, y: 0, width: 200, height: 36 }],
+    nodes: [
+      { node: node('L', 'heading', label), x: 0, y: 0, width: 200, height: 36, childSide: 'right' },
+    ],
     edges: [],
   });
   const el = parent.querySelector<HTMLElement>('.mind-mapper-node');
@@ -90,7 +92,9 @@ function hooked() {
 function withMarkdown(id: string, markdown: string): MapLayout {
   return {
     ...layout,
-    nodes: [{ node: { ...node(id), markdown }, x: 0, y: 0, width: 200, height: 36 }],
+    nodes: [
+      { node: { ...node(id), markdown }, x: 0, y: 0, width: 200, height: 36, childSide: 'right' },
+    ],
     edges: [],
   };
 }
@@ -107,7 +111,16 @@ test('same markdown keeps the element and does not re-render; position updates',
   const el = parent.querySelector('.mind-mapper-node');
   renderer.setLayout({
     ...withMarkdown('A', 'x'),
-    nodes: [{ node: { ...node('A'), markdown: 'x' }, x: 50, y: 60, width: 120, height: 40 }],
+    nodes: [
+      {
+        node: { ...node('A'), markdown: 'x' },
+        x: 50,
+        y: 60,
+        width: 120,
+        height: 40,
+        childSide: 'right',
+      },
+    ],
   });
   const again = parent.querySelector<HTMLElement>('.mind-mapper-node');
   expect(again).toBe(el);
@@ -181,7 +194,7 @@ test('clip direction classes follow the overflowing axes', () => {
   expect([...(nodeEl?.classList ?? [])].some((c) => c.startsWith('is-clipped'))).toBe(false);
 });
 
-const withChildren = (id: string) => id === 'R';
+const withChildren = (id: string) => id === 'R' || id === 'R/A';
 
 test('toggle sits outside the node at its right edge and shows the hidden count when collapsed', () => {
   const { parent, renderer } = hooked();
@@ -190,15 +203,16 @@ test('toggle sits outside the node at its right edge and shows the hidden count 
   expect(toggles).toHaveLength(1);
   const [toggle] = toggles;
   expect(toggle?.parentElement?.classList.contains('mind-mapper-world')).toBe(true);
-  expect(toggle?.dataset.nodeId).toBe('R');
-  expect(toggle?.style.left).toBe('200px');
-  expect(toggle?.style.top).toBe('0px');
+  expect(toggle?.dataset.nodeId).toBe('R/A');
+  expect(toggle?.style.left).toBe('460px');
+  expect(toggle?.style.top).toBe('-24px');
+  expect(toggle?.classList.contains('is-side-right')).toBe(true);
   expect(toggle?.textContent).toBe('−');
   expect(toggle?.getAttribute('aria-label')).toBe('Collapse');
   expect(toggle?.classList.contains('is-collapsed')).toBe(false);
 
-  const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 1), edges: [] };
-  renderer.setLayout(collapsed, { hidden: new Map([['R', 5]]), hasChildren: withChildren });
+  const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 2), edges: [] };
+  renderer.setLayout(collapsed, { hidden: new Map([['R/A', 5]]), hasChildren: withChildren });
   const again = parent.querySelector<HTMLElement>('.mind-mapper-collapse');
   expect(again?.textContent).toBe('5');
   expect(again?.getAttribute('aria-label')).toBe('Expand');
@@ -219,7 +233,7 @@ test('clicking a toggle calls toggle(id) and not select', () => {
   const bubbled = vi.fn();
   parent.addEventListener('click', bubbled);
   parent.querySelector<HTMLElement>('.mind-mapper-collapse')?.click();
-  expect(hooks.toggle).toHaveBeenCalledWith('R');
+  expect(hooks.toggle).toHaveBeenCalledWith('R/A');
   expect(hooks.select).not.toHaveBeenCalled();
   expect(bubbled).not.toHaveBeenCalled();
 });
@@ -289,6 +303,7 @@ test('a node whose id shifts keeps its rendered content element (render hook cal
     y,
     width: 200,
     height: 36,
+    childSide: 'right' as const,
   });
   renderer.setLayout({ ...layout, nodes: [at('A/#2', 'x', 0)], edges: [] });
   const original = parent.querySelector('[data-node-id="A/#2"] .mind-mapper-node-content');
@@ -310,4 +325,24 @@ test('pooled content that finds no new owner is released', () => {
   const original = parent.querySelector('.mind-mapper-node-content');
   renderer.setLayout(withMarkdown('B', 'z'));
   expect(hooks.release).toHaveBeenCalledWith(original);
+});
+
+test.each([
+  ['right', 'is-side-right', '460px', '-24px'],
+  ['left', 'is-side-left', '260px', '-24px'],
+  ['bottom', 'is-side-bottom', '360px', '-6px'],
+  ['top', 'is-side-top', '360px', '-42px'],
+] as const)('toggle on the %s side sits at the middle of that edge', (side, cls, left, top) => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(
+    { ...layout, nodes: layout.nodes.map((p) => ({ ...p, childSide: side })) },
+    { hidden: new Map(), hasChildren: withChildren },
+  );
+  // the root never gets a toggle (circle roots grow on both sides)
+  expect(parent.querySelector('.mind-mapper-collapse[data-node-id="R"]')).toBeNull();
+  const toggle = parent.querySelector<HTMLElement>('.mind-mapper-collapse[data-node-id="R/A"]');
+  expect(toggle?.classList.contains(cls)).toBe(true);
+  expect(toggle?.className.match(/is-side-/g)).toHaveLength(1);
+  expect(toggle?.style.left).toBe(left);
+  expect(toggle?.style.top).toBe(top);
 });

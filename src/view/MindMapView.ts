@@ -11,11 +11,13 @@ import {
 } from 'obsidian';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from '../constants';
 import { anchoredTransform, nearestNode } from '../layout/anchor';
-import { estimateSize, measuredSize } from '../layout/nodeSize';
+import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layout/nodeSize';
 import { SizeCache } from '../layout/sizeCache';
 import { visibleTree } from '../layout/visibleTree';
-import { DEFAULT_LAYOUT, layoutTree } from '../layout/tidyTree';
-import type { MapLayout, PositionedNode, Size } from '../layout/types';
+import { layoutTree } from '../layout/tidyTree';
+import type { MapLayout, MapLayoutName, PositionedNode, Size } from '../layout/types';
+import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
+import { invalidOptionMessage, readMapOptions } from './frontmatter';
 import { toParserInput } from '../parser/adapter';
 import { buildTree } from '../parser/buildTree';
 import { allNodes } from '../parser/treeWalk';
@@ -38,6 +40,15 @@ import { jumpToSource } from '../commands/jumpToSource';
 import { CollapseState } from './collapseState';
 import { LeafRecency } from './leafRecency';
 import { fileBasename, parseViewState } from './viewState';
+
+/** What the plugin provides to each map view. */
+export interface ViewServices {
+  /** Which leaf was active last (jump to source, link clicks). */
+  recency: LeafRecency;
+  settings(): MindMapSettings;
+  /** Shows `message` once per `id` for the session. */
+  warnOnce(id: string, message: string): void;
+}
 
 const RELAYOUT_DEBOUNCE_MS = 100;
 /** Spec "Live update": debounced about 300 ms. */
@@ -71,7 +82,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private updateTimer: number | null = null;
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
-  private readonly sizes = new SizeCache();
+  private readonly sizes = new SizeCache(() => this.limits());
   private observer: ResizeObserver | null = null;
   /** Observed content element -> node id. */
   private readonly observed = new Map<Element, string>();
@@ -86,11 +97,64 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Last non-zero canvas size (a hidden tab reports 0 x 0). */
   private lastSize: Size = { width: 0, height: 0 };
 
-  constructor(
-    leaf: WorkspaceLeaf,
-    private readonly recency: LeafRecency = new LeafRecency(),
-  ) {
+  private readonly services: ViewServices;
+  /** Frontmatter of the shown note (`mind_map_layout` is read per layout). */
+  private frontmatter: Record<string, unknown> | undefined = undefined;
+  /** Layout of the current map; a different effective layout fits once. */
+  private layoutName: MapLayoutName | null = null;
+
+  constructor(leaf: WorkspaceLeaf, services: Partial<ViewServices> = {}) {
     super(leaf);
+    const shown = new Set<string>();
+    this.services = {
+      recency: services.recency ?? new LeafRecency(),
+      settings: services.settings ?? (() => DEFAULT_SETTINGS),
+      warnOnce:
+        services.warnOnce ??
+        ((id, message) => {
+          if (shown.has(id)) return;
+          shown.add(id);
+          new Notice(message);
+        }),
+    };
+  }
+
+  private get recency(): LeafRecency {
+    return this.services.recency;
+  }
+
+  private limits(): NodeLimits {
+    const settings = this.services.settings();
+    return limitsFor(settings.maxNodeWidth, settings.maxNodeHeight);
+  }
+
+  /** Frontmatter `mind_map_layout`, else the plugin setting. */
+  private effectiveLayout(): MapLayoutName {
+    return readMapOptions(this.frontmatter, this.services.settings().defaultLayout).layout;
+  }
+
+  private layoutWillChange(): boolean {
+    return this.layoutName !== null && this.effectiveLayout() !== this.layoutName;
+  }
+
+  /** Tree of the note with frontmatter options; ignored values are reported (once, by the plugin). */
+  private parse(file: TFile, cache: CachedMetadata, text: string): MindMapTree {
+    this.frontmatter = cache.frontmatter;
+    const options = readMapOptions(cache.frontmatter, this.services.settings().defaultLayout);
+    for (const { key, value } of options.invalid) {
+      this.services.warnOnce(
+        `${file.path}\0${key}\0${value}`,
+        invalidOptionMessage(key, value, file.path, options.layout),
+      );
+    }
+    return buildTree(toParserInput(cache, text), file.basename, options.title);
+  }
+
+  /** Max node size as CSS custom properties (content caps in styles.css). */
+  private applyCssLimits(): void {
+    const { maxWidth, maxHeight } = this.limits();
+    this.contentEl.style.setProperty('--mind-mapper-node-max-width', `${maxWidth}px`);
+    this.contentEl.style.setProperty('--mind-mapper-node-max-height', `${maxHeight}px`);
   }
 
   get file(): string | null {
@@ -121,6 +185,22 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const anchor = this.layout.nodes.find((p) => p.node.id === id) ?? null;
     this.collapse.toggle(id);
     this.relayoutKeeping(anchor);
+  }
+
+  /** Plugin settings changed: a new layout fits once, other changes keep the viewport anchored. */
+  refresh(): void {
+    this.applyCssLimits();
+    if (!this.layout || !this.tree) return;
+    // A new max node size changes the size cache keys and the content caps: measure again now
+    // (the ResizeObserver only fires for content whose size changes).
+    this.measure([...this.observed.keys()]);
+    if (this.layoutWillChange()) {
+      this.cancelRelayout();
+      this.pendingFit = true;
+      this.showLayout(this.computeLayout(this.tree));
+      return;
+    }
+    this.relayoutKeeping(this.anchorIn(this.layout));
   }
 
   /** Root and first level stay visible. */
@@ -244,8 +324,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       return this.showMessage('Could not read note');
     }
     if (generation !== this.generation) return;
-    const tree = buildTree(toParserInput(cache, text), file.basename);
+    const tree = this.parse(file, cache, text);
     const previous = this.layout;
+    if (this.layoutWillChange()) this.pendingFit = true;
     // Same note again (rename, recreate): keep the viewport like a live update.
     if (!previous || this.pendingFit) return this.showTree(tree);
     const anchor = this.anchorIn(previous);
@@ -323,9 +404,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.generation++; // a load still reading the file is outdated now
     this.cancelUpdate();
     this.cancelRelayout();
-    const tree = buildTree(toParserInput(cache, data), file.basename);
+    const tree = this.parse(file, cache, data);
     const previous = this.layout;
     if (!previous || !this.tree) return this.showTree(tree);
+    if (this.layoutWillChange()) this.pendingFit = true;
     const ids = new Set(allNodes(tree).map((node) => node.id));
     if (this.selected !== null && !ids.has(this.selected)) this.select(null);
     this.collapse.prune(tree);
@@ -373,10 +455,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         .map((node) => node.id),
     );
     this.collapseInfo = { hidden: visible.hidden, hasChildren: (id) => parents.has(id) };
+    const settings = this.services.settings();
+    const limits = this.limits();
+    this.layoutName = this.effectiveLayout();
     return layoutTree(visible.tree, {
-      siblingGap: DEFAULT_LAYOUT.siblingGap,
-      levelGap: DEFAULT_LAYOUT.levelGap,
-      nodeSize: (node) => this.sizes.get(node)?.size ?? estimateSize(node),
+      siblingGap: settings.siblingGap,
+      levelGap: settings.levelGap,
+      nodeSize: (node) => this.sizes.get(node)?.size ?? estimateSize(node, limits),
+      layout: this.layoutName,
     });
   }
 
@@ -384,6 +470,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (this.dom) return this.dom;
     this.contentEl.empty();
     this.contentEl.addClass('mind-mapper-view');
+    this.applyCssLimits();
     const renderer = new DomMapRenderer(this.contentEl, {
       render: (node, contentEl) => void this.content.render(node, contentEl),
       release: (contentEl) => {
@@ -479,7 +566,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       if (!node || !el.instanceOf(HTMLElement)) continue;
       // Not laid out (yet): no real size to take.
       if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
-      const measured = measuredSize(el);
+      const measured = measuredSize(el, this.limits());
       if (this.sizes.set(node, measured)) changed = true;
       this.dom.renderer.setClipped(node.id, measured.clip);
     }
