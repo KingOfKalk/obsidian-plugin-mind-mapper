@@ -1,0 +1,20 @@
+[
+  {
+    "firstLayoutMs": 321,
+    "longestPanFrameMs": 17,
+    "nodes": 1000,
+    "panFrames": 121,
+    "relayouts": 1,
+    "renderedNodes": 1000,
+    "settleMs": 626
+  },
+  {
+    "firstLayoutMs": 2520,
+    "longestPanFrameMs": 17,
+    "nodes": 5000,
+    "panFrames": 120,
+    "relayouts": 1,
+    "renderedNodes": 5000,
+    "settleMs": 3161
+  }
+]

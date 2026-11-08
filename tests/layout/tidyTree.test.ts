@@ -3,7 +3,16 @@ import type { LayoutOptions, PositionedNode, Rect, Size } from '../../src/layout
 import type { MindMapNode, MindMapTree } from '../../src/parser/types';
 
 function n(id: string, ...children: MindMapNode[]): MindMapNode {
-  return { id, kind: 'heading', label: id, level: 1, line: 0, children };
+  return {
+    id,
+    kind: 'heading',
+    label: id,
+    markdown: id,
+    sectionType: null,
+    level: 1,
+    line: 0,
+    children,
+  };
 }
 
 const fixed: LayoutOptions = {

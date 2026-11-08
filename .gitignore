@@ -4,3 +4,6 @@ release/
 test-vault/.obsidian/
 *.log
 dev-vault/
+.obsidian-cache/
+e2e/perf/last-run.json
+e2e/screenshots/

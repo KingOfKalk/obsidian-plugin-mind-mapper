@@ -1,0 +1,103 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Lazy\n\n- a\n  - b\n\n  more of a\n- c\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        },
+        "heading": "Lazy",
+        "level": 1
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 8
+          },
+          "end": {
+            "line": 6,
+            "col": 3,
+            "offset": 34
+          }
+        }
+      }
+    ],
+    "listItems": [
+      {
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 8
+          },
+          "end": {
+            "line": 5,
+            "col": 11,
+            "offset": 30
+          }
+        },
+        "parent": -2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 2,
+            "offset": 14
+          },
+          "end": {
+            "line": 3,
+            "col": 5,
+            "offset": 17
+          }
+        },
+        "parent": -3
+      },
+      {
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 31
+          },
+          "end": {
+            "line": 6,
+            "col": 3,
+            "offset": 34
+          }
+        },
+        "parent": -2
+      }
+    ]
+  }
+}

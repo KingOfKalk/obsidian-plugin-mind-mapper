@@ -29,5 +29,6 @@
         }
       }
     }
-  }
+  },
+  "postCreateCommand": "bash scripts/install-e2e-deps.sh"
 }

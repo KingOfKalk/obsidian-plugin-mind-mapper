@@ -1,0 +1,165 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Absätze\n\nErster Absatz mit Umlauten: Größe, Übung, Ähre.\n\nZweiter Absatz\nüber zwei Zeilen.\n\n## Heading\n\nEin Absatz mit Block-ID. ^para-id\n\n%% ein Kommentar %%\n\nLetzter Absatz.\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 9,
+            "offset": 9
+          }
+        },
+        "heading": "Absätze",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 94
+          },
+          "end": {
+            "line": 7,
+            "col": 10,
+            "offset": 104
+          }
+        },
+        "heading": "Heading",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 9,
+            "offset": 9
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 11
+          },
+          "end": {
+            "line": 2,
+            "col": 47,
+            "offset": 58
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 60
+          },
+          "end": {
+            "line": 5,
+            "col": 17,
+            "offset": 92
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 94
+          },
+          "end": {
+            "line": 7,
+            "col": 10,
+            "offset": 104
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 9,
+            "col": 0,
+            "offset": 106
+          },
+          "end": {
+            "line": 9,
+            "col": 33,
+            "offset": 139
+          }
+        },
+        "id": "para-id"
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 11,
+            "col": 0,
+            "offset": 141
+          },
+          "end": {
+            "line": 11,
+            "col": 19,
+            "offset": 160
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 13,
+            "col": 0,
+            "offset": 162
+          },
+          "end": {
+            "line": 13,
+            "col": 15,
+            "offset": 177
+          }
+        }
+      }
+    ],
+    "blocks": {
+      "para-id": {
+        "position": {
+          "start": {
+            "line": 9,
+            "col": 0,
+            "offset": 106
+          },
+          "end": {
+            "line": 9,
+            "col": 33,
+            "offset": 139
+          }
+        },
+        "id": "para-id"
+      }
+    }
+  }
+}

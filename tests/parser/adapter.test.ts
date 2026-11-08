@@ -7,7 +7,13 @@ function input(name: string) {
 }
 
 test('null cache gives empty input', () => {
-  expect(toParserInput(null, '# A')).toEqual({ headings: [], firstContentLine: null });
+  expect(toParserInput(null, '# A')).toMatchObject({
+    headings: [],
+    firstContentLine: null,
+    sections: [],
+    listItems: [],
+    embeds: [],
+  });
 });
 
 test('headings come from the cache with text, level and line', () => {
@@ -27,7 +33,7 @@ test('a paragraph before the H1 is content', () => {
 });
 
 test.each(['frontmatter-only', 'empty'])('%s has no content', (name) => {
-  expect(input(name)).toEqual({ headings: [], firstContentLine: null });
+  expect(input(name)).toMatchObject({ headings: [], firstContentLine: null });
 });
 
 test('a paragraph that only contains %% inside is content', () => {

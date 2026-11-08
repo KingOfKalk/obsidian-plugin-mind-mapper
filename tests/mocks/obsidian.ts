@@ -8,17 +8,34 @@ export const apiVersion = '1.7.2-test';
 
 export class Component {
   private cleanups: (() => void)[] = [];
+  private readonly children = new Set<Component>();
+  /** Test helper: true between load() and unload(). */
+  loaded = false;
 
   load(): void {
+    this.loaded = true;
     this.onload();
   }
   onload(): void {}
 
   unload(): void {
+    for (const child of [...this.children]) this.removeChild(child);
     for (const cleanup of this.cleanups.splice(0)) cleanup();
+    this.loaded = false;
     this.onunload();
   }
   onunload(): void {}
+
+  addChild<T extends Component>(child: T): T {
+    this.children.add(child);
+    child.load();
+    return child;
+  }
+
+  removeChild<T extends Component>(child: T): T {
+    if (this.children.delete(child)) child.unload();
+    return child;
+  }
 
   register(cleanup: () => void): void {
     this.cleanups.push(cleanup);
@@ -63,6 +80,12 @@ export class Plugin extends Component {
   registerView(type: string, factory: (leaf: WorkspaceLeaf) => View): void {
     this.viewFactories.set(type, factory);
   }
+
+  readonly hoverSources = new Map<string, { display: string; defaultMod: boolean }>();
+
+  registerHoverLinkSource(id: string, info: { display: string; defaultMod: boolean }): void {
+    this.hoverSources.set(id, info);
+  }
 }
 
 export class ItemView extends Component {
@@ -91,6 +114,10 @@ export class ItemView extends Component {
     return Promise.resolve();
   }
 
+  onClose(): Promise<void> {
+    return Promise.resolve();
+  }
+
   onResize(): void {}
 }
 
@@ -109,4 +136,53 @@ export class TFile {
 
 export class Notice {
   constructor(public message: string) {}
+}
+
+/** Default: renders the markdown as plain text. Tests replace `render` via vi.spyOn. */
+export class MarkdownRenderer {
+  static render(
+    _app: App,
+    markdown: string,
+    el: HTMLElement,
+    _sourcePath: string,
+    _component: Component,
+  ): Promise<void> {
+    el.createDiv({ text: markdown });
+    return Promise.resolve();
+  }
+}
+
+export class Modal {
+  readonly containerEl: HTMLElement;
+  readonly modalEl: HTMLElement;
+  readonly contentEl: HTMLElement;
+  readonly titleEl: HTMLElement;
+  /** Test helper: the most recently opened modal. */
+  static lastOpened: Modal | null = null;
+
+  constructor(public app: App) {
+    this.containerEl = document.createElement('div');
+    this.modalEl = this.containerEl.createDiv({ cls: 'modal' });
+    this.titleEl = this.modalEl.createDiv({ cls: 'modal-title' });
+    this.contentEl = this.modalEl.createDiv({ cls: 'modal-content' });
+  }
+
+  open(): void {
+    Modal.lastOpened = this;
+    this.onOpen();
+  }
+
+  close(): void {
+    this.onClose();
+  }
+
+  onOpen(): void {}
+  onClose(): void {}
+}
+
+export class Keymap {
+  /** Like Obsidian: Ctrl/Cmd click means "new tab". */
+  static isModEvent(evt?: MouseEvent | KeyboardEvent | null): string | boolean {
+    return evt?.ctrlKey || evt?.metaKey ? 'tab' : false;
+  }
 }

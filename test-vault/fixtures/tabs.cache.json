@@ -1,0 +1,103 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Tabs\n\n- parent\n\tcont line\n\n\tpara after blank\n\t- child\n\t  child para\n\n\t  child para after blank\n- fenced\n\t```\n\tcode in item\n\t```\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        },
+        "heading": "Tabs",
+        "level": 1
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 8
+          },
+          "end": {
+            "line": 13,
+            "col": 4,
+            "offset": 129
+          }
+        }
+      }
+    ],
+    "listItems": [
+      {
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 8
+          },
+          "end": {
+            "line": 5,
+            "col": 17,
+            "offset": 46
+          }
+        },
+        "parent": -2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 1,
+            "offset": 48
+          },
+          "end": {
+            "line": 9,
+            "col": 25,
+            "offset": 96
+          }
+        },
+        "parent": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 0,
+            "offset": 97
+          },
+          "end": {
+            "line": 13,
+            "col": 4,
+            "offset": 129
+          }
+        },
+        "parent": -2
+      }
+    ]
+  }
+}

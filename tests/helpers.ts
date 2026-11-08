@@ -121,6 +121,19 @@ export class FakeWorkspace {
     this.metadataCache.caches.set(path, cache);
   }
 
+  private readonly workspaceListeners = new Map<string, Set<() => void>>();
+
+  on(name: string, listener: () => void): { off: () => void } {
+    const set = this.workspaceListeners.get(name) ?? new Set();
+    this.workspaceListeners.set(name, set);
+    set.add(listener);
+    return { off: () => set.delete(listener) };
+  }
+
+  trigger(name: string): void {
+    for (const listener of [...(this.workspaceListeners.get(name) ?? [])]) listener();
+  }
+
   getActiveViewOfType<T>(type: abstract new (...args: never[]) => T): T | null {
     return this.activeView instanceof type ? this.activeView : null;
   }

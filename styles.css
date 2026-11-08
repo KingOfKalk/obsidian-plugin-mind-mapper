@@ -49,14 +49,16 @@
 .mind-mapper-node {
   position: absolute;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--size-4-2);
+  overflow: hidden;
+  padding: 6px 8px;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   color: var(--text-normal);
+  font-size: var(--font-text-size);
+  line-height: var(--line-height-normal);
   cursor: default;
+  user-select: text;
 }
 
 .mind-mapper-node.is-root {
@@ -64,10 +66,97 @@
   font-weight: var(--font-semibold);
 }
 
-.mind-mapper-node-label {
-  white-space: nowrap;
+.mind-mapper-node.is-render-error {
+  border-color: var(--text-error);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Natural content size up to the max node size (320 x 240 incl. padding); measured by the view. */
+.mind-mapper-node-content {
+  width: max-content;
+  max-width: calc(320px - 16px);
+  /* Capped at the max node size so the fade sits on the visible edge; scrollWidth/Height still
+     report the natural size for measuring. */
+  max-height: calc(240px - 12px);
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Diagrams scale to their container (max-width: 100%); give them the full node width. */
+.mind-mapper-node-content:has(.mermaid) {
+  width: calc(320px - 16px);
+}
+
+.mind-mapper-node-content > :first-child {
+  margin-top: 0;
+}
+
+.mind-mapper-node-content > :last-child {
+  margin-bottom: 0;
+}
+
+.mind-mapper-node-content p,
+.mind-mapper-node-content ul,
+.mind-mapper-node-content ol,
+.mind-mapper-node-content pre,
+.mind-mapper-node-content table,
+.mind-mapper-node-content blockquote {
+  margin-block: 0.25em;
+}
+
+/* Tasks: checkbox only, no bullet (spec: bullet markers dropped). */
+.mind-mapper-node-content ul.contains-task-list {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+/* Image embeds: fixed thumbnail box so the size is known before the image loads. */
+.mind-mapper-node-content .internal-embed.image-embed,
+.mind-mapper-node-content img {
+  display: block;
+  width: 160px;
+  height: 120px;
+  object-fit: contain;
+}
+
+/* Fade the overflowing edge (the content box is capped at the max size, see above). */
+.mind-mapper-node.is-clipped-y .mind-mapper-node-content {
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5em), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - 2.5em), transparent);
+}
+
+.mind-mapper-node.is-clipped-x .mind-mapper-node-content {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5em), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 2.5em), transparent);
+}
+
+.mind-mapper-node.is-clipped-x.is-clipped-y .mind-mapper-node-content {
+  -webkit-mask-image:
+    linear-gradient(to bottom, black calc(100% - 2.5em), transparent),
+    linear-gradient(to right, black calc(100% - 2.5em), transparent);
+  mask-image:
+    linear-gradient(to bottom, black calc(100% - 2.5em), transparent),
+    linear-gradient(to right, black calc(100% - 2.5em), transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.mind-mapper-node-expand {
+  display: none;
+  position: absolute;
+  top: var(--size-2-1);
+  right: var(--size-2-1);
+  background: var(--background-primary);
+}
+
+.mind-mapper-node.is-clipped .mind-mapper-node-expand {
+  display: flex;
+}
+
+.mind-mapper-full-content {
+  user-select: text;
 }
 
 .mind-mapper-controls {

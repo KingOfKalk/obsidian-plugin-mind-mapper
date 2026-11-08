@@ -1,4 +1,4 @@
-import { childId, escapeSegment } from '../../src/parser/nodeId';
+import { childId, escapeSegment, ordinalId } from '../../src/parser/nodeId';
 
 test('childId joins parent and text', () => {
   expect(childId('Project', 'Tasks', 1)).toBe('Project/Tasks');
@@ -23,4 +23,14 @@ test.each([
 
 test('a heading named like an indexed duplicate does not collide', () => {
   expect(childId('R', 'Notes[2]', 1)).not.toBe(childId('R', 'Notes', 2));
+});
+
+test('ordinalId appends the 1-based ordinal', () => {
+  expect(ordinalId('Project/Tasks', 1)).toBe('Project/Tasks/#1');
+  expect(ordinalId('', 2)).toBe('#2');
+});
+
+test('escapeSegment escapes # so headings cannot collide with ordinals', () => {
+  expect(escapeSegment('#1')).toBe('\\#1');
+  expect(childId('R', '#1', 1)).not.toBe(ordinalId('R', 1));
 });

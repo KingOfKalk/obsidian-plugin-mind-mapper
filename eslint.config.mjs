@@ -11,6 +11,8 @@ export default defineConfig([
     '.superpowers',
     '.worktrees',
     'esbuild.config.mjs',
+    'wdio.conf.mts',
+    '.obsidian-cache',
   ]),
   ...obsidianmd.configs.recommended,
   {

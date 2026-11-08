@@ -72,3 +72,12 @@ test('dev builds register the parser fixture recorder command', async () => {
   expect(command?.name).toBe('Record parser fixtures (dev)');
   expect(command?.hotkeys).toBeUndefined();
 });
+
+test('registers the map as a hover link source for page preview', async () => {
+  const plugin = await loadPlugin();
+  expect(
+    (plugin as unknown as { hoverSources: Map<string, unknown> }).hoverSources.get(
+      'mind-mapper-view',
+    ),
+  ).toEqual({ display: 'Mind Mapper', defaultMod: true });
+});

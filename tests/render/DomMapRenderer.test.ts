@@ -3,7 +3,7 @@ import type { MindMapNode } from '../../src/parser/types';
 import { DomMapRenderer } from '../../src/render/DomMapRenderer';
 
 function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): MindMapNode {
-  return { id, kind, label, level: 1, line: 0, children: [] };
+  return { id, kind, label, markdown: label, sectionType: null, level: 1, line: 0, children: [] };
 }
 
 const layout: MapLayout = {
@@ -35,7 +35,7 @@ test('renders one node div per node and one path per edge', () => {
   expect(nodes[1]?.style.height).toBe('36px');
   expect(nodes[0]?.classList.contains('is-root')).toBe(true);
   expect(nodes[1]?.classList.contains('is-root')).toBe(false);
-  expect(nodes[1]?.querySelector('.mind-mapper-node-label')?.textContent).toBe('R/A');
+  expect(nodes[1]?.querySelector('.mind-mapper-node-content')?.textContent).toBe('R/A');
   const paths = [...parent.querySelectorAll('svg.mind-mapper-edges path.mind-mapper-edge')];
   expect(paths.map((p) => p.getAttribute('d'))).toEqual([
     'M 200 0 C 230 0, 230 -24, 260 -24',
@@ -70,4 +70,110 @@ test('long labels keep fixed size and expose the full text as title', () => {
   const el = parent.querySelector<HTMLElement>('.mind-mapper-node');
   expect(el?.style.width).toBe('200px');
   expect(el?.title).toBe(label);
+});
+
+function hooked() {
+  const parent = document.createElement('div');
+  const hooks = {
+    render: vi.fn((n: MindMapNode, el: HTMLElement) => {
+      el.setText(n.markdown);
+    }),
+    release: vi.fn(),
+    expand: vi.fn(),
+  };
+  return { parent, hooks, renderer: new DomMapRenderer(parent, hooks) };
+}
+
+function withMarkdown(id: string, markdown: string): MapLayout {
+  return {
+    ...layout,
+    nodes: [{ node: { ...node(id), markdown }, x: 0, y: 0, width: 200, height: 36 }],
+    edges: [],
+  };
+}
+
+test('content is rendered through the hooks once per node', () => {
+  const { renderer, hooks } = hooked();
+  renderer.setLayout(layout);
+  expect(hooks.render).toHaveBeenCalledTimes(3);
+});
+
+test('same markdown keeps the element and does not re-render; position updates', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const el = parent.querySelector('.mind-mapper-node');
+  renderer.setLayout({
+    ...withMarkdown('A', 'x'),
+    nodes: [{ node: { ...node('A'), markdown: 'x' }, x: 50, y: 60, width: 120, height: 40 }],
+  });
+  const again = parent.querySelector<HTMLElement>('.mind-mapper-node');
+  expect(again).toBe(el);
+  expect(again?.style.left).toBe('50px');
+  expect(again?.style.width).toBe('120px');
+  expect(hooks.render).toHaveBeenCalledTimes(1);
+});
+
+test('changed markdown renders into a fresh content element and releases the old one', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const oldContent = parent.querySelector('.mind-mapper-node-content');
+  renderer.setLayout(withMarkdown('A', 'y'));
+  const newContent = parent.querySelector('.mind-mapper-node-content');
+  expect(newContent).not.toBe(oldContent);
+  expect(hooks.release).toHaveBeenCalledWith(oldContent);
+  expect(newContent?.textContent).toBe('y');
+  expect(parent.querySelectorAll('.mind-mapper-node-content')).toHaveLength(1);
+});
+
+test('removed nodes are released and removed', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(layout);
+  renderer.setLayout(withMarkdown('R', 'R'));
+  expect(hooks.release).toHaveBeenCalledTimes(2); // R/A and R/B; R keeps its markdown
+  expect(parent.querySelectorAll('.mind-mapper-node')).toHaveLength(1);
+});
+
+test('content elements are exposed by node id', () => {
+  const { renderer } = hooked();
+  renderer.setLayout(layout);
+  expect([...renderer.contentElements().keys()]).toEqual(['R', 'R/A', 'R/B']);
+});
+
+test('clipped nodes show the expand button, which expands without bubbling', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const nodeEl = parent.querySelector<HTMLElement>('.mind-mapper-node');
+  const bubbled = vi.fn();
+  parent.addEventListener('click', bubbled);
+  renderer.setClipped('A', { x: false, y: true });
+  expect(nodeEl?.classList.contains('is-clipped')).toBe(true);
+  const button = parent.querySelector<HTMLElement>('.mind-mapper-node-expand');
+  expect(button?.getAttribute('aria-label')).toBe('Show full content');
+  button?.click();
+  expect(hooks.expand).toHaveBeenCalledWith(expect.objectContaining({ id: 'A' }));
+  expect(bubbled).not.toHaveBeenCalled();
+  renderer.setClipped('A', { x: false, y: false });
+  expect(nodeEl?.classList.contains('is-clipped')).toBe(false);
+});
+
+test('node content uses Obsidian reading view styles (markdown-rendered)', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const content = parent.querySelector('.mind-mapper-node-content');
+  expect(content?.classList.contains('markdown-rendered')).toBe(true);
+});
+
+test('clip direction classes follow the overflowing axes', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const nodeEl = parent.querySelector('.mind-mapper-node');
+  renderer.setClipped('A', { x: false, y: true });
+  expect([...(nodeEl?.classList ?? [])].filter((c) => c.startsWith('is-clipped'))).toEqual([
+    'is-clipped',
+    'is-clipped-y',
+  ]);
+  renderer.setClipped('A', { x: true, y: true });
+  expect(nodeEl?.classList.contains('is-clipped-x')).toBe(true);
+  renderer.setClipped('A', { x: false, y: false });
+  expect([...(nodeEl?.classList ?? [])].some((c) => c.startsWith('is-clipped'))).toBe(false);
 });

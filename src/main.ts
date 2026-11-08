@@ -3,11 +3,13 @@ import { isMindMapSource, openMindMap } from './commands/openMindMap';
 import { registerViewCommands } from './commands/viewCommands';
 import { VIEW_TYPE_MIND_MAP } from './constants';
 import { recordFixtures } from './dev/recordFixtures';
+import { HOVER_SOURCE_ID } from './render/linkHandling';
 import { MindMapView } from './view/MindMapView';
 
 export default class MindMapperPlugin extends Plugin {
   override async onload(): Promise<void> {
     this.registerView(VIEW_TYPE_MIND_MAP, (leaf) => new MindMapView(leaf));
+    this.registerHoverLinkSource(HOVER_SOURCE_ID, { display: 'Mind Mapper', defaultMod: true });
 
     this.addCommand({
       id: 'open-as-mind-map',
