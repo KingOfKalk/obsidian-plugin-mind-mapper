@@ -81,3 +81,32 @@ test('registers the map as a hover link source for page preview', async () => {
     ),
   ).toEqual({ display: 'Mind Mapper', defaultMod: true });
 });
+
+test('plugin feeds active-leaf-change into the recency tracker', async () => {
+  const ws = new FakeWorkspace();
+  const plugin = (await loadPlugin(ws)) as unknown as MindMapperPlugin;
+  const a = ws.addLeaf({ type: 'markdown' }).asLeaf();
+  const b = ws.addLeaf({ type: 'markdown' }).asLeaf();
+  ws.trigger('active-leaf-change', b);
+  expect(plugin.recency.mostRecent([a, b])).toBe(b);
+  ws.trigger('active-leaf-change', a);
+  expect(plugin.recency.mostRecent([a, b])).toBe(a);
+});
+
+test('a rename moves map leaves that are not loaded yet (deferred) to the new path', async () => {
+  const ws = new FakeWorkspace();
+  await loadPlugin(ws);
+  const deferred = ws.addLeaf({ type: 'mind-mapper-view', state: { file: 'old.md' } });
+  deferred.isDeferred = true;
+  const loaded = ws.addLeaf({ type: 'mind-mapper-view', state: { file: 'old.md' } });
+  const other = ws.addLeaf({ type: 'mind-mapper-view', state: { file: 'other.md' } });
+  other.isDeferred = true;
+  ws.vault.trigger('rename', fakeFile('new.md'), 'old.md');
+  expect(deferred.setViewState).toHaveBeenCalledWith({
+    type: 'mind-mapper-view',
+    state: { file: 'new.md' },
+  });
+  // a loaded view follows the rename itself
+  expect(loaded.setViewState).not.toHaveBeenCalled();
+  expect(other.setViewState).not.toHaveBeenCalled();
+});

@@ -1,5 +1,6 @@
 import { Component, type ItemView, type WorkspaceLeaf } from 'obsidian';
 import { attachLinkHandling, HOVER_SOURCE_ID } from '../../src/render/linkHandling';
+import { LeafRecency } from '../../src/view/leafRecency';
 
 interface FakeLeaf {
   view: { getViewType(): string };
@@ -11,8 +12,9 @@ function setup(leaves: FakeLeaf[] = [], mostRecent: FakeLeaf | null = null) {
     trigger: vi.fn(),
     setActiveLeaf: vi.fn(),
     getLeavesOfType: vi.fn((type: string) => leaves.filter((l) => l.view.getViewType() === type)),
-    getMostRecentLeaf: vi.fn(() => mostRecent),
   };
+  const recency = new LeafRecency();
+  if (mostRecent) recency.touch(mostRecent as unknown as WorkspaceLeaf);
   const component = new Component();
   const mapLeaf = { view: { getViewType: () => 'mind-mapper-view' } };
   const view = Object.assign(component, {
@@ -39,9 +41,10 @@ function setup(leaves: FakeLeaf[] = [], mostRecent: FakeLeaf | null = null) {
     events: component,
     hoverParent: { hoverPopover: null },
     mapLeaf: view.leaf,
+    recency,
     sourcePath: () => 'fixtures/embeds.md',
   });
-  return { workspace, view, canvas, internal, external, nodeClicks, mapLeaf };
+  return { workspace, view, canvas, internal, external, nodeClicks, mapLeaf, recency };
 }
 
 const markdownLeaf = (): FakeLeaf => ({ view: { getViewType: () => 'markdown' } });
@@ -64,10 +67,20 @@ test('plain click on an internal link opens it in the most recent note leaf, not
 
 test('if the most recent leaf is the map, another note leaf is used', () => {
   const note = markdownLeaf();
-  const { workspace, internal, mapLeaf } = setup([note], null);
-  workspace.getMostRecentLeaf.mockReturnValue(mapLeaf);
+  const { workspace, internal, mapLeaf, recency } = setup([note], null);
+  recency.touch(mapLeaf as unknown as WorkspaceLeaf);
   click(internal);
   expect(workspace.setActiveLeaf).toHaveBeenCalledWith(note, { focus: true });
+});
+
+test('link click opens in the most recently active note leaf', () => {
+  const first = markdownLeaf();
+  const second = markdownLeaf();
+  const { workspace, internal, recency } = setup([first, second], null);
+  recency.touch(second as unknown as WorkspaceLeaf);
+  recency.touch(first as unknown as WorkspaceLeaf);
+  click(internal);
+  expect(workspace.setActiveLeaf).toHaveBeenCalledWith(first, { focus: true });
 });
 
 test('without any note leaf the link opens in a split', () => {
@@ -107,7 +120,7 @@ test('a tag link keeps its own click listener', () => {
 
 test('onNavigate runs after an internal link opens (e.g. to close the overlay)', () => {
   const note = markdownLeaf();
-  const { workspace, internal, view } = setup([note], note);
+  const { workspace, internal, view, recency } = setup([note], note);
   const canvas2 = document.createElement('div');
   const link = canvas2.createEl('a', {
     cls: 'internal-link',
@@ -120,6 +133,7 @@ test('onNavigate runs after an internal link opens (e.g. to close the overlay)',
     events: view,
     hoverParent: { hoverPopover: null },
     mapLeaf: view.leaf,
+    recency,
     sourcePath: () => 'Note.md',
     onNavigate,
   });

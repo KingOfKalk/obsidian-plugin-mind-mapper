@@ -1,3 +1,4 @@
+import { LeafRecency } from '../../src/view/leafRecency';
 import { type App, MarkdownRenderer } from 'obsidian';
 import type { MindMapNode } from '../../src/parser/types';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
@@ -21,6 +22,7 @@ function linkContext(openLinkText = vi.fn(() => Promise.resolve())) {
     sourcePath: () => 'Note.md',
     hoverParent: { hoverPopover: null },
     mapLeaf: null,
+    recency: new LeafRecency(),
     workspace: { openLinkText, getMostRecentLeaf: () => null, getLeavesOfType: () => [] },
   };
 }

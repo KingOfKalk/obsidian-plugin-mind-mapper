@@ -1,20 +1,26 @@
 import {
+  type CachedMetadata,
   type EventRef,
   type HoverParent,
   type HoverPopover,
   ItemView,
+  Notice,
+  type TFile,
   type ViewStateResult,
+  type WorkspaceLeaf,
 } from 'obsidian';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from '../constants';
 import { anchoredTransform, nearestNode } from '../layout/anchor';
 import { estimateSize, measuredSize } from '../layout/nodeSize';
 import { SizeCache } from '../layout/sizeCache';
+import { visibleTree } from '../layout/visibleTree';
 import { DEFAULT_LAYOUT, layoutTree } from '../layout/tidyTree';
-import type { MapLayout, Size } from '../layout/types';
+import type { MapLayout, PositionedNode, Size } from '../layout/types';
 import { toParserInput } from '../parser/adapter';
 import { buildTree } from '../parser/buildTree';
+import { allNodes } from '../parser/treeWalk';
 import type { MindMapTree } from '../parser/types';
-import { DomMapRenderer } from '../render/DomMapRenderer';
+import { type CollapseInfo, DomMapRenderer } from '../render/DomMapRenderer';
 import { NodeContentModal } from '../render/NodeContentModal';
 import { NodeContentRenderer } from '../render/NodeContentRenderer';
 import { attachLinkHandling } from '../render/linkHandling';
@@ -28,13 +34,20 @@ import {
   ZOOM_STEP,
   zoomAt,
 } from '../render/viewport';
+import { jumpToSource } from '../commands/jumpToSource';
+import { CollapseState } from './collapseState';
+import { LeafRecency } from './leafRecency';
 import { fileBasename, parseViewState } from './viewState';
 
 const RELAYOUT_DEBOUNCE_MS = 100;
+/** Spec "Live update": debounced about 300 ms. */
+export const LIVE_UPDATE_DEBOUNCE_MS = 300;
 const NO_CLIP = { x: false, y: false };
 
 interface MapDom {
   placeholderEl: HTMLElement;
+  /** "This note has no content yet" over the root-only map. */
+  hintEl: HTMLElement;
   renderer: DomMapRenderer;
   controls: MapControls;
 }
@@ -49,7 +62,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private pendingFit = true;
   /** Incremented on every load; an async load that is no longer current is discarded. */
   private generation = 0;
-  private cacheWait: EventRef | null = null;
+  /** The one `changed` listener (live update, and the first render of a not yet indexed note). */
+  private changeRef: EventRef | null = null;
+  /** Vault rename / delete / create listeners. */
+  private vaultRefs: EventRef[] = [];
+  /** The pinned note was deleted; a note created at its path is shown again. */
+  private deleted = false;
+  private updateTimer: number | null = null;
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
   private readonly sizes = new SizeCache();
@@ -60,9 +79,63 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private relayoutOnResize = false;
   /** True while the transform is an (automatic or requested) fit the user has not changed since. */
   private fitted = false;
+  private readonly collapse = new CollapseState();
+  /** Collapse toggles of the current layout. */
+  private collapseInfo: CollapseInfo = { hidden: new Map(), hasChildren: () => false };
+  private selected: string | null = null;
+  /** Last non-zero canvas size (a hidden tab reports 0 x 0). */
+  private lastSize: Size = { width: 0, height: 0 };
+
+  constructor(
+    leaf: WorkspaceLeaf,
+    private readonly recency: LeafRecency = new LeafRecency(),
+  ) {
+    super(leaf);
+  }
 
   get file(): string | null {
     return this.pinnedFile;
+  }
+
+  get selectedId(): string | null {
+    return this.selected;
+  }
+
+  select(id: string | null): void {
+    this.selected = id;
+    this.dom?.renderer.setSelected(id);
+  }
+
+  /** Double click: the source line in the editor (spec "Jump to source target"). */
+  private jumpTo(line: number | null): void {
+    const path = this.pinnedFile;
+    if (path === null) return;
+    jumpToSource(this.app, this.recency, this.leaf, path, line).catch((error: unknown) => {
+      console.error('Mind Mapper: could not open the note', error);
+      new Notice('Could not open the note');
+    });
+  }
+
+  toggleCollapse(id: string): void {
+    if (!this.layout) return;
+    const anchor = this.layout.nodes.find((p) => p.node.id === id) ?? null;
+    this.collapse.toggle(id);
+    this.relayoutKeeping(anchor);
+  }
+
+  /** Root and first level stay visible. */
+  collapseAll(): void {
+    if (!this.tree || !this.layout) return;
+    const anchor = this.anchorIn(this.layout);
+    this.collapse.collapseAll(this.tree);
+    this.relayoutKeeping(anchor);
+  }
+
+  expandAll(): void {
+    if (!this.layout) return;
+    const anchor = this.anchorIn(this.layout);
+    this.collapse.expandAll();
+    this.relayoutKeeping(anchor);
   }
 
   getViewType(): string {
@@ -84,7 +157,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   override async onClose(): Promise<void> {
     this.generation++;
-    this.stopWaitingForCache();
+    this.stopListening();
+    this.cancelUpdate();
     this.cancelRelayout();
     this.observer?.disconnect();
     this.observer = null;
@@ -148,7 +222,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   private async loadNote(): Promise<void> {
     const generation = ++this.generation;
-    this.stopWaitingForCache();
+    this.deleted = false;
+    this.cancelUpdate();
+    this.listenForChanges();
     const path = this.pinnedFile;
     if (path === null) return this.showMessage('No note selected');
 
@@ -156,42 +232,152 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (!file) return this.showMessage(`Note not found: ${path}`);
 
     const cache = this.app.metadataCache.getFileCache(file);
-    if (!cache) {
-      this.showMessage('Loading…');
-      this.waitForCache(path);
-      return;
-    }
+    // Not indexed yet (e.g. at startup): the first `changed` event renders it.
+    if (!cache) return this.showMessage('Loading…');
 
-    const text = await this.app.vault.cachedRead(file);
+    let text: string;
+    try {
+      text = await this.app.vault.cachedRead(file);
+    } catch (error) {
+      if (generation !== this.generation) return;
+      console.error('Mind Mapper: could not read note', path, error);
+      return this.showMessage('Could not read note');
+    }
     if (generation !== this.generation) return;
-    this.tree = buildTree(toParserInput(cache, text), file.basename);
+    const tree = buildTree(toParserInput(cache, text), file.basename);
+    const previous = this.layout;
+    // Same note again (rename, recreate): keep the viewport like a live update.
+    if (!previous || this.pendingFit) return this.showTree(tree);
+    const anchor = this.anchorIn(previous);
+    this.showTree(tree);
+    this.fitted = false;
+    this.keepInPlace(anchor);
+  }
+
+  private showTree(tree: MindMapTree): void {
+    this.tree = tree;
+    this.showLayout(this.computeLayout(tree));
+  }
+
+  /** Spec "Live update": the event's text matches its cache, no separate read. */
+  private listenForChanges(): void {
+    if (this.changeRef) return;
+    this.listenToVault();
+    this.changeRef = this.app.metadataCache.on('changed', (file, data, cache) => {
+      if (file.path !== this.pinnedFile) return;
+      // Nothing shown yet (loading): render at once.
+      if (!this.tree) return this.applyChange(file, data, cache);
+      this.cancelUpdate();
+      this.updateTimer = this.contentEl.win.setTimeout(() => {
+        this.updateTimer = null;
+        this.applyChange(file, data, cache);
+      }, LIVE_UPDATE_DEBOUNCE_MS);
+    });
+    this.registerEvent(this.changeRef);
+  }
+
+  private stopListening(): void {
+    for (const ref of this.vaultRefs) this.app.vault.offref(ref);
+    this.vaultRefs = [];
+    if (!this.changeRef) return;
+    this.app.metadataCache.offref(this.changeRef);
+    this.changeRef = null;
+  }
+
+  /** Spec "View state": follow a rename, show a deleted note as such. */
+  private listenToVault(): void {
+    const { vault } = this.app;
+    this.vaultRefs = [
+      vault.on('rename', (file, oldPath) => {
+        if (oldPath !== this.pinnedFile) return;
+        // Set first: setState then sees the same file and keeps the viewport (no fit).
+        this.pinnedFile = file.path;
+        // Updates the tab title and the saved workspace (the API has no public updateHeader).
+        this.leaf
+          .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { file: file.path } })
+          .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));
+      }),
+      vault.on('delete', (file) => {
+        if (file.path !== this.pinnedFile) return;
+        this.deleted = true;
+        this.generation++;
+        this.cancelUpdate();
+        this.showMessage('Note was deleted');
+      }),
+      vault.on('create', (file) => {
+        if (!this.deleted || file.path !== this.pinnedFile) return;
+        void this.loadNote();
+      }),
+    ];
+    for (const ref of this.vaultRefs) this.registerEvent(ref);
+  }
+
+  private cancelUpdate(): void {
+    if (this.updateTimer === null) return;
+    this.contentEl.win.clearTimeout(this.updateTimer);
+    this.updateTimer = null;
+  }
+
+  /** New tree from the note; keeps the viewport anchored (never fits, except a fit still pending from opening). */
+  private applyChange(file: TFile, data: string, cache: CachedMetadata): void {
+    this.generation++; // a load still reading the file is outdated now
+    this.cancelUpdate();
+    this.cancelRelayout();
+    const tree = buildTree(toParserInput(cache, data), file.basename);
+    const previous = this.layout;
+    if (!previous || !this.tree) return this.showTree(tree);
+    const ids = new Set(allNodes(tree).map((node) => node.id));
+    if (this.selected !== null && !ids.has(this.selected)) this.select(null);
+    this.collapse.prune(tree);
+    const anchor = this.anchorIn(previous);
+    // Sizes of content that is gone; the cache would otherwise grow with every edit.
+    this.sizes.retain(allNodes(tree));
+    this.showTree(tree);
+    if (this.pendingFit) return;
+    this.fitted = false;
+    this.keepInPlace(anchor);
+  }
+
+  /** The node to keep in place across a re-layout: the selected node, else the one nearest the view center. */
+  private anchorIn(layout: MapLayout): PositionedNode | null {
+    const selected = layout.nodes.find((p) => p.node.id === this.selected);
+    if (selected) return selected;
+    const center = this.center();
+    return nearestNode(layout, {
+      x: (center.x - this.transform.x) / this.transform.zoom,
+      y: (center.y - this.transform.y) / this.transform.zoom,
+    });
+  }
+
+  /** Re-layout after a user action (collapse): no fit, the anchor keeps its screen position. */
+  private relayoutKeeping(anchor: PositionedNode | null): void {
+    if (!this.tree) return;
+    this.cancelRelayout();
     this.showLayout(this.computeLayout(this.tree));
+    this.fitted = false;
+    this.pendingFit = false;
+    this.keepInPlace(anchor);
+  }
+
+  private keepInPlace(anchor: PositionedNode | null): void {
+    const moved = anchor && this.layout?.nodes.find((p) => p.node.id === anchor.node.id);
+    if (anchor && moved) this.applyTransform(anchoredTransform(this.transform, anchor, moved));
   }
 
   /** Measured size if known (size cache), else the instant estimate. */
   private computeLayout(tree: MindMapTree): MapLayout {
-    return layoutTree(tree, {
+    const visible = visibleTree(tree, this.collapse);
+    const parents = new Set(
+      allNodes(tree)
+        .filter((node) => node.children.length > 0)
+        .map((node) => node.id),
+    );
+    this.collapseInfo = { hidden: visible.hidden, hasChildren: (id) => parents.has(id) };
+    return layoutTree(visible.tree, {
       siblingGap: DEFAULT_LAYOUT.siblingGap,
       levelGap: DEFAULT_LAYOUT.levelGap,
       nodeSize: (node) => this.sizes.get(node)?.size ?? estimateSize(node),
     });
-  }
-
-  /** The cache is not ready yet (e.g. at startup): render once on the first `changed` event. */
-  private waitForCache(path: string): void {
-    const ref = this.app.metadataCache.on('changed', (file) => {
-      if (file.path !== path) return;
-      this.stopWaitingForCache();
-      void this.loadNote();
-    });
-    this.cacheWait = ref;
-    this.registerEvent(ref);
-  }
-
-  private stopWaitingForCache(): void {
-    if (!this.cacheWait) return;
-    this.app.metadataCache.offref(this.cacheWait);
-    this.cacheWait = null;
   }
 
   private ensureDom(): MapDom {
@@ -210,22 +396,32 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
           sourcePath: () => this.pinnedFile ?? '',
           hoverParent: this,
           mapLeaf: this.leaf,
+          recency: this.recency,
         }).open(),
+      open: (node) => this.jumpTo(node.line),
+      select: (id) => this.select(id),
+      toggle: (id) => this.toggleCollapse(id),
     });
     const controls = new MapControls(renderer.canvasEl, this);
     const placeholderEl = this.contentEl.createDiv({ cls: 'mind-mapper-placeholder' });
-    attachPanZoom(this, renderer.canvasEl, this);
+    const hintEl = renderer.canvasEl.createDiv({
+      cls: 'mind-mapper-hint',
+      text: 'This note has no content yet',
+    });
+    hintEl.hidden = true;
+    attachPanZoom(this, renderer.canvasEl, this, () => this.select(null));
     attachLinkHandling(renderer.canvasEl, {
       app: this.app,
       events: this,
       hoverParent: this,
       mapLeaf: this.leaf,
+      recency: this.recency,
       sourcePath: () => this.pinnedFile ?? '',
     });
     this.registerEvent(
       this.app.workspace.on('css-change', () => this.measure([...this.observed.keys()])),
     );
-    this.dom = { placeholderEl, renderer, controls };
+    this.dom = { placeholderEl, hintEl, renderer, controls };
     this.applyTransform(this.transform);
     return this.dom;
   }
@@ -244,9 +440,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private showLayout(layout: MapLayout): void {
     const dom = this.ensureDom();
     this.layout = layout;
-    dom.renderer.setLayout(layout);
+    dom.renderer.setLayout(layout, this.collapseInfo);
     dom.placeholderEl.hidden = true;
     dom.renderer.canvasEl.hidden = false;
+    dom.hintEl.hidden = (this.tree?.root.children.length ?? 0) > 0;
     for (const { node } of layout.nodes) {
       dom.renderer.setClipped(node.id, this.sizes.get(node)?.clip ?? NO_CLIP);
     }
@@ -313,20 +510,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       return;
     }
     this.relayoutOnResize = false;
-    const previous = this.layout;
-    const center = this.center();
-    const anchor = nearestNode(previous, {
-      x: (center.x - this.transform.x) / this.transform.zoom,
-      y: (center.y - this.transform.y) / this.transform.zoom,
-    });
-    const next = this.computeLayout(this.tree);
-    this.showLayout(next);
+    const anchor = this.anchorIn(this.layout);
+    this.showLayout(this.computeLayout(this.tree));
     if (this.fitted) {
       this.fitToView();
       return;
     }
-    const moved = anchor && next.nodes.find((p) => p.node.id === anchor.node.id);
-    if (anchor && moved) this.applyTransform(anchoredTransform(this.transform, anchor, moved));
+    this.keepInPlace(anchor);
   }
 
   /** Fits once the view has a real size; a hidden tab keeps the fit pending for `onResize`. */
@@ -342,13 +532,16 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** The canvas is the coordinate space of the transform (the view itself may have padding). */
   private size(): Size {
     const canvas = this.dom?.renderer.canvasEl;
-    return canvas
+    const size = canvas
       ? { width: canvas.clientWidth, height: canvas.clientHeight }
       : { width: 0, height: 0 };
+    if (size.width > 0 && size.height > 0) this.lastSize = size;
+    return size;
   }
 
+  /** Center of the canvas; a hidden tab (0 x 0) uses its last real size. */
   private center(): { x: number; y: number } {
-    const { width, height } = this.size();
-    return { x: width / 2, y: height / 2 };
+    this.size();
+    return { x: this.lastSize.width / 2, y: this.lastSize.height / 2 };
   }
 }

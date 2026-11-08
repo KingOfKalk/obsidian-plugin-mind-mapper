@@ -29,6 +29,8 @@ export function fakeFile(path: string): TFile {
 /** Leaf stand-in. `view` is a plain object, like a deferred leaf whose real view is not loaded. */
 export class FakeLeaf {
   view: unknown = {};
+  /** Restored but not shown yet: the real view is not loaded (Obsidian 1.7.2+). */
+  isDeferred = false;
   constructor(
     public app: App,
     public viewState: ViewState = { type: 'empty' },
@@ -51,6 +53,27 @@ export class FakeLeaf {
 export class FakeVault {
   readonly texts = new Map<string, string>();
   private readonly gates = new Map<string, Promise<void>>();
+  private readonly listeners = new Map<string, Set<(...args: unknown[]) => void>>();
+
+  on(name: string, listener: (...args: unknown[]) => void): { off: () => void } {
+    const set = this.listeners.get(name) ?? new Set();
+    this.listeners.set(name, set);
+    set.add(listener);
+    return { off: () => set.delete(listener) };
+  }
+
+  offref(ref: { off: () => void }): void {
+    ref.off();
+  }
+
+  /** `rename` (file, oldPath), `delete` (file), `create` (file). */
+  trigger(name: string, ...args: unknown[]): void {
+    for (const listener of [...(this.listeners.get(name) ?? [])]) listener(...args);
+  }
+
+  listenerCount(name: string): number {
+    return this.listeners.get(name)?.size ?? 0;
+  }
 
   getFileByPath(path: string): TFile | null {
     return this.texts.has(path) ? fakeFile(path) : null;
@@ -121,17 +144,17 @@ export class FakeWorkspace {
     this.metadataCache.caches.set(path, cache);
   }
 
-  private readonly workspaceListeners = new Map<string, Set<() => void>>();
+  private readonly workspaceListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
-  on(name: string, listener: () => void): { off: () => void } {
+  on(name: string, listener: (...args: unknown[]) => void): { off: () => void } {
     const set = this.workspaceListeners.get(name) ?? new Set();
     this.workspaceListeners.set(name, set);
     set.add(listener);
     return { off: () => set.delete(listener) };
   }
 
-  trigger(name: string): void {
-    for (const listener of [...(this.workspaceListeners.get(name) ?? [])]) listener();
+  trigger(name: string, ...args: unknown[]): void {
+    for (const listener of [...(this.workspaceListeners.get(name) ?? [])]) listener(...args);
   }
 
   getActiveViewOfType<T>(type: abstract new (...args: never[]) => T): T | null {

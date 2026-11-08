@@ -85,3 +85,55 @@ export async function settle(quietMs = 500, timeout = 30000): Promise<void> {
 export function overlaps(a: NodeBox, b: NodeBox): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
+
+/** Writes a note into the (sandboxed) test vault and waits until Obsidian has indexed it. */
+export async function writeNote(path: string, text: string): Promise<void> {
+  await browser.executeObsidian(
+    async ({ app }, notePath, content) => {
+      await app.vault.adapter.write(notePath, content);
+    },
+    path,
+    text,
+  );
+  await waitForCache(path);
+}
+
+/** Opens `path` in a note leaf (reusing the active one when it is a note). */
+export async function openNote(path: string): Promise<void> {
+  await waitForCache(path);
+  await browser.executeObsidian(async ({ app }, notePath) => {
+    const file = app.vault.getFileByPath(notePath);
+    if (!file) throw new Error(`missing ${notePath}`);
+    await app.workspace.getLeaf(false).openFile(file);
+  }, path);
+}
+
+/** Root leaves: view type and pinned / opened file. */
+export function leafSummary(): Promise<{ type: string; file: string | null }[]> {
+  return browser.executeObsidian(({ app }) => {
+    const leaves: { type: string; file: string | null }[] = [];
+    app.workspace.iterateRootLeaves((leaf) => {
+      const state = leaf.getViewState();
+      leaves.push({
+        type: state.type,
+        file: (state.state as { file?: string } | undefined)?.file ?? null,
+      });
+    });
+    return leaves;
+  });
+}
+
+/** Dispatches a mouse event on the content of the node with this ID. */
+export async function mouseOnNode(id: string, type: 'click' | 'dblclick'): Promise<void> {
+  await browser.execute(
+    (nodeId, eventType) => {
+      const el = document.querySelector(
+        `.mind-mapper-node[data-node-id="${nodeId}"] .mind-mapper-node-content`,
+      );
+      if (!el) throw new Error(`no node ${nodeId}`);
+      el.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true, button: 0 }));
+    },
+    id,
+    type,
+  );
+}

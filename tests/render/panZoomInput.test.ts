@@ -2,7 +2,7 @@ import { Component } from 'obsidian';
 import { attachPanZoom } from '../../src/render/panZoomInput';
 import { IDENTITY, type Transform } from '../../src/render/viewport';
 
-function setup() {
+function setup(onTap?: () => void) {
   const canvas = document.createElement('div');
   const nodeEl = canvas.appendChild(document.createElement('div'));
   nodeEl.className = 'mind-mapper-node';
@@ -18,7 +18,7 @@ function setup() {
     }),
   };
   const component = new Component();
-  attachPanZoom(component, canvas, target);
+  attachPanZoom(component, canvas, target, onTap);
   return { canvas, nodeLabel, controls, target, component, get: () => transform };
 }
 
@@ -108,4 +108,34 @@ test('a move without pressed button ends a drag whose pointerup was lost', () =>
   pointer(canvas, 'pointermove', 200, 200, 0);
   expect(get()).toEqual({ x: 10, y: 0, zoom: 1 });
   expect(canvas.classList.contains('is-panning')).toBe(false);
+});
+
+test('onTap fires for a click without movement on the empty canvas', () => {
+  const onTap = vi.fn();
+  const { canvas } = setup(onTap);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointermove', 102, 101);
+  pointer(canvas, 'pointerup', 102, 101, 0);
+  expect(onTap).toHaveBeenCalledTimes(1);
+});
+
+test('onTap does not fire after a drag of 10 px, even when it ends at the start', () => {
+  const onTap = vi.fn();
+  const { canvas } = setup(onTap);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointermove', 110, 100);
+  pointer(canvas, 'pointerup', 110, 100, 0);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointermove', 110, 100);
+  pointer(canvas, 'pointermove', 100, 100);
+  pointer(canvas, 'pointerup', 100, 100, 0);
+  expect(onTap).not.toHaveBeenCalled();
+});
+
+test('onTap does not fire for clicks on a node', () => {
+  const onTap = vi.fn();
+  const { canvas, nodeLabel } = setup(onTap);
+  pointer(nodeLabel, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointerup', 100, 100, 0);
+  expect(onTap).not.toHaveBeenCalled();
 });

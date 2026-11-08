@@ -6,6 +6,8 @@ const VIEW_COMMANDS = [
   { id: 'zoom-out', name: 'Zoom out', run: (view: MindMapView) => view.zoomOut() },
   { id: 'fit-to-view', name: 'Fit to view', run: (view: MindMapView) => view.fitToView() },
   { id: 'reset-zoom', name: 'Reset zoom to 100%', run: (view: MindMapView) => view.resetZoom() },
+  { id: 'collapse-all', name: 'Collapse all', run: (view: MindMapView) => view.collapseAll() },
+  { id: 'expand-all', name: 'Expand all', run: (view: MindMapView) => view.expandAll() },
 ];
 
 /** Commands that act on the active mind map view; hidden when none is active. No default hotkeys. */

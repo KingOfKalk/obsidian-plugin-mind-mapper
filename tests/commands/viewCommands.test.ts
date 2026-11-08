@@ -9,6 +9,8 @@ const COMMANDS = [
   ['zoom-out', 'Zoom out', 'zoomOut'],
   ['fit-to-view', 'Fit to view', 'fitToView'],
   ['reset-zoom', 'Reset zoom to 100%', 'resetZoom'],
+  ['collapse-all', 'Collapse all', 'collapseAll'],
+  ['expand-all', 'Expand all', 'expandAll'],
 ] as const;
 
 async function setup() {

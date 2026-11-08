@@ -1,5 +1,6 @@
 import { type App, type Component, type HoverParent, Keymap, type WorkspaceLeaf } from 'obsidian';
 import { VIEW_TYPE_MIND_MAP } from '../constants';
+import { type LeafRecency, pickNoteLeaf } from '../view/leafRecency';
 
 /** Hover source id registered with the page preview core plugin. */
 export const HOVER_SOURCE_ID = VIEW_TYPE_MIND_MAP;
@@ -13,6 +14,8 @@ export interface LinkContext {
   hoverParent: HoverParent;
   /** The map's own leaf: a plain click must never open a note in it. */
   mapLeaf: WorkspaceLeaf | null;
+  /** Which note leaf was active last (plain click target). */
+  recency: LeafRecency;
   sourcePath: () => string;
   /** Called after an internal link was opened (e.g. to close an overlay). */
   onNavigate?: () => void;
@@ -59,7 +62,7 @@ function open(ctx: LinkContext, linktext: string, mod: ReturnType<typeof Keymap.
     void workspace.openLinkText(linktext, ctx.sourcePath(), mod);
     return;
   }
-  const target = noteLeaf(ctx);
+  const target = pickNoteLeaf(workspace, ctx.recency, { mapLeaf: ctx.mapLeaf });
   if (target) {
     workspace.setActiveLeaf(target, { focus: true });
     void workspace.openLinkText(linktext, ctx.sourcePath(), false);
@@ -77,12 +80,4 @@ function linkFrom(event: Event, selector: string): HTMLElement | null {
 
 function linkText(link: HTMLElement): string {
   return link.getAttribute('data-href') ?? link.getAttribute('href') ?? '';
-}
-
-/** Most recently active note leaf other than the map, else any note leaf. */
-function noteLeaf(ctx: LinkContext): WorkspaceLeaf | null {
-  const { workspace } = ctx.app;
-  const recent = workspace.getMostRecentLeaf();
-  if (recent && recent !== ctx.mapLeaf && recent.view.getViewType() === 'markdown') return recent;
-  return workspace.getLeavesOfType('markdown').find((leaf) => leaf !== ctx.mapLeaf) ?? null;
 }

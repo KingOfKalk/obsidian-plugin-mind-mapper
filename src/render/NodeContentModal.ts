@@ -7,6 +7,7 @@ import {
   type WorkspaceLeaf,
 } from 'obsidian';
 import type { MindMapNode } from '../parser/types';
+import type { LeafRecency } from '../view/leafRecency';
 import { attachLinkHandling } from './linkHandling';
 import { disableCheckboxes } from './NodeContentRenderer';
 
@@ -14,6 +15,7 @@ export interface ModalLinkContext {
   sourcePath: () => string;
   hoverParent: HoverParent;
   mapLeaf: WorkspaceLeaf | null;
+  recency: LeafRecency;
 }
 
 /** Pop-up overlay with the full content of a clipped node; links work like in the map. */

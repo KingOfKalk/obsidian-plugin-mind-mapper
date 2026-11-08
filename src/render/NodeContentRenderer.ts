@@ -17,6 +17,8 @@ export function disableCheckboxes(el: HTMLElement): void {
  */
 export class NodeContentRenderer {
   private readonly owners = new Map<HTMLElement, Component>();
+  /** Pending render timeouts, cleared on release. */
+  private readonly timers = new Map<HTMLElement, () => void>();
 
   constructor(
     private readonly app: App,
@@ -35,6 +37,7 @@ export class NodeContentRenderer {
         MarkdownRenderer.render(this.app, node.markdown, contentEl, this.sourcePath(), owner),
         RENDER_TIMEOUT_MS,
         contentEl,
+        (cancel) => this.timers.set(contentEl, cancel),
       );
     } catch (error) {
       if (!isCurrent()) return;
@@ -47,6 +50,8 @@ export class NodeContentRenderer {
   }
 
   release(contentEl: HTMLElement): void {
+    this.timers.get(contentEl)?.();
+    this.timers.delete(contentEl);
     const owner = this.owners.get(contentEl);
     if (!owner) return;
     this.owners.delete(contentEl);
@@ -58,10 +63,16 @@ export class NodeContentRenderer {
   }
 }
 
-function withTimeout(promise: Promise<void>, ms: number, el: HTMLElement): Promise<void> {
+function withTimeout(
+  promise: Promise<void>,
+  ms: number,
+  el: HTMLElement,
+  onTimer: (cancel: () => void) => void,
+): Promise<void> {
   const win = el.win;
   return new Promise<void>((resolve, reject) => {
     const timer = win.setTimeout(() => reject(new Error(`render timed out after ${ms} ms`)), ms);
+    onTimer(() => win.clearTimeout(timer));
     promise.then(
       () => {
         win.clearTimeout(timer);

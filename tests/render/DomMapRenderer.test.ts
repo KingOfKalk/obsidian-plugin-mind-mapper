@@ -80,6 +80,9 @@ function hooked() {
     }),
     release: vi.fn(),
     expand: vi.fn(),
+    select: vi.fn(),
+    open: vi.fn(),
+    toggle: vi.fn(),
   };
   return { parent, hooks, renderer: new DomMapRenderer(parent, hooks) };
 }
@@ -176,4 +179,135 @@ test('clip direction classes follow the overflowing axes', () => {
   expect(nodeEl?.classList.contains('is-clipped-x')).toBe(true);
   renderer.setClipped('A', { x: false, y: false });
   expect([...(nodeEl?.classList ?? [])].some((c) => c.startsWith('is-clipped'))).toBe(false);
+});
+
+const withChildren = (id: string) => id === 'R';
+
+test('toggle sits outside the node at its right edge and shows the hidden count when collapsed', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+  const toggles = [...parent.querySelectorAll<HTMLElement>('.mind-mapper-collapse')];
+  expect(toggles).toHaveLength(1);
+  const [toggle] = toggles;
+  expect(toggle?.parentElement?.classList.contains('mind-mapper-world')).toBe(true);
+  expect(toggle?.dataset.nodeId).toBe('R');
+  expect(toggle?.style.left).toBe('200px');
+  expect(toggle?.style.top).toBe('0px');
+  expect(toggle?.textContent).toBe('−');
+  expect(toggle?.getAttribute('aria-label')).toBe('Collapse');
+  expect(toggle?.classList.contains('is-collapsed')).toBe(false);
+
+  const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 1), edges: [] };
+  renderer.setLayout(collapsed, { hidden: new Map([['R', 5]]), hasChildren: withChildren });
+  const again = parent.querySelector<HTMLElement>('.mind-mapper-collapse');
+  expect(again?.textContent).toBe('5');
+  expect(again?.getAttribute('aria-label')).toBe('Expand');
+  expect(again?.classList.contains('is-collapsed')).toBe(true);
+  expect(parent.querySelectorAll('.mind-mapper-collapse')).toHaveLength(1);
+});
+
+test('toggles of removed nodes are removed', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+  renderer.setLayout(withMarkdown('X', 'x'), { hidden: new Map(), hasChildren: () => false });
+  expect(parent.querySelectorAll('.mind-mapper-collapse')).toHaveLength(0);
+});
+
+test('clicking a toggle calls toggle(id) and not select', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+  const bubbled = vi.fn();
+  parent.addEventListener('click', bubbled);
+  parent.querySelector<HTMLElement>('.mind-mapper-collapse')?.click();
+  expect(hooks.toggle).toHaveBeenCalledWith('R');
+  expect(hooks.select).not.toHaveBeenCalled();
+  expect(bubbled).not.toHaveBeenCalled();
+});
+
+test('click on a node calls select; dblclick calls open with the current node', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(layout);
+  const content = parent.querySelector<HTMLElement>(
+    '[data-node-id="R/A"] .mind-mapper-node-content',
+  );
+  content?.click();
+  expect(hooks.select).toHaveBeenCalledWith('R/A');
+  renderer.setLayout({
+    ...layout,
+    nodes: layout.nodes.map((p) =>
+      p.node.id === 'R/A' ? { ...p, node: { ...p.node, line: 7 } } : p,
+    ),
+  });
+  content?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  expect(hooks.open).toHaveBeenCalledWith(expect.objectContaining({ id: 'R/A', line: 7 }));
+});
+
+test('dblclick on a link or the expand button inside a node does not call open', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(layout);
+  const content = parent.querySelector<HTMLElement>(
+    '[data-node-id="R/A"] .mind-mapper-node-content',
+  );
+  const link = content?.createEl('a', { cls: 'internal-link', text: 'link' });
+  link?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  link?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  parent
+    .querySelector('[data-node-id="R/A"] .mind-mapper-node-expand')
+    ?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  expect(hooks.open).not.toHaveBeenCalled();
+  expect(hooks.select).not.toHaveBeenCalled();
+});
+
+test('setSelected moves is-selected', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(layout);
+  const selected = () =>
+    [...parent.querySelectorAll<HTMLElement>('.mind-mapper-node.is-selected')].map(
+      (el) => el.dataset.nodeId,
+    );
+  renderer.setSelected('R/A');
+  expect(selected()).toEqual(['R/A']);
+  renderer.setSelected('R/B');
+  expect(selected()).toEqual(['R/B']);
+  renderer.setSelected(null);
+  expect(selected()).toEqual([]);
+});
+
+test('selection survives setLayout for nodes that are re-created', () => {
+  const { parent, renderer } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  renderer.setSelected('B');
+  renderer.setLayout(withMarkdown('B', 'y'));
+  expect(parent.querySelector('[data-node-id="B"]')?.classList.contains('is-selected')).toBe(true);
+});
+
+test('a node whose id shifts keeps its rendered content element (render hook called once)', () => {
+  const { parent, renderer, hooks } = hooked();
+  const at = (id: string, markdown: string, y: number) => ({
+    node: { ...node(id), markdown },
+    x: 0,
+    y,
+    width: 200,
+    height: 36,
+  });
+  renderer.setLayout({ ...layout, nodes: [at('A/#2', 'x', 0)], edges: [] });
+  const original = parent.querySelector('[data-node-id="A/#2"] .mind-mapper-node-content');
+  hooks.render.mockClear();
+  renderer.setLayout({ ...layout, nodes: [at('A/#2', 'y', 0), at('A/#3', 'x', 50)], edges: [] });
+  expect(hooks.render).toHaveBeenCalledTimes(1);
+  expect(hooks.render).toHaveBeenCalledWith(
+    expect.objectContaining({ markdown: 'y' }),
+    expect.anything(),
+  );
+  expect(parent.querySelector('[data-node-id="A/#3"] .mind-mapper-node-content')).toBe(original);
+  expect(hooks.release).not.toHaveBeenCalledWith(original);
+  expect(parent.querySelectorAll('.mind-mapper-node-content')).toHaveLength(2);
+});
+
+test('pooled content that finds no new owner is released', () => {
+  const { parent, renderer, hooks } = hooked();
+  renderer.setLayout(withMarkdown('A', 'x'));
+  const original = parent.querySelector('.mind-mapper-node-content');
+  renderer.setLayout(withMarkdown('B', 'z'));
+  expect(hooks.release).toHaveBeenCalledWith(original);
 });

@@ -137,3 +137,13 @@ test('checkboxes are disabled after rendering', async () => {
   await renderer.render(node('- [ ] a'), contentEl);
   expect(contentEl.querySelector<HTMLInputElement>('input')?.disabled).toBe(true);
 });
+
+test('release clears the pending render timeout', () => {
+  vi.useFakeTimers();
+  vi.spyOn(MarkdownRenderer, 'render').mockReturnValue(new Promise<void>(() => {}));
+  const { renderer, contentEl } = setup();
+  void renderer.render(node('slow'), contentEl);
+  expect(vi.getTimerCount()).toBe(1);
+  renderer.release(contentEl);
+  expect(vi.getTimerCount()).toBe(0);
+});

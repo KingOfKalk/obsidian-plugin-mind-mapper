@@ -66,6 +66,10 @@
   font-weight: var(--font-semibold);
 }
 
+.mind-mapper-node.is-selected {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
 .mind-mapper-node.is-render-error {
   border-color: var(--text-error);
   color: var(--text-muted);
@@ -155,8 +159,47 @@
   display: flex;
 }
 
+/* Collapse toggle: a world-level sibling of the node (nodes clip their overflow), just outside the
+   node's child-side edge, on the edge line. `button.` outranks Obsidian's button styles. */
+button.mind-mapper-collapse {
+  position: absolute;
+  transform: translate(3px, -50%);
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 9px;
+  background: var(--background-primary);
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 16px;
+  cursor: pointer;
+}
+
+button.mind-mapper-collapse:hover {
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+
+button.mind-mapper-collapse.is-collapsed {
+  color: var(--text-on-accent);
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
 .mind-mapper-full-content {
   user-select: text;
+}
+
+.mind-mapper-hint {
+  position: absolute;
+  top: var(--size-4-4);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .mind-mapper-controls {

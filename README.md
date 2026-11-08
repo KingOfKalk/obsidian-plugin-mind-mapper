@@ -16,6 +16,8 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | Zoom out | a mind map is active | `Ctrl/Cmd + Shift + -` |
 | Fit to view | a mind map is active | `Shift + 1` |
 | Reset zoom to 100% | a mind map is active | `Shift + 0` |
+| Collapse all | a mind map is active | `Ctrl/Cmd + Shift + [` |
+| Expand all | a mind map is active | `Ctrl/Cmd + Shift + ]` |
 
 ## Map navigation
 
@@ -23,6 +25,10 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - `Ctrl/Cmd` + wheel, trackpad pinch: zoom at the pointer
 - Drag on empty canvas: pan
 - Floating controls (bottom center): zoom out, current zoom (click resets to 100%), zoom in, fit to view
+- Click a node: select it; click the empty canvas: clear the selection
+- Double click a node: jump to its line in the note
+- Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
+- The map follows edits to the note live; pan, zoom, selection and collapsed branches are kept
 
 ## Development
 

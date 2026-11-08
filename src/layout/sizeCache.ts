@@ -19,6 +19,13 @@ export class SizeCache {
     return this.entries.get(cacheKey(node));
   }
 
+  /** Keeps only the entries of these nodes (e.g. the current tree after a live update). */
+  retain(nodes: Iterable<MindMapNode>): void {
+    const keep = new Set<string>();
+    for (const node of nodes) keep.add(cacheKey(node));
+    for (const key of [...this.entries.keys()]) if (!keep.has(key)) this.entries.delete(key);
+  }
+
   /** Returns true if the stored size or clip state changed (sub-pixel differences ignored). */
   set(node: MindMapNode, measured: Measured): boolean {
     const key = cacheKey(node);

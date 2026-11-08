@@ -7,12 +7,19 @@ import { fitToBounds, IDENTITY } from '../../src/render/viewport';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
 import { MindMapView } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
-import { FakeWorkspace } from '../helpers';
+import { FakeWorkspace, fakeFile } from '../helpers';
 import { type Component as MockComponent, Modal as MockModal } from '../mocks/obsidian';
 
 function newView(ws = new FakeWorkspace()): { view: MindMapView; ws: FakeWorkspace } {
-  const leaf = { app: ws.app } as unknown as WorkspaceLeaf;
-  return { view: new MindMapView(leaf), ws };
+  // Like Obsidian: setViewState with the same view type passes the state to the view.
+  const leaf = {
+    app: ws.app,
+    setViewState: vi.fn((viewState: { state?: unknown }) =>
+      view.setState(viewState.state, { history: false }),
+    ),
+  };
+  const view = new MindMapView(leaf as unknown as WorkspaceLeaf);
+  return { view, ws };
 }
 
 function setElSize(el: Element | null, width: number, height: number): void {
@@ -107,6 +114,9 @@ test('null cache shows Loading and renders on the first changed event for the fi
   ws.metadataCache.caches.set('Note.md', fixture.cache);
   ws.metadataCache.trigger('Note.md', fixture.text, fixture.cache ?? {});
   await vi.waitFor(() => expect(nodeIds(view)).toContain('Project/Tasks'));
+  // one permanent listener: it also drives live update
+  expect(ws.metadataCache.listenerCount).toBe(1);
+  await view.onClose();
   expect(ws.metadataCache.listenerCount).toBe(0);
 });
 
@@ -419,5 +429,360 @@ describe('measuring', () => {
     expect(observers.every((o) => !o.connected)).toBe(true);
     await vi.advanceTimersByTimeAsync(200);
     expect(view.contentEl.querySelectorAll('.mind-mapper-node')).toHaveLength(0);
+  });
+});
+
+function change(ws: FakeWorkspace, path: string, fixtureName: string): void {
+  const { text, cache } = loadFixture(fixtureName);
+  ws.metadataCache.caches.set(path, cache);
+  ws.metadataCache.trigger(path, text, cache ?? {});
+}
+
+async function openLive(): Promise<{ view: MindMapView; ws: FakeWorkspace }> {
+  const { view, ws } = newView();
+  ws.addNote('Live.md', 'live-before');
+  await setSize(view, 800, 600);
+  await view.setState(...state('Live.md'));
+  return { view, ws };
+}
+
+/** Puts the node at the viewport center (800 x 600 canvas), so it is the anchor. */
+function centerOn(view: MindMapView, id: string): { x: number; y: number } {
+  const box = nodeBox(view, id);
+  view.setTransform({ x: 400 - box.x - box.width / 2, y: 300 - box.y - box.height / 2, zoom: 1 });
+  return screenOf(view, id);
+}
+
+function screenOf(view: MindMapView, id: string): { x: number; y: number } {
+  const box = nodeBox(view, id);
+  const t = view.getTransform();
+  return { x: box.x * t.zoom + t.x, y: box.y * t.zoom + t.y };
+}
+
+describe('live update', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('a change of the pinned note re-renders after 300 ms, not before', async () => {
+    const { view, ws } = await openLive();
+    expect(nodeIds(view)).not.toContain('Live/#2');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(299);
+    expect(nodeIds(view)).not.toContain('Live/#2');
+    await vi.advanceTimersByTimeAsync(1);
+    expect(nodeIds(view)).toContain('Live/#2');
+    expect(contentOf(view, 'Live/#1').textContent).toBe('New first paragraph.');
+  });
+
+  test('rapid changes every 100 ms for 2 s give one update with the last text', async () => {
+    const { view, ws } = await openLive();
+    const render = vi.spyOn(MarkdownRenderer, 'render');
+    render.mockClear();
+    for (let i = 0; i < 20; i++) {
+      change(ws, 'Live.md', i % 2 === 0 ? 'live-renamed' : 'live-after');
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    // last change (i = 19) was live-after, 100 ms ago
+    expect(nodeIds(view)).not.toContain('Live/#2');
+    expect(render).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(nodeIds(view)).toContain('Live/#2');
+    expect(nodeIds(view)).toContain('Live/Beta');
+    expect(nodeIds(view)).not.toContain('Live/Gamma');
+    // only the new paragraph is rendered; "Alpha paragraph." moved from Live/#1 to Live/#2 unrendered
+    expect(render.mock.calls.map((call) => call[1])).toEqual(['New first paragraph.']);
+    render.mockRestore();
+  });
+
+  test('changes of other files are ignored', async () => {
+    const { view, ws } = await openLive();
+    change(ws, 'Other.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(nodeIds(view)).not.toContain('Live/#2');
+  });
+
+  test('live update keeps the node nearest the center in place and does not re-fit', async () => {
+    const { view, ws } = await openLive();
+    const before = centerOn(view, 'Live/Beta');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/#2');
+    const after = screenOf(view, 'Live/Beta');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('a fitted map is not re-fitted by a live update', async () => {
+    const { view, ws } = await openLive();
+    const before = screenOf(view, 'Live');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    // a later re-measure must not fit either: the live update ended the automatic fit
+    report(view, 'Live/#1', 300, 200);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(view.getTransform().zoom).toBe(1);
+    expect(screenOf(view, 'Live').x).toBeCloseTo(before.x, 1);
+  });
+
+  test('a loading view renders on the first changed event without debounce', async () => {
+    const { view, ws } = newView();
+    const { text } = loadFixture('live-before');
+    ws.vault.texts.set('Live.md', text);
+    await setSize(view, 800, 600);
+    await view.setState(...state('Live.md'));
+    expect(placeholderText(view)).toBe('Loading…');
+    change(ws, 'Live.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(nodeIds(view)).toContain('Live/Beta');
+  });
+
+  test('cachedRead rejection shows "Could not read note"', async () => {
+    const { view, ws } = newView();
+    ws.addNote('Live.md', 'live-before');
+    vi.spyOn(ws.vault, 'cachedRead').mockRejectedValue(new Error('disk'));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await view.onOpen();
+    await view.setState(...state('Live.md'));
+    expect(placeholderText(view)).toBe('Could not read note');
+    error.mockRestore();
+  });
+});
+
+function toggleOf(view: MindMapView, id: string): HTMLElement {
+  const el = view.contentEl.querySelector<HTMLElement>(
+    `.mind-mapper-collapse[data-node-id="${id}"]`,
+  );
+  if (!el) throw new Error(`no toggle for ${id}`);
+  return el;
+}
+
+function selectedIds(view: MindMapView): (string | undefined)[] {
+  return [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node.is-selected')].map(
+    (el) => el.dataset.nodeId,
+  );
+}
+
+describe('collapse and selection', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('toggling a node hides its subtree and keeps the toggled node in place on screen', async () => {
+    const { view } = await openWorked();
+    view.setTransform({ x: 37, y: 250, zoom: 1 });
+    const before = screenOf(view, 'Project/Tasks');
+    toggleOf(view, 'Project/Tasks').click();
+    expect(nodeIds(view)).not.toContain('Project/Tasks/#1');
+    expect(nodeIds(view)).toContain('Project/Notes/#1');
+    expect(toggleOf(view, 'Project/Tasks').textContent).toBe('2');
+    const after = screenOf(view, 'Project/Tasks');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+    toggleOf(view, 'Project/Tasks').click();
+    expect(nodeIds(view)).toContain('Project/Tasks/#1');
+  });
+
+  test('collapseAll shows root and first level; expandAll shows all', async () => {
+    const { view } = await openWorked();
+    view.collapseAll();
+    expect(nodeIds(view).sort()).toEqual(
+      ['Project', 'Project/#1', 'Project/Notes', 'Project/Tasks'].sort(),
+    );
+    view.expandAll();
+    expect(nodeIds(view)).toHaveLength(7);
+  });
+
+  test('collapse state survives a live update; a renamed collapsed heading loses it, its unchanged sibling keeps it', async () => {
+    const { view, ws } = await openLive();
+    view.toggleCollapse('Live/Beta');
+    view.toggleCollapse('Live/Delta');
+    expect(nodeIds(view)).not.toContain('Live/Delta/#1');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).not.toContain('Live/Beta/#1');
+    expect(nodeIds(view)).not.toContain('Live/Delta/#1');
+    change(ws, 'Live.md', 'live-renamed');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/Gamma/#1');
+    expect(nodeIds(view)).not.toContain('Live/Delta/#1');
+  });
+
+  test('click selects a node; the selection survives a live update and stays in place', async () => {
+    const { view, ws } = await openLive();
+    view.setTransform({ x: 20, y: 280, zoom: 1 });
+    contentOf(view, 'Live/Delta').click();
+    expect(view.selectedId).toBe('Live/Delta');
+    expect(selectedIds(view)).toEqual(['Live/Delta']);
+    const before = screenOf(view, 'Live/Delta');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(selectedIds(view)).toEqual(['Live/Delta']);
+    const after = screenOf(view, 'Live/Delta');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('the selection is cleared when its node disappears', async () => {
+    const { view, ws } = await openLive();
+    contentOf(view, 'Live/Beta').click();
+    change(ws, 'Live.md', 'live-renamed');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(view.selectedId).toBeNull();
+    expect(selectedIds(view)).toEqual([]);
+  });
+
+  test('a tap on the empty canvas clears the selection', async () => {
+    const { view } = await openLive();
+    contentOf(view, 'Live/Beta').click();
+    const canvas = view.contentEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+    for (const type of ['pointerdown', 'pointerup']) {
+      canvas?.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          buttons: type === 'pointerdown' ? 1 : 0,
+          clientX: 5,
+          clientY: 5,
+          pointerId: 1,
+        }),
+      );
+    }
+    expect(view.selectedId).toBeNull();
+  });
+});
+
+function hintText(view: MindMapView): string | null {
+  const el = view.contentEl.querySelector<HTMLElement>('.mind-mapper-hint');
+  return el && !el.hidden ? el.textContent : null;
+}
+
+/** Moves the note in the fake vault and fires the vault rename event. */
+function rename(ws: FakeWorkspace, from: string, to: string, fixtureName: string): void {
+  ws.vault.texts.delete(from);
+  ws.metadataCache.caches.delete(from);
+  ws.addNote(to, fixtureName);
+  ws.vault.trigger('rename', fakeFile(to), from);
+}
+
+describe('rename, delete, empty note', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('renaming the pinned note updates file and title without re-fit', async () => {
+    const { view, ws } = await openWorked();
+    view.setTransform({ x: -60, y: 311, zoom: 0.8 });
+    const setViewState = vi.spyOn(view.leaf, 'setViewState');
+    rename(ws, 'Note.md', 'Folder/Renamed.md', 'worked-example');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(view.file).toBe('Folder/Renamed.md');
+    expect(view.getDisplayText()).toBe('Renamed');
+    expect(setViewState).toHaveBeenCalledWith({
+      type: 'mind-mapper-view',
+      state: { file: 'Folder/Renamed.md' },
+    });
+    expect(view.getTransform()).toEqual({ x: -60, y: 311, zoom: 0.8 });
+    expect(nodeIds(view)).toContain('Project/Tasks');
+  });
+
+  test('renaming another note changes nothing', async () => {
+    const { view, ws } = await openWorked();
+    ws.addNote('Other.md', 'live-before');
+    rename(ws, 'Other.md', 'Other2.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(view.file).toBe('Note.md');
+  });
+
+  test('rename while hidden (0 x 0 canvas), then shown: title updated, transform unchanged', async () => {
+    const { view, ws } = await openWorked();
+    view.setTransform({ x: 15, y: 290, zoom: 1 });
+    const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
+    setElSize(canvas, 0, 0);
+    rename(ws, 'Note.md', 'Renamed.md', 'worked-example');
+    await vi.advanceTimersByTimeAsync(0);
+    setElSize(canvas, 800, 600);
+    view.onResize();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(view.getDisplayText()).toBe('Renamed');
+    expect(view.getTransform()).toEqual({ x: 15, y: 290, zoom: 1 });
+  });
+
+  test('deleting the pinned note shows "Note was deleted"; recreating it renders again', async () => {
+    const { view, ws } = await openWorked();
+    ws.vault.texts.delete('Note.md');
+    ws.vault.trigger('delete', fakeFile('Note.md'));
+    expect(placeholderText(view)).toBe('Note was deleted');
+    ws.vault.trigger('delete', fakeFile('Other.md'));
+    expect(placeholderText(view)).toBe('Note was deleted');
+    ws.addNote('Note.md', 'worked-example');
+    ws.vault.trigger('create', fakeFile('Note.md'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(placeholderText(view)).toBeNull();
+    expect(nodeIds(view)).toContain('Project/Tasks');
+  });
+
+  test('an empty note shows the root and the hint; adding content removes the hint', async () => {
+    const { view, ws } = newView();
+    ws.addNote('Empty.md', 'empty');
+    await setSize(view, 800, 600);
+    await view.setState(...state('Empty.md'));
+    expect(nodeIds(view)).toEqual(['']);
+    expect(hintText(view)).toBe('This note has no content yet');
+    change(ws, 'Empty.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(hintText(view)).toBeNull();
+  });
+
+  test('a note with only frontmatter shows the hint', async () => {
+    const { view, ws } = newView();
+    ws.addNote('Fm.md', 'frontmatter-only');
+    await setSize(view, 800, 600);
+    await view.setState(...state('Fm.md'));
+    expect(hintText(view)).toBe('This note has no content yet');
+  });
+
+  test('closing the view removes the vault listeners', async () => {
+    const { view, ws } = await openWorked();
+    expect(ws.vault.listenerCount('rename')).toBe(1);
+    await view.onClose();
+    expect(ws.vault.listenerCount('rename')).toBe(0);
+    expect(ws.vault.listenerCount('delete')).toBe(0);
+    expect(ws.vault.listenerCount('create')).toBe(0);
+  });
+});
+
+describe('re-layouts of a hidden or reloaded map', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('a live update while the tab is hidden keeps the centered node in place', async () => {
+    const { view, ws } = await openLive();
+    const before = centerOn(view, 'Live/Delta');
+    const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
+    setElSize(canvas, 0, 0);
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    setElSize(canvas, 800, 600);
+    view.onResize();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(nodeIds(view)).toContain('Live/#2');
+    const after = screenOf(view, 'Live/Delta');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('renaming a note without H1 (root = file name) keeps the other nodes in place', async () => {
+    const { view, ws } = newView();
+    ws.addNote('A.md', 'no-h1');
+    await setSize(view, 800, 600);
+    await view.setState(...state('A.md'));
+    const child = nodeIds(view).find((id) => id !== '') ?? '';
+    view.setTransform({ x: 30, y: 280, zoom: 1 });
+    const rootWidth = nodeBox(view, '').width;
+    const before = screenOf(view, child);
+    rename(ws, 'A.md', 'A much longer file name.md', 'no-h1');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(nodeBox(view, '').width).toBeGreaterThan(rootWidth);
+    const after = screenOf(view, child);
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
   });
 });
