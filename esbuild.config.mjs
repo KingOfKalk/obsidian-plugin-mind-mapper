@@ -1,10 +1,18 @@
 import { copyFileSync, mkdirSync, watch, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import esbuild from 'esbuild';
-import { gitCommonDir, resolveDevPluginDir } from './scripts/dev-paths.mjs';
+import { gitCommonDir, resolveDevTargets } from './scripts/dev-paths.mjs';
+import { enablePlugin, syncNotes } from './scripts/dev-vault.mjs';
 
 const production = process.argv[2] === 'production';
-const devPluginDir = production ? '' : resolveDevPluginDir(process.env, gitCommonDir);
+const dev = production ? null : resolveDevTargets(process.env, gitCommonDir);
+const devPluginDir = dev?.pluginDir ?? '';
+
+if (dev?.vaultDir) {
+  syncNotes('test-vault', dev.vaultDir);
+  enablePlugin(dev.vaultDir, 'mind-mapper');
+  console.log(`Dev vault: ${dev.vaultDir}`);
+}
 
 /** Copies manifest and styles next to the dev build and touches `.hotreload` for the Hot Reload plugin. */
 const devAssets = {
@@ -30,6 +38,7 @@ const context = await esbuild.context({
   sourcemap: production ? false : 'inline',
   minify: production,
   treeShaking: true,
+  define: { __DEV__: JSON.stringify(!production) },
   outfile: production ? 'main.js' : `${devPluginDir}/main.js`,
   plugins: production ? [] : [devAssets],
 });

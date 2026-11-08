@@ -1,5 +1,13 @@
-import type { App, PluginManifest, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
+import type {
+  App,
+  CachedMetadata,
+  PluginManifest,
+  TFile,
+  ViewState,
+  WorkspaceLeaf,
+} from 'obsidian';
 import { vi } from 'vitest';
+import { loadFixture } from './fixtures';
 import { TFile as MockTFile } from './mocks/obsidian';
 
 export function fakeManifest(): PluginManifest {
@@ -40,10 +48,82 @@ export class FakeLeaf {
   }
 }
 
+export class FakeVault {
+  readonly texts = new Map<string, string>();
+  private readonly gates = new Map<string, Promise<void>>();
+
+  getFileByPath(path: string): TFile | null {
+    return this.texts.has(path) ? fakeFile(path) : null;
+  }
+
+  async cachedRead(file: TFile): Promise<string> {
+    await this.gates.get(file.path);
+    return this.texts.get(file.path) ?? '';
+  }
+
+  /** Makes `cachedRead` of `path` wait until the returned release function is called. */
+  hold(path: string): () => void {
+    let release = (): void => {};
+    this.gates.set(
+      path,
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    );
+    return () => release();
+  }
+}
+
+type ChangedListener = (file: TFile, data: string, cache: CachedMetadata) => void;
+
+export class FakeMetadataCache {
+  readonly caches = new Map<string, CachedMetadata | null>();
+  private readonly listeners = new Set<ChangedListener>();
+
+  getFileCache(file: TFile): CachedMetadata | null {
+    return this.caches.get(file.path) ?? null;
+  }
+
+  on(_name: 'changed', listener: ChangedListener): { off: () => void } {
+    this.listeners.add(listener);
+    return { off: () => this.listeners.delete(listener) };
+  }
+
+  offref(ref: { off: () => void }): void {
+    ref.off();
+  }
+
+  get listenerCount(): number {
+    return this.listeners.size;
+  }
+
+  trigger(path: string, text: string, cache: CachedMetadata): void {
+    for (const listener of [...this.listeners]) listener(fakeFile(path), text, cache);
+  }
+}
+
 export class FakeWorkspace {
-  app: App = { workspace: this } as unknown as App;
+  readonly vault = new FakeVault();
+  readonly metadataCache = new FakeMetadataCache();
+  app: App = {
+    workspace: this,
+    vault: this.vault,
+    metadataCache: this.metadataCache,
+  } as unknown as App;
   leaves: FakeLeaf[] = [];
   activeFile: TFile | null = null;
+  activeView: unknown = null;
+
+  /** Adds a note whose text and cache come from a recorded fixture. */
+  addNote(path: string, fixtureName: string): void {
+    const { text, cache } = loadFixture(fixtureName);
+    this.vault.texts.set(path, text);
+    this.metadataCache.caches.set(path, cache);
+  }
+
+  getActiveViewOfType<T>(type: abstract new (...args: never[]) => T): T | null {
+    return this.activeView instanceof type ? this.activeView : null;
+  }
 
   getActiveFile(): TFile | null {
     return this.activeFile;

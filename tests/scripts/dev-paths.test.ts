@@ -1,23 +1,27 @@
-import { resolveDevPluginDir } from '../../scripts/dev-paths.mjs';
+import { resolveDevTargets } from '../../scripts/dev-paths.mjs';
 
 const commonDir = () => '/repo/.git';
 
-test('defaults to the test vault of the main checkout (shared by all worktrees)', () => {
-  expect(resolveDevPluginDir({}, commonDir)).toBe('/repo/test-vault/.obsidian/plugins/mind-mapper');
+test('defaults to the dev vault of the main checkout (shared by all worktrees)', () => {
+  expect(resolveDevTargets({}, commonDir)).toEqual({
+    vaultDir: '/repo/dev-vault',
+    pluginDir: '/repo/dev-vault/.obsidian/plugins/mind-mapper',
+  });
 });
 
-test('MIND_MAPPER_PLUGIN_DIR overrides the default without asking git', () => {
+test('MIND_MAPPER_PLUGIN_DIR targets another vault without note sync and without git', () => {
   const noGit = vi.fn(() => {
     throw new Error('not a git repository');
   });
-  expect(resolveDevPluginDir({ MIND_MAPPER_PLUGIN_DIR: '/vault/plugins/mm' }, noGit)).toBe(
-    '/vault/plugins/mm',
-  );
+  expect(resolveDevTargets({ MIND_MAPPER_PLUGIN_DIR: '/vault/plugins/mm' }, noGit)).toEqual({
+    vaultDir: null,
+    pluginDir: '/vault/plugins/mm',
+  });
   expect(noGit).not.toHaveBeenCalled();
 });
 
 test('empty MIND_MAPPER_PLUGIN_DIR is ignored', () => {
-  expect(resolveDevPluginDir({ MIND_MAPPER_PLUGIN_DIR: '' }, commonDir)).toBe(
-    '/repo/test-vault/.obsidian/plugins/mind-mapper',
+  expect(resolveDevTargets({ MIND_MAPPER_PLUGIN_DIR: '' }, commonDir).vaultDir).toBe(
+    '/repo/dev-vault',
   );
 });

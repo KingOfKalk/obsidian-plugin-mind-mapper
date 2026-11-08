@@ -7,6 +7,7 @@ export default defineConfig([
     'main.js',
     'release',
     'test-vault',
+    'dev-vault',
     '.superpowers',
     '.worktrees',
     'esbuild.config.mjs',

@@ -1,0 +1,165 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# A\n\n### B\n\n## C\n\n#### D\n\n## E\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 3,
+            "offset": 3
+          }
+        },
+        "heading": "A",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 5
+          },
+          "end": {
+            "line": 2,
+            "col": 5,
+            "offset": 10
+          }
+        },
+        "heading": "B",
+        "level": 3
+      },
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 12
+          },
+          "end": {
+            "line": 4,
+            "col": 4,
+            "offset": 16
+          }
+        },
+        "heading": "C",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 18
+          },
+          "end": {
+            "line": 6,
+            "col": 6,
+            "offset": 24
+          }
+        },
+        "heading": "D",
+        "level": 4
+      },
+      {
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 26
+          },
+          "end": {
+            "line": 8,
+            "col": 4,
+            "offset": 30
+          }
+        },
+        "heading": "E",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 3,
+            "offset": 3
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 5
+          },
+          "end": {
+            "line": 2,
+            "col": 5,
+            "offset": 10
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 12
+          },
+          "end": {
+            "line": 4,
+            "col": 4,
+            "offset": 16
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 18
+          },
+          "end": {
+            "line": 6,
+            "col": 6,
+            "offset": 24
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 26
+          },
+          "end": {
+            "line": 8,
+            "col": 4,
+            "offset": 30
+          }
+        }
+      }
+    ]
+  }
+}

@@ -3,3 +3,89 @@
   color: var(--text-muted);
   padding: var(--size-4-4);
 }
+
+.workspace-leaf-content .view-content.mind-mapper-view {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mind-mapper-canvas {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.mind-mapper-canvas.is-panning {
+  cursor: grabbing;
+}
+
+.mind-mapper-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.mind-mapper-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mind-mapper-edge {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.5;
+}
+
+.mind-mapper-node {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--size-4-2);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  color: var(--text-normal);
+  cursor: default;
+}
+
+.mind-mapper-node.is-root {
+  border-color: var(--interactive-accent);
+  font-weight: var(--font-semibold);
+}
+
+.mind-mapper-node-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mind-mapper-controls {
+  position: absolute;
+  bottom: var(--size-4-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+  cursor: default;
+}
+
+.mind-mapper-controls button {
+  min-width: 2.5em;
+  font-variant-numeric: tabular-nums;
+}

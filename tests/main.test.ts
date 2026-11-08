@@ -65,3 +65,10 @@ test('onunload does not detach leaves', async () => {
   plugin.onunload();
   expect(ws.detachLeavesOfType).not.toHaveBeenCalled();
 });
+
+test('dev builds register the parser fixture recorder command', async () => {
+  const plugin = await loadPlugin();
+  const command = plugin.commands.find((c) => c.id === 'record-parser-fixtures');
+  expect(command?.name).toBe('Record parser fixtures (dev)');
+  expect(command?.hotkeys).toBeUndefined();
+});

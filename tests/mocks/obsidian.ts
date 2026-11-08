@@ -4,11 +4,44 @@
  */
 import type { App, Command, PluginManifest, View, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 
+export const apiVersion = '1.7.2-test';
+
 export class Component {
-  load(): void {}
+  private cleanups: (() => void)[] = [];
+
+  load(): void {
+    this.onload();
+  }
   onload(): void {}
-  unload(): void {}
+
+  unload(): void {
+    for (const cleanup of this.cleanups.splice(0)) cleanup();
+    this.onunload();
+  }
   onunload(): void {}
+
+  register(cleanup: () => void): void {
+    this.cleanups.push(cleanup);
+  }
+
+  registerEvent(ref: unknown): void {
+    // Test fakes return refs with `off()`; real EventRefs are opaque.
+    this.register(() => (ref as { off?: () => void }).off?.());
+  }
+
+  registerDomEvent(
+    el: EventTarget,
+    type: string,
+    callback: EventListener,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
+    el.addEventListener(type, callback, options);
+    this.register(() => el.removeEventListener(type, callback, options));
+  }
+}
+
+export function setIcon(el: HTMLElement, icon: string): void {
+  el.dataset.icon = icon;
 }
 
 export class Plugin extends Component {
@@ -53,6 +86,12 @@ export class ItemView extends Component {
   setState(_state: unknown, _result: ViewStateResult): Promise<void> {
     return Promise.resolve();
   }
+
+  onOpen(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  onResize(): void {}
 }
 
 export class TFile {

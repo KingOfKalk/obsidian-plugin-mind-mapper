@@ -2,16 +2,18 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 
 /**
- * Dev build target. Defaults to the main checkout's test vault, so every git worktree
- * builds into the one vault that is set up in Obsidian.
+ * Dev build targets. By default the plugin is built into `dev-vault/` of the main checkout,
+ * one persistent vault shared by every git worktree, which also receives the test notes.
+ * `MIND_MAPPER_PLUGIN_DIR` targets another vault's plugin folder; then no notes are synced.
  * @param {Record<string, string | undefined>} env
- * @param {() => string} getGitCommonDir returns the absolute path of the repository's common `.git` directory; only called without override
- * @returns {string}
+ * @param {() => string} getGitCommonDir absolute path of the repository's common `.git` directory; only called without override
+ * @returns {{ vaultDir: string | null, pluginDir: string }}
  */
-export function resolveDevPluginDir(env, getGitCommonDir) {
+export function resolveDevTargets(env, getGitCommonDir) {
   const override = env.MIND_MAPPER_PLUGIN_DIR;
-  if (override) return override;
-  return join(dirname(getGitCommonDir()), 'test-vault', '.obsidian', 'plugins', 'mind-mapper');
+  if (override) return { vaultDir: null, pluginDir: override };
+  const vaultDir = join(dirname(getGitCommonDir()), 'dev-vault');
+  return { vaultDir, pluginDir: join(vaultDir, '.obsidian', 'plugins', 'mind-mapper') };
 }
 
 /** @returns {string} */

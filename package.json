@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "version": "node scripts/version-bump.mjs",
-    "release": "npm run check && node scripts/release.mjs"
+    "release": "npm run check && node scripts/release.mjs",
+    "fixtures:pull": "node scripts/dev-vault.mjs pull-fixtures"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
