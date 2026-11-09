@@ -17,8 +17,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
-    "version": "node scripts/version-bump.mjs",
-    "release": "npm run check && node scripts/release.mjs",
     "fixtures:pull": "node scripts/sandbox-vault.mjs pull-fixtures",
     "test:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts",
     "fixtures:record": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/recordFixtures.e2e.ts",
@@ -47,5 +45,8 @@
     "wdio-obsidian-reporter": "^3.5.0",
     "wdio-obsidian-service": "^3.5.0",
     "webdriverio": "^10.2.0"
+  },
+  "engines": {
+    "node": "^26.12.1"
   }
 }

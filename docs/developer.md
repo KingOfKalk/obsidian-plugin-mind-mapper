@@ -31,10 +31,21 @@
   - No timing assertions; compare against `e2e/perf/baseline.json` by hand
 - Merge gate: `npm run check` and `npm run test:e2e` pass
 
-## Release (local)
+## Release
 
-- `npm version <x.y.z>` (or `patch|minor|major`): bumps `package.json`, syncs `manifest.json` and `versions.json`, commits `chore: release <x.y.z>` and tags `<x.y.z>` (no `v` prefix: Obsidian needs the tag to equal the manifest version)
-- `npm run release`: runs `npm run check`, then copies `main.js`, `manifest.json`, `styles.css` into `release/<x.y.z>/` (the GitHub release assets for that tag) and writes `release/mind-mapper-<x.y.z>.zip` when `zip` is installed
+- Automated with [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release.yml`); there is no local release command
+  - Config: `release-please-config.json` (release type `node`, also bumps `manifest.json` `version`), current version: `.release-please-manifest.json`
+  - Every push to `main` updates the release PR ("chore(main): release x.y.z"): version from the Conventional Commits since the last release (`fix` = patch, `feat` = minor, `!`/`BREAKING CHANGE` = major), `CHANGELOG.md`, `package.json`, `package-lock.json`, `manifest.json`
+  - A second job adds `"<version>": "<minAppVersion>"` to `versions.json` on the release PR branch (commit `chore: add <version> to versions.json`)
+  - Merging the release PR creates the tag and the GitHub release `x.y.z` (no `v` prefix: Obsidian needs the tag to equal the manifest version), builds, and uploads `main.js`, `manifest.json`, `styles.css`, `versions.json` and `mind-mapper-x.y.z.zip` (folder `mind-mapper/` with the three plugin files)
+  - Force a version: a commit on `main` with the footer `Release-As: x.y.z`
+  - Commit messages on `main` (squash-merge titles) are the changelog: keep them Conventional Commits
+- CI (`.github/workflows/`)
+  - `ci.yml` on pushes to and pull requests into `main`: job `check` (`npm run check`, uploads the plugin files as artifact `mind-mapper-<sha>`) and job `e2e` (`scripts/install-e2e-deps.sh`, then `npm run test:e2e`; `.obsidian-cache` cached by the Obsidian version in `wdio.conf.mts`)
+  - `codeql.yml`: CodeQL (security-and-quality) on push, pull request and weekly
+  - `.github/dependabot.yml`: weekly npm and GitHub Actions updates, grouped; `dependabot-auto-merge.yml` approves and auto-merges minor and patch updates of dev dependencies and actions
+  - `notify-failure.yml`: opens (or comments on) an issue labelled `workflow-failure` when CI or Release fails on `main`
+  - Node.js version: `engines.node` in `package.json` (shared setup in `.github/actions/setup/action.yml`)
 - Community submission: the manifest follows the directory rules (checked in `tests/manifest.test.ts`); the id `mind-mapper` and the name "Mind Mapper" were not taken on 2026-11-08
 
 ## Testing strategy

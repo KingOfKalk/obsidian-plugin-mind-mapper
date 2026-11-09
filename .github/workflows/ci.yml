@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # The same gate as locally: format check, lint, typecheck, unit tests, production build.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Check (format, lint, typecheck, unit tests, build)
+        run: npm run check
+
+      - name: Artifact name
+        id: artifact
+        run: echo "name=mind-mapper-${HEAD_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: |
+            main.js
+            manifest.json
+            styles.css
+          if-no-files-found: error
+          retention-days: 14
+
+  # End-to-end tests in real, headless Obsidian (wdio-obsidian-service under Xvfb).
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Install Xvfb and Electron libraries
+        run: bash scripts/install-e2e-deps.sh
+
+      # Key the Obsidian download cache by the app and installer versions wdio.conf.mts resolves.
+      - name: Obsidian version
+        id: obsidian
+        run: |
+          node --input-type=module -e '
+            const { config } = await import("./wdio.conf.mts");
+            const cap = config.capabilities[0];
+            const installer = cap["wdio:obsidianOptions"].installerVersion;
+            console.log("version=" + cap.browserVersion + "-" + installer);
+          ' >> "$GITHUB_OUTPUT"
+
+      - name: Cache Obsidian
+        uses: actions/cache@v6
+        with:
+          path: .obsidian-cache
+          key: obsidian-${{ runner.os }}-${{ runner.arch }}-${{ steps.obsidian.outputs.version }}
+
+      - name: E2E tests
+        run: npm run test:e2e

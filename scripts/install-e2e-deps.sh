@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # System packages for headless Obsidian E2E tests (Xvfb + Electron runtime libraries).
-# Idempotent; run by the devcontainer's postCreateCommand.
+# Idempotent; run by the devcontainer's postCreateCommand and the CI e2e job.
+# Package names (t64) need Debian trixie or Ubuntu 24.04 or newer.
 set -euo pipefail
 
 packages=(

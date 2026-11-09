@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Optional secret RELEASE_PLEASE_TOKEN (fine-grained PAT or GitHub App token with contents and
+# pull-requests write): the release PR and the versions.json commit then trigger CI, so required
+# status checks can pass on the release PR. Without it GITHUB_TOKEN is used, which does not
+# trigger workflows.
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      prs_created: ${{ steps.release.outputs.prs_created }}
+      pr: ${{ steps.release.outputs.pr }}
+
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+
+      - uses: actions/checkout@v7
+        if: ${{ steps.release.outputs.release_created }}
+
+      - uses: ./.github/actions/setup
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Build
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm run build
+
+      - name: Build plugin zip
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          PLUGIN_ID: mind-mapper
+          VERSION: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
+        run: |
+          mkdir -p "dist/${PLUGIN_ID}"
+          cp main.js manifest.json styles.css "dist/${PLUGIN_ID}/"
+          (cd dist && zip -r "../${PLUGIN_ID}-${VERSION}.zip" "${PLUGIN_ID}")
+
+      - name: Upload plugin release assets
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+          VERSION: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
+        run: |
+          gh release upload "$TAG" \
+            main.js \
+            manifest.json \
+            styles.css \
+            versions.json \
+            "mind-mapper-${VERSION}.zip"
+
+  # Adds the release PR's version to versions.json on the release branch, so the entry is part of
+  # the release commit and the release uploads the committed file. release-please rewrites the
+  # branch whenever the PR changes and reports it in `prs_created`, so this runs after every PR
+  # update and is a no-op when the entry is already there. Written with 2-space indent: Prettier
+  # checks versions.json (`npm run format:check`).
+  versions-json:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.prs_created == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+
+      - name: Add version to versions.json
+        run: |
+          node -e '
+            const fs = require("fs");
+            const { version, minAppVersion } = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            const versions = JSON.parse(fs.readFileSync("versions.json", "utf8"));
+            versions[version] = minAppVersion;
+            fs.writeFileSync("versions.json", JSON.stringify(versions, null, 2) + "\n");
+          '
+          if git diff --quiet -- versions.json; then
+            echo "versions.json is up to date"
+            exit 0
+          fi
+          VERSION=$(node -p 'require("./manifest.json").version')
+          echo "Adding ${VERSION} to versions.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: add ${VERSION} to versions.json" -- versions.json
+          git push
