@@ -616,6 +616,49 @@ describe('collapse and selection', () => {
     expect(nodeIds(view)).not.toContain('Live/Delta/#1');
   });
 
+  test('after collapse all, a branch with a new id (moved or renamed) stays collapsed', async () => {
+    const { view, ws } = await openLive();
+    view.collapseAll();
+    change(ws, 'Live.md', 'live-renamed');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/Gamma');
+    expect(nodeIds(view)).not.toContain('Live/Gamma/#1');
+    expect(nodeIds(view)).not.toContain('Live/Delta/#1');
+  });
+
+  test('after collapse all, a branch expanded by hand stays expanded across a live edit', async () => {
+    const { view, ws } = await openLive();
+    view.collapseAll();
+    view.toggleCollapse('Live/Delta');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/Delta/#1');
+    expect(nodeIds(view)).not.toContain('Live/Beta/#1');
+  });
+
+  test('after collapse all, a deleted and recreated note stays collapsed', async () => {
+    const { view, ws } = await openWorked();
+    view.collapseAll();
+    ws.vault.texts.delete('Note.md');
+    ws.vault.trigger('delete', fakeFile('Note.md'));
+    ws.addNote('Note.md', 'worked-example');
+    ws.vault.trigger('create', fakeFile('Note.md'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(nodeIds(view)).toContain('Project/Tasks');
+    expect(nodeIds(view)).not.toContain('Project/Tasks/#1');
+  });
+
+  test('switching the view to another note resets the collapse state', async () => {
+    const { view, ws } = await openWorked();
+    view.collapseAll();
+    ws.addNote('Live.md', 'live-before');
+    await view.setState(...state('Live.md'));
+    expect(nodeIds(view)).toContain('Live/Beta/#1');
+    change(ws, 'Live.md', 'live-renamed');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/Gamma/#1');
+  });
+
   test('click selects a node; the selection survives a live update and stays in place', async () => {
     const { view, ws } = await openLive();
     view.setTransform({ x: 20, y: 280, zoom: 1 });

@@ -123,6 +123,26 @@ describe('live update', function () {
   });
 });
 
+describe('collapse all mode', function () {
+  it('a moved branch stays collapsed after collapse all', async function () {
+    const path = 'collapse-move.md';
+    await writeNote(path, '# R\n\n## A\n\n- a1\n\n## B\n\n- b1\n');
+    await openMindMap(path);
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:collapse-all');
+    await expect(node('R/A/#1')).not.toExist();
+    // move B under A: B gets the new id R/A/B
+    await writeNote(path, '# R\n\n## A\n\n- a1\n\n### B\n\n- b1\n');
+    await node('R/B').waitForExist({ timeout: 10000, reverse: true });
+    await browser.execute(() => {
+      document.querySelector<HTMLElement>('.mind-mapper-collapse[data-node-id="R/A"]')?.click();
+    });
+    await expect(node('R/A/B')).toExist();
+    await expect(node('R/A/#1')).toExist();
+    await expect(node('R/A/B/#1')).not.toExist();
+  });
+});
+
 describe('jump to source', function () {
   it('double click puts the cursor on the line in the open note', async function () {
     await openNote('fixtures/worked-example.md');

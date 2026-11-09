@@ -334,7 +334,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   override async setState(state: unknown, result: ViewStateResult): Promise<void> {
     const file = parseViewState(state).file;
-    if (file !== this.pinnedFile) this.pendingFit = true;
+    if (file !== this.pinnedFile) {
+      this.pendingFit = true;
+      this.collapse.reset();
+    }
     this.pinnedFile = file;
     await super.setState(state, result);
     await this.loadNote();
@@ -414,7 +417,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.keepInPlace(anchor);
   }
 
+  /** Every new tree passes here, so the collapse state always follows the shown tree. */
   private showTree(tree: MindMapTree): void {
+    this.collapse.update(this.tree, tree);
     this.tree = tree;
     this.showLayout(this.computeLayout(tree));
   }
@@ -489,7 +494,6 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (this.layoutWillChange()) this.pendingFit = true;
     const ids = new Set(allNodes(tree).map((node) => node.id));
     if (this.selected !== null && !ids.has(this.selected)) this.select(null);
-    this.collapse.prune(tree);
     const anchor = this.anchorIn(previous);
     // Sizes of content that is gone; the cache would otherwise grow with every edit.
     this.sizes.retain(allNodes(tree));

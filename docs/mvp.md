@@ -93,7 +93,8 @@ Project (root, H1)
   - Cache hits survive ID shifts
 - Collapse state kept in memory per ID for the session; persisting per note is a future feature
 - Collapse all mode (decided): "Collapse all" switches the map into collapse-all mode until "Expand all"
-  - In this mode every node with children whose ID was not in the previous tree starts collapsed (moved nodes get new IDs, new nodes too), so after an edit everything stays collapsed
+  - In this mode every node that newly has children starts collapsed: its ID was not in the previous tree (moved nodes get new IDs, new nodes too) or it had no children before; so after an edit everything stays collapsed
+  - Branches expanded by hand stay expanded
   - Toggling single nodes does not end the mode
 ## Frontmatter
  
