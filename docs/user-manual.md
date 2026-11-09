@@ -14,6 +14,7 @@ Mind Mapper shows a Markdown note as a mind map in Obsidian. Headings, paragraph
 - [Collapse and expand](#collapse-and-expand)
 - [Full screen](#full-screen)
 - [Layouts](#layouts)
+- [Colour themes](#colour-themes)
 - [Frontmatter keys](#frontmatter-keys)
 - [Settings](#settings)
 - [Commands](#commands)
@@ -176,6 +177,31 @@ The controls bar at the bottom center, left to right:
 
 ![A map growing downwards: Agenda, Travel and Food with two items each](images/manual/layout-top-to-bottom.png)
 
+## Colour themes
+
+A colour theme colours the map by level: every first-level node gets the first colour, every second-level node the second, and so on. Colours repeat after the last one.
+
+- Coloured: the node border, a light tint behind the text, and the line leading into the node
+- Unchanged: the root, the text, dashed link lines, dividers and the collapse buttons
+
+| Theme | Colours by level |
+|---|---|
+| `none` (default) | the plain look |
+| `rainbow` | red, orange, yellow, green, blue, purple |
+| `ocean` | blue, cyan, green, purple |
+| `forest` | green, yellow, orange, olive |
+| `accent` | your accent colour (Settings → Appearance), fading level by level |
+
+- For all notes: setting "Default theme"
+- For one note: `mind-mapper-theme` in its frontmatter
+- The colours come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
+- Changing the theme applies to an open map right away
+- With `accent`, a selected first-level node's selection ring has the same colour as its border
+
+`rainbow`:
+
+![The garden plans map in rainbow: first-level nodes and their lines red, second-level nodes and their lines orange, the root unchanged](images/manual/theme-rainbow.png)
+
 ## Frontmatter keys
 
 | Key | Values | Default |
@@ -183,19 +209,21 @@ The controls bar at the bottom center, left to right:
 | `mind-mapper-title` | any text | the single H1, else the file name |
 | `mind-mapper-layout` | one of the [layouts](#layouts) | setting "Default layout" |
 | `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | setting "Start collapsed" |
+| `mind-mapper-theme` | one of the [colour themes](#colour-themes) | setting "Default theme" |
 
 ```yaml
 ---
 mind-mapper-title: Lumen 2.0
 mind-mapper-layout: top-to-bottom
 mind-mapper-collapsed: true
+mind-mapper-theme: ocean
 ---
 ```
 
 - Only the frontmatter at the very top of the note counts
 - A missing key or a key without a value uses the default silently
 - An invalid value uses the default and shows a notice once per note and value (per session), e.g. `Mind Mapper: unknown mind-mapper-layout "sideways" in Note.md, using circle-clockwise`
-  - Invalid: an unknown layout, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
+  - Invalid: an unknown layout or colour theme, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
 
 ## Settings
 
@@ -205,6 +233,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 |---|---|---|---|---|---|
 | Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | None | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |
@@ -213,7 +242,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 - Each slider shows its value (e.g. "320 px") and has a "Restore default" button
 - About group: the plugin version and a link to the source code
 
-![The Mind Mapper settings tab: Map, Nodes and Spacing groups with a dropdown, a toggle and four sliders](images/manual/settings.png)
+![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and four sliders](images/manual/settings.png)
 
 ## Commands
 
@@ -238,7 +267,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys and layout names stay English in every language
+- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdown shows translated labels)
 
 ## Large notes
 
@@ -265,6 +294,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | The map does not show my latest typing | Obsidian saves about 2 s after you stop typing; the map follows then. Pan, zoom, selection and collapsed branches are kept |
 | A line of text became a heading | a `---` directly under it (see [Dividers](#dividers)); add a blank line above the `---` or use `***` |
 | Notice `Mind Mapper: unknown mind-mapper-layout …` | the layout name is misspelled; use one of the [layouts](#layouts) |
+| Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [colour themes](#colour-themes), in lower case |
 | Notice `Mind Mapper: mind-mapper-collapsed … is not true or false …` | use `true` or `false` without quotes, or the checkbox in Properties |
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
 | Notice `Open a markdown note first` | the ribbon icon needs an active Markdown note |

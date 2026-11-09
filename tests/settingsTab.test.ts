@@ -70,7 +70,7 @@ test('the tab shows the settings in groups under headings', async () => {
       (group.items ?? []).map((d) => d.name),
     ]),
   ).toEqual([
-    ['Map', ['Default layout', 'Start collapsed']],
+    ['Map', ['Default layout', 'Start collapsed', 'Default theme']],
     ['Nodes', ['Max node width', 'Max node height']],
     ['Spacing', ['Sibling gap', 'Level gap']],
     ['About', ['Version', 'Source code']],
@@ -83,6 +83,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(Setting.rows.map((s) => [s.group, s.name])).toEqual([
     ['Map', 'Default layout'],
     ['Map', 'Start collapsed'],
+    ['Map', 'Default theme'],
     ['Nodes', 'Max node width'],
     ['Nodes', 'Max node height'],
     ['Spacing', 'Sibling gap'],
@@ -93,6 +94,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(row('Default layout').dropdown?.options.size).toBe(6);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
   expect(row('Start collapsed').toggle?.value).toBe(false);
+  expect(row('Default theme').dropdown?.value).toBe('none');
   expect(row('Max node width').slider?.value).toBe(400);
   expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
   expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
@@ -105,6 +107,9 @@ test('every setting has a name and description, so Obsidian settings search find
   );
   expect(definition(mock, 'Default layout').desc).toBe(
     'For notes without mind-mapper-layout in their frontmatter.',
+  );
+  expect(definition(mock, 'Default theme').desc).toBe(
+    'Colours nodes and lines by level, for notes without mind-mapper-theme in their frontmatter.',
   );
   // The slider shows the value and its bounds; the description no longer repeats the range.
   expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
@@ -144,6 +149,52 @@ test('changing the default layout in the tab saves it and refreshes open maps', 
   await row('Default layout').dropdown?.changeHandler?.('right-to-left');
   expect(plugin.settings.defaultLayout).toBe('right-to-left');
   expect(mock.data).toMatchObject({ defaultLayout: 'right-to-left' });
+  expect(refresh).toHaveBeenCalledTimes(1);
+});
+
+test('the default theme is a dropdown bound to defaultTheme: theme names as values, translated labels', async () => {
+  const { mock } = await setup();
+  expect(definition(mock, 'Default theme').control).toEqual({
+    type: 'dropdown',
+    key: 'defaultTheme',
+    options: {
+      none: 'None',
+      rainbow: 'Rainbow',
+      ocean: 'Ocean',
+      forest: 'Forest',
+      accent: 'Accent colour',
+    },
+  });
+});
+
+test('in German the theme labels are German, the values stay', async () => {
+  useGerman();
+  const { mock } = await setup();
+  expect(definition(mock, 'Standard-Farbschema').control?.options).toEqual({
+    none: 'Keins',
+    rainbow: 'Regenbogen',
+    ocean: 'Ozean',
+    forest: 'Wald',
+    accent: 'Akzentfarbe',
+  });
+});
+
+test('choosing a default theme in the tab saves it and re-applies only the theme of open maps', async () => {
+  const { ws, plugin, mock } = await setup();
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  const leaf = ws.addLeaf({ type: 'mind-mapper-view' });
+  leaf.view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
+  const applyTheme = vi.spyOn(view, 'applyTheme').mockImplementation(() => {});
+  display(mock);
+  await row('Default theme').dropdown?.changeHandler?.('rainbow');
+  expect(plugin.settings.defaultTheme).toBe('rainbow');
+  expect(mock.data).toMatchObject({ defaultTheme: 'rainbow' });
+  // Spec "Colour themes": pure CSS, no re-measure and no re-layout.
+  expect(applyTheme).toHaveBeenCalledTimes(1);
+  expect(refresh).not.toHaveBeenCalled();
+  // Any other change still refreshes.
+  await plugin.updateSettings({ defaultTheme: 'ocean', levelGap: 80 });
   expect(refresh).toHaveBeenCalledTimes(1);
 });
 
@@ -234,6 +285,7 @@ test('in German the groups, rows and values are German; layout values stay', asy
   expect(Setting.rows.map((s) => [s.group, s.name])).toEqual([
     ['Mindmap', 'Standard-Layout'],
     ['Mindmap', 'Eingeklappt starten'],
+    ['Mindmap', 'Standard-Farbschema'],
     ['Knoten', 'Maximale Knotenbreite'],
     ['Knoten', 'Maximale Knotenhöhe'],
     ['Abstände', 'Geschwisterabstand'],

@@ -4,6 +4,7 @@ test('defaults match the spec', () => {
   expect(DEFAULT_SETTINGS).toEqual({
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
+    defaultTheme: 'none',
     maxNodeWidth: 320,
     maxNodeHeight: 240,
     siblingGap: 12,
@@ -23,6 +24,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
     sanitizeSettings({
       defaultLayout: 'spiral',
       startCollapsed: 'yes',
+      defaultTheme: 'neon',
       maxNodeWidth: '500',
       maxNodeHeight: 5,
       siblingGap: 'wide',
@@ -32,6 +34,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
   ).toEqual({
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
+    defaultTheme: 'none',
     maxNodeWidth: 500,
     maxNodeHeight: 120,
     siblingGap: 12,
@@ -44,6 +47,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
     sanitizeSettings({
       defaultLayout: 'top-to-bottom',
       startCollapsed: true,
+      defaultTheme: 'rainbow',
       maxNodeWidth: 400.6,
       maxNodeHeight: 300,
       siblingGap: 0,
@@ -52,6 +56,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
   ).toEqual({
     defaultLayout: 'top-to-bottom',
     startCollapsed: true,
+    defaultTheme: 'rainbow',
     maxNodeWidth: 401,
     maxNodeHeight: 300,
     siblingGap: 0,
@@ -67,5 +72,16 @@ test.each([1, 'true', null])(
   'startCollapsed %j that is not a boolean falls back to false',
   (value) => {
     expect(sanitizeSettings({ startCollapsed: value }).startCollapsed).toBe(false);
+  },
+);
+
+test.each(['none', 'rainbow', 'ocean', 'forest', 'accent'])('defaultTheme %s is kept', (value) => {
+  expect(sanitizeSettings({ defaultTheme: value }).defaultTheme).toBe(value);
+});
+
+test.each(['Rainbow', '', 3, null, ['ocean']])(
+  'defaultTheme %j that is not a theme falls back to none',
+  (value) => {
+    expect(sanitizeSettings({ defaultTheme: value }).defaultTheme).toBe('none');
   },
 );

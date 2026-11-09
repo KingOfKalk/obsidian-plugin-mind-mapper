@@ -136,6 +136,67 @@ describe('screenshots', function () {
     await browser.saveScreenshot(`${dir}/start-collapsed.png`);
   });
 
+  // Colour themes in light and dark mode, in full screen so the nodes are readable.
+  for (const theme of ['rainbow', 'accent', 'ocean', 'forest']) {
+    for (const mode of ['light', 'dark'] as const) {
+      it(`theme ${theme} ${mode}`, async function () {
+        await useTheme(theme, mode);
+        await openMindMap('fixtures/worked-example.md');
+        await settle();
+        await saveFullScreenShot(`${dir}/theme-${theme}-${mode}.png`);
+      });
+    }
+  }
+
+  // Eight levels: rainbow starts again at level 7, accent (4 steps) at level 5.
+  for (const [theme, mode] of [
+    ['rainbow', 'light'],
+    ['rainbow', 'dark'],
+    ['accent', 'light'],
+    ['accent', 'dark'],
+  ] as const) {
+    it(`theme ${theme} ${mode}, deep nesting`, async function () {
+      await useTheme(theme, mode);
+      await writeNote(
+        'theme-deep.md',
+        [
+          '---',
+          'mind-mapper-layout: left-to-right',
+          '---',
+          '# Deep',
+          '## Level 1',
+          '### Level 2',
+          '#### Level 3',
+          '##### Level 4',
+          '###### Level 5',
+          '- Level 6',
+          '  - Level 7',
+          '    - Level 8',
+          '## Level 1 again',
+          'A paragraph on level 2.',
+          '',
+        ].join('\n'),
+      );
+      await openMindMap('theme-deep.md');
+      await settle();
+      await saveFullScreenShot(`${dir}/theme-${theme}-deep-${mode}.png`);
+    });
+  }
+
+  // Clipped nodes: the expand button takes the tinted node background.
+  for (const mode of ['light', 'dark'] as const) {
+    it(`theme rainbow ${mode}, clipped nodes`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('fixtures/long-content.md');
+      await settle();
+      await saveFullScreenShot(`${dir}/theme-rainbow-clipped-${mode}.png`);
+    });
+  }
+
+  it('back to light mode without a colour theme', async function () {
+    await useTheme('none', 'light');
+  });
+
   it('settings', async function () {
     await saveSettingsScreenshots(`${dir}/settings`);
   });
@@ -150,6 +211,45 @@ describe('screenshots', function () {
     await setObsidianLanguage(null);
   });
 });
+
+/** Full screen fits the map to the whole window; Esc leaves it again. */
+async function saveFullScreenShot(path: string): Promise<void> {
+  await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+  await browser.pause(300);
+  await browser.saveScreenshot(path);
+  await browser.keys('Escape');
+}
+
+/** The plugin's default colour theme and Obsidian's base theme (moonstone light, obsidian dark). */
+async function useTheme(theme: string, mode: 'light' | 'dark'): Promise<void> {
+  await browser.executeObsidian(
+    async ({ app }, name, base) => {
+      // Settings > Appearance > Base color scheme.
+      (app as unknown as { changeTheme(theme: string): void }).changeTheme(
+        base === 'dark' ? 'obsidian' : 'moonstone',
+      );
+      const plugins = (
+        app as unknown as {
+          plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
+        }
+      ).plugins.plugins;
+      await plugins['mind-mapper']?.updateSettings({
+        defaultTheme: name,
+        defaultLayout: 'circle-clockwise',
+      });
+    },
+    theme,
+    mode,
+  );
+  await browser.waitUntil(
+    async () =>
+      (await browser.execute(() => document.body.classList.contains('theme-dark'))) ===
+      (mode === 'dark'),
+    { timeout: 5000, timeoutMsg: `Obsidian is not in ${mode} mode` },
+  );
+  // CSS transitions are off for 200 ms after a switch.
+  await browser.pause(300);
+}
 
 /**
  * Obsidian 1.15 opens the settings in their own window; shoots the Mind Mapper tab there:

@@ -46,6 +46,8 @@ export interface PositionedNode extends Rect {
   node: MindMapNode;
   /** Edge the children grow from (collapse toggle position). */
   childSide: Side;
+  /** Tree depth: 0 for the root, 1 for the first level (colour themes). */
+  depth: number;
 }
 
 export interface LayoutEdge {

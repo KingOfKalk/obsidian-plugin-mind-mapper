@@ -165,7 +165,11 @@ describe('user manual images', function () {
   });
 
   beforeEach(async function () {
-    await updateSettings({ defaultLayout: 'circle-clockwise', startCollapsed: false });
+    await updateSettings({
+      defaultLayout: 'circle-clockwise',
+      startCollapsed: false,
+      defaultTheme: 'none',
+    });
   });
 
   it('note and map side by side', async function () {
@@ -182,6 +186,15 @@ describe('user manual images', function () {
     await fit();
     await movePointerAway(400, 100);
     await shoot('layout-balanced');
+  });
+
+  it('rainbow colour theme', async function () {
+    await updateSettings({ defaultTheme: 'rainbow' });
+    await setWindowSize(820, 480);
+    await showMap(SIMPLE);
+    await fit();
+    await movePointerAway(400, 100);
+    await shoot('theme-rainbow');
   });
 
   it('top-to-bottom layout', async function () {

@@ -111,17 +111,39 @@ Project (root, H1)
 | `mind-mapper-title` | text | any string | single H1, else file name |
 | `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
+| `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `none`) |
  
-- Theme (decided): the map always follows the active Obsidian theme via CSS variables; no per-note override in MVP
+- Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a colour theme (see Colour themes)
 - Validation
   - `mind-mapper-layout` not in the list: fall back to the plugin setting
   - `mind-mapper-title` not a string (YAML number, list, ...): fall back to the default
   - `mind-mapper-collapsed` not a YAML boolean (`yes`, `"true"`, `1`, a list, ...): fall back to the plugin setting
+  - `mind-mapper-theme` not in the list (case-sensitive, like `mind-mapper-layout`): fall back to the plugin setting
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
-- Plugin settings tab: global defaults for layout and start collapsed, frontmatter overrides per note
-  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
+- Plugin settings tab: global defaults for layout, start collapsed and colour theme, frontmatter overrides per note
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
+  - "Default theme" is a dropdown: the values are the theme names, the labels are translated
+## Colour themes (decided)
+ 
+- Colour by nesting level: first-level nodes get colour 1, second-level nodes colour 2, and so on; the root keeps its look
+- Colours repeat after the end of the palette (with 6 colours, level 7 is coloured like level 1)
+- Coloured: the node border, a light tint of the same colour as node background, and the edge leading into the node; text keeps the normal text colour
+- Not coloured: the root, cross-link lines, dividers, collapse toggles, the selection ring
+- Themes
+ 
+| Theme | Colours by level |
+|---|---|
+| `none` (default) | none: the plain look |
+| `rainbow` | red, orange, yellow, green, blue, purple |
+| `ocean` | blue, cyan, green, purple |
+| `forest` | green, yellow, orange, olive (green and orange mixed) |
+| `accent` | Obsidian's accent colour at 100 %, 70 %, 50 %, 35 % (mixed into the background) |
+ 
+- Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--background-primary`), so light and dark mode and community themes keep working
+- Choice: frontmatter `mind-mapper-theme`, else the plugin setting "Default theme"
+- Live: a changed key or setting re-applies the theme while the map is open, without a re-layout (pure CSS)
 ## Layout (decided)
  
 - Input: tree, layout, measured or estimated node sizes; output: positioned nodes and edges; pure function
@@ -217,7 +239,6 @@ Project (root, H1)
  
 - Presentation mode: step through branches one by one (next / previous, focus and zoom to the current branch, dim the rest)
 - Custom themes
-- Per-note theme override (`mind-mapper-theme`: `system`, `dark`, `light`)
 - Map follows the active note (like Outline)
 - Labels / comments on connection lines
 - Editing in the map (writes back to markdown)

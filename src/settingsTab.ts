@@ -8,7 +8,17 @@ import { t } from './i18n';
 import type { MessageKey } from './i18n/en';
 import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
+import { type MapThemeName, THEME_NAMES } from './render/themes';
 import { DEFAULT_SETTINGS, type NumericSetting, SETTING_RANGES } from './settings';
+
+/** Dropdown labels; the values are the frontmatter names and stay untranslated. */
+const THEME_LABELS: Record<MapThemeName, MessageKey> = {
+  none: 'themeNone',
+  rainbow: 'themeRainbow',
+  ocean: 'themeOcean',
+  forest: 'themeForest',
+  accent: 'themeAccent',
+};
 
 const REPOSITORY_URL = 'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper';
 
@@ -51,6 +61,15 @@ export class MindMapSettingTab extends PluginSettingTab {
             name: t('startCollapsedName'),
             desc: t('startCollapsedDesc'),
             control: { type: 'toggle', key: 'startCollapsed' },
+          },
+          {
+            name: t('defaultThemeName'),
+            desc: t('defaultThemeDesc'),
+            control: {
+              type: 'dropdown',
+              key: 'defaultTheme',
+              options: Object.fromEntries(THEME_NAMES.map((name) => [name, t(THEME_LABELS[name])])),
+            },
           },
         ],
       },

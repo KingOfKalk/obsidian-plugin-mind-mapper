@@ -37,6 +37,7 @@ export const en = {
   invalidCollapsed:
     'Mind Mapper: mind-mapper-collapsed "{value}" in {path} is not true or false, using {collapsed}',
   invalidTitle: 'Mind Mapper: mind-mapper-title in {path} is not text, using the default title',
+  invalidTheme: 'Mind Mapper: unknown mind-mapper-theme "{value}" in {path}, using {theme}',
 
   // Settings
   mapHeading: 'Map',
@@ -48,6 +49,14 @@ export const en = {
   startCollapsedName: 'Start collapsed',
   startCollapsedDesc:
     'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
+  defaultThemeName: 'Default theme',
+  defaultThemeDesc:
+    'Colours nodes and lines by level, for notes without mind-mapper-theme in their frontmatter.',
+  themeNone: 'None',
+  themeRainbow: 'Rainbow',
+  themeOcean: 'Ocean',
+  themeForest: 'Forest',
+  themeAccent: 'Accent colour',
   maxNodeWidthName: 'Max node width',
   maxNodeWidthDesc: 'Wider content is clipped with a fade.',
   maxNodeHeightName: 'Max node height',

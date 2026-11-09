@@ -1,7 +1,9 @@
 import { t } from '../i18n';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
+import { type MapThemeName, THEME_NAMES } from '../render/themes';
 
-export type MapOptionKey = 'mind-mapper-title' | 'mind-mapper-layout' | 'mind-mapper-collapsed';
+export type MapOptionKey =
+  'mind-mapper-title' | 'mind-mapper-layout' | 'mind-mapper-collapsed' | 'mind-mapper-theme';
 
 export interface MapOptions {
   /** `mind-mapper-title`, else null (default title). */
@@ -9,24 +11,28 @@ export interface MapOptions {
   layout: MapLayoutName;
   /** `mind-mapper-collapsed`: the map starts like after "Collapse all". */
   collapsed: boolean;
+  /** `mind-mapper-theme`, else the "Default theme" setting. */
+  theme: MapThemeName;
   /** Values that were ignored; shown once per note and value (spec "Frontmatter"). */
   invalid: { key: MapOptionKey; value: string }[];
 }
 
 /**
  * Spec "Frontmatter": `mind-mapper-layout` outside the list and `mind-mapper-collapsed` that is
- * not a YAML boolean fall back to the plugin settings, `mind-mapper-title` that is not text falls
+ * not a YAML boolean and `mind-mapper-theme` outside the list fall back to the plugin settings, `mind-mapper-title` that is not text falls
  * back to the default. Absent or empty keys fall back without a warning.
  */
 export function readMapOptions(
   frontmatter: Record<string, unknown> | undefined,
   defaultLayout: MapLayoutName,
   startCollapsed: boolean,
+  defaultTheme: MapThemeName = 'none',
 ): MapOptions {
   const invalid: MapOptions['invalid'] = [];
   const rawTitle = frontmatter?.['mind-mapper-title'];
   const rawLayout = frontmatter?.['mind-mapper-layout'];
   const rawCollapsed = frontmatter?.['mind-mapper-collapsed'];
+  const rawTheme = frontmatter?.['mind-mapper-theme'];
 
   let title: string | null = null;
   if (typeof rawTitle === 'string') {
@@ -49,7 +55,14 @@ export function readMapOptions(
     invalid.push({ key: 'mind-mapper-collapsed', value: shown(rawCollapsed) });
   }
 
-  return { title, layout, collapsed, invalid };
+  let theme = defaultTheme;
+  if (THEME_NAMES.includes(rawTheme as MapThemeName)) {
+    theme = rawTheme as MapThemeName;
+  } else if (rawTheme !== undefined && rawTheme !== null) {
+    invalid.push({ key: 'mind-mapper-theme', value: shown(rawTheme) });
+  }
+
+  return { title, layout, collapsed, theme, invalid };
 }
 
 /** A YAML value as the user wrote it: lists comma separated, maps as JSON. */
@@ -73,5 +86,7 @@ export function invalidOptionMessage(
       return t('invalidCollapsed', { value, path, collapsed: String(options.collapsed) });
     case 'mind-mapper-title':
       return t('invalidTitle', { path });
+    case 'mind-mapper-theme':
+      return t('invalidTheme', { value, path, theme: options.theme });
   }
 }

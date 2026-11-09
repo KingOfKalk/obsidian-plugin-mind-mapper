@@ -13,7 +13,7 @@ function positioned(id: string, x: number, y: number): PositionedNode {
     line: 0,
     children: [],
   };
-  return { node, x, y, width: 100, height: 20, childSide: 'right' };
+  return { node, x, y, width: 100, height: 20, childSide: 'right', depth: 1 };
 }
 
 const layout: MapLayout = {

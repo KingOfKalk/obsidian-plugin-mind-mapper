@@ -2,9 +2,10 @@ import { setIcon } from 'obsidian';
 import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
-import type { MapLayout, PositionedNode, Rect, Side } from '../layout/types';
+import type { MapLayout, PositionedNode, Side } from '../layout/types';
 import type { MindMapNode } from '../parser/types';
 import { detailLevel, SpatialIndex, worldViewport } from './culling';
+import { levelAttr, type MapThemeName, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -76,7 +77,7 @@ export class DomMapRenderer implements MapRenderer {
   private readonly toggles = new Map<string, HTMLElement>();
   private selectedId: string | null = null;
   /** Node rects of the last layout (cross-links are drawn from the layout, never from the DOM). */
-  private rects = new Map<string, Rect>();
+  private rects = new Map<string, PositionedNode>();
   private layout: MapLayout | null = null;
   private collapse: CollapseInfo = NO_COLLAPSE;
   private index: SpatialIndex | null = null;
@@ -88,6 +89,7 @@ export class DomMapRenderer implements MapRenderer {
   private sized = false;
   private frame: number | null = null;
   private skeletonD: string | null = null;
+  private theme: MapThemeName = 'none';
 
   constructor(
     parentEl: HTMLElement,
@@ -96,6 +98,7 @@ export class DomMapRenderer implements MapRenderer {
   ) {
     this.culling = options.culling ?? false;
     this.canvasEl = parentEl.createDiv({ cls: 'mind-mapper-canvas' });
+    this.canvasEl.addClass(themeClass(this.theme));
     this.worldEl = this.canvasEl.createDiv({ cls: 'mind-mapper-world' });
     this.worldEl.addEventListener('click', (event) => {
       const id = this.nodeIdOf(event);
@@ -109,8 +112,8 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   setLayout(layout: MapLayout, collapse: CollapseInfo = NO_COLLAPSE): void {
-    this.renderEdges(layout);
     this.rects = new Map(layout.nodes.map((p) => [p.node.id, p]));
+    this.renderEdges(layout);
     this.layout = layout;
     this.collapse = collapse;
     this.skeletonD = null;
@@ -228,6 +231,17 @@ export class DomMapRenderer implements MapRenderer {
     }
   }
 
+  /**
+   * Spec "Colour themes": one class on the canvas; styles.css colours nodes and edges by their
+   * `data-level`, so a switch is pure CSS (no re-render).
+   */
+  setTheme(name: MapThemeName): void {
+    if (name === this.theme) return;
+    this.canvasEl.removeClass(themeClass(this.theme));
+    this.theme = name;
+    this.canvasEl.addClass(themeClass(name));
+  }
+
   /** `is-selected` on the node with this ID (kept for nodes created later). */
   setSelected(id: string | null): void {
     if (this.selectedId !== null) this.nodes.get(this.selectedId)?.el.removeClass('is-selected');
@@ -306,6 +320,8 @@ export class DomMapRenderer implements MapRenderer {
         this.edgePaths.push(path);
       }
       path.setAttribute('d', edgePath(edge));
+      // The level of the node the edge leads into (colour themes).
+      setLevel(path, this.rects.get(edge.toId)?.depth ?? 0);
     });
     this.renderDividers(layout, svg);
   }
@@ -379,7 +395,7 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   private placeNode(
-    { node, x, y, width, height }: PositionedNode,
+    { node, x, y, width, height, depth }: PositionedNode,
     pool: Map<string, HTMLElement[]>,
   ): void {
     let dom = this.nodes.get(node.id);
@@ -401,6 +417,7 @@ export class DomMapRenderer implements MapRenderer {
     }
     const { el } = dom;
     el.toggleClass('is-root', node.kind === 'root');
+    setLevel(el, depth);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.style.width = `${width}px`;
@@ -442,6 +459,14 @@ export class DomMapRenderer implements MapRenderer {
     this.hooks.render(node, contentEl);
     return contentEl;
   }
+}
+
+/** `data-level` for colour themes; written only when it changes (reconcile runs per frame). */
+function setLevel(el: Element, depth: number): void {
+  const level = levelAttr(depth);
+  if (el.getAttribute('data-level') === level) return;
+  if (level === null) el.removeAttribute('data-level');
+  else el.setAttribute('data-level', level);
 }
 
 /**

@@ -113,12 +113,19 @@ export default class MindMapperPlugin extends Plugin {
     new Notice(message);
   }
 
-  /** Validates, saves and applies to all open maps. */
+  /** Validates, saves and applies to all open maps; a theme-only change skips the re-layout. */
   async updateSettings(patch: Partial<MindMapSettings>): Promise<void> {
-    this.settings = sanitizeSettings({ ...this.settings, ...patch });
+    const previous = this.settings;
+    this.settings = sanitizeSettings({ ...previous, ...patch });
     await this.saveData(this.settings);
+    const changed = (Object.keys(this.settings) as (keyof MindMapSettings)[]).filter(
+      (key) => this.settings[key] !== previous[key],
+    );
+    const themeOnly = changed.length === 1 && changed[0] === 'defaultTheme';
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_MIND_MAP)) {
-      if (leaf.view instanceof MindMapView) leaf.view.refresh();
+      if (!(leaf.view instanceof MindMapView)) continue;
+      if (themeOnly) leaf.view.applyTheme();
+      else leaf.view.refresh();
     }
   }
 

@@ -160,8 +160,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Frontmatter options of the shown note, plugin settings as defaults. */
   private mapOptions(): MapOptions {
-    const { defaultLayout, startCollapsed } = this.services.settings();
-    return readMapOptions(this.frontmatter, defaultLayout, startCollapsed);
+    const { defaultLayout, startCollapsed, defaultTheme } = this.services.settings();
+    return readMapOptions(this.frontmatter, defaultLayout, startCollapsed, defaultTheme);
   }
 
   /** Frontmatter `mind-mapper-layout`, else the plugin setting. */
@@ -296,9 +296,15 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.relayoutKeeping(anchor);
   }
 
+  /** Frontmatter `mind-mapper-theme`, else the setting: pure CSS, no re-measure, no re-layout. */
+  applyTheme(): void {
+    this.dom?.renderer.setTheme(this.mapOptions().theme);
+  }
+
   /** Plugin settings changed: a new layout fits once, other changes keep the viewport anchored. */
   refresh(): void {
     this.applyCssLimits();
+    this.applyTheme();
     if (!this.layout || !this.tree) return;
     // A new max node size changes the size cache keys and the content caps: measure again now
     // (the ResizeObserver only fires for content whose size changes).
@@ -710,6 +716,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // Shown first: culling needs the canvas size (a hidden canvas measures 0 x 0).
     dom.placeholderEl.hidden = true;
     dom.renderer.canvasEl.hidden = false;
+    // Frontmatter edits arrive as a new layout; the theme itself is CSS only.
+    this.applyTheme();
     dom.renderer.setLayout(layout, this.collapseInfo);
     this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);

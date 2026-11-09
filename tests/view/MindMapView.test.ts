@@ -3,6 +3,7 @@ import { estimateSize } from '../../src/layout/nodeSize';
 import { DEFAULT_LAYOUT, layoutTree } from '../../src/layout/tidyTree';
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
+import { DomMapRenderer } from '../../src/render/DomMapRenderer';
 import { fitToBounds, IDENTITY } from '../../src/render/viewport';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
@@ -981,6 +982,80 @@ describe('layouts, frontmatter and settings', () => {
     view.refresh();
     expect(view.contentEl.style.getPropertyValue('--mind-mapper-node-max-width')).toBe('400px');
     expect(nodeBox(view, 'Long content/#2').width).toBe(400);
+  });
+});
+
+describe('colour themes', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function theme(view: MindMapView): string[] {
+    const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
+    return [...(canvas?.classList ?? [])].filter((c) => c.startsWith('mind-mapper-theme-'));
+  }
+
+  function level(view: MindMapView, id: string): string | null | undefined {
+    return view.contentEl.querySelector(`[data-node-id="${id}"]`)?.getAttribute('data-level');
+  }
+
+  test('nodes carry their level: root none, headings 1, their paragraphs 2', async () => {
+    const { view } = await openWith('fm-theme', { settings: () => LTR_SETTINGS });
+    expect(level(view, 'Theme')).toBeNull();
+    expect(level(view, 'Theme/Alpha')).toBe('1');
+    expect(level(view, 'Theme/Alpha/#1')).toBe('2');
+  });
+
+  test('the setting gives the theme of notes without mind-mapper-theme; a change applies live', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('live-before', { settings: () => settings });
+    expect(theme(view)).toEqual(['mind-mapper-theme-none']);
+    settings.defaultTheme = 'ocean';
+    view.refresh();
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+  });
+
+  test('applyTheme switches the theme without a re-layout', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('live-before', { settings: () => settings });
+    const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
+    settings.defaultTheme = 'rainbow';
+    view.applyTheme();
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).not.toHaveBeenCalled();
+    setLayout.mockRestore();
+  });
+
+  test('mind-mapper-theme overrides the setting, also after a setting change', async () => {
+    const settings: MindMapSettings = { ...LTR_SETTINGS, defaultTheme: 'accent' };
+    const { view } = await openWith('fm-theme', { settings: () => settings });
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+    settings.defaultTheme = 'forest';
+    view.refresh();
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+  });
+
+  test('editing or removing mind-mapper-theme switches the theme live', async () => {
+    const settings = { ...LTR_SETTINGS, defaultTheme: 'forest' as const };
+    const { view, ws } = await openWith('live-before', { settings: () => settings });
+    expect(theme(view)).toEqual(['mind-mapper-theme-forest']);
+    change(ws, 'Note.md', 'fm-theme');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+    change(ws, 'Note.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(theme(view)).toEqual(['mind-mapper-theme-forest']);
+  });
+
+  test('an unknown mind-mapper-theme falls back to the setting with a notice', async () => {
+    const warnOnce = vi.fn();
+    const settings = { ...LTR_SETTINGS, defaultTheme: 'ocean' as const };
+    const { view } = await openWith('fm-theme-invalid', { warnOnce, settings: () => settings });
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+    expect(warnOnce).toHaveBeenCalledWith(
+      'Note.md\0mind-mapper-theme\0neon',
+      'Mind Mapper: unknown mind-mapper-theme "neon" in Note.md, using ocean',
+    );
   });
 });
 

@@ -9,9 +9,9 @@ function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): Mi
 
 const layout: MapLayout = {
   nodes: [
-    { node: node('R', 'root'), x: 0, y: -18, width: 200, height: 36, childSide: 'right' },
-    { node: node('R/A'), x: 260, y: -42, width: 200, height: 36, childSide: 'right' },
-    { node: node('R/B'), x: 260, y: 6, width: 200, height: 36, childSide: 'right' },
+    { node: node('R', 'root'), x: 0, y: -18, width: 200, height: 36, childSide: 'right', depth: 0 },
+    { node: node('R/A'), x: 260, y: -42, width: 200, height: 36, childSide: 'right', depth: 1 },
+    { node: node('R/B'), x: 260, y: 6, width: 200, height: 36, childSide: 'right', depth: 1 },
   ],
   edges: [
     { fromId: 'R', toId: 'R/A', source: { x: 200, y: 0 }, target: { x: 260, y: -24 }, axis: 'x' },
@@ -67,7 +67,15 @@ test('long labels keep fixed size; node elements have no title tooltip', () => {
   renderer.setLayout({
     ...layout,
     nodes: [
-      { node: node('L', 'heading', label), x: 0, y: 0, width: 200, height: 36, childSide: 'right' },
+      {
+        node: node('L', 'heading', label),
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 36,
+        childSide: 'right',
+        depth: 1,
+      },
     ],
     edges: [],
   });
@@ -96,7 +104,15 @@ function withMarkdown(id: string, markdown: string): MapLayout {
   return {
     ...layout,
     nodes: [
-      { node: { ...node(id), markdown }, x: 0, y: 0, width: 200, height: 36, childSide: 'right' },
+      {
+        node: { ...node(id), markdown },
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 36,
+        childSide: 'right',
+        depth: 1,
+      },
     ],
     edges: [],
   };
@@ -122,6 +138,7 @@ test('same markdown keeps the element and does not re-render; position updates',
         width: 120,
         height: 40,
         childSide: 'right',
+        depth: 1,
       },
     ],
   });
@@ -307,6 +324,7 @@ test('a node whose id shifts keeps its rendered content element (render hook cal
     width: 200,
     height: 36,
     childSide: 'right' as const,
+    depth: 1,
   });
   renderer.setLayout({ ...layout, nodes: [at('A/#2', 'x', 0)], edges: [] });
   const original = parent.querySelector('[data-node-id="A/#2"] .mind-mapper-node-content');
@@ -378,6 +396,7 @@ describe('culling', () => {
         width: 100,
         height: 20,
         childSide: 'right',
+        depth: i === 0 ? 0 : 1,
       });
     }
     const edges = nodes.slice(1).map((p) => ({
@@ -554,6 +573,109 @@ test('dividers are drawn as dashed lines below cross-links and replaced on each 
   expect(svg?.querySelector('path.mind-mapper-divider')?.getAttribute('d')).toBe('M 260 5 L 460 5');
   renderer.setLayout(layout);
   expect(svg?.querySelectorAll('path.mind-mapper-divider')).toHaveLength(0);
+});
+
+/** A chain root -> d1 -> d2 -> … of `depth` levels below the root, one edge into each node. */
+function chain(depth: number): MapLayout {
+  const nodes: MapLayout['nodes'] = Array.from({ length: depth + 1 }, (_, d) => ({
+    node: node(`d${d}`, d === 0 ? 'root' : 'heading'),
+    x: d * 260,
+    y: 0,
+    width: 200,
+    height: 36,
+    childSide: 'right',
+    depth: d,
+  }));
+  const edges = nodes.slice(1).map((p, i) => ({
+    fromId: `d${i}`,
+    toId: p.node.id,
+    source: { x: i * 260 + 200, y: 18 },
+    target: { x: p.x, y: 18 },
+    axis: 'x' as const,
+  }));
+  return {
+    nodes,
+    edges,
+    dividers: [],
+    bounds: { x: 0, y: 0, width: depth * 260 + 200, height: 36 },
+  };
+}
+
+function levelsOf(parent: HTMLElement, selector: string): (string | null)[] {
+  return [...parent.querySelectorAll(selector)].map((el) => el.getAttribute('data-level'));
+}
+
+test('nodes and the edges into them carry their level, cycling after 12; the root has none', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(chain(14));
+  expect(levelsOf(parent, '.mind-mapper-node')).toEqual([
+    null,
+    ...['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '1', '2'],
+  ]);
+  // edge i leads into node d(i+1)
+  expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual([
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    '11',
+    '12',
+    '1',
+    '2',
+  ]);
+});
+
+test('levels follow a new layout on reused node elements and edge paths', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(chain(2));
+  const nodeEl = parent.querySelector('[data-node-id="d1"]');
+  const edgeEl = parent.querySelector('path.mind-mapper-edge');
+  // the same node one level deeper (e.g. after a heading level change keeps its id in a test)
+  renderer.setLayout({
+    ...chain(2),
+    nodes: chain(2).nodes.map((p) => (p.node.id === 'd1' ? { ...p, depth: 3 } : p)),
+    edges: chain(2).edges.map((e, i) => (i === 0 ? { ...e, toId: 'd2' } : { ...e, toId: 'd1' })),
+  });
+  expect(parent.querySelector('[data-node-id="d1"]')).toBe(nodeEl);
+  expect(nodeEl?.getAttribute('data-level')).toBe('3');
+  expect(parent.querySelector('path.mind-mapper-edge')).toBe(edgeEl);
+  expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual(['2', '3']);
+});
+
+test('nodes created later by culling get their level too', () => {
+  const parent = document.createElement('div');
+  const renderer = new DomMapRenderer(parent, undefined, { culling: true });
+  const canvas = renderer.canvasEl;
+  Object.defineProperty(canvas, 'clientWidth', { value: 400 });
+  Object.defineProperty(canvas, 'clientHeight', { value: 100 });
+  renderer.setLayout(chain(6));
+  expect(parent.querySelector('[data-node-id="d5"]')).toBeNull();
+  renderer.setTransform({ x: -5 * 260, y: 0, zoom: 1 });
+  renderer.updateVisible();
+  expect(parent.querySelector('[data-node-id="d5"]')?.getAttribute('data-level')).toBe('5');
+});
+
+test('the canvas has a theme class: none by default, setTheme switches it live', () => {
+  const { renderer } = setup();
+  renderer.setLayout(layout);
+  const themeClasses = () =>
+    [...renderer.canvasEl.classList].filter((c) => c.startsWith('mind-mapper-theme-'));
+  expect(themeClasses()).toEqual(['mind-mapper-theme-none']);
+  const nodeEl = renderer.canvasEl.querySelector('[data-node-id="R/A"]');
+  renderer.setTheme('rainbow');
+  expect(themeClasses()).toEqual(['mind-mapper-theme-rainbow']);
+  renderer.setTheme('accent');
+  expect(themeClasses()).toEqual(['mind-mapper-theme-accent']);
+  // a pure CSS switch: no re-render
+  expect(renderer.canvasEl.querySelector('[data-node-id="R/A"]')).toBe(nodeEl);
+  renderer.clear();
+  expect(themeClasses()).toEqual(['mind-mapper-theme-accent']);
 });
 
 test('in German the toggle and the expand button are labelled German', () => {

@@ -11,6 +11,7 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 - **Live companion:** open the map next to the note; edits show up in the map after Obsidian saves the note (about 2 s), and pan, zoom, selection and collapsed branches are kept
 - **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself
 - **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
+- **Colour themes:** colour nodes and lines by level (`rainbow`, `ocean`, `forest` or your `accent` colour), per note or as default; follows light and dark mode
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
 - **Languages:** English and German; follows Obsidian's language setting (Settings → General → Language)
@@ -77,10 +78,13 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | `mind-mapper-title` | any text | the single H1, else the file name |
 | `mind-mapper-layout` | one of the layouts above | the plugin setting |
 | `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | the plugin setting "Start collapsed" |
+| `mind-mapper-theme` | `none`, `rainbow`, `ocean`, `forest`, `accent` | the plugin setting "Default theme" |
 
 `mind-mapper-collapsed: true` opens the map like after "Collapse all": root and first level visible, and branches added by later edits stay collapsed until "Expand all". Changing the value while the map is open collapses or expands all once; other edits keep what you expanded or collapsed.
 
-An unknown layout, a title that is not text or a `mind-mapper-collapsed` that is not `true`/`false` falls back to the default and shows a notice once per note and value (per session).
+`mind-mapper-theme` colours each level of the map: the node border, a light tint behind the text and the line leading into the node; the root keeps its look and colours repeat after the last one. `rainbow`: red, orange, yellow, green, blue, purple. `ocean`: blue, cyan, green, purple. `forest`: green, yellow, orange, olive. `accent`: Obsidian's accent colour, fading level by level. The colours come from the Obsidian theme, so they suit light and dark mode. `none` is the plain look.
+
+An unknown layout or theme, a title that is not text or a `mind-mapper-collapsed` that is not `true`/`false` falls back to the default and shows a notice once per note and value (per session).
 
 ## Settings
 
@@ -90,6 +94,7 @@ Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's
 |---|---|---|---|---|
 | Map | Default layout | dropdown | the layouts above | `circle-clockwise` |
 | Map | Start collapsed | toggle | on / off | off |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | None |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px |

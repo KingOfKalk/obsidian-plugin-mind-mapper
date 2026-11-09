@@ -42,6 +42,8 @@ export const de: Messages = {
     'Mind Mapper: mind-mapper-collapsed "{value}" in {path} ist nicht true oder false, {collapsed} wird verwendet',
   invalidTitle:
     'Mind Mapper: mind-mapper-title in {path} ist kein Text, der Standardtitel wird verwendet',
+  invalidTheme:
+    'Mind Mapper: Unbekanntes mind-mapper-theme "{value}" in {path}, {theme} wird verwendet',
 
   // Settings
   mapHeading: 'Mindmap',
@@ -53,6 +55,14 @@ export const de: Messages = {
   startCollapsedName: 'Eingeklappt starten',
   startCollapsedDesc:
     'Mindmaps nur mit dem Hauptthema und der ersten Ebene öffnen, für Notizen ohne mind-mapper-collapsed im Frontmatter.',
+  defaultThemeName: 'Standard-Farbschema',
+  defaultThemeDesc:
+    'Färbt Knoten und Linien nach Ebene, für Notizen ohne mind-mapper-theme im Frontmatter.',
+  themeNone: 'Keins',
+  themeRainbow: 'Regenbogen',
+  themeOcean: 'Ozean',
+  themeForest: 'Wald',
+  themeAccent: 'Akzentfarbe',
   maxNodeWidthName: 'Maximale Knotenbreite',
   maxNodeWidthDesc: 'Breiterer Inhalt wird abgeschnitten und ausgeblendet.',
   maxNodeHeightName: 'Maximale Knotenhöhe',

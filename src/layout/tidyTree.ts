@@ -98,7 +98,7 @@ function canonical(
   const edges: Omit<LayoutEdge, 'axis'>[] = [];
   const dividers: LayoutDivider[] = [];
 
-  const place = (node: MindMapNode, x: number, top: number): PositionedNode => {
+  const place = (node: MindMapNode, x: number, top: number, depth: number): PositionedNode => {
     const size = sizes.get(node) ?? { width: 0, height: 0 };
     const box = boxHeights.get(node) ?? size.height;
     const centerY = top + box / 2;
@@ -108,6 +108,7 @@ function canonical(
       y: centerY - size.height / 2,
       ...size,
       childSide: 'right',
+      depth,
     };
     nodes.push(positioned);
 
@@ -124,7 +125,7 @@ function canonical(
         dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + length, y } });
       }
       childTop += gap;
-      const placed = place(child, childX, childTop);
+      const placed = place(child, childX, childTop, depth + 1);
       edges.push({
         fromId: node.id,
         toId: child.id,
@@ -138,7 +139,7 @@ function canonical(
   };
 
   const rootBox = measure(root);
-  place(root, 0, -rootBox / 2);
+  place(root, 0, -rootBox / 2, 0);
   return { nodes, edges, dividers };
 }
 

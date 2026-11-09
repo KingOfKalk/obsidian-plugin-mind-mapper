@@ -149,6 +149,14 @@ test('childSide per layout', () => {
   expect(sides('circle-counter-clockwise')).toEqual({ r: 'right', c1: 'left', c2: 'right' });
 });
 
+test.each(LAYOUT_NAMES)('%s: depth is the tree depth, the root 0', (layout) => {
+  const tree = n('r', n('a', n('a1', n('a1x'))), n('b'), n('c', n('c1')));
+  const depths = Object.fromEntries(
+    layoutTree({ root: tree }, options(layout)).nodes.map((p) => [p.node.id, p.depth]),
+  );
+  expect(depths).toEqual({ r: 0, a: 1, a1: 2, a1x: 3, b: 1, c: 1, c1: 2 });
+});
+
 function intersects(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
