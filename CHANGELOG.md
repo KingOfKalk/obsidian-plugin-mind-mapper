@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.1.0...1.1.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* align node text towards its parent ([#17](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/17)) ([71a9a13](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/71a9a132577825695123a4c5685a2da73ab16643))
+* harden the layout and colour theme switcher ([#16](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/16)) ([b1ec664](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/b1ec664eb145558a34ebdf6b554477a03cbeb2b0))
+
+
+### Documentation
+
+* host screenshots in secret gists instead of the repository ([#15](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/15)) ([1c4baed](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/1c4baed9998b7cb0262356f1fee400c365b8cd20))
+
 ## [1.1.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.0.0...1.1.0) (2026-11-09)
 
 
