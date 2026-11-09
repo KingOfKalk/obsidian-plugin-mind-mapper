@@ -1,10 +1,12 @@
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -181,4 +183,33 @@ test('syncNotes without a manifest prunes nothing', () => {
   expect(readFileSync(join(dest, 'Extra.md'), 'utf8')).toBe('extra');
   expect(readFileSync(join(dest, 'folder', 'Extra.md'), 'utf8')).toBe('extra');
   expect(existsSync(join(dest, MANIFEST))).toBe(true);
+});
+
+/**
+ * Temp dir on the repo's own filesystem: the devcontainer's workspace mount is where `cpSync`
+ * with a filter left overwritten notes write-only (0200); `/tmp` does not show it.
+ */
+function repoTmp(): string {
+  const base = join(__dirname, '..', '..', '.test-tmp');
+  mkdirSync(base, { recursive: true });
+  return mkdtempSync(join(base, 'vault-'));
+}
+
+test('syncNotes keeps notes readable: every sync gives copies the source permissions', () => {
+  const src = repoTmp();
+  const dest = repoTmp();
+  write(join(src, 'demo', 'Note.md'), '# Note');
+  chmodSync(join(src, 'demo', 'Note.md'), 0o644);
+  syncNotes(src, dest);
+  syncNotes(src, dest);
+  expect(statSync(join(dest, 'demo', 'Note.md')).mode & 0o777).toBe(0o644);
+  // a copy already broken by an earlier sync is repaired
+  chmodSync(join(dest, 'demo', 'Note.md'), 0o200);
+  syncNotes(src, dest);
+  expect(statSync(join(dest, 'demo', 'Note.md')).mode & 0o777).toBe(0o644);
+  expect(readFileSync(join(dest, 'demo', 'Note.md'), 'utf8')).toBe('# Note');
+});
+
+afterAll(() => {
+  rmSync(join(__dirname, '..', '..', '.test-tmp'), { recursive: true, force: true });
 });

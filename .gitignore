@@ -7,3 +7,4 @@ dev-vault/
 .obsidian-cache/
 e2e/perf/last-run.json
 e2e/screenshots/
+.test-tmp/

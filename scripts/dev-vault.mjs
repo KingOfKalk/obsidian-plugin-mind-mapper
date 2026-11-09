@@ -1,5 +1,7 @@
 // Dev vault helpers: copy test notes in, enable the plugin, pull recorded fixtures back.
 import {
+  chmodSync,
+  copyFileSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -7,9 +9,10 @@ import {
   readdirSync,
   rmSync,
   rmdirSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gitCommonDir, resolveDevTargets } from './dev-paths.mjs';
 
@@ -92,10 +95,16 @@ export function syncNotes(srcDir, destDir) {
   const previous = readManifest(manifestFile);
   const notes = listNotes(srcDir);
   mkdirSync(destDir, { recursive: true });
-  cpSync(srcDir, destDir, {
-    recursive: true,
-    filter: (source) => isSyncable(basename(source)),
-  });
+  // File by file, not `cpSync` with a filter: on the devcontainer's workspace mount that left
+  // overwritten notes write-only (0200), so Obsidian could not read them. Setting the mode
+  // explicitly also repairs copies an earlier sync broke.
+  for (const note of notes) {
+    const source = join(srcDir, note);
+    const target = join(destDir, note);
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(source, target);
+    chmodSync(target, statSync(source).mode & 0o777);
+  }
   const current = new Set(notes);
   prune(
     destDir,
