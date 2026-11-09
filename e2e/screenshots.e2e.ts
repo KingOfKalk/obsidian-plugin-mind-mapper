@@ -19,6 +19,7 @@ describe('screenshots', function () {
     'embeds',
     'long-content',
     'thematic-breaks',
+    'dividers-headings',
   ]) {
     it(note, async function () {
       await openMindMap(`fixtures/${note}.md`);

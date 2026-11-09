@@ -21,7 +21,7 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 - Every heading is a branch, nested by level (skipped levels attach to the nearest heading above)
 - Every paragraph, list item and block (code, table, math, quote, callout) is a node under its heading; nested list items nest their nodes
 - Frontmatter, comments (`%% %%`), HTML blocks and footnote definitions are left out
-- Horizontal rules (`---`, `***`, `___`) are not nodes: they show as a dashed line in a wider gap between the two nodes they separate; one directly before a heading, before the first or after the last node of a section is not shown
+- Horizontal rules (`---`, `***`, `___`) are not nodes: they show as a dashed line in a wider gap between the two branches they separate, also before a heading (e.g. `---` between two `##` sections); one before the first or after the last node of a section is not shown
 - Large nodes are capped at the max node size (default 320 × 240 px) with a fade; the expand icon shows all of it
 - Image embeds show a thumbnail; other embeds become plain links (no transclusion)
 

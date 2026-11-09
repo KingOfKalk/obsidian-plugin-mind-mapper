@@ -187,7 +187,7 @@ test('thematic breaks: every variant is skipped, setext dashes make a heading, a
   expect(cache?.frontmatter).toEqual({ 'mind-mapper-layout': 'left-to-right' });
 });
 
-test('thematic breaks: dividers mark the following sibling, never before a heading', () => {
+test('thematic breaks: dividers mark the next node, headings included, if it has a previous sibling', () => {
   const flagged: string[] = [];
   const visit = (node: MindMapNode): void => {
     if (node.dividerBefore) flagged.push(node.id);
@@ -200,5 +200,24 @@ test('thematic breaks: dividers mark the following sibling, never before a headi
     'Dividers/#4',
     'Dividers/#5',
     'Dividers/Paragraph directly above dashes/#3',
+    'Dividers/Mid block',
+    'Dividers/mind-mapper-title: Not frontmatter',
   ]);
+});
+
+test('dividers before headings mark that heading under its parent', () => {
+  const flagged: string[] = [];
+  const visit = (node: MindMapNode): void => {
+    if (node.dividerBefore) flagged.push(node.id);
+    node.children.forEach(visit);
+  };
+  const root = treeOf('dividers-headings');
+  visit(root);
+  expect(outline(root)).toEqual([
+    'example',
+    '  example/test one',
+    '    example/test one/test two',
+    '  example/test three',
+  ]);
+  expect(flagged).toEqual(['example/test one/test two', 'example/test three']);
 });

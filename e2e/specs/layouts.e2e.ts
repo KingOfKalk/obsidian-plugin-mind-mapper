@@ -152,8 +152,38 @@ describe('dividers', function () {
           !!above && !!below && !!first && first.top > above.bottom && first.bottom < below.top,
       };
     });
-    expect(result.count).toBe(5);
+    expect(result.count).toBe(7);
     expect(result.between).toBe(true);
     expect(result.stroke).not.toBe('none');
+  });
+
+  it('before a heading divide whole branches', async function () {
+    await openMindMap('fixtures/dividers-headings.md');
+    await settle();
+    const result = await browser.execute(() => {
+      const rect = (id: string) =>
+        document.querySelector(`.mind-mapper-node[data-node-id="${id}"]`)?.getBoundingClientRect();
+      const lines = [...document.querySelectorAll('path.mind-mapper-divider')].map((p) =>
+        p.getBoundingClientRect(),
+      );
+      const entry = rect('example/test one/#1');
+      const heading = rect('example/test one/test two');
+      const child = rect('example/test one/test two/#1');
+      const between = lines.filter(
+        (l) => !!entry && !!heading && l.top > entry.bottom && l.bottom < heading.top,
+      );
+      const line = between[0];
+      return {
+        count: between.length,
+        startsAtColumn: !!line && !!entry && Math.abs(line.left - entry.left) <= 1,
+        // The line divides whole branches: it reaches the right edge of test two's children.
+        reachesChildren: !!line && !!child && line.right >= child.right - 1,
+        pastHeading: !!line && !!heading && line.right > heading.right + 1,
+      };
+    });
+    expect(result.count).toBe(1);
+    expect(result.startsAtColumn).toBe(true);
+    expect(result.reachesChildren).toBe(true);
+    expect(result.pastHeading).toBe(true);
   });
 });

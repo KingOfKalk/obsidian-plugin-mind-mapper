@@ -1,0 +1,302 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "---\nmind-mapper-layout: left-to-right\n---\n\n# example\n\n## test one\n\n- entry 1\n\n---\n\n### test two\n\n- entry 1\n- entry 2\n\n---\n\n## test three\n\n- entry 1\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 43
+          },
+          "end": {
+            "line": 4,
+            "col": 9,
+            "offset": 52
+          }
+        },
+        "heading": "example",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 54
+          },
+          "end": {
+            "line": 6,
+            "col": 11,
+            "offset": 65
+          }
+        },
+        "heading": "test one",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 12,
+            "col": 0,
+            "offset": 83
+          },
+          "end": {
+            "line": 12,
+            "col": 12,
+            "offset": 95
+          }
+        },
+        "heading": "test two",
+        "level": 3
+      },
+      {
+        "position": {
+          "start": {
+            "line": 19,
+            "col": 0,
+            "offset": 123
+          },
+          "end": {
+            "line": 19,
+            "col": 13,
+            "offset": 136
+          }
+        },
+        "heading": "test three",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "yaml",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 2,
+            "col": 3,
+            "offset": 41
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 43
+          },
+          "end": {
+            "line": 4,
+            "col": 9,
+            "offset": 52
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 54
+          },
+          "end": {
+            "line": 6,
+            "col": 11,
+            "offset": 65
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 67
+          },
+          "end": {
+            "line": 8,
+            "col": 9,
+            "offset": 76
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 0,
+            "offset": 78
+          },
+          "end": {
+            "line": 10,
+            "col": 3,
+            "offset": 81
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 12,
+            "col": 0,
+            "offset": 83
+          },
+          "end": {
+            "line": 12,
+            "col": 12,
+            "offset": 95
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 14,
+            "col": 0,
+            "offset": 97
+          },
+          "end": {
+            "line": 15,
+            "col": 9,
+            "offset": 116
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 17,
+            "col": 0,
+            "offset": 118
+          },
+          "end": {
+            "line": 17,
+            "col": 3,
+            "offset": 121
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 19,
+            "col": 0,
+            "offset": 123
+          },
+          "end": {
+            "line": 19,
+            "col": 13,
+            "offset": 136
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 21,
+            "col": 0,
+            "offset": 138
+          },
+          "end": {
+            "line": 21,
+            "col": 9,
+            "offset": 147
+          }
+        }
+      }
+    ],
+    "listItems": [
+      {
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 67
+          },
+          "end": {
+            "line": 8,
+            "col": 9,
+            "offset": 76
+          }
+        },
+        "parent": -8
+      },
+      {
+        "position": {
+          "start": {
+            "line": 14,
+            "col": 0,
+            "offset": 97
+          },
+          "end": {
+            "line": 14,
+            "col": 9,
+            "offset": 106
+          }
+        },
+        "parent": -14
+      },
+      {
+        "position": {
+          "start": {
+            "line": 15,
+            "col": 0,
+            "offset": 107
+          },
+          "end": {
+            "line": 15,
+            "col": 9,
+            "offset": 116
+          }
+        },
+        "parent": -14
+      },
+      {
+        "position": {
+          "start": {
+            "line": 21,
+            "col": 0,
+            "offset": 138
+          },
+          "end": {
+            "line": 21,
+            "col": 9,
+            "offset": 147
+          }
+        },
+        "parent": -21
+      }
+    ],
+    "frontmatter": {
+      "mind-mapper-layout": "left-to-right"
+    },
+    "frontmatterPosition": {
+      "start": {
+        "line": 0,
+        "col": 0,
+        "offset": 0
+      },
+      "end": {
+        "line": 2,
+        "col": 3,
+        "offset": 41
+      }
+    },
+    "frontmatterLinks": []
+  }
+}

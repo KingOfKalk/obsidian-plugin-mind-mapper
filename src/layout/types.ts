@@ -57,7 +57,7 @@ export interface LayoutEdge {
   axis: 'x' | 'y';
 }
 
-/** Spec "Dividers": a line in the gap between two siblings, across the wider of the two. */
+/** Spec "Dividers": a line in the gap between two siblings, across both of their subtrees. */
 export interface LayoutDivider {
   parentId: string;
   from: Point;

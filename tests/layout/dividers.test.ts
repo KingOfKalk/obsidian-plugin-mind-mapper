@@ -1,6 +1,8 @@
 import { DIVIDER_GAP, layoutTree } from '../../src/layout/tidyTree';
 import type { LayoutOptions, MapLayoutName, PositionedNode } from '../../src/layout/types';
+import { visibleTree } from '../../src/layout/visibleTree';
 import type { MindMapNode } from '../../src/parser/types';
+import { CollapseState } from '../../src/view/collapseState';
 
 function n(id: string, children: MindMapNode[] = [], dividerBefore = false): MindMapNode {
   return {
@@ -33,7 +35,7 @@ function rect(nodes: PositionedNode[], id: string): PositionedNode {
   return found;
 }
 
-test('left-to-right: extra gap and a horizontal line across the wider neighbor', () => {
+test('left-to-right: extra gap and a horizontal line across the wider of two leaves', () => {
   const layout = layoutTree({ root: n('r', [n('a'), n('b', [], true)]) }, options('left-to-right'));
   const a = rect(layout.nodes, 'a');
   const b = rect(layout.nodes, 'b');
@@ -80,6 +82,66 @@ test('a divider deeper in the tree is placed under its own parent', () => {
     options('left-to-right'),
   );
   expect(layout.dividers.map((d) => d.parentId)).toEqual(['p']);
+});
+
+describe('the line spans the two neighbouring subtrees', () => {
+  // a has one child (a1), b a deeper branch (b1 > b11): b's subtree reaches further out.
+  const tree = () => ({
+    root: n('r', [n('a', [n('a1')]), n('b', [n('b1', [n('b11')])], true)]),
+  });
+
+  test('left-to-right: from the child column to the far edge of the deepest descendant', () => {
+    const layout = layoutTree(tree(), options('left-to-right'));
+    const a = rect(layout.nodes, 'a');
+    const b11 = rect(layout.nodes, 'b11');
+    const [divider] = layout.dividers;
+    expect(divider?.from.x).toBe(a.x);
+    expect(divider?.to.x).toBe(b11.x + b11.width);
+    expect(divider?.from.y).toBe(divider?.to.y);
+  });
+
+  test('right-to-left: mirrored, reaching the left edge of the deepest descendant', () => {
+    const layout = layoutTree(tree(), options('right-to-left'));
+    const a = rect(layout.nodes, 'a');
+    const b11 = rect(layout.nodes, 'b11');
+    const [divider] = layout.dividers;
+    expect(divider?.from.x).toBeCloseTo(a.x + a.width);
+    expect(divider?.to.x).toBeCloseTo(b11.x);
+  });
+
+  test('top-to-bottom: vertical, down to the bottom edge of the deepest descendant', () => {
+    const layout = layoutTree(tree(), options('top-to-bottom'));
+    const a = rect(layout.nodes, 'a');
+    const b11 = rect(layout.nodes, 'b11');
+    const [divider] = layout.dividers;
+    expect(divider?.from.x).toBe(divider?.to.x);
+    expect(divider?.from.y).toBe(a.y);
+    expect(divider?.to.y).toBe(b11.y + b11.height);
+  });
+
+  test('circle left side: reaching the left edge of the deepest descendant', () => {
+    // c3, c4 on the left side; c4 (flagged) has the deeper branch.
+    const root = n('r', [n('c1'), n('c2'), n('c3', [n('x')]), n('c4', [n('y', [n('z')])], true)]);
+    const layout = layoutTree({ root }, options('circle-clockwise'));
+    const c3 = rect(layout.nodes, 'c3');
+    const z = rect(layout.nodes, 'z');
+    const [divider] = layout.dividers;
+    expect(layout.dividers).toHaveLength(1);
+    expect(Math.max(divider?.from.x ?? 0, divider?.to.x ?? 0)).toBeCloseTo(c3.x + c3.width);
+    expect(Math.min(divider?.from.x ?? 0, divider?.to.x ?? 0)).toBeCloseTo(z.x);
+  });
+
+  test('a collapsed neighbour counts only with its visible part', () => {
+    const collapsed = new CollapseState();
+    collapsed.toggle('b1');
+    const layout = layoutTree(visibleTree(tree(), collapsed).tree, options('left-to-right'));
+    const a1 = rect(layout.nodes, 'a1');
+    const b1 = rect(layout.nodes, 'b1');
+    const [divider] = layout.dividers;
+    // b1 (100) and a1 (100) end in the same column; b11 is hidden.
+    expect(divider?.to.x).toBe(Math.max(a1.x + a1.width, b1.x + b1.width));
+    expect(layout.nodes.some((p) => p.node.id === 'b11')).toBe(false);
+  });
 });
 
 describe('circle layouts', () => {

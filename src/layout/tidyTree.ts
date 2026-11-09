@@ -81,11 +81,16 @@ function canonical(
   const childrenBlockHeight = (node: MindMapNode, height: (n: MindMapNode) => number): number =>
     node.children.reduce((sum, child, i) => sum + gapBefore(node, i) + height(child), 0);
 
+  /** Subtree extent along the level axis, from the node's near edge to its deepest descendant. */
+  const extents = new Map<MindMapNode, number>();
+
   const measure = (node: MindMapNode): number => {
     const size = nodeSize(node);
     sizes.set(node, size);
     const box = Math.max(size.height, childrenBlockHeight(node, measure));
     boxHeights.set(node, box);
+    const deepest = Math.max(0, ...node.children.map((child) => extents.get(child) ?? 0));
+    extents.set(node, size.width + (deepest > 0 ? options.levelGap + deepest : 0));
     return box;
   };
 
@@ -114,8 +119,9 @@ function canonical(
       const gap = gapBefore(node, i);
       if (previous && dividerAt(node, i)) {
         const y = childTop + gap / 2;
-        const width = Math.max(sizes.get(previous)?.width ?? 0, sizes.get(child)?.width ?? 0);
-        dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + width, y } });
+        // Spans both neighbouring branches, not just the two nodes (spec "Dividers").
+        const length = Math.max(extents.get(previous) ?? 0, extents.get(child) ?? 0);
+        dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + length, y } });
       }
       childTop += gap;
       const placed = place(child, childX, childTop);

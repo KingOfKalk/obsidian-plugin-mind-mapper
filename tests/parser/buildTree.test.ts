@@ -279,20 +279,78 @@ describe('dividers (spec "Dividers")', () => {
     expect(flagged(buildTree(input, 'note').root)).toEqual(['R/#2']);
   });
 
-  test('before the first child, after the last child and before a heading it is ignored', () => {
+  test('before the first child and after the last child it is ignored', () => {
     const input = noteInput(
-      ['# R', '---', 'A.', '***', '## H', 'B.', '___'],
+      ['# R', '---', 'A.', 'B.', '___'],
       [
         ['heading', 0, 0],
         ['thematicBreak', 1, 1],
         ['paragraph', 2, 2],
-        ['thematicBreak', 3, 3],
-        ['heading', 4, 4],
-        ['paragraph', 5, 5],
-        ['thematicBreak', 6, 6],
+        ['paragraph', 3, 3],
+        ['thematicBreak', 4, 4],
       ],
     );
     expect(flagged(buildTree(input, 'note').root)).toEqual([]);
+  });
+
+  test('before a heading it marks that heading under its parent (owner example)', () => {
+    const input = noteInput(
+      ['# example', '## test one', 'entry 1', '---', '### test two', 'entry 1', 'entry 2'],
+      [
+        ['heading', 0, 0],
+        ['heading', 1, 1],
+        ['paragraph', 2, 2],
+        ['thematicBreak', 3, 3],
+        ['heading', 4, 4],
+        ['paragraph', 5, 5],
+        ['paragraph', 6, 6],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual(['example/test one/test two']);
+  });
+
+  test('between two sections of the same level it marks the second section', () => {
+    const input = noteInput(
+      ['# R', '## A', 'a.', '---', '## B', 'b.'],
+      [
+        ['heading', 0, 0],
+        ['heading', 1, 1],
+        ['paragraph', 2, 2],
+        ['thematicBreak', 3, 3],
+        ['heading', 4, 4],
+        ['paragraph', 5, 5],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual(['R/B']);
+  });
+
+  test("before a heading that is its parent's first child it is ignored", () => {
+    const input = noteInput(
+      ['# R', '## A', '---', '### A1', 'a.'],
+      [
+        ['heading', 0, 0],
+        ['heading', 1, 1],
+        ['thematicBreak', 2, 2],
+        ['heading', 3, 3],
+        ['paragraph', 4, 4],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual([]);
+  });
+
+  test("before a higher-level heading it lands under that heading's parent", () => {
+    const input = noteInput(
+      ['# R', '## A', '### A1', 'a.', '---', '## B'],
+      [
+        ['heading', 0, 0],
+        ['heading', 1, 1],
+        ['heading', 2, 2],
+        ['paragraph', 3, 3],
+        ['thematicBreak', 4, 4],
+        ['heading', 5, 5],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual(['R/B']);
   });
 
   test('several in a row count as one; skipped sections in between do not break it', () => {

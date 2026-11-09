@@ -1041,11 +1041,11 @@ describe('dividers', () => {
 
   test('dividers of the thematic-breaks note are drawn; a collapsed parent hides its own', async () => {
     const { view } = await openWith('thematic-breaks', {});
-    expect(dividerCount(view)).toBe(5);
+    expect(dividerCount(view)).toBe(7);
     view.toggleCollapse('Dividers/Paragraph directly above dashes');
-    expect(dividerCount(view)).toBe(4);
+    expect(dividerCount(view)).toBe(6);
     view.toggleCollapse('Dividers/Paragraph directly above dashes');
-    expect(dividerCount(view)).toBe(5);
+    expect(dividerCount(view)).toBe(7);
   });
 });
 

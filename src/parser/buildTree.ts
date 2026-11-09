@@ -48,27 +48,33 @@ export function buildTree(
   const builder = new ChildBuilder();
   const stack: MindMapNode[] = [root];
   const current = (): MindMapNode => stack[stack.length - 1] ?? root;
-  // Parent under which a divider is waiting for the next sibling (spec "Dividers").
-  let dividerParent: MindMapNode | null = null;
+  // A divider waits for the next node, wherever it lands (spec "Dividers").
+  let dividerPending = false;
+  /** Marks `first` if a divider is pending and it is not its parent's first child. */
+  const takeDivider = (parent: MindMapNode, first: MindMapNode): void => {
+    if (dividerPending && parent.children.length > 0) first.dividerBefore = true;
+    dividerPending = false;
+  };
 
   for (const item of orderedItems(input)) {
     if ('heading' in item) {
       const heading = item.heading;
-      dividerParent = null; // directly before a heading: ignored
-      if (h1IsRoot && heading === onlyH1) continue;
+      if (h1IsRoot && heading === onlyH1) {
+        dividerPending = false;
+        continue;
+      }
       while (stack.length > 1 && current().level >= heading.level) stack.pop();
       const parent = current();
       const child = headingNode(builder.headingId(parent, heading.text), heading, 'heading');
+      takeDivider(parent, child);
       parent.children.push(child);
       stack.push(child);
     } else if (item.section.type === 'thematicBreak') {
-      // Before the first child there is nothing to separate.
-      if (current().children.length > 0) dividerParent = current();
+      dividerPending = true;
     } else {
       const children = sectionNodes(item.section, input, current(), builder);
       const first = children[0];
-      if (first && dividerParent === current()) first.dividerBefore = true;
-      if (first) dividerParent = null;
+      if (first) takeDivider(current(), first);
       current().children.push(...children);
     }
   }

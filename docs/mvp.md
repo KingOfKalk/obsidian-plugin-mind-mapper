@@ -31,10 +31,10 @@
   - Block ID `^id`: hidden in the node
   - Skip: frontmatter, comments `%% %%`, HTML blocks, footnote definitions; footnote references stay as text
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
-  - Shown only between two siblings of the same parent; before the first or after the last child: ignored
-  - Directly before a heading: ignored (the heading branches already separate those sections)
-  - Several in a row count as one
-  - Look: extra gap between the two siblings plus a dashed line in the theme's divider color (`--hr-color`), across the width of the wider of the two neighbors; perpendicular to the stacking direction (horizontal line in left/right layouts, vertical line in top/bottom layouts)
+  - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
+  - Ignored: before a parent's first child, after the last child (no next node)
+  - Several in a row count as one; skipped sections in between (comments, HTML, ...) keep it pending
+  - Look: extra gap between the two siblings plus a dashed line in the theme's divider color (`--hr-color`); the line divides whole branches: it runs from the child column to the far edge of the deepest visible descendant of either neighbor (a collapsed branch counts only with its visible part); perpendicular to the stacking direction (horizontal line in left/right layouts, vertical line in top/bottom layouts), mirrored with its nodes (right-to-left, bottom-to-top, left side of the circle layouts)
   - Circle layouts: drawn on the side it falls on; a divider exactly at the split between right and left side is not drawn
   - A collapsed parent hides its dividers
   - Inside a container (list item, blockquote, callout) a divider is part of that node's content and renders as a line inside the node
