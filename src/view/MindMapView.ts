@@ -361,6 +361,15 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     await super.onClose();
   }
 
+  /**
+   * Obsidian fills the view header title once, when the view loads (before setState has set the
+   * note), and only refreshes the tab. The API has no hook for the header title: set it ourselves.
+   */
+  private updateHeaderTitle(): void {
+    const title = this.containerEl.querySelector('.view-header-title');
+    if (title) title.textContent = this.getDisplayText();
+  }
+
   override getState(): Record<string, unknown> {
     return { ...super.getState(), file: this.pinnedFile };
   }
@@ -373,6 +382,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       this.startCollapsed = null;
     }
     this.pinnedFile = file;
+    this.updateHeaderTitle();
     await super.setState(state, result);
     await this.loadNote();
   }
@@ -492,7 +502,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         if (oldPath !== this.pinnedFile) return;
         // Set first: setState then sees the same file and keeps the viewport (no fit).
         this.pinnedFile = file.path;
-        // Updates the tab title and the saved workspace (the API has no public updateHeader).
+        // Updates the tab title and the saved workspace (setState also refreshes the view header title).
         this.leaf
           .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { file: file.path } })
           .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));

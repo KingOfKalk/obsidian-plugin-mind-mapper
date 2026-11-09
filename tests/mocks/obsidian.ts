@@ -130,7 +130,8 @@ export class ItemView extends Component {
     // Real leaves carry the app internally; test fakes expose it as `app`.
     this.app = (leaf as unknown as { app: App }).app;
     this.containerEl = document.createElement('div');
-    this.containerEl.createDiv({ cls: 'view-header' });
+    // Real views fill the header title once, on load, and never refresh it by themselves.
+    this.containerEl.createDiv({ cls: 'view-header' }).createDiv({ cls: 'view-header-title' });
     this.contentEl = this.containerEl.createDiv({ cls: 'view-content' });
   }
 

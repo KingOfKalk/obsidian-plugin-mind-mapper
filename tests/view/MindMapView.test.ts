@@ -76,6 +76,21 @@ test('setState({file}) round-trips through getState and sets title', async () =>
   expect(view.getDisplayText()).toBe('Über Ärger 🚀');
 });
 
+function headerTitle(view: MindMapView): string | null | undefined {
+  return view.containerEl.querySelector('.view-header-title')?.textContent;
+}
+
+test('the view header title follows the note: set, switched and reset', async () => {
+  const { view } = newView();
+  await view.onOpen();
+  await view.setState(...state('Folder/First.md'));
+  expect(headerTitle(view)).toBe('First');
+  await view.setState(...state('Second.md'));
+  expect(headerTitle(view)).toBe('Second');
+  await view.setState(...state(42));
+  expect(headerTitle(view)).toBe('Mind map');
+});
+
 test('setState with malformed state falls back to no file', async () => {
   const { view } = newView();
   await view.setState(...state('a.md'));
@@ -743,6 +758,7 @@ describe('rename, delete, empty note', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(view.file).toBe('Folder/Renamed.md');
     expect(view.getDisplayText()).toBe('Renamed');
+    expect(headerTitle(view)).toBe('Renamed');
     expect(setViewState).toHaveBeenCalledWith({
       type: 'mind-mapper-view',
       state: { file: 'Folder/Renamed.md' },
