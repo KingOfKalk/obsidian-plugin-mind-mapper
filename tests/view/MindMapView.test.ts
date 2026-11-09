@@ -7,6 +7,7 @@ import { DomMapRenderer } from '../../src/render/DomMapRenderer';
 import { fitBounds, fitMargin, fitToBounds, IDENTITY } from '../../src/render/viewport';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
+import type { MockInstance } from 'vitest';
 import { MindMapView, type ViewServices } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
 import { FakeWorkspace, fakeFile, useGerman } from '../helpers';
@@ -1225,11 +1226,24 @@ describe('colour themes', () => {
 });
 
 describe('layout and colour theme of this view (overrides)', () => {
+  let frames: MockInstance[] = [];
   beforeEach(() => {
     vi.useFakeTimers();
     MockMenu.lastShown = null;
+    // jsdom's frames run on real time: tie them to the fake timers (a frame is one tick).
+    frames = [
+      vi
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation(
+          (callback) => setTimeout(() => callback(performance.now()), 1) as unknown as number,
+        ),
+      vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => clearTimeout(id)),
+    ];
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    for (const spy of frames) spy.mockRestore();
+  });
 
   function theme(view: MindMapView): string[] {
     const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
@@ -1420,6 +1434,123 @@ describe('layout and colour theme of this view (overrides)', () => {
     view.nextTheme();
     expect(theme(view)).toEqual(['mind-mapper-theme-none']);
     expect(view.getState()).toMatchObject({ theme: 'none' });
+  });
+
+  test('choosing the layout that is already shown does not re-fit, but sets the highlight; so does "Use the note\'s layout" when it equals the override', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const moved = { x: -500, y: 900, zoom: 0.3 };
+    view.setTransform(moved);
+    const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
+    // The note's layout (left-to-right) as an override: nothing to lay out, but highlighted.
+    view.chooseLayout('left-to-right');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).not.toHaveBeenCalled();
+    expect(view.getTransform()).toEqual(moved);
+    expect(active(view, 'Layout')).toBe(true);
+    expect(view.getState()).toMatchObject({ layout: 'left-to-right' });
+    // Back to the note's layout, which is the same one: highlight off, no re-fit.
+    view.chooseLayout(null);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).not.toHaveBeenCalled();
+    expect(view.getTransform()).toEqual(moved);
+    expect(active(view, 'Layout')).toBe(false);
+    expect(view.getState()).toMatchObject({ layout: null });
+    // A different override twice in a row: the second choice changes nothing.
+    view.chooseLayout('top-to-bottom');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).toHaveBeenCalledTimes(1);
+    const fitted = view.getTransform();
+    view.setTransform(moved);
+    view.chooseLayout('top-to-bottom');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).toHaveBeenCalledTimes(1);
+    expect(view.getTransform()).toEqual(moved);
+    expect(fitted).not.toEqual(moved);
+    setLayout.mockRestore();
+  });
+
+  test('next layout re-lays out and fits', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const moved = { x: -500, y: 900, zoom: 0.3 };
+    view.setTransform(moved);
+    view.nextLayout();
+    await vi.advanceTimersByTimeAsync(300);
+    // From left-to-right to right-to-left.
+    expect(view.getState()).toMatchObject({ layout: 'right-to-left' });
+    expect(centerX(view, 'Project/Tasks')).toBeLessThan(centerX(view, 'Project'));
+    expect(view.getTransform()).not.toEqual(moved);
+    const root = screenOf(view, 'Project');
+    expect(root.x).toBeGreaterThanOrEqual(0);
+    expect(root.x).toBeLessThan(800);
+    expect(root.y).toBeGreaterThanOrEqual(0);
+    expect(root.y).toBeLessThan(600);
+  });
+
+  test('an override restored into a hidden tab fits once the tab is shown', async () => {
+    const { ws } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+    const restored = new MindMapView(leaf as unknown as WorkspaceLeaf, {
+      settings: () => LTR_SETTINGS,
+    });
+    await setSize(restored, 0, 0);
+    await restored.setState({ file: 'Note.md', layout: 'top-to-bottom' }, { history: false });
+    await vi.advanceTimersByTimeAsync(300);
+    expect(grows(restored, 'Project', 'Project/Tasks')).toBe('down');
+    expect(restored.getTransform()).toEqual(IDENTITY);
+    setElSize(restored.contentEl.querySelector('.mind-mapper-canvas'), 800, 600);
+    restored.onResize();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(restored.getTransform()).not.toEqual(IDENTITY);
+    // Fits once: a later resize keeps the viewport.
+    restored.setTransform({ x: 5, y: 6, zoom: 1 });
+    restored.onResize();
+    expect(restored.getTransform()).toEqual({ x: 5, y: 6, zoom: 1 });
+  });
+
+  test('"Next layout" many times within one frame lays out once per frame; the last choice wins', async () => {
+    const { view, ws } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const reference = await openWith('worked-example', {
+      settings: () => ({ ...LTR_SETTINGS, defaultLayout: 'circle-counter-clockwise' }),
+    });
+    const requestSaveLayout = vi.spyOn(ws, 'requestSaveLayout');
+    const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
+    view.setTransform({ x: -500, y: 900, zoom: 0.3 });
+    for (let i = 0; i < 5; i++) view.nextLayout();
+    // The choice is stored at once, the re-layout waits for the frame.
+    expect(view.getState()).toMatchObject({ layout: 'circle-counter-clockwise' });
+    expect(requestSaveLayout).toHaveBeenCalledTimes(5);
+    expect(active(view, 'Layout')).toBe(true);
+    expect(setLayout).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(setLayout).toHaveBeenCalledTimes(1);
+    expect(view.getState()).toMatchObject({ layout: 'circle-counter-clockwise' });
+    // Same geometry as a map that was opened with the last choice.
+    for (const id of ['Project', 'Project/Tasks', 'Project/Notes'])
+      expect(nodeBox(view, id)).toEqual(nodeBox(reference.view, id));
+    const root = screenOf(view, 'Project');
+    expect(root.x).toBeGreaterThanOrEqual(0);
+    expect(root.x).toBeLessThan(800);
+    // A second burst in a later frame lays out once more.
+    view.nextLayout();
+    view.nextLayout();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(setLayout).toHaveBeenCalledTimes(2);
+    expect(view.getState()).toMatchObject({ layout: 'right-to-left' });
+    setLayout.mockRestore();
+  });
+
+  test('a burst that ends on the shown layout lays out nothing; a closed view stays quiet', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
+    view.chooseLayout('top-to-bottom');
+    view.chooseLayout(null);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(setLayout).not.toHaveBeenCalled();
+    view.nextLayout();
+    await view.onClose();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(setLayout).not.toHaveBeenCalled();
+    setLayout.mockRestore();
   });
 
   test('the menus open at their buttons (commands "Change layout…" and "Change colour theme…")', async () => {
