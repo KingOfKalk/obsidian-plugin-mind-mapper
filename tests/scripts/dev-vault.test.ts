@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { enablePlugin, pullFixtures, syncNotes } from '../../scripts/dev-vault.mjs';
@@ -72,4 +80,105 @@ test('syncNotes never overwrites recordings in the dev vault', () => {
 
   expect(readFileSync(join(dest, 'fixtures', 'a.cache.json'), 'utf8')).toBe('{"fresh":true}');
   expect(readFileSync(join(dest, 'fixtures', 'a.md'), 'utf8')).toBe('note');
+});
+
+const MANIFEST = '.mind-mapper-sync.json';
+
+test('syncNotes prunes a note that was synced earlier and is gone from the source', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(src, 'Keep.md'), 'keep');
+  write(join(src, 'Old.md'), 'old');
+  syncNotes(src, dest);
+  expect(existsSync(join(dest, 'Old.md'))).toBe(true);
+
+  rmSync(join(src, 'Old.md'));
+  syncNotes(src, dest);
+
+  expect(existsSync(join(dest, 'Old.md'))).toBe(false);
+  expect(readFileSync(join(dest, 'Keep.md'), 'utf8')).toBe('keep');
+});
+
+test('syncNotes records the copied notes in a manifest outside .obsidian', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(src, 'B.md'), 'b');
+  write(join(src, 'demo', 'A.md'), 'a');
+  write(join(src, 'demo', 'A.cache.json'), '{}');
+  write(join(src, '.obsidian', 'app.json'), '{}');
+
+  syncNotes(src, dest);
+
+  const manifest = JSON.parse(readFileSync(join(dest, MANIFEST), 'utf8')) as string[];
+  expect([...manifest].sort()).toEqual(['B.md', 'demo/A.md']);
+});
+
+test('syncNotes never prunes notes the user created in the dest vault', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(src, 'Old.md'), 'old');
+  syncNotes(src, dest);
+  write(join(dest, 'Mine.md'), 'mine');
+  write(join(dest, 'folder', 'Mine too.md'), 'mine');
+
+  rmSync(join(src, 'Old.md'));
+  syncNotes(src, dest);
+
+  expect(existsSync(join(dest, 'Old.md'))).toBe(false);
+  expect(readFileSync(join(dest, 'Mine.md'), 'utf8')).toBe('mine');
+  expect(readFileSync(join(dest, 'folder', 'Mine too.md'), 'utf8')).toBe('mine');
+});
+
+test('syncNotes never touches .obsidian, even if a manifest lists it', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(dest, '.obsidian', 'app.json'), '{"dest":true}');
+  write(join(dest, '.obsidian', 'plugins', 'x', 'data.json'), '{}');
+  write(join(dest, 'fixtures', 'a.cache.json'), '{"fresh":true}');
+  write(join(src, 'Note.md'), 'n');
+  writeFileSync(
+    join(dest, MANIFEST),
+    JSON.stringify(['.obsidian/app.json', 'fixtures/a.cache.json', '../outside.md']),
+  );
+  write(join(dest, '..', 'outside.md'), 'outside');
+
+  syncNotes(src, dest);
+
+  expect(readFileSync(join(dest, '.obsidian', 'app.json'), 'utf8')).toBe('{"dest":true}');
+  expect(existsSync(join(dest, '.obsidian', 'plugins', 'x', 'data.json'))).toBe(true);
+  expect(existsSync(join(dest, 'fixtures', 'a.cache.json'))).toBe(true);
+  expect(existsSync(join(dest, '..', 'outside.md'))).toBe(true);
+});
+
+test('syncNotes removes folders a pruned note leaves empty, but not folders with other files', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(src, 'empty', 'deep', 'Gone.md'), 'x');
+  write(join(src, 'shared', 'Gone.md'), 'x');
+  write(join(src, 'Keep.md'), 'k');
+  syncNotes(src, dest);
+  write(join(dest, 'shared', 'Mine.md'), 'mine');
+
+  rmSync(join(src, 'empty'), { recursive: true });
+  rmSync(join(src, 'shared'), { recursive: true });
+  syncNotes(src, dest);
+
+  expect(existsSync(join(dest, 'empty'))).toBe(false);
+  expect(existsSync(join(dest, 'shared', 'Gone.md'))).toBe(false);
+  expect(readFileSync(join(dest, 'shared', 'Mine.md'), 'utf8')).toBe('mine');
+  expect(existsSync(dest)).toBe(true);
+});
+
+test('syncNotes without a manifest prunes nothing', () => {
+  const src = tmp();
+  const dest = tmp();
+  write(join(src, 'New.md'), 'new');
+  write(join(dest, 'Extra.md'), 'extra');
+  write(join(dest, 'folder', 'Extra.md'), 'extra');
+
+  syncNotes(src, dest);
+
+  expect(readFileSync(join(dest, 'Extra.md'), 'utf8')).toBe('extra');
+  expect(readFileSync(join(dest, 'folder', 'Extra.md'), 'utf8')).toBe('extra');
+  expect(existsSync(join(dest, MANIFEST))).toBe(true);
 });

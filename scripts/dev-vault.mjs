@@ -1,24 +1,107 @@
 // Dev vault helpers: copy test notes in, enable the plugin, pull recorded fixtures back.
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  rmdirSync,
+  writeFileSync,
+} from 'node:fs';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gitCommonDir, resolveDevTargets } from './dev-paths.mjs';
 
 const CONFIG_DIR = '.obsidian';
 const FIXTURES = 'fixtures';
 const RECORDING_SUFFIX = '.cache.json';
+// A dot file in the vault root: Obsidian does not index hidden files, and it stays out of `.obsidian/`.
+const SYNC_MANIFEST = '.mind-mapper-sync.json';
 
 /**
- * Copies every file of `srcDir` into `destDir`, overwriting notes of the same name; never deletes.
+ * @param {string} name file or folder name
+ * @returns {boolean} whether syncing may copy (and later prune) it
+ */
+function isSyncable(name) {
+  return name !== CONFIG_DIR && name !== SYNC_MANIFEST && !name.endsWith(RECORDING_SUFFIX);
+}
+
+/**
+ * @param {string} dir
+ * @param {string} [prefix] relative path of `dir` below the walk root
+ * @returns {string[]} relative paths (forward slashes) of all syncable files below `dir`
+ */
+function listNotes(dir, prefix = '') {
+  /** @type {string[]} */
+  const files = [];
+  for (const entry of readdirSync(join(dir, prefix), { withFileTypes: true })) {
+    if (!isSyncable(entry.name)) continue;
+    const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) files.push(...listNotes(dir, path));
+    else files.push(path);
+  }
+  return files;
+}
+
+/**
+ * @param {string} file
+ * @returns {string[]} the relative paths recorded by the previous sync, or none
+ */
+function readManifest(file) {
+  if (!existsSync(file)) return [];
+  try {
+    const parsed = /** @type {unknown} */ (JSON.parse(readFileSync(file, 'utf8')));
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Deletes `files` (relative to `destDir`), then the folders they leave empty.
+ * Entries that are not plain syncable files inside `destDir` are skipped.
+ * @param {string} destDir
+ * @param {string[]} files
+ */
+function prune(destDir, files) {
+  const root = resolve(destDir);
+  for (const file of files) {
+    const path = resolve(root, file);
+    const parts = relative(root, path).split(sep);
+    if (parts[0] === '..' || parts.some((part) => !isSyncable(part))) continue;
+    rmSync(path, { force: true });
+    for (let dir = dirname(path); dir !== root; dir = dirname(dir)) {
+      if (!existsSync(dir) || readdirSync(dir).length > 0) break;
+      rmdirSync(dir);
+    }
+  }
+}
+
+/**
+ * Copies every file of `srcDir` into `destDir`, overwriting notes of the same name, and records the
+ * copied paths in a manifest inside `destDir`. Notes that an earlier sync copied and `srcDir` no
+ * longer has are deleted again (with the folders they leave empty). Files that are in no manifest
+ * (the user's own notes) are never deleted, and without a manifest nothing is.
  * Skips `.obsidian/` and recordings (`*.cache.json`): those only flow dev vault → repo.
  * @param {string} srcDir
  * @param {string} destDir
  */
 export function syncNotes(srcDir, destDir) {
+  const manifestFile = join(destDir, SYNC_MANIFEST);
+  const previous = readManifest(manifestFile);
+  const notes = listNotes(srcDir);
+  mkdirSync(destDir, { recursive: true });
   cpSync(srcDir, destDir, {
     recursive: true,
-    filter: (source) => basename(source) !== CONFIG_DIR && !source.endsWith(RECORDING_SUFFIX),
+    filter: (source) => isSyncable(basename(source)),
   });
+  const current = new Set(notes);
+  prune(
+    destDir,
+    previous.filter((file) => !current.has(file)),
+  );
+  writeFileSync(manifestFile, `${JSON.stringify(notes, null, 2)}\n`);
 }
 
 /**
