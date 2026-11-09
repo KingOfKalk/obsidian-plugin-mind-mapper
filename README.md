@@ -104,6 +104,8 @@ Content larger than the max node size is clipped with a fade; the expand icon sh
 - Dashed link lines only connect headings and blocks within the same note; lines are not routed around nodes
 - The map updates when Obsidian saves the note (about 2 s after typing stops), not on every keystroke
 - Collapsed branches are remembered while the map is open, not across restarts
+- A `---` directly under a line of text turns that text into a heading (Markdown rule, same as reading view); leave a blank line above a divider, or use `***`
+- A second `--- ... ---` block in the middle of a note is not frontmatter: its last line becomes a heading
 
 ## Installation
 

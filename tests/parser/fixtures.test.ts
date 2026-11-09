@@ -166,3 +166,23 @@ test('block syntax at the start of headings and items is escaped, one node per l
     '    Numbered/1. Introduction/#4 [list-item] \\# not a heading',
   ]);
 });
+
+test('thematic breaks: every variant is skipped, setext dashes make a heading, a mid-note block is no frontmatter', () => {
+  expect(nodes(treeOf('thematic-breaks'))).toEqual([
+    'Dividers [root] Dividers',
+    '  Dividers/#1 [paragraph] Before dash divider.',
+    '  Dividers/#2 [paragraph] After dash divider.',
+    '  Dividers/#3 [paragraph] After star divider.',
+    '  Dividers/#4 [paragraph] After underscore divider.',
+    '  Dividers/#5 [paragraph] After spaced dash divider.',
+    '  Dividers/Paragraph directly above dashes [heading] Paragraph directly above dashes',
+    '    Dividers/Paragraph directly above dashes/#1 [paragraph] Under the setext heading.',
+    '    Dividers/Paragraph directly above dashes/#2 [paragraph] Paragraph directly above stars',
+    '    Dividers/Paragraph directly above dashes/#3 [paragraph] Paragraph directly above underscores',
+    '  Dividers/Mid block [heading] Mid block',
+    '  Dividers/mind_map_title: Not frontmatter [heading] mind_map_title: Not frontmatter',
+    '    Dividers/mind_map_title: Not frontmatter/#1 [paragraph] End.',
+  ]);
+  const { cache } = loadFixture('thematic-breaks');
+  expect(cache?.frontmatter).toEqual({ mind_map_layout: 'left-to-right' });
+});

@@ -10,14 +10,15 @@
 - Root node (decided)
   - Exactly one H1 and no content before it: H1 is root
     - "Content" means any section except frontmatter, comments and blank lines
-    - `mind_map_title` overrides the root label
+    - `mind-mapper-title` overrides the root label
   - Otherwise (no H1, multiple H1s, or content before the first H1): virtual root
-    - Label: `mind_map_title`, else file name
+    - Label: `mind-mapper-title`, else file name
     - All H1s and any content before the first H1 become first-level children
     - No H1 at all: the highest heading level present becomes first-level children
 - Headings: every heading is a branch node, nested by level
   - Skipped levels (H1 then H3): attach to nearest parent heading
-  - Setext headings (`---` or `===` under a paragraph) are headings, as reported by the cache
+  - Setext headings (`===` or `---` directly under a paragraph, no blank line between) are headings, as reported by the cache: the paragraph becomes an H1 or H2 branch, the content after it hangs under it
+    - `***` and `___` never form a heading
 - Paragraphs: one leaf node per paragraph section, under its heading
 - Lists: one node per list item, nested lists nest the nodes
   - Item node content: the item text plus continuation content indented under it (paragraphs, code), excluding nested list items
@@ -28,7 +29,15 @@
   - Code block (incl. Mermaid), table, math block, blockquote: node
   - Callout (decided): one node, rendered as in Obsidian
   - Block ID `^id`: hidden in the node
-  - Skip: frontmatter, comments `%% %%`, thematic breaks `---`, HTML blocks, footnote definitions; footnote references stay as text
+  - Skip: frontmatter, comments `%% %%`, HTML blocks, footnote definitions; footnote references stay as text
+- Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
+  - Shown only between two siblings of the same parent; before the first or after the last child: ignored
+  - Directly before a heading: ignored (the heading branches already separate those sections)
+  - Several in a row count as one
+  - Look: extra gap between the two siblings plus a dashed line in the theme's divider color (`--hr-color`), across the width of the wider of the two neighbors; perpendicular to the stacking direction (horizontal line in left/right layouts, vertical line in top/bottom layouts)
+  - Circle layouts: drawn on the side it falls on; a divider exactly at the split between right and left side is not drawn
+  - A collapsed parent hides its dividers
+  - Inside a container (list item, blockquote, callout) a divider is part of that node's content and renders as a line inside the node
 - Node size (decided)
   - Max node size 320 x 240 px (about 10 lines at default line height), configurable in plugin settings
   - Text wraps within max width
@@ -83,17 +92,24 @@ Project (root, H1)
 - Render cache key is separate from identity: content hash of the section text plus node width
   - Cache hits survive ID shifts
 - Collapse state kept in memory per ID for the session; persisting per note is a future feature
+- Collapse all mode (decided): "Collapse all" switches the map into collapse-all mode until "Expand all"
+  - In this mode every node with children whose ID was not in the previous tree starts collapsed (moved nodes get new IDs, new nodes too), so after an edit everything stays collapsed
+  - Toggling single nodes does not end the mode
 ## Frontmatter
  
+- Frontmatter is only the `yaml` section the cache reports at the start of the file (`---` on line 1); keys are read only from it
+  - A later `--- ... ---` block is not frontmatter: the cache reports a thematic break plus a setext H2 whose text is the block's last line, and the map shows that heading like any other
+- Keys are kebab-case and prefixed with the plugin ID `mind-mapper` (decided)
+
 | Key | Type | Values | Default |
 |---|---|---|---|
-| `mind_map_title` | text | any string | single H1, else file name |
-| `mind_map_layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
+| `mind-mapper-title` | text | any string | single H1, else file name |
+| `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
  
 - Theme (decided): the map always follows the active Obsidian theme via CSS variables; no per-note override in MVP
 - Validation
-  - `mind_map_layout` not in the list: fall back to the plugin setting
-  - `mind_map_title` not a string (YAML number, list, ...): fall back to the default
+  - `mind-mapper-layout` not in the list: fall back to the plugin setting
+  - `mind-mapper-title` not a string (YAML number, list, ...): fall back to the default
   - Show a notice once per note and invalid value, not on every save
 - Plugin settings tab: global default for layout, frontmatter overrides per note
 ## Layout (decided)
@@ -145,7 +161,9 @@ Project (root, H1)
   - Drag on empty canvas: pan
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
-- Collapse / expand: toggle button on the node edge (XMind style) for single node, commands for all
+- Collapse / expand: toggle button on the node edge (XMind style) for single node
+  - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
+  - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
   - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen
   - Each command is registered in the same milestone as its control
@@ -188,7 +206,7 @@ Project (root, H1)
  
 - Presentation mode: step through branches one by one (next / previous, focus and zoom to the current branch, dim the rest)
 - Custom themes
-- Per-note theme override (`mind_map_theme`: `system`, `dark`, `light`)
+- Per-note theme override (`mind-mapper-theme`: `system`, `dark`, `light`)
 - Map follows the active note (like Outline)
 - Labels / comments on connection lines
 - Editing in the map (writes back to markdown)
@@ -202,6 +220,7 @@ Project (root, H1)
 - Mobile support
 - Callouts as title node with content as children, color by callout type
 - Embeds: show embedded note content
+- Dividers as groups: a thematic break splits a section's children into named or framed groups
 ## Implementation
  
 - TypeScript, Obsidian plugin API
@@ -243,7 +262,7 @@ Each milestone ends in something installable and usable in a real vault. Order i
   - Dev loop: hot reload into a test vault, CI with lint, unit tests, build, release workflow (GitHub release + BRAT installable)
   - Value: installable from day one, every later milestone ships via BRAT
 - M1 - Outline map
-  - Parser: headings only (cache + text), root rules without `mind_map_title` (H1 or file name), skipped levels, occurrence-indexed heading IDs
+  - Parser: headings only (cache + text), root rules without `mind-mapper-title` (H1 or file name), skipped levels, occurrence-indexed heading IDs
   - Worked example as first fixture
   - Layout: `left-to-right` bounding-box tidy tree with fixed node size, constant gaps, bezier edges
   - Renderer: plain text nodes, pan and zoom like Canvas, fit to view on open
@@ -267,7 +286,7 @@ Each milestone ends in something installable and usable in a real vault. Order i
   - Value: the map is useful while writing, not only for reading
 - M4 - XMind look
   - `circle-clockwise` and `circle-counter-clockwise` layouts, remaining linear directions
-  - Frontmatter `mind_map_title` and `mind_map_layout`, validation with once-per-value notice
+  - Frontmatter `mind-mapper-title` and `mind-mapper-layout`, validation with once-per-value notice
   - Settings tab: default layout, max node size, sibling and level gap
   - `circle-clockwise` becomes the default
   - Contour-based packing only if maps look too sparse

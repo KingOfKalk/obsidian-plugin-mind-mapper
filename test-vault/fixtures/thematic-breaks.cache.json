@@ -1,0 +1,405 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "---\nmind_map_layout: left-to-right\n---\n\n# Dividers\n\nBefore dash divider.\n\n---\n\nAfter dash divider.\n\n***\n\nAfter star divider.\n\n___\n\nAfter underscore divider.\n\n- - -\n\nAfter spaced dash divider.\n\nParagraph directly above dashes\n---\n\nUnder the setext heading.\n\nParagraph directly above stars\n***\n\nParagraph directly above underscores\n___\n\n## Mid block\n\n---\nmind_map_title: Not frontmatter\n---\n\nEnd.\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 40
+          },
+          "end": {
+            "line": 4,
+            "col": 10,
+            "offset": 50
+          }
+        },
+        "heading": "Dividers",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 24,
+            "col": 0,
+            "offset": 193
+          },
+          "end": {
+            "line": 25,
+            "col": 3,
+            "offset": 228
+          }
+        },
+        "heading": "Paragraph directly above dashes",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 35,
+            "col": 0,
+            "offset": 335
+          },
+          "end": {
+            "line": 35,
+            "col": 12,
+            "offset": 347
+          }
+        },
+        "heading": "Mid block",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 38,
+            "col": 0,
+            "offset": 353
+          },
+          "end": {
+            "line": 39,
+            "col": 3,
+            "offset": 388
+          }
+        },
+        "heading": "mind_map_title: Not frontmatter",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "yaml",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 2,
+            "col": 3,
+            "offset": 38
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 40
+          },
+          "end": {
+            "line": 4,
+            "col": 10,
+            "offset": 50
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 52
+          },
+          "end": {
+            "line": 6,
+            "col": 20,
+            "offset": 72
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 74
+          },
+          "end": {
+            "line": 8,
+            "col": 3,
+            "offset": 77
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 0,
+            "offset": 79
+          },
+          "end": {
+            "line": 10,
+            "col": 19,
+            "offset": 98
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 12,
+            "col": 0,
+            "offset": 100
+          },
+          "end": {
+            "line": 12,
+            "col": 3,
+            "offset": 103
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 14,
+            "col": 0,
+            "offset": 105
+          },
+          "end": {
+            "line": 14,
+            "col": 19,
+            "offset": 124
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 16,
+            "col": 0,
+            "offset": 126
+          },
+          "end": {
+            "line": 16,
+            "col": 3,
+            "offset": 129
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 18,
+            "col": 0,
+            "offset": 131
+          },
+          "end": {
+            "line": 18,
+            "col": 25,
+            "offset": 156
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 20,
+            "col": 0,
+            "offset": 158
+          },
+          "end": {
+            "line": 20,
+            "col": 5,
+            "offset": 163
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 22,
+            "col": 0,
+            "offset": 165
+          },
+          "end": {
+            "line": 22,
+            "col": 26,
+            "offset": 191
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 24,
+            "col": 0,
+            "offset": 193
+          },
+          "end": {
+            "line": 25,
+            "col": 3,
+            "offset": 228
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 27,
+            "col": 0,
+            "offset": 230
+          },
+          "end": {
+            "line": 27,
+            "col": 25,
+            "offset": 255
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 29,
+            "col": 0,
+            "offset": 257
+          },
+          "end": {
+            "line": 29,
+            "col": 30,
+            "offset": 287
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 30,
+            "col": 0,
+            "offset": 288
+          },
+          "end": {
+            "line": 30,
+            "col": 3,
+            "offset": 291
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 32,
+            "col": 0,
+            "offset": 293
+          },
+          "end": {
+            "line": 32,
+            "col": 36,
+            "offset": 329
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 33,
+            "col": 0,
+            "offset": 330
+          },
+          "end": {
+            "line": 33,
+            "col": 3,
+            "offset": 333
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 35,
+            "col": 0,
+            "offset": 335
+          },
+          "end": {
+            "line": 35,
+            "col": 12,
+            "offset": 347
+          }
+        }
+      },
+      {
+        "type": "thematicBreak",
+        "position": {
+          "start": {
+            "line": 37,
+            "col": 0,
+            "offset": 349
+          },
+          "end": {
+            "line": 37,
+            "col": 3,
+            "offset": 352
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 38,
+            "col": 0,
+            "offset": 353
+          },
+          "end": {
+            "line": 39,
+            "col": 3,
+            "offset": 388
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 41,
+            "col": 0,
+            "offset": 390
+          },
+          "end": {
+            "line": 41,
+            "col": 4,
+            "offset": 394
+          }
+        }
+      }
+    ],
+    "frontmatter": {
+      "mind_map_layout": "left-to-right"
+    },
+    "frontmatterPosition": {
+      "start": {
+        "line": 0,
+        "col": 0,
+        "offset": 0
+      },
+      "end": {
+        "line": 2,
+        "col": 3,
+        "offset": 38
+      }
+    },
+    "frontmatterLinks": []
+  }
+}
