@@ -115,6 +115,8 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 | Zoom at the pointer | `Ctrl/Cmd` + wheel, or trackpad pinch (10 % to 400 %) |
 | Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button; small maps are enlarged up to the setting "Max zoom for fit" (default 150 %); a margin keeps nodes and badges off the edges |
 
+Fit to view, the zoom buttons, the zoom presets, a typed zoom and Back to root glide to their place in about a quarter of a second; the zoom level follows along. Panning and zooming with the wheel or trackpad stay immediate, and a wheel turn or drag during a glide ends it at once. With the system setting "reduce motion" the view jumps instead.
+
 The controls bar at the bottom center, left to right:
 
 | Button | Does |
@@ -245,7 +247,7 @@ How a node looks depends on its level, in every theme:
 
 To show a map differently for a moment, e.g. while presenting, change its layout or colour theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
 
-- Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom and bottom → top; the shown layout is checked. A choice re-arranges the map and fits it to view
+- Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom and bottom → top; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
 - Colour theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent colour; the shown theme is checked. A choice recolours the map at once; nothing moves
 - Below a line in each menu: "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the settings
 - While you have chosen a layout or theme, its button is highlighted. Your choice wins over later edits of `mind-mapper-layout` / `mind-mapper-theme` and over the settings, so the map does not jump while you edit

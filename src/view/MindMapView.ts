@@ -54,14 +54,7 @@ import { jumpToSource } from '../commands/jumpToSource';
 import { t } from '../i18n';
 import { CollapseState } from './collapseState';
 import { drilledTree, findNode, isValidDrillPath } from './drill';
-import {
-  easeInOut,
-  FADE_MS,
-  GLIDE_MS,
-  lerpTransform,
-  type Phase,
-  PhaseRunner,
-} from './drillAnimation';
+import { easeInOut, FADE_MS, GLIDE_MS, lerpTransform, type Phase, PhaseRunner } from './animation';
 import { FullScreen } from './fullScreen';
 import { LeafRecency } from './leafRecency';
 import { fileBasename, type MindMapViewState, parseViewState } from './viewState';
@@ -165,7 +158,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private drillPath: string[] = [];
   /** Centre of the shown map (null: the whole map); trails `drillPath` while animating. */
   private shownCentre: string | null = null;
-  private drillAnimation: PhaseRunner | null = null;
+  /** Drill-down, fit, zoom or layout switch animation (issues #23, #24); at most one runs. */
+  private animation: PhaseRunner | null = null;
+  /**
+   * The camera move of the running animation. A re-layout meanwhile (measured sizes) moves its ends
+   * with the map, or, gliding to the fit, retargets it to the new fit: it lands where the instant
+   * action plus that re-layout would have put the view.
+   */
+  private cameraGlide: { from: Transform; to: Transform; fit: boolean } | null = null;
 
   constructor(leaf: WorkspaceLeaf, services: Partial<ViewServices> = {}) {
     super(leaf);
@@ -285,9 +285,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     else this.enterFullScreen();
   }
 
-  /** Spec "Full screen": entering fits, Esc (after modals, via the view scope) exits. */
+  /**
+   * Spec "Full screen": entering fits (at once: the canvas itself jumps to its new size), Esc
+   * (after modals, via the view scope) exits.
+   */
   private enterFullScreen(): void {
     if (this.fullScreen.active || !this.dom) return;
+    this.finishAnimation();
     this.beforeFullScreen = this.transform;
     this.fullScreen.enter();
     this.scope ??= new Scope(this.app.scope);
@@ -303,7 +307,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       if (leaf !== this.leaf) this.exitFullScreen();
     });
     this.registerEvent(this.leafChangeRef);
-    this.fitToView();
+    this.pendingFit = true;
+    this.tryFit();
   }
 
   /** Restores the transform from before full screen. */
@@ -318,19 +323,22 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.beforeFullScreen = null;
   }
 
-  /** Selects the root (drilled in: the centre) and centres it at the current zoom. */
+  /** Selects the root (drilled in: the centre) and glides it to the centre at the current zoom. */
   backToRoot(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     const rootId = this.shownCentre ?? this.tree?.root.id;
-    const root = this.layout?.nodes.find((p) => p.node.id === rootId);
-    if (!root) return;
-    this.select(root.node.id);
-    const center = this.center();
-    const { zoom } = this.transform;
-    this.setTransform({
-      x: center.x - (root.x + root.width / 2) * zoom,
-      y: center.y - (root.y + root.height / 2) * zoom,
-      zoom,
+    if (rootId === undefined || !this.layout?.nodes.some((p) => p.node.id === rootId)) return;
+    this.select(rootId);
+    this.glideCamera(() => {
+      const root = this.layout?.nodes.find((p) => p.node.id === rootId);
+      if (!root) return null;
+      const center = this.center();
+      const { zoom } = this.transform;
+      return {
+        x: center.x - (root.x + root.width / 2) * zoom,
+        y: center.y - (root.y + root.height / 2) * zoom,
+        zoom,
+      };
     });
   }
 
@@ -346,7 +354,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   toggleCollapse(id: string): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     if (!this.layout) return;
     const anchor = this.layout.nodes.filter((p) => p.node.id === id);
     this.collapse.toggle(id);
@@ -363,7 +371,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Layout of this view only (null: the note's again): a different layout re-lays out and fits. */
   chooseLayout(layout: MapLayoutName | null): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.layoutOverride = layout;
     this.app.workspace.requestSaveLayout();
     this.dom?.controls.setLayout(this.effectiveLayout(), layout !== null);
@@ -371,10 +379,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // A held hotkey repeats faster than a large map lays out: at most once per frame, last choice wins.
     this.layoutFrame ??= this.contentEl.win.requestAnimationFrame(() => {
       this.layoutFrame = null;
-      if (!this.tree || !this.layout || !this.layoutWillChange()) return;
-      this.cancelRelayout();
-      this.pendingFit = true;
-      this.showLayout(this.computeLayout(this.tree));
+      const tree = this.tree;
+      if (!tree || !this.layout || !this.layoutWillChange()) return;
+      this.switchLayout(() => this.showLayout(this.computeLayout(tree)));
     });
   }
 
@@ -416,7 +423,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Plugin settings changed: a new layout fits once, other changes keep the viewport anchored. */
   refresh(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.applyCssLimits();
     this.applyTheme();
     if (!this.layout || !this.tree) return;
@@ -424,10 +431,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // (the ResizeObserver only fires for content whose size changes).
     this.measure([...this.observed.keys()]);
     this.applyStartCollapsed(this.tree);
+    const tree = this.tree;
     if (this.layoutWillChange()) {
-      this.cancelRelayout();
-      this.pendingFit = true;
-      this.showLayout(this.computeLayout(this.tree));
+      this.switchLayout(() => this.showLayout(this.computeLayout(tree)));
       return;
     }
     this.relayoutKeeping(this.anchorIn(this.layout));
@@ -435,7 +441,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Root and first level stay visible. */
   collapseAll(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     if (!this.tree || !this.layout) return;
     const anchor = this.anchorIn(this.layout);
     this.collapse.collapseAll(this.tree);
@@ -443,7 +449,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   expandAll(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     if (!this.layout) return;
     const anchor = this.anchorIn(this.layout);
     this.collapse.expandAll();
@@ -484,7 +490,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   override async onClose(): Promise<void> {
     this.exitFullScreen();
-    this.cancelDrillAnimation();
+    this.cancelAnimation();
     this.generation++;
     this.stopListening();
     this.cancelUpdate();
@@ -528,7 +534,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // drill path that no longer fits the note shows the whole map.
     this.layoutOverride = layout;
     this.themeOverride = theme;
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.drillPath = drill;
     this.shownCentre = drill.at(-1) ?? null;
     if (file !== this.pinnedFile) {
@@ -548,15 +554,15 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (this.pendingFit) this.tryFit();
   }
 
-  /** Pan and zoom input reads it first: a running drill animation ends, the input continues from there. */
+  /** Pan and zoom input reads it first: a running animation ends, the input continues from there. */
   getTransform(): Transform {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     return this.transform;
   }
 
   /** User-driven transform (pan, zoom, commands): later re-layouts anchor instead of re-fitting. */
   setTransform(t: Transform): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.fitted = false;
     this.applyTransform(t);
   }
@@ -569,30 +575,68 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Next zoom step (spec "Zoom and pan"); wheel and pinch zoom smoothly instead. */
   zoomIn(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.zoomTo(nextZoomStep(this.transform.zoom, 1));
   }
 
   zoomOut(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.zoomTo(nextZoomStep(this.transform.zoom, -1));
   }
 
-  /** Zoom (1 = 100 %, clamped to the limits), centred on the canvas. */
+  /** Zoom (1 = 100 %, clamped to the limits), centred on the canvas; glides there. */
   zoomTo(zoom: number): void {
-    this.finishDrillAnimation();
-    this.setTransform(zoomTo(this.transform, zoom, this.center()));
+    this.finishAnimation();
+    this.glideCamera(() => zoomTo(this.transform, zoom, this.center()));
   }
 
   resetZoom(): void {
-    this.finishDrillAnimation();
-    this.setTransform(resetZoom(this.transform, this.size()));
+    this.finishAnimation();
+    this.glideCamera(() => resetZoom(this.transform, this.size()));
   }
 
+  /** Glides to the fit; at once while there is nothing to fit yet (it fits when there is). */
   fitToView(): void {
-    this.finishDrillAnimation();
-    this.pendingFit = true;
-    this.tryFit();
+    this.finishAnimation();
+    const fit = this.layout && this.fitTransform(this.layout, this.collapseInfo);
+    if (!fit || sameTransform(fit, this.transform)) {
+      this.pendingFit = true;
+      this.tryFit();
+      return;
+    }
+    this.runAnimation([this.fitGlide()]);
+  }
+
+  /**
+   * A camera move of the user (zoom controls, Back to root, issue #24): glides to `target`
+   * (evaluated now and when the glide starts); later re-layouts anchor instead of re-fitting.
+   */
+  private glideCamera(target: () => Transform | null): void {
+    this.fitted = false;
+    const to = target();
+    if (!to || sameTransform(to, this.transform)) return;
+    this.runAnimation([this.glide(target)]);
+  }
+
+  /**
+   * A different layout (issue #24): the map fades out, the new one (`swap`) fades in with the node
+   * at the centre (or the selected one) kept in place, then the view glides to its fit. The choice
+   * itself (view state, control bar) applies at once.
+   */
+  private switchLayout(swap: () => void): void {
+    this.cancelRelayout();
+    this.fitted = false;
+    this.pendingFit = false;
+    this.runAnimation([
+      this.fade('out'),
+      this.fade('in', () => {
+        const anchor = this.layout ? this.anchorIn(this.layout) : [];
+        this.cancelRelayout();
+        swap();
+        this.keepInPlace(anchor);
+      }),
+      this.fitGlide(),
+    ]);
   }
 
   /** A map is shown around a drilled-in node (issue #23). */
@@ -624,11 +668,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** The selected node becomes the centre: only it and its subtree, fitted. */
   drillDown(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     const id = this.selected;
     if (id === null || !this.canDrillDown()) return;
     this.setDrillPath([...this.drillPath, id]);
-    this.runDrillAnimation([
+    this.runAnimation([
       this.glide(() => this.drilledInTarget(id)),
       this.fade('out'),
       this.fade('in', () => this.showCentre(id, null)),
@@ -637,7 +681,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** One level up; the node drilled out of stays selected, the map is fitted. */
   drillOut(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     const left = this.drillPath.at(-1);
     if (left === undefined) return;
     this.drillOutTo(this.drillPath.slice(0, -1), left);
@@ -645,7 +689,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Straight back to the whole map; the outermost drilled node is selected, the map fitted. */
   showWholeMap(): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     const first = this.drillPath[0];
     if (first === undefined) return;
     this.drillOutTo([], first);
@@ -659,16 +703,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.setDrillPath(path);
     const centre = path.at(-1) ?? null;
     this.select(left);
-    this.runDrillAnimation([
+    this.runAnimation([
       this.fade('out'),
       this.fade('in', () => this.showCentre(centre, left)),
-      this.glide(
-        () => (this.layout ? this.fitTransform(this.layout, this.collapseInfo) : null),
-        () => {
-          this.fitted = true;
-          this.pendingFit = false;
-        },
-      ),
+      this.fitGlide(),
     ]);
   }
 
@@ -740,21 +778,39 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     };
   }
 
-  /** Moves the view to `target` (evaluated when the glide starts), eased; then `arrived`. */
-  private glide(target: () => Transform | null, arrived?: () => void): Phase {
-    let from = this.transform;
-    let to: Transform | null = null;
+  /**
+   * Moves the view to `target` (evaluated when the glide starts), eased; it ends exactly there.
+   * `fit`: the target is the fit, a re-layout meanwhile retargets it (see `cameraGlide`).
+   */
+  private glide(target: () => Transform | null, fit = false): Phase {
     return {
       duration: GLIDE_MS,
       begin: () => {
-        from = this.transform;
-        to = target();
+        const to = target();
+        this.cameraGlide = to && { from: this.transform, to, fit };
       },
       frame: (progress) => {
-        if (to) this.applyTransform(lerpTransform(from, to, easeInOut(progress)));
-        if (to && progress >= 1) arrived?.();
+        const glide = this.cameraGlide;
+        if (!glide) return;
+        if (progress < 1) {
+          this.applyTransform(lerpTransform(glide.from, glide.to, easeInOut(progress)));
+          return;
+        }
+        this.cameraGlide = null;
+        this.applyTransform(glide.to);
       },
     };
+  }
+
+  /** Glides to the fit of the shown map, which counts as fitted (like after "Fit to view"). */
+  private fitGlide(): Phase {
+    return this.glide(() => {
+      const fit = this.layout && this.fitTransform(this.layout, this.collapseInfo);
+      // No size (hidden tab): the next resize fits.
+      this.pendingFit = !fit;
+      if (fit) this.fitted = true;
+      return fit;
+    }, true);
   }
 
   /** Fades the map out, or (after `begin`, the swap) in; opacity only. */
@@ -771,16 +827,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /**
    * Runs the phases on animation frames; at once with the OS setting "reduce motion". The canvas
-   * has `is-drilling` while it runs (E2E and screenshots wait for its end).
+   * has `is-animating` while it runs (E2E and screenshots wait for its end).
    */
-  private runDrillAnimation(phases: Phase[]): void {
+  private runAnimation(phases: Phase[]): void {
     const canvas = this.dom?.renderer.canvasEl;
-    canvas?.addClass('is-drilling');
+    canvas?.addClass('is-animating');
     const runner = new PhaseRunner(this.contentEl.win, phases, () => {
-      canvas?.removeClass('is-drilling');
-      if (this.drillAnimation === runner) this.drillAnimation = null;
+      canvas?.removeClass('is-animating');
+      if (this.animation !== runner) return;
+      this.animation = null;
+      this.cameraGlide = null;
     });
-    this.drillAnimation = runner;
+    this.animation = runner;
     if (this.reducedMotion()) runner.finish();
   }
 
@@ -792,17 +850,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       : false;
   }
 
-  /** A running drill animation jumps to its end (a new step, user input, a re-layout). */
-  private finishDrillAnimation(): void {
-    this.drillAnimation?.finish();
+  /** A running animation jumps to its end (a new action, pan and zoom input, an edit). */
+  private finishAnimation(): void {
+    this.animation?.finish();
   }
 
-  /** Stops a running drill animation where it is (close, a placeholder replaces the map). */
-  private cancelDrillAnimation(): void {
-    this.drillAnimation?.cancel();
-    this.drillAnimation = null;
+  /** Stops a running animation where it is (close, a placeholder replaces the map). */
+  private cancelAnimation(): void {
+    this.animation?.cancel();
+    this.animation = null;
+    this.cameraGlide = null;
     this.dom?.renderer.setOpacity(null);
-    this.dom?.renderer.canvasEl.removeClass('is-drilling');
+    this.dom?.renderer.canvasEl.removeClass('is-animating');
   }
 
   /**
@@ -811,14 +870,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
    */
   private dropLostDrill(tree: MindMapTree): boolean {
     if (!this.isDrilled || isValidDrillPath(tree, this.drillPath)) return false;
-    this.cancelDrillAnimation();
+    this.cancelAnimation();
     this.shownCentre = null;
     this.setDrillPath([]);
     return true;
   }
 
   private async loadNote(): Promise<void> {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     const generation = ++this.generation;
     this.deleted = false;
     this.cancelUpdate();
@@ -923,7 +982,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** New tree from the note; keeps the viewport anchored (never fits, except a fit still pending from opening). */
   private applyChange(file: TFile, data: string, cache: CachedMetadata): void {
-    this.finishDrillAnimation();
+    this.finishAnimation();
     this.generation++; // a load still reading the file is outdated now
     this.cancelUpdate();
     this.cancelRelayout();
@@ -933,7 +992,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       this.dropLostDrill(tree);
       return this.showTree(tree);
     }
-    if (this.layoutWillChange()) this.pendingFit = true;
+    const switching = this.layoutWillChange();
     // Spec "Drill-down": quietly back to the whole map, fitted.
     const lost = this.dropLostDrill(tree);
     if (lost) this.pendingFit = true;
@@ -942,6 +1001,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const anchor = this.anchorIn(previous);
     // Sizes of content that is gone; the cache would otherwise grow with every edit.
     this.sizes.retain(allNodes(tree));
+    // A new layout from the frontmatter switches like a chosen one (unless a fit is due anyway).
+    if (switching && !this.pendingFit) return this.switchLayout(() => this.showTree(tree));
+    if (switching) this.pendingFit = true;
     this.showTree(tree);
     if (lost || this.pendingFit) return;
     this.fitted = false;
@@ -1011,6 +1073,12 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     for (const before of anchor) {
       const after = positioned.get(before.node.id);
       if (!after) continue;
+      // A camera glide on its way moves with the map.
+      const glide = this.cameraGlide;
+      if (glide && !glide.fit) {
+        glide.from = anchoredTransform(glide.from, before, after);
+        glide.to = anchoredTransform(glide.to, before, after);
+      }
       this.applyTransform(anchoredTransform(this.transform, before, after));
       return;
     }
@@ -1129,7 +1197,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   private showMessage(text: string): void {
     const dom = this.ensureDom();
-    this.cancelDrillAnimation();
+    this.cancelAnimation();
     this.cancelRelayout();
     this.cancelLayoutFrame();
     this.tree = null;
@@ -1236,7 +1304,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const anchor = this.anchorIn(this.layout);
     this.showLayout(this.computeLayout(this.tree));
     if (this.fitted) {
-      // Not fitToView: a drill animation fading in the measured map keeps running.
+      // Not fitToView: a running animation keeps going (a fit glide lands on the new fit).
       this.pendingFit = true;
       this.tryFit();
       return;
@@ -1250,8 +1318,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const fitted = this.fitTransform(this.layout, this.collapseInfo);
     if (!fitted) return;
     this.pendingFit = false;
-    this.applyTransform(fitted);
     this.fitted = true;
+    // Gliding to the fit: it lands on the new one instead of jumping there now.
+    if (this.cameraGlide?.fit) this.cameraGlide.to = fitted;
+    else this.applyTransform(fitted);
   }
 
   /** The transform that fits `layout` into the canvas; null while the canvas has no size. */
@@ -1278,6 +1348,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.size();
     return { x: this.lastSize.width / 2, y: this.lastSize.height / 2 };
   }
+}
+
+function sameTransform(a: Transform, b: Transform): boolean {
+  return a.x === b.x && a.y === b.y && a.zoom === b.zoom;
 }
 
 /** Key events typed into a text field (the zoom input, an editor) are not map keys. */

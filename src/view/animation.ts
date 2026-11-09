@@ -1,6 +1,6 @@
 import type { Transform } from '../render/viewport';
 
-/** Drill-down animation (issue #23): the view glides towards the node, then cross-fades. */
+/** Camera and cross-fade animations (drill-down, issue #23; fit, zoom and layout switches, issue #24). */
 export const GLIDE_MS = 250;
 export const FADE_MS = 150;
 

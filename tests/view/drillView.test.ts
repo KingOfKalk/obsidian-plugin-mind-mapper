@@ -1,6 +1,6 @@
 import type { WorkspaceLeaf } from 'obsidian';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
-import { FADE_MS, GLIDE_MS } from '../../src/view/drillAnimation';
+import { FADE_MS, GLIDE_MS } from '../../src/view/animation';
 import { LIVE_UPDATE_DEBOUNCE_MS, MindMapView } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
 import { FakeWorkspace, fakeFile } from '../helpers';
@@ -494,7 +494,7 @@ describe('animation', () => {
     expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
     expect(nodeIds(view)).toHaveLength(10);
     const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
-    expect(canvas?.classList.contains('is-drilling')).toBe(true);
+    expect(canvas?.classList.contains('is-animating')).toBe(true);
     frame();
     frame();
     // Gliding: the transform moves, the map is fully shown.
@@ -511,7 +511,7 @@ describe('animation', () => {
     expect(Number(opacity(view))).toBeLessThan(1);
     settleFrames();
     expect(opacity(view)).toBe('');
-    expect(canvas?.classList.contains('is-drilling')).toBe(false);
+    expect(canvas?.classList.contains('is-animating')).toBe(false);
     expect(view.getTransform()).toEqual(fitted(view));
   });
 
@@ -582,7 +582,7 @@ describe('animation', () => {
     view.drill();
     expect(nodeIds(view)).toEqual(BETA);
     expect(opacity(view)).toBe('');
-    expect(view.contentEl.querySelector('.is-drilling')).toBeNull();
+    expect(view.contentEl.querySelector('.is-animating')).toBeNull();
   });
 
   test('pan and zoom input reads the transform: that finishes the animation first', async () => {

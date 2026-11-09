@@ -1,5 +1,12 @@
 import { browser, expect } from '@wdio/globals';
-import { leafSummary, mouseOnNode, openMindMap, openNote, settle } from '../helpers';
+import {
+  leafSummary,
+  mouseOnNode,
+  openMindMap,
+  openNote,
+  settle,
+  waitForAnimation,
+} from '../helpers';
 
 const CANVAS = '.mind-mapper-canvas';
 
@@ -317,6 +324,8 @@ describe('back to root', function () {
         );
     });
     await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    // It glides there.
+    await waitForAnimation();
     const offset = await browser.execute(() => {
       const canvas = document.querySelector('.mind-mapper-canvas')?.getBoundingClientRect();
       const root = document.querySelector('.mind-mapper-node.is-root')?.getBoundingClientRect();

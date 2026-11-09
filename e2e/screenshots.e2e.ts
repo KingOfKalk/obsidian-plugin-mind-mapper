@@ -6,6 +6,7 @@ import {
   openNote,
   setObsidianLanguage,
   settle,
+  waitForAnimation,
   waitForCache,
   writeNote,
 } from './helpers';
@@ -51,6 +52,7 @@ describe('screenshots', function () {
       await openMindMap(`fixtures/${note}.md`);
       await settle();
       await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+      await waitForAnimation();
       await browser.pause(300);
       await browser.saveScreenshot(`${dir}/${note}.png`);
     });
@@ -61,6 +63,7 @@ describe('screenshots', function () {
     await settle();
     await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
     await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+    await waitForAnimation();
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/welcome.png`);
     await browser.keys('Escape');
@@ -71,6 +74,7 @@ describe('screenshots', function () {
     await settle();
     await browser.executeObsidianCommand('mind-mapper:reset-zoom');
     await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await waitForAnimation();
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/thematic-breaks-100.png`);
   });
@@ -96,6 +100,7 @@ describe('screenshots', function () {
         await openMindMap(`fixtures/${note}.md`);
         await settle();
         await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await waitForAnimation();
         await browser.pause(300);
         await browser.saveScreenshot(`${dir}/layout-${layout}-${note}.png`);
       });
@@ -141,6 +146,7 @@ describe('screenshots', function () {
     await browser.saveScreenshot(`${dir}/large-fit.png`);
     await browser.executeObsidianCommand('mind-mapper:reset-zoom');
     await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await waitForAnimation();
     await browser.pause(1000);
     await browser.saveScreenshot(`${dir}/large-100.png`);
   });
@@ -160,6 +166,7 @@ describe('screenshots', function () {
     });
     await settle();
     await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+    await waitForAnimation();
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/collapsed.png`);
   });
@@ -181,6 +188,7 @@ describe('screenshots', function () {
       await browser.executeObsidianCommand('mind-mapper:collapse-all');
       await settle();
       await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+      await waitForAnimation();
       await browser.pause(300);
       await browser.saveScreenshot(`${dir}/fit-collapsed-${mode}.png`);
       await saveFullScreenShot(`${dir}/fit-collapsed-full-screen-${mode}.png`);
@@ -321,6 +329,7 @@ describe('screenshots', function () {
     await settle();
     await withLoudPalette(async () => {
       await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+      await waitForAnimation();
       await browser.pause(300);
       await browser.saveScreenshot(`${dir}/loud-rainbow-tour-window.png`);
       await saveFullScreenShot(`${dir}/loud-rainbow-tour.png`);
@@ -356,6 +365,7 @@ describe('screenshots', function () {
     await settle();
     // 100 % is a preset: the menu shows it checked.
     await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await waitForAnimation();
     await withLoudPalette(() => saveControlsShots(`${dir}/loud-controls`));
   });
 
@@ -411,6 +421,7 @@ describe('screenshots', function () {
         await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
         await clickNodeEndingWith('/Timeline');
         await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await waitForAnimation();
         await pointerAway();
         await browser.saveScreenshot(`${prefix}-1-selected.png`);
         await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
@@ -626,7 +637,7 @@ async function clickNodeEndingWith(suffix: string): Promise<void> {
 
 /** Waits for the end of a drill-down animation and the re-layout after it. */
 async function drillEnd(): Promise<void> {
-  await browser.$('.mind-mapper-canvas.is-drilling').waitForExist({ reverse: true, timeout: 5000 });
+  await waitForAnimation();
   await settle();
 }
 

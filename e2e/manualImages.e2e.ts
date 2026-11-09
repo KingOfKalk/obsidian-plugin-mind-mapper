@@ -138,6 +138,9 @@ async function showMap(notePath: string, withNote = false): Promise<void> {
 /** Fit to view through the map's own button (works whatever leaf is active), then settle. */
 async function fit(): Promise<void> {
   await browser.$('.mind-mapper-controls button[aria-label="Fit to view"]').click();
+  await browser
+    .$('.mind-mapper-canvas.is-animating')
+    .waitForExist({ reverse: true, timeout: 5000 });
   await browser.pause(400);
 }
 
@@ -257,14 +260,14 @@ describe('user manual images', function () {
     });
     await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
     await browser
-      .$('.mind-mapper-canvas.is-drilling')
+      .$('.mind-mapper-canvas.is-animating')
       .waitForExist({ reverse: true, timeout: 5000 });
     await settle();
     await movePointerAway(400, 100);
     await shoot('drill-down');
     await browser.executeObsidianCommand('mind-mapper:show-whole-map');
     await browser
-      .$('.mind-mapper-canvas.is-drilling')
+      .$('.mind-mapper-canvas.is-animating')
       .waitForExist({ reverse: true, timeout: 5000 });
   });
 
