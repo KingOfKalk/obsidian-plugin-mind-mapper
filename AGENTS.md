@@ -28,6 +28,7 @@
 
 - Git workflow (branches, worktrees, commits, merging, releases): [CONTRIBUTING.md](CONTRIBUTING.md).
 - Testing, screenshots, devcontainer, dev vault: [docs/developer.md](docs/developer.md).
+- Anything that only matters once the repo is public (issue links, CI, submission, doc changes): add it to [docs/going-public.md](docs/going-public.md) instead of doing it now.
 
 ## Commands
 
