@@ -30,6 +30,16 @@ describe('screenshots', function () {
     });
   }
 
+  it('welcome', async function () {
+    await openMindMap('Welcome.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/welcome.png`);
+    await browser.keys('Escape');
+  });
+
   it('dividers at 100 %', async function () {
     await openMindMap('fixtures/thematic-breaks.md');
     await settle();

@@ -91,6 +91,7 @@
 - README images (`npm run readme:images`)
   - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `test-vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes
+  - `test-vault/Welcome.md` is the first note to open in the dev vault (how to open a map, where the notes are, frontmatter keys)
   - Demo notes in `test-vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
 - User manual images (`npm run manual:images`)
   - Runs `e2e/manualImages.e2e.ts`; writes the committed images in `docs/images/manual/`, used by `docs/user-manual.md`

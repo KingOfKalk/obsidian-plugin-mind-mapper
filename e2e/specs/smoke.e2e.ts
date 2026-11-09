@@ -11,7 +11,7 @@ describe('smoke', function () {
   });
 
   it('worked example opens as a mind map', async function () {
-    await openViaCommand('Worked example.md');
+    await openViaCommand('fixtures/worked-example.md');
     expect(await browser.$$('.mind-mapper-node').length).toBe(7);
   });
 });
