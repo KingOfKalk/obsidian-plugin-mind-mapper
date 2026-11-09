@@ -8,6 +8,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# One run at a time: two quick merges otherwise race on the release PR branch, and the
+# versions-json push of the older run is rejected (#11). Queued runs are not cancelled.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 # Optional secret RELEASE_PLEASE_TOKEN (fine-grained PAT or GitHub App token with contents and
 # pull-requests write): the release PR and the versions.json commit then trigger CI, so required
 # status checks can pass on the release PR. Without it GITHUB_TOKEN is used, which does not
