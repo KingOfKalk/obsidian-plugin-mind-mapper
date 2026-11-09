@@ -22,6 +22,9 @@ export const de: Messages = {
   backToRoot: 'Zurück zum Hauptthema',
   toggleFullScreen: 'Vollbild umschalten',
   exitFullScreen: 'Vollbild beenden',
+  drillDown: 'In die Auswahl eintauchen',
+  drillOut: 'Eine Ebene zurück',
+  showWholeMap: 'Ganze Mindmap anzeigen',
 
   // Layout and colour theme of the map view (control bar menus and commands)
   layoutMenu: 'Layout',
@@ -43,6 +46,7 @@ export const de: Messages = {
   collapseNode: 'Einklappen',
   expandNode: 'Ausklappen',
   showFullContent: 'Gesamten Inhalt anzeigen',
+  drillCentre: 'Mitte der Detailansicht',
 
   // View
   viewTitle: 'Mindmap',

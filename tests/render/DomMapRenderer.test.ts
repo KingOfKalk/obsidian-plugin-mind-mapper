@@ -1022,3 +1022,60 @@ test('in German the toggle and the expand button are labelled German', () => {
     'Gesamten Inhalt anzeigen',
   );
 });
+
+describe('drill-down (issue #23)', () => {
+  const marker = (parent: HTMLElement) =>
+    parent.querySelector<HTMLElement>('.mind-mapper-drill-marker');
+
+  test('setDrillCentre marks the centre node and shows the `focus` marker above it', () => {
+    const { parent, renderer } = setup();
+    renderer.setLayout(layout);
+    expect(marker(parent)).toBeNull();
+    renderer.setDrillCentre('R');
+    const el = marker(parent);
+    expect(el?.dataset.icon).toBe('focus');
+    expect(el?.getAttribute('aria-label')).toBe('Drilled-in centre');
+    // Middle of the top edge (CSS moves it just above the node).
+    expect(el?.style.left).toBe('100px');
+    expect(el?.style.top).toBe('-18px');
+    expect(el?.classList.contains('is-side-top')).toBe(true);
+    expect(parent.querySelector('[data-node-id="R"]')?.classList.contains('is-drill-centre')).toBe(
+      true,
+    );
+    renderer.setDrillCentre(null);
+    expect(marker(parent)).toBeNull();
+    expect(parent.querySelectorAll('.is-drill-centre')).toHaveLength(0);
+  });
+
+  test('the marker goes below the centre when its children grow upwards (bottom to top)', () => {
+    const { parent, renderer } = setup();
+    const [root, ...rest] = layout.nodes;
+    if (!root) throw new Error('no root');
+    renderer.setLayout({ ...layout, nodes: [{ ...root, childSide: 'top' }, ...rest] });
+    renderer.setDrillCentre('R');
+    expect(marker(parent)?.style.top).toBe('18px');
+    expect(marker(parent)?.classList.contains('is-side-bottom')).toBe(true);
+  });
+
+  test('the marker follows the centre across layouts and is removed when it is not laid out', () => {
+    const { parent, renderer } = setup();
+    renderer.setDrillCentre('R');
+    renderer.setLayout(layout);
+    expect(marker(parent)).not.toBeNull();
+    expect(parent.querySelector('[data-node-id="R"]')?.classList.contains('is-drill-centre')).toBe(
+      true,
+    );
+    renderer.setLayout({ ...layout, nodes: layout.nodes.slice(1), edges: [] });
+    expect(marker(parent)).toBeNull();
+  });
+
+  test('setOpacity fades the whole map (nodes and lines), null restores it', () => {
+    const { parent, renderer } = setup();
+    renderer.setLayout(layout);
+    const world = parent.querySelector<HTMLElement>('.mind-mapper-world');
+    renderer.setOpacity(0.25);
+    expect(world?.style.opacity).toBe('0.25');
+    renderer.setOpacity(null);
+    expect(world?.style.opacity).toBe('');
+  });
+});

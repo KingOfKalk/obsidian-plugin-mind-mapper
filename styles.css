@@ -561,3 +561,25 @@ button.mind-mapper-collapse.is-collapsed {
   --icon-size: var(--icon-xs);
   --icon-stroke: var(--icon-xs-stroke-width);
 }
+
+/* Drill-down (issue #23): the `focus` icon on the edge of the centre node that has no lines (above
+   it; below it when its children grow upwards). */
+.mind-mapper-drill-marker {
+  position: absolute;
+  display: flex;
+  transform: translate(-50%, calc(-100% - 2px));
+  color: var(--text-accent);
+  pointer-events: none;
+  --icon-size: var(--icon-s);
+  --icon-stroke: var(--icon-s-stroke-width);
+}
+
+.mind-mapper-drill-marker.is-side-bottom {
+  transform: translate(-50%, 2px);
+}
+
+/* The drill-down button without anything to drill into or out of. */
+.mind-mapper-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

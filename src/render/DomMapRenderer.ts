@@ -78,6 +78,9 @@ export class DomMapRenderer implements MapRenderer {
   private readonly nodes = new Map<string, NodeDom>();
   private readonly toggles = new Map<string, HTMLElement>();
   private selectedId: string | null = null;
+  /** Drill-down centre (issue #23): `is-drill-centre` and the marker above it. */
+  private drillCentreId: string | null = null;
+  private drillMarkerEl: HTMLElement | null = null;
   /** Hit path of each drawn cross-link -> the link (a tap on a line looks it up). */
   private readonly linkHits = new Map<EventTarget, CrossLink>();
   /** Visible path of each drawn cross-link by `linkKey`. */
@@ -200,6 +203,7 @@ export class DomMapRenderer implements MapRenderer {
     }
     for (const list of pool.values()) for (const contentEl of list) this.hooks.release(contentEl);
     this.placeToggles(layout, this.collapse);
+    this.placeDrillMarker();
     this.drawSkeleton(layout, skeleton);
     this.keepHighlightOnTop();
   }
@@ -345,6 +349,49 @@ export class DomMapRenderer implements MapRenderer {
     if (id !== null) this.nodes.get(id)?.el.addClass('is-selected');
   }
 
+  /** The drilled-in centre node (issue #23), null: the whole map (kept for nodes created later). */
+  setDrillCentre(id: string | null): void {
+    if (this.drillCentreId !== null) {
+      this.nodes.get(this.drillCentreId)?.el.removeClass('is-drill-centre');
+    }
+    this.drillCentreId = id;
+    if (id !== null) this.nodes.get(id)?.el.addClass('is-drill-centre');
+    this.placeDrillMarker();
+  }
+
+  /**
+   * The `focus` icon centred on the edge without lines: above the centre, below it when its
+   * children grow upwards. A world-level sibling like the collapse toggles (nodes clip overflow).
+   */
+  private placeDrillMarker(): void {
+    const id = this.drillCentreId;
+    const centre = id === null ? undefined : this.rects.get(id);
+    if (!centre) return this.removeDrillMarker();
+    if (!this.drillMarkerEl) {
+      this.drillMarkerEl = this.worldEl.createDiv({
+        cls: 'mind-mapper-drill-marker',
+        attr: { 'aria-label': t('drillCentre') },
+      });
+      setIcon(this.drillMarkerEl, 'focus');
+    }
+    const below = centre.childSide === 'top';
+    const el = this.drillMarkerEl;
+    el.toggleClass('is-side-top', !below);
+    el.toggleClass('is-side-bottom', below);
+    el.style.left = `${centre.x + centre.width / 2}px`;
+    el.style.top = `${below ? centre.y + centre.height : centre.y}px`;
+  }
+
+  private removeDrillMarker(): void {
+    this.drillMarkerEl?.remove();
+    this.drillMarkerEl = null;
+  }
+
+  /** Opacity of the whole map (drill-down cross-fade); null: fully shown again. */
+  setOpacity(opacity: number | null): void {
+    this.worldEl.style.opacity = opacity === null ? '' : String(opacity);
+  }
+
   setTransform(t: Transform): void {
     this.transform = t;
     this.worldEl.style.transform = transformCss(t);
@@ -394,6 +441,7 @@ export class DomMapRenderer implements MapRenderer {
     this.linkLines.clear();
     this.highlighted = null;
     this.highlightEl = null;
+    this.drillMarkerEl = null;
   }
 
   /** Edge paths are reused across layouts (a re-layout of a large map only updates `d`). */
@@ -506,6 +554,7 @@ export class DomMapRenderer implements MapRenderer {
       this.nodes.set(node.id, dom);
       dom.el.toggleClass('is-selected', node.id === this.selectedId);
       dom.el.toggleClass('is-link-end', this.linkEndIds().includes(node.id));
+      dom.el.toggleClass('is-drill-centre', node.id === this.drillCentreId);
       const clip = this.clips.get(node.id);
       if (clip) this.applyClip(dom.el, clip);
     } else if (dom.node.markdown !== node.markdown) {

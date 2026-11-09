@@ -7,13 +7,16 @@ export interface VisibleTree {
   hidden: ReadonlyMap<string, number>;
 }
 
-/** The tree without the subtrees of collapsed nodes; unchanged nodes keep their identity. */
+/**
+ * The tree without the subtrees of collapsed nodes; unchanged nodes keep their identity. The root is
+ * never collapsed (a drilled-in centre may be collapsed in the whole map).
+ */
 export function visibleTree(tree: MindMapTree, collapsed: CollapseState): VisibleTree {
   const hidden = new Map<string, number>();
 
   const visit = (node: MindMapNode): MindMapNode => {
     if (node.children.length === 0) return node;
-    if (collapsed.has(node.id)) {
+    if (node !== tree.root && collapsed.has(node.id)) {
       hidden.set(node.id, countDescendants(node));
       return { ...node, children: [] };
     }

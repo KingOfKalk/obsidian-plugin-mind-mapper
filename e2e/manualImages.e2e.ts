@@ -246,6 +246,28 @@ describe('user manual images', function () {
     await browser.keys('Escape');
   });
 
+  it('drilled into a branch', async function () {
+    await setWindowSize(820, 480);
+    await showMap(TOUR);
+    await browser.execute(() => {
+      const node = Array.from(
+        document.querySelectorAll<HTMLElement>('.mind-mapper-node[data-node-id]'),
+      ).find((el) => el.dataset.nodeId?.endsWith('/Timeline'));
+      node?.querySelector<HTMLElement>('.mind-mapper-node-content')?.click();
+    });
+    await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+    await browser
+      .$('.mind-mapper-canvas.is-drilling')
+      .waitForExist({ reverse: true, timeout: 5000 });
+    await settle();
+    await movePointerAway(400, 100);
+    await shoot('drill-down');
+    await browser.executeObsidianCommand('mind-mapper:show-whole-map');
+    await browser
+      .$('.mind-mapper-canvas.is-drilling')
+      .waitForExist({ reverse: true, timeout: 5000 });
+  });
+
   it('layout menu, theme chosen for this map', async function () {
     await setWindowSize(820, 560);
     await showMap(SIMPLE);
