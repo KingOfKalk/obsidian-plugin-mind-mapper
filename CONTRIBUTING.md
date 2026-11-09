@@ -60,7 +60,8 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 ## Releases
 
 - Releases are automated with [release-please](https://github.com/googleapis/release-please). Do not bump versions or tag by hand; do not edit `manifest.json` / `versions.json` versions by hand.
-- release-please keeps a release pull request open on `main`. It collects the Conventional Commits since the last release, proposes the next version (`feat` = minor, `fix` = patch, `!` = major) and updates the changelog, `package.json`, `manifest.json` and `versions.json`.
+- release-please keeps a release pull request open on `main`. It collects the Conventional Commits since the last release, proposes the next version (`feat` = minor; `fix`, `perf`, `revert`, `docs`, `refactor` = patch; `!` = major) and updates the changelog, `package.json`, `manifest.json` and `versions.json`.
+- `chore`, `ci`, `test`, `build` and `style` commits are hidden: they do not appear in the changelog and do not trigger a release on their own.
 - The owner merges the release pull request. That publishes the GitHub release and the tag, and CI attaches `main.js`, `manifest.json` and `styles.css` to it.
 - Tags and release titles have no `v` prefix (`release-please-config.json`): Obsidian needs the tag to equal the manifest version, e.g. `1.0.0`.
 - Install channel for now: [BRAT](https://github.com/TfTHacker/obsidian42-brat) picks up each GitHub release. The community directory submission comes later (see [docs/going-public.md](docs/going-public.md)).
