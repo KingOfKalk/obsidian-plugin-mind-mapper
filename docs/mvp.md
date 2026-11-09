@@ -197,6 +197,7 @@ Project (root, H1)
   - Visible: floating controls bottom center (same as normal view), exit button top right, optional title chip
   - Controls fade out after about 2 s idle, reappear on mouse move
   - Exit: Esc (handled by the plugin, after open overlays and modals have consumed it) and exit button
+    - Esc that closes a menu of the controls (zoom presets, layout, colour theme) only closes the menu; Esc on the map, in or out of full screen, never makes another tab active
   - Entering: fit to view; exiting: restore previous pan and zoom
   - Jump to source from full screen exits full screen first
   - Static map with free pan and zoom; no step-through (see Future features)

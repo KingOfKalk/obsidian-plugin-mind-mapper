@@ -1828,6 +1828,32 @@ test('another leaf becoming active (quick switcher, search, hover link) exits fu
   document.body.empty();
 });
 
+test('Esc that nothing handled is marked handled while the map is the active view (keeps its tab)', async () => {
+  const ws = new FakeWorkspace();
+  ws.addNote('Note.md', 'worked-example');
+  const { view } = newView(ws);
+  await view.onOpen();
+  const press = (init: KeyboardEventInit = {}): boolean => {
+    const evt = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+      ...init,
+    });
+    document.body.dispatchEvent(evt);
+    return evt.defaultPrevented;
+  };
+  // Another view is active: Obsidian's own Esc handling stays untouched.
+  expect(press()).toBe(false);
+  ws.activeView = view;
+  // After a menu closed itself on Esc (its handler does not mark the key handled) or bare.
+  expect(press()).toBe(true);
+  expect(press({ key: 'Enter' })).toBe(false);
+  await view.onClose();
+  view.unload();
+  expect(press()).toBe(false);
+});
+
 /** Headings-only note: `# Big`, `groups` H2s with `perGroup` H3s each (1 + groups * (1 + perGroup) nodes). */
 function bigNote(groups: number, perGroup: number): { text: string; cache: CachedMetadata } {
   const lines: string[] = [];
