@@ -411,7 +411,22 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   override async onOpen(): Promise<void> {
     this.pendingFit = true;
+    // Bubble phase on the document: after the target, menus and scopes, before Obsidian's own
+    // listener on the window.
+    this.registerDomEvent(this.containerEl.doc, 'keydown', (evt) => this.keepTabOnEscape(evt));
     await this.loadNote();
+  }
+
+  /**
+   * Obsidian's workspace hands an Esc nothing marked as handled from a non-navigation view (like
+   * this one) to the most recent note tab: a bare Esc, or one that closed a menu of the control bar
+   * (menus do not mark it), would take the active tab from the map and end full screen. The map is
+   * not a navigation view on purpose (a note opened in the current tab would replace it), so it
+   * marks Esc handled instead.
+   */
+  private keepTabOnEscape(evt: KeyboardEvent): void {
+    if (evt.key !== 'Escape') return;
+    if (this.app.workspace.getActiveViewOfType(MindMapView) === this) evt.preventDefault();
   }
 
   override async onClose(): Promise<void> {
