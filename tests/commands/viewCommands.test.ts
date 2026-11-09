@@ -13,6 +13,10 @@ const COMMANDS = [
   ['expand-all', 'Expand all', 'expandAll'],
   ['back-to-root', 'Back to root', 'backToRoot'],
   ['toggle-full-screen', 'Toggle full screen', 'toggleFullScreen'],
+  ['change-layout', 'Change layout…', 'showLayoutMenu'],
+  ['next-layout', 'Next layout', 'nextLayout'],
+  ['change-theme', 'Change colour theme…', 'showThemeMenu'],
+  ['next-theme', 'Next colour theme', 'nextTheme'],
 ] as const;
 
 async function setup() {
@@ -66,5 +70,38 @@ test('in German the view commands have German names', async () => {
     'Alle ausklappen',
     'Zurück zum Hauptthema',
     'Vollbild umschalten',
+    'Layout ändern…',
+    'Nächstes Layout',
+    'Farbschema ändern…',
+    'Nächstes Farbschema',
   ]);
+});
+
+test('"Next layout" and "Next colour theme" cycle through all values of the active map and wrap around', async () => {
+  const { commands, ws, view } = await setup();
+  ws.addNote('Note.md', 'worked-example');
+  await view.setState({ file: 'Note.md' }, { history: false });
+  ws.activeView = view;
+  const layouts: unknown[] = [];
+  for (let i = 0; i < 7; i++) {
+    find(commands, 'next-layout').checkCallback?.(false);
+    layouts.push(view.getState().layout);
+  }
+  // From the default circle-clockwise.
+  expect(layouts).toEqual([
+    'circle-counter-clockwise',
+    'left-to-right',
+    'right-to-left',
+    'top-to-bottom',
+    'bottom-to-top',
+    'circle-clockwise',
+    'circle-counter-clockwise',
+  ]);
+  const themes: unknown[] = [];
+  for (let i = 0; i < 6; i++) {
+    find(commands, 'next-theme').checkCallback?.(false);
+    themes.push(view.getState().theme);
+  }
+  // From the default rainbow.
+  expect(themes).toEqual(['ocean', 'forest', 'accent', 'none', 'rainbow', 'ocean']);
 });

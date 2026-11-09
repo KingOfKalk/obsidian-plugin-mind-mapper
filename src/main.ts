@@ -73,9 +73,11 @@ export default class MindMapperPlugin extends Plugin {
       this.app.vault.on('rename', (file, oldPath) => {
         for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_MIND_MAP)) {
           if (!leaf.isDeferred) continue;
-          if (parseViewState(leaf.getViewState().state).file !== oldPath) continue;
+          const state = parseViewState(leaf.getViewState().state);
+          if (state.file !== oldPath) continue;
+          // The layout and theme overrides stay with the map.
           leaf
-            .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { file: file.path } })
+            .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { ...state, file: file.path } })
             .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));
         }
       }),

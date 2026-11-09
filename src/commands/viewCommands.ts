@@ -12,6 +12,11 @@ const VIEW_COMMANDS: { id: string; name: MessageKey; run: (view: MindMapView) =>
   { id: 'expand-all', name: 'expandAll', run: (view) => view.expandAll() },
   { id: 'back-to-root', name: 'backToRoot', run: (view) => view.backToRoot() },
   { id: 'toggle-full-screen', name: 'toggleFullScreen', run: (view) => view.toggleFullScreen() },
+  // The pickers are the control bar menus, opened at their buttons.
+  { id: 'change-layout', name: 'changeLayout', run: (view) => view.showLayoutMenu() },
+  { id: 'next-layout', name: 'nextLayout', run: (view) => view.nextLayout() },
+  { id: 'change-theme', name: 'changeTheme', run: (view) => view.showThemeMenu() },
+  { id: 'next-theme', name: 'nextTheme', run: (view) => view.nextTheme() },
 ];
 
 /** Commands that act on the active mind map view; hidden when none is active. No default hotkeys. */

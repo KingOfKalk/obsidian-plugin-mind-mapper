@@ -23,6 +23,22 @@ export const de: Messages = {
   toggleFullScreen: 'Vollbild umschalten',
   exitFullScreen: 'Vollbild beenden',
 
+  // Layout and colour theme of the map view (control bar menus and commands)
+  layoutMenu: 'Layout',
+  themeMenu: 'Farbschema',
+  changeLayout: 'Layout ändern…',
+  nextLayout: 'Nächstes Layout',
+  changeTheme: 'Farbschema ändern…',
+  nextTheme: 'Nächstes Farbschema',
+  useNoteLayout: 'Layout der Notiz verwenden',
+  useNoteTheme: 'Farbschema der Notiz verwenden',
+  layoutCircleClockwise: 'Ausgewogen im Uhrzeigersinn',
+  layoutCircleCounterClockwise: 'Ausgewogen gegen den Uhrzeigersinn',
+  layoutLeftToRight: 'Links → rechts',
+  layoutRightToLeft: 'Rechts → links',
+  layoutTopToBottom: 'Oben → unten',
+  layoutBottomToTop: 'Unten → oben',
+
   // Nodes
   collapseNode: 'Einklappen',
   expandNode: 'Ausklappen',

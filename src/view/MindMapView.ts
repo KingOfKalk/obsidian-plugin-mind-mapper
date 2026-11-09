@@ -17,7 +17,14 @@ import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layou
 import { SizeCache } from '../layout/sizeCache';
 import { visibleTree } from '../layout/visibleTree';
 import { layoutTree } from '../layout/tidyTree';
-import type { MapLayout, MapLayoutName, PositionedNode, Rect, Size } from '../layout/types';
+import {
+  LAYOUT_NAMES,
+  type MapLayout,
+  type MapLayoutName,
+  type PositionedNode,
+  type Rect,
+  type Size,
+} from '../layout/types';
 import { worldViewport } from '../render/culling';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
 import { type CrossLink, crossLinks, visibleCrossLinks } from '../layout/crossLinks';
@@ -33,6 +40,7 @@ import { NodeContentRenderer } from '../render/NodeContentRenderer';
 import { attachLinkHandling } from '../render/linkHandling';
 import { type MapActions, MapControls } from '../render/MapControls';
 import { attachPanZoom, type PanZoomTarget } from '../render/panZoomInput';
+import { type MapThemeName, THEME_NAMES } from '../render/themes';
 import {
   fitBounds,
   fitToBounds,
@@ -47,7 +55,7 @@ import { t } from '../i18n';
 import { CollapseState } from './collapseState';
 import { FullScreen } from './fullScreen';
 import { LeafRecency } from './leafRecency';
-import { fileBasename, parseViewState } from './viewState';
+import { fileBasename, type MindMapViewState, parseViewState } from './viewState';
 
 /** What the plugin provides to each map view. */
 export interface ViewServices {
@@ -133,6 +141,12 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private links: CrossLink[] = [];
   /** Layout of the current map; a different effective layout fits once. */
   private layoutName: MapLayoutName | null = null;
+  /**
+   * Layout and colour theme chosen in this view (control bar, commands), null: the note's. Saved in
+   * the view state, never in the note; they win over the frontmatter and the settings.
+   */
+  private layoutOverride: MapLayoutName | null = null;
+  private themeOverride: MapThemeName | null = null;
 
   constructor(leaf: WorkspaceLeaf, services: Partial<ViewServices> = {}) {
     super(leaf);
@@ -165,9 +179,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     return readMapOptions(this.frontmatter, defaultLayout, startCollapsed, defaultTheme);
   }
 
-  /** Frontmatter `mind-mapper-layout`, else the plugin setting. */
+  /** This view's chosen layout, else frontmatter `mind-mapper-layout`, else the plugin setting. */
   private effectiveLayout(): MapLayoutName {
-    return this.mapOptions().layout;
+    return this.layoutOverride ?? this.mapOptions().layout;
+  }
+
+  /** This view's chosen theme, else frontmatter `mind-mapper-theme`, else the plugin setting. */
+  private effectiveTheme(): MapThemeName {
+    return this.themeOverride ?? this.mapOptions().theme;
   }
 
   /**
@@ -299,9 +318,50 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.relayoutKeeping(anchor);
   }
 
-  /** Frontmatter `mind-mapper-theme`, else the setting: pure CSS, no re-measure, no re-layout. */
+  /** The effective colour theme: pure CSS, no re-measure, no re-layout. */
   applyTheme(): void {
-    this.dom?.renderer.setTheme(this.mapOptions().theme);
+    if (!this.dom) return;
+    const theme = this.effectiveTheme();
+    this.dom.renderer.setTheme(theme);
+    this.dom.controls.setTheme(theme, this.themeOverride !== null);
+  }
+
+  /** Layout of this view only (null: the note's again): a different layout re-lays out and fits. */
+  chooseLayout(layout: MapLayoutName | null): void {
+    this.layoutOverride = layout;
+    this.app.workspace.requestSaveLayout();
+    if (this.tree && this.layout && this.layoutWillChange()) {
+      this.cancelRelayout();
+      this.pendingFit = true;
+      this.showLayout(this.computeLayout(this.tree));
+      return;
+    }
+    this.dom?.controls.setLayout(this.effectiveLayout(), layout !== null);
+  }
+
+  /** Colour theme of this view only (null: the note's again), applied live without a re-layout. */
+  chooseTheme(theme: MapThemeName | null): void {
+    this.themeOverride = theme;
+    this.app.workspace.requestSaveLayout();
+    this.applyTheme();
+  }
+
+  /** The layout after the shown one (wraps around). */
+  nextLayout(): void {
+    this.chooseLayout(following(LAYOUT_NAMES, this.effectiveLayout()));
+  }
+
+  /** The colour theme after the shown one (wraps around). */
+  nextTheme(): void {
+    this.chooseTheme(following(THEME_NAMES, this.effectiveTheme()));
+  }
+
+  showLayoutMenu(): void {
+    this.dom?.controls.showLayoutMenu();
+  }
+
+  showThemeMenu(): void {
+    this.dom?.controls.showThemeMenu();
   }
 
   /** Plugin settings changed: a new layout fits once, other changes keep the viewport anchored. */
@@ -380,11 +440,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   override getState(): Record<string, unknown> {
-    return { ...super.getState(), file: this.pinnedFile };
+    return { ...super.getState(), ...this.viewState() };
+  }
+
+  private viewState(): MindMapViewState {
+    return { file: this.pinnedFile, layout: this.layoutOverride, theme: this.themeOverride };
   }
 
   override async setState(state: unknown, result: ViewStateResult): Promise<void> {
-    const file = parseViewState(state).file;
+    const { file, layout, theme } = parseViewState(state);
+    // Applied by the load below: a different layout fits, the theme is set with the layout.
+    this.layoutOverride = layout;
+    this.themeOverride = theme;
     if (file !== this.pinnedFile) {
       this.pendingFit = true;
       this.collapse.reset();
@@ -519,7 +586,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         this.pinnedFile = file.path;
         // Updates the tab title and the saved workspace (setState also refreshes the view header title).
         this.leaf
-          .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { file: file.path } })
+          .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { ...this.viewState() } })
           .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));
       }),
       vault.on('delete', (file) => {
@@ -736,6 +803,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     dom.renderer.setLayout(layout, this.collapseInfo);
     this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);
+    dom.controls.setLayout(this.layoutName ?? this.effectiveLayout(), this.layoutOverride !== null);
     if (this.tree) {
       const shown = new Set(layout.nodes.map((p) => p.node.id));
       dom.renderer.setCrossLinks(visibleCrossLinks(this.tree, this.links, shown));
@@ -853,4 +921,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.size();
     return { x: this.lastSize.width / 2, y: this.lastSize.height / 2 };
   }
+}
+
+/** The value after `current` in `values`, the first after the last. */
+function following<T>(values: readonly T[], current: T): T {
+  return values[(values.indexOf(current) + 1) % values.length] ?? current;
 }

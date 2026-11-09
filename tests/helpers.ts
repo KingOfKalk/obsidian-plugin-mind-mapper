@@ -189,6 +189,7 @@ export class FakeWorkspace {
   getLeaf = vi.fn((..._args: unknown[]): WorkspaceLeaf => this.addLeaf({ type: 'empty' }).asLeaf());
   revealLeaf = vi.fn((_leaf: WorkspaceLeaf): Promise<void> => Promise.resolve());
   detachLeavesOfType = vi.fn();
+  requestSaveLayout = vi.fn();
 }
 
 export function fakeApp(workspace = new FakeWorkspace()): App {

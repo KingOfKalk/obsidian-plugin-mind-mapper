@@ -15,6 +15,8 @@ function setup() {
     expandAll: vi.fn(),
     backToRoot: vi.fn(),
     toggleFullScreen: vi.fn(),
+    chooseLayout: vi.fn(),
+    chooseTheme: vi.fn(),
   };
   const controls = new MapControls(parent, actions);
   const buttons = [...parent.querySelectorAll<HTMLElement>('.mind-mapper-controls button')];
@@ -49,6 +51,8 @@ test('renders the buttons in order with aria labels', () => {
     'Fit to view',
     'Collapse all',
     'Back to root',
+    'Layout',
+    'Colour theme',
     'Toggle full screen',
   ]);
   expect(buttons.map((b) => b.dataset.icon)).toEqual([
@@ -58,6 +62,8 @@ test('renders the buttons in order with aria labels', () => {
     'group',
     'chevrons-down-up',
     'locate',
+    'workflow',
+    'palette',
     'maximize-2',
   ]);
 });
@@ -82,6 +88,9 @@ test('each button calls its action once', () => {
   expect(actions.collapseAll).toHaveBeenCalledTimes(1);
   expect(actions.backToRoot).toHaveBeenCalledTimes(1);
   expect(actions.toggleFullScreen).toHaveBeenCalledTimes(1);
+  // The layout and theme buttons only open their menus.
+  expect(actions.chooseLayout).not.toHaveBeenCalled();
+  expect(actions.chooseTheme).not.toHaveBeenCalled();
 });
 
 test('the zoom input shows the zoom percentage', () => {
@@ -226,6 +235,8 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
     'An Ansicht anpassen',
     'Alle einklappen',
     'Zurück zum Hauptthema',
+    'Layout',
+    'Farbschema',
     'Vollbild umschalten',
   ]);
   expect(input.getAttribute('aria-label')).toBe('Zoomstufe');
@@ -249,4 +260,103 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
   ]);
   controls.setCollapsed(true);
   expect(buttons[4]?.getAttribute('aria-label')).toBe('Alle ausklappen');
+  controls.setLayout('left-to-right', false);
+  buttons[6]?.click();
+  expect(titles(Menu.lastShown)).toEqual([
+    'Ausgewogen im Uhrzeigersinn',
+    'Ausgewogen gegen den Uhrzeigersinn',
+    'Links → rechts',
+    'Rechts → links',
+    'Oben → unten',
+    'Unten → oben',
+    null,
+    'Layout der Notiz verwenden',
+  ]);
+  controls.setTheme('rainbow', false);
+  buttons[7]?.click();
+  expect(titles(Menu.lastShown)).toEqual([
+    'Keins',
+    'Regenbogen',
+    'Ozean',
+    'Wald',
+    'Akzentfarbe',
+    null,
+    'Farbschema der Notiz verwenden',
+  ]);
+});
+
+const LAYOUT_TITLES = [
+  'Balanced clockwise',
+  'Balanced counter-clockwise',
+  'Left → right',
+  'Right → left',
+  'Top → bottom',
+  'Bottom → top',
+];
+
+test('the layout button opens a menu of the six layouts, the current one checked, then "Use the note\'s layout"', () => {
+  const { parent, actions, controls, buttons } = setup();
+  controls.setLayout('top-to-bottom', false);
+  buttons[6]?.click();
+  const menu = Menu.lastShown;
+  expect(titles(menu)).toEqual([...LAYOUT_TITLES, null, "Use the note's layout"]);
+  expect(checked(menu)).toEqual(['Top → bottom']);
+  // The button's document: popout windows get the menu in their own window.
+  expect(menu?.shownAt?.doc).toBe(parent.ownerDocument);
+
+  void item(menu, 'Right → left')?.clickHandler?.();
+  expect(actions.chooseLayout).toHaveBeenLastCalledWith('right-to-left');
+  void item(menu, "Use the note's layout")?.clickHandler?.();
+  expect(actions.chooseLayout).toHaveBeenLastCalledWith(null);
+  expect(actions.chooseLayout).toHaveBeenCalledTimes(2);
+});
+
+test('the theme button opens a menu of the five themes, the current one checked, then "Use the note\'s theme"', () => {
+  const { parent, actions, controls, buttons } = setup();
+  controls.setTheme('ocean', true);
+  buttons[7]?.click();
+  const menu = Menu.lastShown;
+  expect(titles(menu)).toEqual([
+    'None',
+    'Rainbow',
+    'Ocean',
+    'Forest',
+    'Accent colour',
+    null,
+    "Use the note's theme",
+  ]);
+  expect(checked(menu)).toEqual(['Ocean']);
+  expect(menu?.shownAt?.doc).toBe(parent.ownerDocument);
+
+  void item(menu, 'Accent colour')?.clickHandler?.();
+  expect(actions.chooseTheme).toHaveBeenLastCalledWith('accent');
+  void item(menu, "Use the note's theme")?.clickHandler?.();
+  expect(actions.chooseTheme).toHaveBeenLastCalledWith(null);
+});
+
+test('the layout and theme buttons are highlighted while their override is active', () => {
+  const { controls, buttons } = setup();
+  const [layout, theme] = [buttons[6], buttons[7]];
+  expect(layout?.classList.contains('is-active')).toBe(false);
+  expect(theme?.classList.contains('is-active')).toBe(false);
+  controls.setLayout('left-to-right', true);
+  expect(layout?.classList.contains('is-active')).toBe(true);
+  expect(theme?.classList.contains('is-active')).toBe(false);
+  controls.setTheme('forest', true);
+  expect(theme?.classList.contains('is-active')).toBe(true);
+  controls.setLayout('left-to-right', false);
+  controls.setTheme('forest', false);
+  expect(layout?.classList.contains('is-active')).toBe(false);
+  expect(theme?.classList.contains('is-active')).toBe(false);
+});
+
+test('the menus can be opened without a click (commands), at their buttons', () => {
+  const { controls, buttons } = setup();
+  controls.setLayout('left-to-right', false);
+  controls.setTheme('none', false);
+  controls.showLayoutMenu();
+  expect(checked(Menu.lastShown)).toEqual(['Left → right']);
+  controls.showThemeMenu();
+  expect(checked(Menu.lastShown)).toEqual(['None']);
+  expect(buttons.length).toBe(9);
 });

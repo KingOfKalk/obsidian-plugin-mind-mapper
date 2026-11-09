@@ -483,8 +483,9 @@ async function withLoudPalette(shoot: () => Promise<void>): Promise<void> {
 }
 
 /**
- * The controls bar as is, while typing a zoom ("87,5") and the window with the zoom preset menu
- * open. Leaves the zoom unchanged.
+ * The controls bar as is, while typing a zoom ("87,5"), the window with the zoom preset, layout
+ * and colour theme menus open, and the bar with both overrides active (highlighted). Ends with
+ * the note's layout and theme again, fitted.
  */
 async function saveControlsShots(prefix: string): Promise<void> {
   const controls = browser.$('.mind-mapper-controls');
@@ -500,6 +501,42 @@ async function saveControlsShots(prefix: string): Promise<void> {
   await browser.saveScreenshot(`${prefix}-menu.png`);
   await browser.keys('Escape');
   await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
+  // The layout (7th child) and colour theme (8th) menus; labels differ per language.
+  for (const [child, name] of [
+    [7, 'layout'],
+    [8, 'theme'],
+  ] as const) {
+    await browser.$(`.mind-mapper-controls > :nth-child(${child})`).click();
+    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await browser.pause(200);
+    await browser.saveScreenshot(`${prefix}-${name}-menu.png`);
+    await browser.keys('Escape');
+    await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
+  }
+  // Both overridden: the buttons are highlighted. Then back to the note's layout and theme. Through
+  // the view: Esc on a menu leaves another leaf active, so the map commands are not available.
+  const choose = (layout: string | null, theme: string | null) =>
+    browser.executeObsidian(
+      ({ app }, l, t) => {
+        for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+          const view = leaf.view as unknown as {
+            chooseLayout(layout: string | null): void;
+            chooseTheme(theme: string | null): void;
+          };
+          view.chooseLayout(l);
+          view.chooseTheme(t);
+        }
+      },
+      layout,
+      theme,
+    );
+  await choose('top-to-bottom', 'ocean');
+  await settle();
+  await browser.$('.mind-mapper-world').moveTo();
+  await browser.pause(200);
+  await controls.saveScreenshot(`${prefix}-overridden.png`);
+  await choose(null, null);
+  await settle();
 }
 
 /** Full screen fits the map to the whole window; Esc leaves it again. */

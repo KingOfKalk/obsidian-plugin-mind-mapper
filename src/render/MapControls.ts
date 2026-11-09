@@ -1,5 +1,9 @@
 import { Menu, setIcon } from 'obsidian';
 import { t } from '../i18n';
+import type { MessageKey } from '../i18n/en';
+import { LAYOUT_LABELS, THEME_LABELS } from '../i18n/labels';
+import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
+import { type MapThemeName, THEME_NAMES } from './themes';
 import { parseZoomPercent } from './viewport';
 
 export interface MapActions {
@@ -12,6 +16,10 @@ export interface MapActions {
   expandAll(): void;
   backToRoot(): void;
   toggleFullScreen(): void;
+  /** Layout of this map view only; null: the note's layout again. */
+  chooseLayout(layout: MapLayoutName | null): void;
+  /** Colour theme of this map view only; null: the note's theme again. */
+  chooseTheme(theme: MapThemeName | null): void;
 }
 
 /** Zoom presets of the menu next to the zoom input, in percent. */
@@ -21,7 +29,11 @@ const ZOOM_PRESETS = [50, 75, 100, 125, 150, 200];
 export class MapControls {
   private readonly zoomInput: HTMLInputElement;
   private readonly collapseButton: HTMLButtonElement;
+  private readonly layoutButton: HTMLButtonElement;
+  private readonly themeButton: HTMLButtonElement;
   private anyCollapsed = false;
+  private layout: MapLayoutName | null = null;
+  private theme: MapThemeName | null = null;
   private zoom = 1;
   /** True while the zoom input holds typed text not yet applied. */
   private editing = false;
@@ -57,6 +69,10 @@ export class MapControls {
       this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),
     );
     button(t('backToRoot'), () => actions.backToRoot(), 'locate');
+    // `workflow` (boxes joined by a line): the arrangement of the nodes; distinct from `group` (fit)
+    // and the view icon `network`.
+    this.layoutButton = button(t('layoutMenu'), () => this.showLayoutMenu(), 'workflow');
+    this.themeButton = button(t('themeMenu'), () => this.showThemeMenu(), 'palette');
     button(t('toggleFullScreen'), () => actions.toggleFullScreen(), 'maximize-2');
     this.setZoom(1);
     this.setCollapsed(false);
@@ -69,6 +85,64 @@ export class MapControls {
     b.setAttribute('aria-label', t(anyCollapsed ? 'expandAll' : 'collapseAll'));
     b.toggleClass('is-active', anyCollapsed);
     setIcon(b, anyCollapsed ? 'chevrons-up-down' : 'chevrons-down-up');
+  }
+
+  /** The shown layout; while this view overrides the note's layout the button is highlighted. */
+  setLayout(layout: MapLayoutName, overridden: boolean): void {
+    this.layout = layout;
+    this.layoutButton.toggleClass('is-active', overridden);
+  }
+
+  /** The shown colour theme; while this view overrides the note's theme the button is highlighted. */
+  setTheme(theme: MapThemeName, overridden: boolean): void {
+    this.theme = theme;
+    this.themeButton.toggleClass('is-active', overridden);
+  }
+
+  /** The six layouts, the shown one checked, then "Use the note's layout"; above its button. */
+  showLayoutMenu(): void {
+    this.showChoiceMenu(
+      this.layoutButton,
+      LAYOUT_NAMES,
+      LAYOUT_LABELS,
+      this.layout,
+      'useNoteLayout',
+      (layout) => this.actions.chooseLayout(layout),
+    );
+  }
+
+  /** The colour themes, the shown one checked, then "Use the note's theme"; above its button. */
+  showThemeMenu(): void {
+    this.showChoiceMenu(
+      this.themeButton,
+      THEME_NAMES,
+      THEME_LABELS,
+      this.theme,
+      'useNoteTheme',
+      (theme) => this.actions.chooseTheme(theme),
+    );
+  }
+
+  private showChoiceMenu<T extends string>(
+    anchor: HTMLElement,
+    values: readonly T[],
+    labels: Readonly<Record<T, MessageKey>>,
+    current: T | null,
+    reset: MessageKey,
+    choose: (value: T | null) => void,
+  ): void {
+    const menu = new Menu();
+    for (const value of values) {
+      menu.addItem((item) =>
+        item
+          .setTitle(t(labels[value]))
+          .setChecked(value === current)
+          .onClick(() => choose(value)),
+      );
+    }
+    menu.addSeparator();
+    menu.addItem((item) => item.setTitle(t(reset)).onClick(() => choose(null)));
+    showAbove(menu, anchor);
   }
 
   setZoom(zoom: number): void {
@@ -146,10 +220,18 @@ export class MapControls {
     }
     menu.addSeparator();
     menu.addItem((item) => item.setTitle(t('fitToView')).onClick(() => this.actions.fitToView()));
-    const rect = anchor.getBoundingClientRect();
-    // The anchor's document: works in popout windows too.
-    menu.showAtPosition({ x: rect.left, y: rect.top }, anchor.ownerDocument);
+    showAbove(menu, anchor);
   }
+}
+
+/**
+ * At the anchor's top left corner; a menu that does not fit below it (the bar sits at the bottom)
+ * is moved up by Obsidian, above the bar.
+ */
+function showAbove(menu: Menu, anchor: HTMLElement): void {
+  const rect = anchor.getBoundingClientRect();
+  // The anchor's document: works in popout windows too.
+  menu.showAtPosition({ x: rect.left, y: rect.top }, anchor.ownerDocument);
 }
 
 function formatZoom(zoom: number): string {

@@ -20,6 +20,22 @@ export const en = {
   toggleFullScreen: 'Toggle full screen',
   exitFullScreen: 'Exit full screen',
 
+  // Layout and colour theme of the map view (control bar menus and commands)
+  layoutMenu: 'Layout',
+  themeMenu: 'Colour theme',
+  changeLayout: 'Change layout…',
+  nextLayout: 'Next layout',
+  changeTheme: 'Change colour theme…',
+  nextTheme: 'Next colour theme',
+  useNoteLayout: "Use the note's layout",
+  useNoteTheme: "Use the note's theme",
+  layoutCircleClockwise: 'Balanced clockwise',
+  layoutCircleCounterClockwise: 'Balanced counter-clockwise',
+  layoutLeftToRight: 'Left → right',
+  layoutRightToLeft: 'Right → left',
+  layoutTopToBottom: 'Top → bottom',
+  layoutBottomToTop: 'Bottom → top',
+
   // Nodes
   collapseNode: 'Collapse',
   expandNode: 'Expand',
