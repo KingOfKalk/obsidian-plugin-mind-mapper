@@ -1,5 +1,5 @@
-import { type App, PluginSettingTab, Setting } from 'obsidian';
-import { LAYOUT_NAMES, type MapLayoutName } from './layout/types';
+import { type App, PluginSettingTab, type SettingDefinitionItem } from 'obsidian';
+import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
 import { type NumericSetting, SETTING_RANGES } from './settings';
 
@@ -10,6 +10,7 @@ const NUMBER_ROWS: { key: NumericSetting; name: string; desc: string }[] = [
   { key: 'levelGap', name: 'Level gap', desc: 'Space between a node and its children.' },
 ];
 
+/** Declarative settings: Obsidian renders the rows and indexes their names and descriptions for search. */
 export class MindMapSettingTab extends PluginSettingTab {
   constructor(
     app: App,
@@ -18,33 +19,41 @@ export class MindMapSettingTab extends PluginSettingTab {
     super(app, mindMapper);
   }
 
-  override display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    const settings = this.mindMapper.settings;
+  override getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        name: 'Default layout',
+        desc: 'For notes without mind-mapper-layout in their frontmatter.',
+        control: {
+          type: 'dropdown',
+          key: 'defaultLayout',
+          options: Object.fromEntries(LAYOUT_NAMES.map((name) => [name, name])),
+        },
+      },
+      ...NUMBER_ROWS.map(({ key, name, desc }) => this.numberDefinition(key, name, desc)),
+    ];
+  }
 
-    new Setting(containerEl)
-      .setName('Default layout')
-      .setDesc('For notes without mind-mapper-layout in their frontmatter.')
-      .addDropdown((dropdown) => {
-        for (const name of LAYOUT_NAMES) dropdown.addOption(name, name);
-        dropdown
-          .setValue(settings.defaultLayout)
-          .onChange((value) =>
-            this.mindMapper.updateSettings({ defaultLayout: value as MapLayoutName }),
-          );
-      });
+  /** Saves through the plugin, so values are sanitized and open maps re-laid out. */
+  override setControlValue(key: string, value: unknown): Promise<void> {
+    return this.mindMapper.updateSettings({ [key]: value });
+  }
 
-    for (const { key, name, desc } of NUMBER_ROWS) {
-      const { min, max } = SETTING_RANGES[key];
-      new Setting(containerEl)
-        .setName(name)
-        .setDesc(`${desc} ${min}–${max} px.`)
-        .addText((text) => {
+  /**
+   * Rendered by hand, not as a `number` control: that one rejects out-of-range input with an
+   * error, while these clamp it to the range and show the clamped value.
+   */
+  private numberDefinition(key: NumericSetting, name: string, desc: string): SettingDefinitionItem {
+    const { min, max } = SETTING_RANGES[key];
+    return {
+      name,
+      desc: `${desc} ${min}–${max} px.`,
+      render: (setting) => {
+        setting.addText((text) => {
           text.inputEl.type = 'number';
           text.inputEl.min = String(min);
           text.inputEl.max = String(max);
-          text.setValue(String(settings[key]));
+          text.setValue(String(this.mindMapper.settings[key]));
           // Commit on blur / Enter, not per keystroke: every commit saves and re-lays out all maps.
           text.inputEl.addEventListener('change', () => {
             const value = text.inputEl.value;
@@ -58,6 +67,7 @@ export class MindMapSettingTab extends PluginSettingTab {
             }
           });
         });
-    }
+      },
+    };
   }
 }

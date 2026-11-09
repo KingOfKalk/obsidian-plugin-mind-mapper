@@ -252,7 +252,7 @@ Project (root, H1)
   - Render only nodes in the viewport plus a margin; edges and cross-connection lines are kept even when one endpoint is off screen
   - Render cache and measured size cache by content hash, reused on live update
   - Verified with a benchmark harness on generated notes (frame times logged, compared against a baseline) plus a manual gate; no fps assertions in CI, they are flaky
-- Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` set to the oldest Obsidian version that has every API used
+- Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` 1.15.0, the newest public Obsidian release (betas do not count); it unlocks the declarative settings API, so the settings appear in Obsidian's settings search
 ## Suggested milestones
  
 Each milestone ends in something installable and usable in a real vault. Order is by risk and value: the parser and layout core first, polish last.

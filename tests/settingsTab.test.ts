@@ -3,7 +3,14 @@ import MindMapperPlugin from '../src/main';
 import { MindMapSettingTab } from '../src/settingsTab';
 import { MindMapView } from '../src/view/MindMapView';
 import { FakeWorkspace, fakeApp, fakeManifest } from './helpers';
-import { Setting, type Plugin as MockPlugin } from './mocks/obsidian';
+import { LAYOUT_NAMES } from '../src/layout/types';
+import {
+  type MockSettingDefinition,
+  type Plugin as MockPlugin,
+  type PluginSettingTab as MockPluginSettingTab,
+  Setting,
+  renderSettingDefinitions,
+} from './mocks/obsidian';
 
 async function setup(data: unknown = null) {
   const ws = new FakeWorkspace();
@@ -19,10 +26,24 @@ function row(name: string): Setting {
   return found;
 }
 
+function tab(mock: MockPlugin): MockPluginSettingTab {
+  const found = mock.settingTabs[0];
+  if (!found) throw new Error('no setting tab');
+  return found;
+}
+
+function definition(mock: MockPlugin, name: string): MockSettingDefinition {
+  const found = tab(mock)
+    .getSettingDefinitions()
+    .find((d) => d.name === name);
+  if (!found) throw new Error(`no definition ${name}`);
+  return found;
+}
+
+/** Renders the tab the way Obsidian's settings modal does (declarative definitions). */
 function display(mock: MockPlugin): void {
   Setting.rows = [];
-  const tab = mock.settingTabs[0] as unknown as MindMapSettingTab;
-  tab.display();
+  renderSettingDefinitions(tab(mock));
 }
 
 test('plugin loads saved settings (sanitized) and registers the tab', async () => {
@@ -48,6 +69,31 @@ test('the tab shows one row per setting with its range', async () => {
   expect(row('Max node width').desc).toContain('160');
   expect(row('Max node width').desc).toContain('800');
   expect(row('Max node width').text?.value).toBe('320');
+});
+
+test('every setting is a definition, so Obsidian settings search finds it by name and range', async () => {
+  const { mock } = await setup();
+  expect(
+    tab(mock)
+      .getSettingDefinitions()
+      .map((d) => d.name),
+  ).toEqual(['Default layout', 'Max node width', 'Max node height', 'Sibling gap', 'Level gap']);
+  expect(definition(mock, 'Default layout').desc).toBe(
+    'For notes without mind-mapper-layout in their frontmatter.',
+  );
+  expect(definition(mock, 'Max node width').desc).toBe(
+    'Wider content is clipped with a fade. 160–800 px.',
+  );
+  expect(definition(mock, 'Level gap').desc).toBe(
+    'Space between a node and its children. 20–400 px.',
+  );
+});
+
+test('the default layout is a dropdown control bound to defaultLayout', async () => {
+  const { mock } = await setup();
+  const control = definition(mock, 'Default layout').control;
+  expect(control).toMatchObject({ type: 'dropdown', key: 'defaultLayout' });
+  expect(Object.keys(control?.options ?? {})).toEqual(LAYOUT_NAMES);
 });
 
 test('changing the default layout in the tab saves it and refreshes open maps', async () => {

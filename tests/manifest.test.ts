@@ -33,6 +33,11 @@ test('manifest follows the community submission rules', () => {
   expect(manifest.fundingUrl).toBeUndefined();
 });
 
+/** Declarative settings (getSettingDefinitions) exist since 1.13.0; the tab has no display() fallback. */
+test('minAppVersion is the newest public Obsidian, 1.15.0', () => {
+  expect(read<Manifest>('manifest.json').minAppVersion).toBe('1.15.0');
+});
+
 test('command ids do not repeat the plugin id', () => {
   const source = readFileSync(join(process.cwd(), 'src', 'commands', 'viewCommands.ts'), 'utf8');
   const main = readFileSync(join(process.cwd(), 'src', 'main.ts'), 'utf8');

@@ -216,12 +216,57 @@ export class Keymap {
   }
 }
 
+/** The parts of Obsidian's `SettingDefinition` the mock renders. */
+export interface MockSettingDefinition {
+  name: string;
+  desc?: string;
+  render?: (setting: Setting, group: unknown) => unknown;
+  control?: { type: string; key: string; options?: Record<string, string>; defaultValue?: unknown };
+}
+
 export class PluginSettingTab {
   containerEl: HTMLElement = document.createElement('div');
   constructor(
     public app: App,
     public plugin: Plugin,
   ) {}
+  getSettingDefinitions(): MockSettingDefinition[] {
+    return [];
+  }
+  /** Like Obsidian: reads `plugin.settings`. */
+  getControlValue(key: string): unknown {
+    return (this.plugin as unknown as { settings?: Record<string, unknown> }).settings?.[key];
+  }
+  /** Like Obsidian: mutates `plugin.settings` and saves it. */
+  setControlValue(key: string, value: unknown): void | Promise<void> {
+    const settings = (this.plugin as unknown as { settings?: Record<string, unknown> }).settings;
+    if (!settings) return;
+    settings[key] = value;
+    return this.plugin.saveData(settings);
+  }
+}
+
+/**
+ * Renders a tab's definitions like Obsidian's settings modal (1.15.0): a row per definition with
+ * its name and description, then `render(setting)` or the control bound through
+ * `getControlValue` / `setControlValue`. Only dropdown controls are implemented.
+ */
+export function renderSettingDefinitions(tab: PluginSettingTab): void {
+  for (const def of tab.getSettingDefinitions()) {
+    const setting = new Setting(tab.containerEl).setName(def.name).setDesc(def.desc ?? '');
+    if (def.render) {
+      def.render(setting, null);
+    } else if (def.control) {
+      const { type, key, options = {}, defaultValue } = def.control;
+      if (type !== 'dropdown') throw new Error(`mock does not render ${type} controls`);
+      const value = tab.getControlValue(key) ?? defaultValue;
+      setting.addDropdown((dropdown) => {
+        for (const [option, display] of Object.entries(options))
+          dropdown.addOption(option, display);
+        dropdown.setValue(String(value)).onChange((next) => tab.setControlValue(key, next));
+      });
+    }
+  }
 }
 
 type ChangeHandler = (value: string) => unknown;

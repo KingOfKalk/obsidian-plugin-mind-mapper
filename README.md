@@ -110,7 +110,7 @@ Content larger than the max node size is clipped with a fade; the expand icon sh
 
 - From the community directory: once published, search for "Mind Mapper" in Settings > Community plugins
 - Manually: download `main.js`, `manifest.json` and `styles.css` from a release into `<vault>/.obsidian/plugins/mind-mapper/`, then enable Mind Mapper in Settings > Community plugins
-- Requires Obsidian 1.7.4 or later (desktop)
+- Requires Obsidian 1.15.0 or later (desktop)
 
 ## Development
 

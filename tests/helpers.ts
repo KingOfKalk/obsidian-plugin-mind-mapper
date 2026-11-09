@@ -15,7 +15,7 @@ export function fakeManifest(): PluginManifest {
     id: 'mind-mapper',
     name: 'Mind Mapper',
     version: '0.1.0',
-    minAppVersion: '1.7.4',
+    minAppVersion: '1.15.0',
     description: 'Renders a Markdown note as a mind map.',
     author: 'KingOfKalk',
     isDesktopOnly: true,

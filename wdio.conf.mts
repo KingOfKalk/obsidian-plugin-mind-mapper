@@ -10,7 +10,7 @@ export const config: WebdriverIO.Config = {
     {
       browserName: 'obsidian',
       // Pinned: results must not change with an Obsidian update. OBSIDIAN_VERSION /
-      // OBSIDIAN_INSTALLER run the suite against another version (e.g. the manifest minAppVersion).
+      // OBSIDIAN_INSTALLER run the suite against another version. The default is the manifest minAppVersion.
       browserVersion: process.env.OBSIDIAN_VERSION ?? '1.15.0',
       'wdio:obsidianOptions': {
         installerVersion: process.env.OBSIDIAN_INSTALLER ?? '1.15.0',
