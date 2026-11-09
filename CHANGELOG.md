@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.2.0...1.3.0) (2026-11-09)
+
+
+### Features
+
+* drill down into a branch ([#26](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/26)) ([0b74a75](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/0b74a752a862d1cd5bd6537a90c3370162a5ece9))
+
 ## [1.2.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.1.1...1.2.0) (2026-11-09)
 
 
