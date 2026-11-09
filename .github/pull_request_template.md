@@ -8,7 +8,7 @@ Closes #
 
 ## Screenshots
 
-<!-- Visible changes: before/after table, images on the `screenshots` branch (see CONTRIBUTING.md). Delete this section if nothing is visible. -->
+<!-- Visible changes: before/after table, images in a secret gist (see CONTRIBUTING.md), never in this repository. Delete this section if nothing is visible. -->
 
 | Before | After |
 |---|---|
