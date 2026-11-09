@@ -16,7 +16,7 @@ concurrency:
 jobs:
   # The same gate as locally: format check, lint, typecheck, unit tests, production build.
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -45,7 +45,7 @@ jobs:
 
   # End-to-end tests in real, headless Obsidian (wdio-obsidian-service under Xvfb).
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
