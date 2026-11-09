@@ -16,7 +16,7 @@ const LABEL_LENGTH = 200;
 
 type Item = { line: number; heading: HeadingInput } | { line: number; section: SectionInput };
 
-/** `title` (frontmatter `mind_map_title`) replaces the root's label, never its ID. */
+/** `title` (frontmatter `mind-mapper-title`) replaces the root's label, never its ID. */
 export function buildTree(
   input: ParserInput,
   fileName: string,

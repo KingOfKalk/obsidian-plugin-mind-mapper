@@ -3,7 +3,7 @@ import { readMapOptions } from '../../src/view/frontmatter';
 test('valid layout and title', () => {
   expect(
     readMapOptions(
-      { mind_map_layout: 'top-to-bottom', mind_map_title: '  Plan  ' },
+      { 'mind-mapper-layout': 'top-to-bottom', 'mind-mapper-title': '  Plan  ' },
       'circle-clockwise',
     ),
   ).toEqual({ title: 'Plan', layout: 'top-to-bottom', invalid: [] });
@@ -25,9 +25,9 @@ test('absent keys use the defaults without warnings', () => {
 test.each([['spiral'], [3], [['left-to-right']]])(
   'invalid layout %j falls back with a warning',
   (value) => {
-    const options = readMapOptions({ mind_map_layout: value }, 'right-to-left');
+    const options = readMapOptions({ 'mind-mapper-layout': value }, 'right-to-left');
     expect(options.layout).toBe('right-to-left');
-    expect(options.invalid).toEqual([{ key: 'mind_map_layout', value: String(value) }]);
+    expect(options.invalid).toEqual([{ key: 'mind-mapper-layout', value: String(value) }]);
   },
 );
 
@@ -37,13 +37,13 @@ test.each([
   [true, 'true'],
   [{ a: 1 }, '{"a":1}'],
 ])('title %j that is not text falls back with a warning', (value, shown) => {
-  const options = readMapOptions({ mind_map_title: value }, 'circle-clockwise');
+  const options = readMapOptions({ 'mind-mapper-title': value }, 'circle-clockwise');
   expect(options.title).toBeNull();
-  expect(options.invalid).toEqual([{ key: 'mind_map_title', value: shown }]);
+  expect(options.invalid).toEqual([{ key: 'mind-mapper-title', value: shown }]);
 });
 
 test.each(['', '   '])('empty title %j falls back silently', (value) => {
-  expect(readMapOptions({ mind_map_title: value }, 'circle-clockwise')).toEqual({
+  expect(readMapOptions({ 'mind-mapper-title': value }, 'circle-clockwise')).toEqual({
     title: null,
     layout: 'circle-clockwise',
     invalid: [],
@@ -52,6 +52,12 @@ test.each(['', '   '])('empty title %j falls back silently', (value) => {
 
 test('keys without value (null) fall back silently', () => {
   expect(
-    readMapOptions({ mind_map_title: null, mind_map_layout: null }, 'circle-clockwise'),
+    readMapOptions({ 'mind-mapper-title': null, 'mind-mapper-layout': null }, 'circle-clockwise'),
+  ).toEqual({ title: null, layout: 'circle-clockwise', invalid: [] });
+});
+
+test('the old mind_map_* keys are ignored', () => {
+  expect(
+    readMapOptions({ mind_map_title: 'Old', mind_map_layout: 'top-to-bottom' }, 'circle-clockwise'),
   ).toEqual({ title: null, layout: 'circle-clockwise', invalid: [] });
 });

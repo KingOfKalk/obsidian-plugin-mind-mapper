@@ -1,6 +1,6 @@
 ---
-mind_map_layout: top-to-bottom
-mind_map_title: Custom title
+mind-mapper-layout: top-to-bottom
+mind-mapper-title: Custom title
 ---
 # Root
 

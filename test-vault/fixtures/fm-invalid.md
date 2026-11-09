@@ -1,5 +1,5 @@
 ---
-mind_map_layout: spiral
+mind-mapper-layout: spiral
 ---
 # Root
 

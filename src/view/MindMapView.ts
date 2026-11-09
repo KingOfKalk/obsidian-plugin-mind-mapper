@@ -104,7 +104,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private lastSize: Size = { width: 0, height: 0 };
 
   private readonly services: ViewServices;
-  /** Frontmatter of the shown note (`mind_map_layout` is read per layout). */
+  /** Frontmatter of the shown note (`mind-mapper-layout` is read per layout). */
   private frontmatter: Record<string, unknown> | undefined = undefined;
   private readonly fullScreen = new FullScreen({
     contentEl: this.contentEl,
@@ -146,7 +146,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     return limitsFor(settings.maxNodeWidth, settings.maxNodeHeight);
   }
 
-  /** Frontmatter `mind_map_layout`, else the plugin setting. */
+  /** Frontmatter `mind-mapper-layout`, else the plugin setting. */
   private effectiveLayout(): MapLayoutName {
     return readMapOptions(this.frontmatter, this.services.settings().defaultLayout).layout;
   }

@@ -25,7 +25,7 @@ export class MindMapSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Default layout')
-      .setDesc('For notes without mind_map_layout in their frontmatter.')
+      .setDesc('For notes without mind-mapper-layout in their frontmatter.')
       .addDropdown((dropdown) => {
         for (const name of LAYOUT_NAMES) dropdown.addOption(name, name);
         dropdown

@@ -829,7 +829,7 @@ describe('layouts, frontmatter and settings', () => {
     expect(centerX(view, 'Project/Notes/#1')).toBeLessThan(centerX(view, 'Project/Notes'));
   });
 
-  test('frontmatter mind_map_layout top-to-bottom puts all children below the root', async () => {
+  test('frontmatter mind-mapper-layout top-to-bottom puts all children below the root', async () => {
     const { view } = await openWith('fm-layout', {});
     const root = nodeBox(view, 'Root');
     for (const id of ['Root/A', 'Root/B', 'Root/A/#1']) {
@@ -837,12 +837,12 @@ describe('layouts, frontmatter and settings', () => {
     }
   });
 
-  test('mind_map_title replaces the root label, the root id stays', async () => {
+  test('mind-mapper-title replaces the root label, the root id stays', async () => {
     const { view } = await openWith('fm-layout', {});
     expect(contentOf(view, 'Root').textContent).toBe('Custom title');
   });
 
-  test('an invalid mind_map_layout falls back to the setting and is reported on every load', async () => {
+  test('an invalid mind-mapper-layout falls back to the setting and is reported on every load', async () => {
     const warnOnce = vi.fn();
     const { view, ws } = await openWith('fm-invalid', {
       warnOnce,
@@ -850,8 +850,8 @@ describe('layouts, frontmatter and settings', () => {
     });
     expect(centerX(view, 'Root/B')).toBeGreaterThan(centerX(view, 'Root'));
     expect(warnOnce).toHaveBeenCalledWith(
-      'Note.md\0mind_map_layout\0spiral',
-      'Mind Mapper: unknown mind_map_layout "spiral" in Note.md, using left-to-right',
+      'Note.md\0mind-mapper-layout\0spiral',
+      'Mind Mapper: unknown mind-mapper-layout "spiral" in Note.md, using left-to-right',
     );
     change(ws, 'Note.md', 'fm-invalid');
     await vi.advanceTimersByTimeAsync(300);

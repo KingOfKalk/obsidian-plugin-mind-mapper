@@ -16,7 +16,7 @@ Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lis
 
 ## How a note becomes a map
 
-- The root is the note's single H1 (if nothing comes before it), else the file name; `mind_map_title` overrides it
+- The root is the note's single H1 (if nothing comes before it), else the file name; `mind-mapper-title` overrides it
 - Every heading is a branch, nested by level (skipped levels attach to the nearest heading above)
 - Every paragraph, list item and block (code, table, math, quote, callout) is a node under its heading; nested list items nest their nodes
 - Frontmatter, comments (`%% %%`), horizontal rules, HTML blocks and footnote definitions are left out
@@ -72,8 +72,8 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 
 | Key | Values | Default |
 |---|---|---|
-| `mind_map_title` | any text | the single H1, else the file name |
-| `mind_map_layout` | one of the layouts above | the plugin setting |
+| `mind-mapper-title` | any text | the single H1, else the file name |
+| `mind-mapper-layout` | one of the layouts above | the plugin setting |
 
 An unknown layout or a title that is not text falls back to the default and shows a notice once per note and value (per session).
 

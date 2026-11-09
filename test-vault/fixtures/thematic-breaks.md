@@ -1,5 +1,5 @@
 ---
-mind_map_layout: left-to-right
+mind-mapper-layout: left-to-right
 ---
 
 # Dividers
@@ -36,7 +36,7 @@ ___
 ## Mid block
 
 ---
-mind_map_title: Not frontmatter
+mind-mapper-title: Not frontmatter
 ---
 
 End.

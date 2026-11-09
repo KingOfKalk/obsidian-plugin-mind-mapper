@@ -180,9 +180,9 @@ test('thematic breaks: every variant is skipped, setext dashes make a heading, a
     '    Dividers/Paragraph directly above dashes/#2 [paragraph] Paragraph directly above stars',
     '    Dividers/Paragraph directly above dashes/#3 [paragraph] Paragraph directly above underscores',
     '  Dividers/Mid block [heading] Mid block',
-    '  Dividers/mind_map_title: Not frontmatter [heading] mind_map_title: Not frontmatter',
-    '    Dividers/mind_map_title: Not frontmatter/#1 [paragraph] End.',
+    '  Dividers/mind-mapper-title: Not frontmatter [heading] mind-mapper-title: Not frontmatter',
+    '    Dividers/mind-mapper-title: Not frontmatter/#1 [paragraph] End.',
   ]);
   const { cache } = loadFixture('thematic-breaks');
-  expect(cache?.frontmatter).toEqual({ mind_map_layout: 'left-to-right' });
+  expect(cache?.frontmatter).toEqual({ 'mind-mapper-layout': 'left-to-right' });
 });

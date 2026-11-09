@@ -1,6 +1,6 @@
 {
   "obsidianVersion": "1.15.0",
-  "text": "---\nmind_map_layout: top-to-bottom\nmind_map_title: Custom title\n---\n# Root\n\n## A\n\nText A.\n\n## B\n\nText B.\n",
+  "text": "---\nmind-mapper-layout: top-to-bottom\nmind-mapper-title: Custom title\n---\n# Root\n\n## A\n\nText A.\n\n## B\n\nText B.\n",
   "cache": {
     "headings": [
       {
@@ -8,12 +8,12 @@
           "start": {
             "line": 4,
             "col": 0,
-            "offset": 68
+            "offset": 74
           },
           "end": {
             "line": 4,
             "col": 6,
-            "offset": 74
+            "offset": 80
           }
         },
         "heading": "Root",
@@ -24,12 +24,12 @@
           "start": {
             "line": 6,
             "col": 0,
-            "offset": 76
+            "offset": 82
           },
           "end": {
             "line": 6,
             "col": 4,
-            "offset": 80
+            "offset": 86
           }
         },
         "heading": "A",
@@ -40,12 +40,12 @@
           "start": {
             "line": 10,
             "col": 0,
-            "offset": 91
+            "offset": 97
           },
           "end": {
             "line": 10,
             "col": 4,
-            "offset": 95
+            "offset": 101
           }
         },
         "heading": "B",
@@ -64,7 +64,7 @@
           "end": {
             "line": 3,
             "col": 3,
-            "offset": 67
+            "offset": 73
           }
         }
       },
@@ -74,42 +74,42 @@
           "start": {
             "line": 4,
             "col": 0,
-            "offset": 68
+            "offset": 74
           },
           "end": {
             "line": 4,
             "col": 6,
-            "offset": 74
-          }
-        }
-      },
-      {
-        "type": "heading",
-        "position": {
-          "start": {
-            "line": 6,
-            "col": 0,
-            "offset": 76
-          },
-          "end": {
-            "line": 6,
-            "col": 4,
             "offset": 80
           }
         }
       },
       {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 0,
+            "offset": 82
+          },
+          "end": {
+            "line": 6,
+            "col": 4,
+            "offset": 86
+          }
+        }
+      },
+      {
         "type": "paragraph",
         "position": {
           "start": {
             "line": 8,
             "col": 0,
-            "offset": 82
+            "offset": 88
           },
           "end": {
             "line": 8,
             "col": 7,
-            "offset": 89
+            "offset": 95
           }
         }
       },
@@ -119,12 +119,12 @@
           "start": {
             "line": 10,
             "col": 0,
-            "offset": 91
+            "offset": 97
           },
           "end": {
             "line": 10,
             "col": 4,
-            "offset": 95
+            "offset": 101
           }
         }
       },
@@ -134,19 +134,19 @@
           "start": {
             "line": 12,
             "col": 0,
-            "offset": 97
+            "offset": 103
           },
           "end": {
             "line": 12,
             "col": 7,
-            "offset": 104
+            "offset": 110
           }
         }
       }
     ],
     "frontmatter": {
-      "mind_map_layout": "top-to-bottom",
-      "mind_map_title": "Custom title"
+      "mind-mapper-layout": "top-to-bottom",
+      "mind-mapper-title": "Custom title"
     },
     "frontmatterPosition": {
       "start": {
@@ -157,7 +157,7 @@
       "end": {
         "line": 3,
         "col": 3,
-        "offset": 67
+        "offset": 73
       }
     },
     "frontmatterLinks": []

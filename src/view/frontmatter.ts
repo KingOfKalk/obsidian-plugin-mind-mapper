@@ -1,9 +1,9 @@
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
 
-export type MapOptionKey = 'mind_map_title' | 'mind_map_layout';
+export type MapOptionKey = 'mind-mapper-title' | 'mind-mapper-layout';
 
 export interface MapOptions {
-  /** `mind_map_title`, else null (default title). */
+  /** `mind-mapper-title`, else null (default title). */
   title: string | null;
   layout: MapLayoutName;
   /** Values that were ignored; shown once per note and value (spec "Frontmatter"). */
@@ -11,8 +11,8 @@ export interface MapOptions {
 }
 
 /**
- * Spec "Frontmatter": `mind_map_layout` outside the list falls back to the plugin setting,
- * `mind_map_title` that is not text falls back to the default. Absent or empty keys fall back
+ * Spec "Frontmatter": `mind-mapper-layout` outside the list falls back to the plugin setting,
+ * `mind-mapper-title` that is not text falls back to the default. Absent or empty keys fall back
  * without a warning.
  */
 export function readMapOptions(
@@ -20,21 +20,21 @@ export function readMapOptions(
   defaultLayout: MapLayoutName,
 ): MapOptions {
   const invalid: MapOptions['invalid'] = [];
-  const rawTitle = frontmatter?.mind_map_title;
-  const rawLayout = frontmatter?.mind_map_layout;
+  const rawTitle = frontmatter?.['mind-mapper-title'];
+  const rawLayout = frontmatter?.['mind-mapper-layout'];
 
   let title: string | null = null;
   if (typeof rawTitle === 'string') {
     title = rawTitle.trim() || null;
   } else if (rawTitle !== undefined && rawTitle !== null) {
-    invalid.push({ key: 'mind_map_title', value: shown(rawTitle) });
+    invalid.push({ key: 'mind-mapper-title', value: shown(rawTitle) });
   }
 
   let layout = defaultLayout;
   if (LAYOUT_NAMES.includes(rawLayout as MapLayoutName)) {
     layout = rawLayout as MapLayoutName;
   } else if (rawLayout !== undefined && rawLayout !== null) {
-    invalid.push({ key: 'mind_map_layout', value: shown(rawLayout) });
+    invalid.push({ key: 'mind-mapper-layout', value: shown(rawLayout) });
   }
 
   return { title, layout, invalid };
@@ -54,7 +54,7 @@ export function invalidOptionMessage(
   path: string,
   layout: MapLayoutName,
 ): string {
-  return key === 'mind_map_layout'
-    ? `Mind Mapper: unknown mind_map_layout "${value}" in ${path}, using ${layout}`
-    : `Mind Mapper: mind_map_title in ${path} is not text, using the default title`;
+  return key === 'mind-mapper-layout'
+    ? `Mind Mapper: unknown mind-mapper-layout "${value}" in ${path}, using ${layout}`
+    : `Mind Mapper: mind-mapper-title in ${path} is not text, using the default title`;
 }

@@ -1,6 +1,6 @@
 {
   "obsidianVersion": "1.15.0",
-  "text": "---\nmind_map_layout: spiral\n---\n# Root\n\n## A\n\n## B\n",
+  "text": "---\nmind-mapper-layout: spiral\n---\n# Root\n\n## A\n\n## B\n",
   "cache": {
     "headings": [
       {
@@ -8,12 +8,12 @@
           "start": {
             "line": 3,
             "col": 0,
-            "offset": 32
+            "offset": 35
           },
           "end": {
             "line": 3,
             "col": 6,
-            "offset": 38
+            "offset": 41
           }
         },
         "heading": "Root",
@@ -24,12 +24,12 @@
           "start": {
             "line": 5,
             "col": 0,
-            "offset": 40
+            "offset": 43
           },
           "end": {
             "line": 5,
             "col": 4,
-            "offset": 44
+            "offset": 47
           }
         },
         "heading": "A",
@@ -40,12 +40,12 @@
           "start": {
             "line": 7,
             "col": 0,
-            "offset": 46
+            "offset": 49
           },
           "end": {
             "line": 7,
             "col": 4,
-            "offset": 50
+            "offset": 53
           }
         },
         "heading": "B",
@@ -64,7 +64,7 @@
           "end": {
             "line": 2,
             "col": 3,
-            "offset": 31
+            "offset": 34
           }
         }
       },
@@ -74,12 +74,12 @@
           "start": {
             "line": 3,
             "col": 0,
-            "offset": 32
+            "offset": 35
           },
           "end": {
             "line": 3,
             "col": 6,
-            "offset": 38
+            "offset": 41
           }
         }
       },
@@ -89,12 +89,12 @@
           "start": {
             "line": 5,
             "col": 0,
-            "offset": 40
+            "offset": 43
           },
           "end": {
             "line": 5,
             "col": 4,
-            "offset": 44
+            "offset": 47
           }
         }
       },
@@ -104,18 +104,18 @@
           "start": {
             "line": 7,
             "col": 0,
-            "offset": 46
+            "offset": 49
           },
           "end": {
             "line": 7,
             "col": 4,
-            "offset": 50
+            "offset": 53
           }
         }
       }
     ],
     "frontmatter": {
-      "mind_map_layout": "spiral"
+      "mind-mapper-layout": "spiral"
     },
     "frontmatterPosition": {
       "start": {
@@ -126,7 +126,7 @@
       "end": {
         "line": 2,
         "col": 3,
-        "offset": 31
+        "offset": 34
       }
     },
     "frontmatterLinks": []

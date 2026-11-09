@@ -95,7 +95,7 @@ describe('layouts', function () {
 });
 
 describe('frontmatter', function () {
-  it('mind_map_layout and mind_map_title apply', async function () {
+  it('mind-mapper-layout and mind-mapper-title apply', async function () {
     await updateSettings({ defaultLayout: 'circle-clockwise' });
     await openMindMap('fixtures/fm-layout.md');
     await settle();
@@ -110,7 +110,7 @@ describe('frontmatter', function () {
 
   it('an invalid layout shows one notice across reopen and edits', async function () {
     const path = 'invalid-layout.md';
-    const text = (n: number) => `---\nmind_map_layout: sideways\n---\n# Root\n\n## A${n}\n`;
+    const text = (n: number) => `---\nmind-mapper-layout: sideways\n---\n# Root\n\n## A${n}\n`;
     await writeNote(path, text(1));
     await openMindMap(path);
     await openMindMap(path);
@@ -125,7 +125,7 @@ describe('frontmatter', function () {
     const notices = await browser.execute(
       () =>
         Array.from(document.querySelectorAll('.notice')).filter((el) =>
-          el.textContent?.includes('unknown mind_map_layout "sideways"'),
+          el.textContent?.includes('unknown mind-mapper-layout "sideways"'),
         ).length,
     );
     expect(notices).toBe(1);
