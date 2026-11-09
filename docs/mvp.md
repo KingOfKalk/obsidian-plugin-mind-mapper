@@ -152,7 +152,7 @@ Project (root, H1)
 | `none` | greys: level 1 and 2 from the faint text colour, lines faint, block borders the normal border colour |
  
 - Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--text-faint`, `--background-primary`), so light and dark mode and community themes keep working
-- Choice: frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
+- Choice: the map view's own choice (controls bar, see "Layout and colour theme switcher"), else frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
 - Live: a changed key or setting re-applies the theme while the map is open, without a re-layout
 ## Layout (decided)
  
@@ -196,9 +196,16 @@ Project (root, H1)
   - Entering: fit to view; exiting: restore previous pan and zoom
   - Jump to source from full screen exits full screen first
   - Static map with free pan and zoom; no step-through (see Future features)
-- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, full screen
+- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, layout, colour theme, full screen
   - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centred on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
   - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
+- Layout and colour theme switcher (decided, issues #6 and #7): change the layout or colour theme of one map view without changing the note
+  - Two buttons in the controls bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and colour theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
+  - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the six layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top) or the five themes (None, Rainbow, Ocean, Forest, Accent colour), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
+  - Choosing a layout re-lays out and fits to view (like a frontmatter layout change); choosing the same layout that is shown only marks it as chosen. Choosing a theme applies it live without a re-layout
+  - The choice (override) is per map view: stored in the view state (`layout`, `theme` next to `file`), so it survives an Obsidian restart and follows a rename (also of a deferred tab); the note and its frontmatter are never written. A view state without the keys (older versions) or with an unknown value has no override. A map opened anew (command, file menu, ribbon) starts without overrides
+  - Precedence: override, else frontmatter, else plugin setting. An active override wins over later frontmatter edits and setting changes; while active, its button is highlighted (`is-active`, like the collapse button)
+  - Commands (no default hotkeys, `checkCallback` on an active map view): "Change layout…" and "Change colour theme…" open the same menus at their buttons (Obsidian's menu works with arrow keys and Enter; one picker for mouse and keyboard, no second UI); "Next layout" and "Next colour theme" step to the next value in menu order from the shown one, wrapping after the last
 - Zoom and pan (decided, like Canvas)
   - Mouse wheel / two-finger scroll: pan
   - Ctrl/Cmd + wheel and trackpad pinch (arrives as wheel event with `ctrlKey`): zoom
@@ -214,7 +221,7 @@ Project (root, H1)
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
-  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen
+  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change colour theme…, next colour theme
   - Each command is registered in the same milestone as its control
   - Commands use `checkCallback` and act on the active mind map view; hidden when no mind map view is active
   - No default hotkeys (Obsidian plugin guidelines discourage them because of conflicts); users assign their own
@@ -234,7 +241,7 @@ Project (root, H1)
 ## View lifecycle and error states
  
 - View state
-  - `getState` / `setState` persist the pinned file path, so the map is restored after an Obsidian restart (views can be deferred until shown)
+  - `getState` / `setState` persist the pinned file path and the view's layout and theme overrides (see "Layout and colour theme switcher"), so the map is restored after an Obsidian restart (views can be deferred until shown)
   - File renamed or moved (`vault` `rename` event): follow the file, update title
   - File deleted: keep the view, show an empty state "Note was deleted"
 - Loading and empty states

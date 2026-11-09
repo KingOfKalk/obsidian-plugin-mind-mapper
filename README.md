@@ -10,8 +10,8 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 
 - **Live companion:** open the map next to the note; edits show up in the map after Obsidian saves the note (about 2 s), and pan, zoom, selection and collapsed branches are kept
 - **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself
-- **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
-- **Colour themes:** every main branch in its own colour (`rainbow` by default, `ocean`, `forest`, your `accent` colour or plain grey), with filled first-level nodes and a large root; per note or as default; follows light and dark mode
+- **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter, or for the open map from the control bar
+- **Colour themes:** every main branch in its own colour (`rainbow` by default, `ocean`, `forest`, your `accent` colour or plain grey), with filled first-level nodes and a large root; per note or as default, or for the open map from the control bar; follows light and dark mode
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
 - **Languages:** English and German; follows Obsidian's language setting (Settings → General → Language)
@@ -49,6 +49,12 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | Expand all | a mind map is active | `Ctrl/Cmd + Shift + ]` |
 | Back to root | a mind map is active | `Shift + H` |
 | Toggle full screen | a mind map is active | `Ctrl/Cmd + Shift + F11` |
+| Change layout… | a mind map is active | |
+| Next layout | a mind map is active | `Shift + L` |
+| Change colour theme… | a mind map is active | |
+| Next colour theme | a mind map is active | `Shift + T` |
+
+"Change layout…" and "Change colour theme…" open the menu of the control bar button; arrow keys and Enter choose without the mouse. "Next layout" and "Next colour theme" step to the next one (after the last, the first again), handy while presenting.
 
 ## Map navigation
 
@@ -58,13 +64,23 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Double click the empty canvas: fit the whole map into view (also in full screen)
 - Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 150%); large maps shrink to fit; a margin keeps nodes and collapse badges off the edges
 - Zoom in / out snap to steps: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400%
-- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, full screen
+- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, layout, colour theme, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
 - Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), hover shows the page preview
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Full screen covers the whole Obsidian window (previews, menus and notices stay on top); `Esc` or the button top right exits and restores the previous view; the controls fade after 2 s without mouse movement
+
+## Layout and theme of the open map
+
+The layout button (boxes joined by a line) and the colour theme button (palette) in the control bar, also in full screen, change only the map on screen, never the note:
+
+- The menu lists the six layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top) or the five themes; the shown one is checked
+- A layout change re-arranges the map and fits it to view; a theme change only recolours it
+- "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the plugin setting
+- While a choice is active the button is highlighted, and it wins over later frontmatter edits and setting changes
+- The choice belongs to the map tab: it survives closing and reopening Obsidian and following a rename; the note file is never written
 
 ## Layouts
 
