@@ -8,7 +8,7 @@ Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lis
 
 - **Live companion:** open the map next to the note; edits show up in the map after Obsidian saves the note (about 2 s), and pan, zoom, selection and collapsed branches are kept
 - **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself
-- **XMind-like layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
+- **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
 
@@ -65,7 +65,7 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 
 | Layout | Shape |
 |---|---|
-| `circle-clockwise` (default) | Balanced like XMind: the first half of the first-level branches on the right (top to bottom), the rest on the left (bottom to top) |
+| `circle-clockwise` (default) | Balanced: the first half of the first-level branches on the right (top to bottom), the rest on the left (bottom to top) |
 | `circle-counter-clockwise` | The same, mirrored |
 | `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | All branches grow in that direction |
 
@@ -116,33 +116,4 @@ Content larger than the max node size is clipped with a fade; the expand icon sh
 
 ## Development
 
-- Requirements: Node.js and npm (the devcontainer has both)
-- `npm install`
-- Vaults
-  - `test-vault/`: versioned test notes (source, tracked in git)
-  - `dev-vault/` in the main checkout: the one vault you open in Obsidian, ignored by git, shared by all worktrees
-- `npm run dev` (from the main checkout or any worktree): watch build into `dev-vault/.obsidian/plugins/mind-mapper/` (also copies `manifest.json`, `styles.css`, writes `.hotreload`)
-  - On start it copies the current checkout's `test-vault/` notes into `dev-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `test-vault/`, not in `dev-vault/`), nothing is deleted, recordings (`*.cache.json`) are never overwritten
-  - `MIND_MAPPER_PLUGIN_DIR=<vault>/.obsidian/plugins/mind-mapper npm run dev` targets another vault instead (plugin files only, no notes copied)
-- `npm run dev:build`: the same dev build and note sync once, then exits (no watch)
-- One-time setup on the host: open `dev-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
-- README images: `npm run readme:images` (headless, writes `docs/images/`)
-- E2E against another Obsidian version: `OBSIDIAN_VERSION=1.7.4 OBSIDIAN_INSTALLER=earliest npm run test:e2e` (default 1.15.0; 1.7.4 is the `minAppVersion`)
-- Parser fixtures: notes in `test-vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
-  - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
-  - Manual: in Obsidian run "Record parser fixtures (dev)", then `npm run fixtures:pull`
-- `npm run check`: format check, lint, typecheck, unit tests, production build
-- `npm test` / `npm run test:watch`: unit tests (Vitest, `obsidian` is mocked in `tests/mocks/obsidian.ts`)
-- `npm run test:e2e`: end-to-end tests in real, headless Obsidian (`e2e/specs/`)
-  - Uses [wdio-obsidian-service](https://github.com/jesse-r-s-hines/wdio-obsidian-service), which downloads Obsidian into `.obsidian-cache/` and opens a temp copy of `test-vault/`
-  - Needs Xvfb and Electron libraries: `scripts/install-e2e-deps.sh` (run automatically when the devcontainer is created)
-- `npm run perf:e2e`: performance spike on generated 1,000 and 5,000 node notes in headless Obsidian
-  - Prints time to first layout, time until the layout settles, re-layout count and the longest frame while panning; writes `e2e/perf/last-run.json`
-  - No timing assertions; compare against `e2e/perf/baseline.json` by hand
-- Merge gate: `npm run check` and `npm run test:e2e` pass
-
-## Release (local)
-
-- `npm version <x.y.z>` (or `patch|minor|major`): bumps `package.json`, syncs `manifest.json` and `versions.json`, commits `chore: release <x.y.z>` and tags `<x.y.z>` (no `v` prefix: Obsidian needs the tag to equal the manifest version)
-- `npm run release`: runs `npm run check`, then copies `main.js`, `manifest.json`, `styles.css` into `release/<x.y.z>/` (the GitHub release assets for that tag) and writes `release/mind-mapper-<x.y.z>.zip` when `zip` is installed
-- Community submission: the manifest follows the directory rules (checked in `tests/manifest.test.ts`); the id `mind-mapper` and the name "Mind Mapper" were not taken on 2026-11-08
+Development: see [docs/developer.md](docs/developer.md)

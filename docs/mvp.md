@@ -117,7 +117,7 @@ Project (root, H1)
  
 - Input: tree, layout, measured or estimated node sizes; output: positioned nodes and edges; pure function
 - Linear layouts (`left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top`): all subtrees grow in the layout direction
-- Circle layouts (`circle-clockwise`, `circle-counter-clockwise`): balanced like XMind
+- Circle layouts (`circle-clockwise`, `circle-counter-clockwise`): balanced
   - First half of first-level branches (rounded up) on the right side, rest on the left side
   - Clockwise order: right side top to bottom, then left side bottom to top
   - `circle-counter-clockwise` mirrors it horizontally
@@ -162,7 +162,7 @@ Project (root, H1)
   - Drag on empty canvas: pan
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
-- Collapse / expand: toggle button on the node edge (XMind style) for single node
+- Collapse / expand: toggle button on the node edge for single node
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
@@ -285,13 +285,13 @@ Each milestone ends in something installable and usable in a real vault. Order i
   - Selection, double click jump to source with the target leaf rules
   - Rename, delete, loading and empty states
   - Value: the map is useful while writing, not only for reading
-- M4 - XMind look
+- M4 - Map look
   - `circle-clockwise` and `circle-counter-clockwise` layouts, remaining linear directions
   - Frontmatter `mind-mapper-title` and `mind-mapper-layout`, validation with once-per-value notice
   - Settings tab: default layout, max node size, sibling and level gap
   - `circle-clockwise` becomes the default
   - Contour-based packing only if maps look too sparse
-  - Value: the promised XMind-like map; per-note configuration
+  - Value: the promised balanced map; per-note configuration
 - M5 - Navigation and polish
   - Cross-connection lines for heading and block links, collapsed-ancestor rule, culling-safe
   - Back to root and full screen (workspace overlay) with their commands, file menu entry, ribbon icon
