@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
 
 export type MapOptionKey = 'mind-mapper-title' | 'mind-mapper-layout' | 'mind-mapper-collapsed';
@@ -67,10 +68,10 @@ export function invalidOptionMessage(
 ): string {
   switch (key) {
     case 'mind-mapper-layout':
-      return `Mind Mapper: unknown mind-mapper-layout "${value}" in ${path}, using ${options.layout}`;
+      return t('invalidLayout', { value, path, layout: options.layout });
     case 'mind-mapper-collapsed':
-      return `Mind Mapper: mind-mapper-collapsed "${value}" in ${path} is not true or false, using ${options.collapsed}`;
+      return t('invalidCollapsed', { value, path, collapsed: String(options.collapsed) });
     case 'mind-mapper-title':
-      return `Mind Mapper: mind-mapper-title in ${path} is not text, using the default title`;
+      return t('invalidTitle', { path });
   }
 }

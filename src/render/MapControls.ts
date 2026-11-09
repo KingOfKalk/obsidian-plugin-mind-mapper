@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian';
+import { t } from '../i18n';
 
 export interface MapActions {
   zoomIn(): void;
@@ -25,16 +26,16 @@ export class MapControls {
       b.addEventListener('click', action);
       return b;
     };
-    button('Zoom out', () => actions.zoomOut(), 'zoom-out');
-    this.resetButton = button('Reset zoom to 100%', () => actions.resetZoom());
-    button('Zoom in', () => actions.zoomIn(), 'zoom-in');
-    button('Fit to view', () => actions.fitToView(), 'maximize');
+    button(t('zoomOut'), () => actions.zoomOut(), 'zoom-out');
+    this.resetButton = button(t('resetZoom'), () => actions.resetZoom());
+    button(t('zoomIn'), () => actions.zoomIn(), 'zoom-in');
+    button(t('fitToView'), () => actions.fitToView(), 'maximize');
     // One button for both (spec "Collapse / expand"): it shows the state, see setCollapsed.
-    this.collapseButton = button('Collapse all', () =>
+    this.collapseButton = button(t('collapseAll'), () =>
       this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),
     );
-    button('Back to root', () => actions.backToRoot(), 'locate');
-    button('Toggle full screen', () => actions.toggleFullScreen(), 'maximize-2');
+    button(t('backToRoot'), () => actions.backToRoot(), 'locate');
+    button(t('toggleFullScreen'), () => actions.toggleFullScreen(), 'maximize-2');
     this.setZoom(1);
     this.setCollapsed(false);
   }
@@ -43,12 +44,12 @@ export class MapControls {
   setCollapsed(anyCollapsed: boolean): void {
     this.anyCollapsed = anyCollapsed;
     const b = this.collapseButton;
-    b.setAttribute('aria-label', anyCollapsed ? 'Expand all' : 'Collapse all');
+    b.setAttribute('aria-label', t(anyCollapsed ? 'expandAll' : 'collapseAll'));
     b.toggleClass('is-active', anyCollapsed);
     setIcon(b, anyCollapsed ? 'chevrons-up-down' : 'chevrons-down-up');
   }
 
   setZoom(zoom: number): void {
-    this.resetButton.setText(`${Math.round(zoom * 100)}%`);
+    this.resetButton.setText(t('zoomPercent', { percent: Math.round(zoom * 100) }));
   }
 }

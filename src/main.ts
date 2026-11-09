@@ -3,6 +3,7 @@ import { isMindMapSource, openMindMap } from './commands/openMindMap';
 import { registerViewCommands } from './commands/viewCommands';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from './constants';
 import { recordFixtures } from './dev/recordFixtures';
+import { loadLanguage, t } from './i18n';
 import { HOVER_SOURCE_ID } from './render/linkHandling';
 import { LeafRecency } from './view/leafRecency';
 import { type MindMapSettings, DEFAULT_SETTINGS, sanitizeSettings } from './settings';
@@ -16,6 +17,7 @@ export default class MindMapperPlugin extends Plugin {
   override settings: MindMapSettings = DEFAULT_SETTINGS;
 
   override async onload(): Promise<void> {
+    loadLanguage();
     this.settings = sanitizeSettings(await this.loadData());
     this.addSettingTab(new MindMapSettingTab(this.app, this));
     this.registerEvent(
@@ -34,7 +36,7 @@ export default class MindMapperPlugin extends Plugin {
 
     this.addCommand({
       id: 'open-as-mind-map',
-      name: 'Open as mind map',
+      name: t('openAsMindMap'),
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!isMindMapSource(file)) return false;
@@ -48,17 +50,17 @@ export default class MindMapperPlugin extends Plugin {
         if (!(file instanceof TFile) || !isMindMapSource(file)) return;
         menu.addItem((item) =>
           item
-            .setTitle('Open as mind map')
+            .setTitle(t('openAsMindMap'))
             .setIcon(VIEW_ICON)
             .onClick(() => this.open(file)),
         );
       }),
     );
 
-    this.addRibbonIcon(VIEW_ICON, 'Open as mind map', () => {
+    this.addRibbonIcon(VIEW_ICON, t('openAsMindMap'), () => {
       const file = this.app.workspace.getActiveFile();
       if (!isMindMapSource(file)) {
-        new Notice('Open a markdown note first');
+        new Notice(t('openNoteFirst'));
         return;
       }
       this.open(file);
@@ -98,7 +100,7 @@ export default class MindMapperPlugin extends Plugin {
   private open(file: TFile): void {
     openMindMap(this.app.workspace, file).catch((error: unknown) => {
       console.error('Mind Mapper: failed to open mind map', error);
-      new Notice('Mind Mapper: could not open the mind map');
+      new Notice(t('couldNotOpenMap'));
     });
   }
 

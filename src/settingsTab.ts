@@ -1,13 +1,15 @@
 import { type App, PluginSettingTab, type SettingDefinitionItem } from 'obsidian';
+import { t } from './i18n';
+import type { MessageKey } from './i18n/en';
 import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
 import { type NumericSetting, SETTING_RANGES } from './settings';
 
-const NUMBER_ROWS: { key: NumericSetting; name: string; desc: string }[] = [
-  { key: 'maxNodeWidth', name: 'Max node width', desc: 'Wider content is clipped with a fade.' },
-  { key: 'maxNodeHeight', name: 'Max node height', desc: 'Taller content is clipped with a fade.' },
-  { key: 'siblingGap', name: 'Sibling gap', desc: 'Space between neighbouring branches.' },
-  { key: 'levelGap', name: 'Level gap', desc: 'Space between a node and its children.' },
+const NUMBER_ROWS: { key: NumericSetting; name: MessageKey; desc: MessageKey }[] = [
+  { key: 'maxNodeWidth', name: 'maxNodeWidthName', desc: 'maxNodeWidthDesc' },
+  { key: 'maxNodeHeight', name: 'maxNodeHeightName', desc: 'maxNodeHeightDesc' },
+  { key: 'siblingGap', name: 'siblingGapName', desc: 'siblingGapDesc' },
+  { key: 'levelGap', name: 'levelGapName', desc: 'levelGapDesc' },
 ];
 
 /** Declarative settings: Obsidian renders the rows and indexes their names and descriptions for search. */
@@ -22,8 +24,8 @@ export class MindMapSettingTab extends PluginSettingTab {
   override getSettingDefinitions(): SettingDefinitionItem[] {
     return [
       {
-        name: 'Default layout',
-        desc: 'For notes without mind-mapper-layout in their frontmatter.',
+        name: t('defaultLayoutName'),
+        desc: t('defaultLayoutDesc'),
         control: {
           type: 'dropdown',
           key: 'defaultLayout',
@@ -31,11 +33,11 @@ export class MindMapSettingTab extends PluginSettingTab {
         },
       },
       {
-        name: 'Start collapsed',
-        desc: 'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
+        name: t('startCollapsedName'),
+        desc: t('startCollapsedDesc'),
         control: { type: 'toggle', key: 'startCollapsed' },
       },
-      ...NUMBER_ROWS.map(({ key, name, desc }) => this.numberDefinition(key, name, desc)),
+      ...NUMBER_ROWS.map(({ key, name, desc }) => this.numberDefinition(key, t(name), t(desc))),
     ];
   }
 
@@ -52,7 +54,7 @@ export class MindMapSettingTab extends PluginSettingTab {
     const { min, max } = SETTING_RANGES[key];
     return {
       name,
-      desc: `${desc} ${min}–${max} px.`,
+      desc: t('pixelRange', { desc, min, max }),
       render: (setting) => {
         setting.addText((text) => {
           text.inputEl.type = 'number';

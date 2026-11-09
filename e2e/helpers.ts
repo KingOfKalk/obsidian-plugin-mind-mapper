@@ -138,3 +138,15 @@ export async function mouseOnNode(id: string, type: 'click' | 'dblclick'): Promi
     type,
   );
 }
+
+/**
+ * Switches Obsidian's app language (Settings → General → Language stores it in localStorage)
+ * and restarts Obsidian with the same vault, as Obsidian only reads it at startup. `null` = English.
+ */
+export async function setObsidianLanguage(code: string | null): Promise<void> {
+  await browser.execute((language) => {
+    if (language === null) window.localStorage.removeItem('language');
+    else window.localStorage.setItem('language', language);
+  }, code);
+  await browser.reloadObsidian();
+}

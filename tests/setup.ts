@@ -1,3 +1,6 @@
+import { language } from './mocks/obsidian';
+import { loadLanguage } from '../src/i18n';
+
 /** Polyfills for Obsidian's DOM helpers on HTMLElement (normally provided by the app). */
 interface ElOptions {
   cls?: string;
@@ -106,3 +109,9 @@ class FakeResizeObserver {
 }
 
 Object.assign(globalThis, { ResizeObserver: FakeResizeObserver, FakeResizeObserver });
+
+// English unless a test picks another language (`language.code` + `loadLanguage`).
+afterEach(() => {
+  language.code = 'en';
+  loadLanguage();
+});

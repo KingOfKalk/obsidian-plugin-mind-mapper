@@ -1,7 +1,7 @@
 import type { Command } from 'obsidian';
 import MindMapperPlugin from '../src/main';
 import { MindMapView } from '../src/view/MindMapView';
-import { FakeWorkspace, fakeApp, fakeFile, fakeManifest } from './helpers';
+import { FakeWorkspace, fakeApp, fakeFile, fakeManifest, useGerman } from './helpers';
 import { Menu, Notice, type Plugin as MockPlugin } from './mocks/obsidian';
 
 async function loadPlugin(ws = new FakeWorkspace()): Promise<MockPlugin> {
@@ -170,4 +170,19 @@ test('a failure to open the map shows a notice', async () => {
     expect(Notice.messages).toEqual(['Mind Mapper: could not open the mind map']),
   );
   error.mockRestore();
+});
+
+test('in German (de-DE) the command, file menu, ribbon and notice are German', async () => {
+  useGerman('de-DE');
+  const ws = new FakeWorkspace();
+  const plugin = await loadPlugin(ws);
+  expect(openCommand(plugin).name).toBe('Als Mindmap öffnen');
+  expect(plugin.ribbonIcons.map((r) => r.title)).toEqual(['Als Mindmap öffnen']);
+  const menu = new Menu();
+  ws.trigger('file-menu', menu, fakeFile('Note.md'), 'file-explorer');
+  expect(menu.items.map((i) => i.title)).toEqual(['Als Mindmap öffnen']);
+  Notice.messages = [];
+  ws.activeFile = null;
+  plugin.ribbonIcons[0]?.callback(new MouseEvent('click'));
+  expect(Notice.messages).toEqual(['Öffne zuerst eine Markdown-Notiz']);
 });

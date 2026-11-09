@@ -11,6 +11,7 @@ Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lis
 - **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
+- **Languages:** English and German; follows Obsidian's language setting (Settings → General → Language)
 
 ## How a note becomes a map
 

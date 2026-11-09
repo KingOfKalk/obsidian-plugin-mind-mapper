@@ -57,6 +57,13 @@ export class Component {
   }
 }
 
+/** What `getLanguage` returns; tests set it, `tests/setup.ts` resets it to English. */
+export const language = { code: 'en' };
+
+export function getLanguage(): string {
+  return language.code;
+}
+
 export function setIcon(el: HTMLElement, icon: string): void {
   el.dataset.icon = icon;
 }

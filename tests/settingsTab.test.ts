@@ -2,7 +2,7 @@ import type { WorkspaceLeaf } from 'obsidian';
 import MindMapperPlugin from '../src/main';
 import { MindMapSettingTab } from '../src/settingsTab';
 import { MindMapView } from '../src/view/MindMapView';
-import { FakeWorkspace, fakeApp, fakeManifest } from './helpers';
+import { FakeWorkspace, fakeApp, fakeManifest, useGerman } from './helpers';
 import { LAYOUT_NAMES } from '../src/layout/types';
 import {
   type MockSettingDefinition,
@@ -185,4 +185,22 @@ test('typing in a number field does not save until it is committed', async () =>
   text?.inputEl.dispatchEvent(new Event('input'));
   expect(save).not.toHaveBeenCalled();
   expect(plugin.settings.maxNodeWidth).toBe(320);
+});
+
+test('in German the rows have German names and descriptions; layout values stay', async () => {
+  useGerman();
+  const { mock } = await setup();
+  display(mock);
+  expect(Setting.rows.map((s) => s.name)).toEqual([
+    'Standard-Layout',
+    'Eingeklappt starten',
+    'Maximale Knotenbreite',
+    'Maximale Knotenhöhe',
+    'Abstand zwischen Geschwistern',
+    'Ebenenabstand',
+  ]);
+  expect(row('Maximale Knotenbreite').desc).toBe(
+    'Breiterer Inhalt wird mit einem Verlauf abgeschnitten. 160–800 px.',
+  );
+  expect([...(row('Standard-Layout').dropdown?.options.keys() ?? [])]).toEqual([...LAYOUT_NAMES]);
 });

@@ -8,7 +8,7 @@ import { NodeContentModal } from '../../src/render/NodeContentModal';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
 import { MindMapView, type ViewServices } from '../../src/view/MindMapView';
 import { loadFixture } from '../fixtures';
-import { FakeWorkspace, fakeFile } from '../helpers';
+import { FakeWorkspace, fakeFile, useGerman } from '../helpers';
 import {
   type Component as MockComponent,
   Modal as MockModal,
@@ -1474,4 +1474,20 @@ describe('collapse that hides the selected node', () => {
     expect(after.x).toBeCloseTo(before.x, 1);
     expect(after.y).toBeCloseTo(before.y, 1);
   });
+});
+
+test('in German the title, placeholders and empty-note hint are German', async () => {
+  useGerman();
+  const { view } = newView();
+  await view.onOpen();
+  expect(view.getDisplayText()).toBe('Mindmap');
+  expect(placeholderText(view)).toBe('Keine Notiz ausgewählt');
+  await view.setState(...state('gone/Old.md'));
+  expect(placeholderText(view)).toBe('Notiz nicht gefunden: gone/Old.md');
+  expect(view.contentEl.querySelector('.mind-mapper-hint')?.textContent).toBe(
+    'Diese Notiz hat noch keinen Inhalt',
+  );
+  expect(
+    view.contentEl.querySelector('.mind-mapper-controls [aria-label="Vergrößern"]'),
+  ).not.toBeNull();
 });

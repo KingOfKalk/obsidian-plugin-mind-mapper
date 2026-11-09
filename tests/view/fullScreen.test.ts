@@ -1,4 +1,5 @@
 import { FullScreen } from '../../src/view/fullScreen';
+import { useGerman } from '../helpers';
 
 function setup() {
   const leafEl = document.body.createDiv({ cls: 'workspace-leaf-content' });
@@ -63,4 +64,12 @@ test('enter twice does not nest overlays; exit when inactive is a no-op', () => 
   fullScreen.enter();
   fullScreen.enter();
   expect(document.body.querySelectorAll('.mind-mapper-full-screen')).toHaveLength(1);
+});
+
+test('in German the exit button is labelled German', () => {
+  useGerman();
+  const { fullScreen } = setup();
+  fullScreen.enter();
+  const exit = document.body.querySelector('.mind-mapper-exit-full-screen');
+  expect(exit?.getAttribute('aria-label')).toBe('Vollbild beenden');
 });

@@ -8,7 +8,8 @@ import type {
 } from 'obsidian';
 import { vi } from 'vitest';
 import { loadFixture } from './fixtures';
-import { TFile as MockTFile } from './mocks/obsidian';
+import { loadLanguage } from '../src/i18n';
+import { TFile as MockTFile, language } from './mocks/obsidian';
 
 export function fakeManifest(): PluginManifest {
   return {
@@ -192,4 +193,10 @@ export class FakeWorkspace {
 
 export function fakeApp(workspace = new FakeWorkspace()): App {
   return workspace.app;
+}
+
+/** Obsidian set to German, as read on plugin load; `tests/setup.ts` switches back after each test. */
+export function useGerman(code = 'de'): void {
+  language.code = code;
+  loadLanguage();
 }

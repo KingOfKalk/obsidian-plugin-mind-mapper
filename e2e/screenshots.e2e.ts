@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { browser } from '@wdio/globals';
-import { openMindMap, settle, waitForCache, writeNote } from './helpers';
+import { openMindMap, setObsidianLanguage, settle, waitForCache, writeNote } from './helpers';
 import { generateNote } from './perf/generateNote';
 
 /**
@@ -133,5 +133,30 @@ describe('screenshots', function () {
     await openMindMap('start-collapsed.md');
     await settle();
     await browser.saveScreenshot(`${dir}/start-collapsed.png`);
+  });
+
+  // Last: restarts Obsidian in German.
+  it('German UI', async function () {
+    await setObsidianLanguage('de');
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    await browser.saveScreenshot(`${dir}/german-map.png`);
+    // Obsidian 1.15 opens the settings in their own window.
+    const main = await browser.getWindowHandle();
+    await browser.executeObsidianCommand('app:open-settings');
+    await browser.waitUntil(async () => (await browser.getWindowHandles()).length > 1);
+    const settings = (await browser.getWindowHandles()).find((h) => h !== main);
+    if (!settings) throw new Error('no settings window');
+    await browser.switchToWindow(settings);
+    await browser.executeObsidian(async ({ app }) => {
+      await (
+        app as unknown as { setting: { openTabById(id: string): Promise<unknown> } }
+      ).setting.openTabById('mind-mapper');
+    });
+    await browser.pause(500);
+    await browser.saveScreenshot(`${dir}/german-settings.png`);
+    await browser.closeWindow();
+    await browser.switchToWindow(main);
+    await setObsidianLanguage(null);
   });
 });

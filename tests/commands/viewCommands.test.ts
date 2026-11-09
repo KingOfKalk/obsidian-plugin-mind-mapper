@@ -1,7 +1,7 @@
 import type { Command, WorkspaceLeaf } from 'obsidian';
 import MindMapperPlugin from '../../src/main';
 import { MindMapView } from '../../src/view/MindMapView';
-import { FakeWorkspace, fakeApp, fakeManifest } from '../helpers';
+import { FakeWorkspace, fakeApp, fakeManifest, useGerman } from '../helpers';
 import type { Plugin as MockPlugin } from '../mocks/obsidian';
 
 const COMMANDS = [
@@ -52,4 +52,19 @@ test.each(COMMANDS)('%s calls %s on the active mind map view', async (id, _name,
   expect(spy).not.toHaveBeenCalled();
   command.checkCallback?.(false);
   expect(spy).toHaveBeenCalledTimes(1);
+});
+
+test('in German the view commands have German names', async () => {
+  useGerman();
+  const { commands } = await setup();
+  expect(COMMANDS.map(([id]) => find(commands, id).name)).toEqual([
+    'Vergrößern',
+    'Verkleinern',
+    'An Ansicht anpassen',
+    'Vergrößerung auf 100 % zurücksetzen',
+    'Alle einklappen',
+    'Alle ausklappen',
+    'Zurück zur Wurzel',
+    'Vollbild umschalten',
+  ]);
 });

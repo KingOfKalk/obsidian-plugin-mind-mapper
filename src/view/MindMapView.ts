@@ -42,6 +42,7 @@ import {
   zoomAt,
 } from '../render/viewport';
 import { jumpToSource } from '../commands/jumpToSource';
+import { t } from '../i18n';
 import { CollapseState } from './collapseState';
 import { FullScreen } from './fullScreen';
 import { LeafRecency } from './leafRecency';
@@ -284,7 +285,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.exitFullScreen();
     jumpToSource(this.app, this.recency, this.leaf, path, line).catch((error: unknown) => {
       console.error('Mind Mapper: could not open the note', error);
-      new Notice('Could not open the note');
+      new Notice(t('couldNotOpenNote'));
     });
   }
 
@@ -336,7 +337,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   getDisplayText(): string {
-    return this.pinnedFile === null ? 'Mind map' : fileBasename(this.pinnedFile);
+    return this.pinnedFile === null ? t('viewTitle') : fileBasename(this.pinnedFile);
   }
 
   override async onOpen(): Promise<void> {
@@ -421,14 +422,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.cancelUpdate();
     this.listenForChanges();
     const path = this.pinnedFile;
-    if (path === null) return this.showMessage('No note selected');
+    if (path === null) return this.showMessage(t('noNoteSelected'));
 
     const file = this.app.vault.getFileByPath(path);
-    if (!file) return this.showMessage(`Note not found: ${path}`);
+    if (!file) return this.showMessage(t('noteNotFound', { path }));
 
     const cache = this.app.metadataCache.getFileCache(file);
     // Not indexed yet (e.g. at startup): the first `changed` event renders it.
-    if (!cache) return this.showMessage('Loading…');
+    if (!cache) return this.showMessage(t('loading'));
 
     let text: string;
     try {
@@ -436,7 +437,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     } catch (error) {
       if (generation !== this.generation) return;
       console.error('Mind Mapper: could not read note', path, error);
-      return this.showMessage('Could not read note');
+      return this.showMessage(t('couldNotReadNote'));
     }
     if (generation !== this.generation) return;
     const tree = this.parse(file, cache, text);
@@ -501,7 +502,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         this.deleted = true;
         this.generation++;
         this.cancelUpdate();
-        this.showMessage('Note was deleted');
+        this.showMessage(t('noteDeleted'));
       }),
       vault.on('create', (file) => {
         if (!this.deleted || file.path !== this.pinnedFile) return;
@@ -661,7 +662,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const placeholderEl = this.contentEl.createDiv({ cls: 'mind-mapper-placeholder' });
     const hintEl = renderer.canvasEl.createDiv({
       cls: 'mind-mapper-hint',
-      text: 'This note has no content yet',
+      text: t('noContentYet'),
     });
     hintEl.hidden = true;
     attachPanZoom(this, renderer.canvasEl, this, () => this.select(null));

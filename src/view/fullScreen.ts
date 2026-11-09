@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian';
+import { t } from '../i18n';
 
 /** Spec "Full screen": controls fade after about 2 s without mouse movement. */
 export const IDLE_MS = 2000;
@@ -37,7 +38,7 @@ export class FullScreen {
     overlay.createDiv({ cls: 'mind-mapper-title-chip', text: this.options.title() });
     const exit = overlay.createEl('button', {
       cls: 'mind-mapper-exit-full-screen clickable-icon',
-      attr: { 'aria-label': 'Exit full screen' },
+      attr: { 'aria-label': t('exitFullScreen') },
     });
     setIcon(exit, 'x');
     exit.addEventListener('click', () => this.options.onExit());

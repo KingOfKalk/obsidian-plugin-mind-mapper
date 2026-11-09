@@ -1,4 +1,5 @@
 import { invalidOptionMessage, readMapOptions } from '../../src/view/frontmatter';
+import { useGerman } from '../helpers';
 
 test('valid layout and title', () => {
   expect(
@@ -115,5 +116,21 @@ test('notice texts name the key, the value, the note and the fallback', () => {
     'Mind Mapper: mind-mapper-title in a/Note.md is not text, using the default title',
     'Mind Mapper: unknown mind-mapper-layout "spiral" in a/Note.md, using left-to-right',
     'Mind Mapper: mind-mapper-collapsed "yes" in a/Note.md is not true or false, using true',
+  ]);
+});
+
+test('notice texts in German keep key names and values', () => {
+  useGerman();
+  const options = readMapOptions(
+    { 'mind-mapper-layout': 'spiral', 'mind-mapper-collapsed': 'yes', 'mind-mapper-title': 3 },
+    'left-to-right',
+    true,
+  );
+  expect(
+    options.invalid.map(({ key, value }) => invalidOptionMessage(key, value, 'a/Note.md', options)),
+  ).toEqual([
+    'Mind Mapper: mind-mapper-title in a/Note.md ist kein Text, der Standardtitel wird verwendet',
+    'Mind Mapper: Unbekanntes mind-mapper-layout "spiral" in a/Note.md, left-to-right wird verwendet',
+    'Mind Mapper: mind-mapper-collapsed "yes" in a/Note.md ist nicht true oder false, true wird verwendet',
   ]);
 });

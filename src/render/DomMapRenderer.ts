@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian';
+import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Rect, Side } from '../layout/types';
@@ -346,7 +347,7 @@ export class DomMapRenderer implements MapRenderer {
       const collapsed = count !== undefined;
       toggle.toggleClass('is-collapsed', collapsed);
       toggle.setText(collapsed ? String(count) : '−');
-      toggle.setAttribute('aria-label', collapsed ? 'Expand' : 'Collapse');
+      toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
       // Middle of the child-side edge; CSS moves it just outside the node.
       const at = {
         right: { left: x + width, top: y + height / 2 },
@@ -420,7 +421,7 @@ export class DomMapRenderer implements MapRenderer {
     }
     const expand = el.createEl('button', {
       cls: 'mind-mapper-node-expand clickable-icon',
-      attr: { 'aria-label': 'Show full content' },
+      attr: { 'aria-label': t('showFullContent') },
     });
     setIcon(expand, 'maximize-2');
     expand.addEventListener('click', (event) => {

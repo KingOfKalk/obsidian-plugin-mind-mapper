@@ -1,4 +1,5 @@
 import { MapControls } from '../../src/render/MapControls';
+import { useGerman } from '../helpers';
 
 function setup() {
   const parent = document.createElement('div');
@@ -77,4 +78,23 @@ test('the collapse button shows the state: expand all while anything is collapse
   expect(toggle?.classList.contains('is-active')).toBe(false);
   toggle?.click();
   expect(actions.collapseAll).toHaveBeenCalledTimes(1);
+});
+
+test('in German the labels, the collapse state and the zoom percentage are German', () => {
+  useGerman();
+  const { controls, buttons } = setup();
+  expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+    'Verkleinern',
+    'Vergrößerung auf 100 % zurücksetzen',
+    'Vergrößern',
+    'An Ansicht anpassen',
+    'Alle einklappen',
+    'Zurück zur Wurzel',
+    'Vollbild umschalten',
+  ]);
+  expect(buttons[1]?.textContent).toBe('100\u00a0%');
+  controls.setZoom(1.5);
+  expect(buttons[1]?.textContent).toBe('150\u00a0%');
+  controls.setCollapsed(true);
+  expect(buttons[4]?.getAttribute('aria-label')).toBe('Alle ausklappen');
 });

@@ -1,6 +1,7 @@
 import type { MapLayout } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
 import { DomMapRenderer, RENDER_BUDGET } from '../../src/render/DomMapRenderer';
+import { useGerman } from '../helpers';
 
 function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): MindMapNode {
   return { id, kind, label, markdown: label, sectionType: null, level: 1, line: 0, children: [] };
@@ -553,4 +554,20 @@ test('dividers are drawn as dashed lines below cross-links and replaced on each 
   expect(svg?.querySelector('path.mind-mapper-divider')?.getAttribute('d')).toBe('M 260 5 L 460 5');
   renderer.setLayout(layout);
   expect(svg?.querySelectorAll('path.mind-mapper-divider')).toHaveLength(0);
+});
+
+test('in German the toggle and the expand button are labelled German', () => {
+  useGerman();
+  const { parent, renderer } = hooked();
+  renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+  const toggle = () => parent.querySelector('.mind-mapper-collapse')?.getAttribute('aria-label');
+  expect(toggle()).toBe('Einklappen');
+  const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 2), edges: [] };
+  renderer.setLayout(collapsed, { hidden: new Map([['R/A', 5]]), hasChildren: withChildren });
+  expect(toggle()).toBe('Ausklappen');
+  renderer.setLayout(withMarkdown('A', 'x'));
+  renderer.setClipped('A', { x: false, y: true });
+  expect(parent.querySelector('.mind-mapper-node-expand')?.getAttribute('aria-label')).toBe(
+    'Gesamten Inhalt anzeigen',
+  );
 });
