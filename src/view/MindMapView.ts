@@ -147,6 +147,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
    */
   private layoutOverride: MapLayoutName | null = null;
   private themeOverride: MapThemeName | null = null;
+  /** Pending animation frame of a layout choice: a burst of choices lays out once. */
+  private layoutFrame: number | null = null;
 
   constructor(leaf: WorkspaceLeaf, services: Partial<ViewServices> = {}) {
     super(leaf);
@@ -330,13 +332,22 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   chooseLayout(layout: MapLayoutName | null): void {
     this.layoutOverride = layout;
     this.app.workspace.requestSaveLayout();
-    if (this.tree && this.layout && this.layoutWillChange()) {
+    this.dom?.controls.setLayout(this.effectiveLayout(), layout !== null);
+    if (!this.tree || !this.layout || !this.layoutWillChange()) return;
+    // A held hotkey repeats faster than a large map lays out: at most once per frame, last choice wins.
+    this.layoutFrame ??= this.contentEl.win.requestAnimationFrame(() => {
+      this.layoutFrame = null;
+      if (!this.tree || !this.layout || !this.layoutWillChange()) return;
       this.cancelRelayout();
       this.pendingFit = true;
       this.showLayout(this.computeLayout(this.tree));
-      return;
-    }
-    this.dom?.controls.setLayout(this.effectiveLayout(), layout !== null);
+    });
+  }
+
+  private cancelLayoutFrame(): void {
+    if (this.layoutFrame === null) return;
+    this.contentEl.win.cancelAnimationFrame(this.layoutFrame);
+    this.layoutFrame = null;
   }
 
   /** Colour theme of this view only (null: the note's again), applied live without a re-layout. */
@@ -354,6 +365,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** The colour theme after the shown one (wraps around). */
   nextTheme(): void {
     this.chooseTheme(following(THEME_NAMES, this.effectiveTheme()));
+  }
+
+  /** A map is shown (not a placeholder such as "No note selected" or "Loading…"). */
+  showsMap(): boolean {
+    return this.layout !== null;
   }
 
   showLayoutMenu(): void {
@@ -420,6 +436,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.stopListening();
     this.cancelUpdate();
     this.cancelRelayout();
+    this.cancelLayoutFrame();
     this.observer?.disconnect();
     this.observer = null;
     this.observed.clear();
@@ -784,6 +801,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private showMessage(text: string): void {
     const dom = this.ensureDom();
     this.cancelRelayout();
+    this.cancelLayoutFrame();
     this.tree = null;
     this.layout = null;
     dom.renderer.clear();

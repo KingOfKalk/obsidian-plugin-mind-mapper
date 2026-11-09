@@ -50,12 +50,51 @@ test.each(COMMANDS)('%s is hidden without an active mind map view', async (id) =
 test.each(COMMANDS)('%s calls %s on the active mind map view', async (id, _name, method) => {
   const { commands, ws, view } = await setup();
   ws.activeView = view;
+  vi.spyOn(view, 'showsMap').mockReturnValue(true);
   const spy = vi.spyOn(view, method).mockImplementation(() => {});
   const command = find(commands, id);
   expect(command.checkCallback?.(true)).toBe(true);
   expect(spy).not.toHaveBeenCalled();
   command.checkCallback?.(false);
   expect(spy).toHaveBeenCalledTimes(1);
+});
+
+const SWITCHER = ['change-layout', 'next-layout', 'change-theme', 'next-theme'];
+
+test.each(SWITCHER)('%s is unavailable while the view shows a placeholder', async (id) => {
+  const { commands, ws, view } = await setup();
+  ws.activeView = view;
+  // No note selected.
+  await view.onOpen();
+  expect(find(commands, id).checkCallback?.(true)).toBe(false);
+  // Note not found.
+  await view.setState({ file: 'Missing.md' }, { history: false });
+  expect(find(commands, id).checkCallback?.(true)).toBe(false);
+  // Not indexed yet ("Loading…").
+  ws.addNote('Note.md', 'worked-example');
+  vi.spyOn(ws.app.metadataCache, 'getFileCache').mockReturnValue(null);
+  await view.setState({ file: 'Note.md' }, { history: false });
+  expect(find(commands, id).checkCallback?.(true)).toBe(false);
+  // Running it anyway does nothing.
+  find(commands, id).checkCallback?.(false);
+  expect(view.getState()).toMatchObject({ layout: null, theme: null });
+});
+
+test.each(SWITCHER)('%s is available once the view shows a map', async (id) => {
+  const { commands, ws, view } = await setup();
+  ws.addNote('Note.md', 'worked-example');
+  await view.setState({ file: 'Note.md' }, { history: false });
+  ws.activeView = view;
+  expect(find(commands, id).checkCallback?.(true)).toBe(true);
+});
+
+test('the other view commands stay available on a placeholder', async () => {
+  const { commands, ws, view } = await setup();
+  ws.activeView = view;
+  await view.onOpen();
+  for (const [id] of COMMANDS.filter(([id]) => !SWITCHER.includes(id))) {
+    expect(find(commands, id).checkCallback?.(true)).toBe(true);
+  }
 });
 
 test('in German the view commands have German names', async () => {
