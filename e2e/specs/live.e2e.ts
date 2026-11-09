@@ -107,6 +107,20 @@ describe('live update', function () {
     await browser.executeObsidianCommand('mind-mapper:expand-all');
     await expect(node('Project/Tasks/#1')).toExist();
   });
+
+  it('collapse all and expand all buttons in the controls work', async function () {
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    const collapseButton = browser.$('.mind-mapper-controls button[aria-label="Collapse all"]');
+    const expandButton = browser.$('.mind-mapper-controls button[aria-label="Expand all"]');
+    await expect(collapseButton.$('svg')).toExist();
+    await expect(expandButton.$('svg')).toExist();
+    await collapseButton.click();
+    await expect(node('Project/Tasks/#1')).not.toExist();
+    await expect(node('Project/Tasks')).toExist();
+    await expandButton.click();
+    await expect(node('Project/Tasks/#1')).toExist();
+  });
 });
 
 describe('jump to source', function () {

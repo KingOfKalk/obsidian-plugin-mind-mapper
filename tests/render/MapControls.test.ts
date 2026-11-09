@@ -7,6 +7,8 @@ function setup() {
     zoomOut: vi.fn(),
     fitToView: vi.fn(),
     resetZoom: vi.fn(),
+    collapseAll: vi.fn(),
+    expandAll: vi.fn(),
     backToRoot: vi.fn(),
     toggleFullScreen: vi.fn(),
   };
@@ -15,13 +17,15 @@ function setup() {
   return { actions, controls, buttons };
 }
 
-test('renders six buttons in order with aria labels', () => {
+test('renders eight buttons in order with aria labels', () => {
   const { buttons } = setup();
   expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
     'Zoom out',
     'Reset zoom to 100%',
     'Zoom in',
     'Fit to view',
+    'Collapse all',
+    'Expand all',
     'Back to root',
     'Toggle full screen',
   ]);
@@ -30,6 +34,8 @@ test('renders six buttons in order with aria labels', () => {
     undefined,
     'zoom-in',
     'maximize',
+    'chevrons-down-up',
+    'chevrons-up-down',
     'locate',
     'maximize-2',
   ]);
@@ -42,6 +48,8 @@ test('each button calls its action once', () => {
   expect(actions.resetZoom).toHaveBeenCalledTimes(1);
   expect(actions.zoomIn).toHaveBeenCalledTimes(1);
   expect(actions.fitToView).toHaveBeenCalledTimes(1);
+  expect(actions.collapseAll).toHaveBeenCalledTimes(1);
+  expect(actions.expandAll).toHaveBeenCalledTimes(1);
   expect(actions.backToRoot).toHaveBeenCalledTimes(1);
   expect(actions.toggleFullScreen).toHaveBeenCalledTimes(1);
 });

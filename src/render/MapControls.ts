@@ -5,6 +5,8 @@ export interface MapActions {
   zoomOut(): void;
   fitToView(): void;
   resetZoom(): void;
+  collapseAll(): void;
+  expandAll(): void;
   backToRoot(): void;
   toggleFullScreen(): void;
 }
@@ -25,6 +27,8 @@ export class MapControls {
     this.resetButton = button('Reset zoom to 100%', () => actions.resetZoom());
     button('Zoom in', () => actions.zoomIn(), 'zoom-in');
     button('Fit to view', () => actions.fitToView(), 'maximize');
+    button('Collapse all', () => actions.collapseAll(), 'chevrons-down-up');
+    button('Expand all', () => actions.expandAll(), 'chevrons-up-down');
     button('Back to root', () => actions.backToRoot(), 'locate');
     button('Toggle full screen', () => actions.toggleFullScreen(), 'maximize-2');
     this.setZoom(1);
