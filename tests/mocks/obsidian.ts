@@ -277,7 +277,23 @@ export function renderSettingDefinitions(tab: PluginSettingTab): void {
 
 type ChangeHandler = (value: string) => unknown;
 
-export class DropdownComponent {
+/**
+ * Like Obsidian's `BaseComponent`: `then(cb)` calls `cb(this)` and returns `this`, so every
+ * component is a thenable. A promise resolved with a component (e.g. returned from a `.then`
+ * callback) calls `then` again with its own resolve function, forever: an endless microtask
+ * loop that freezes Obsidian. The mock throws instead, so such a test fails rather than hangs.
+ */
+class BaseComponent {
+  thenCalls = 0;
+  then(cb: (component: this) => unknown): this {
+    if (++this.thenCalls > 100)
+      throw new Error('component used as a thenable: endless promise resolution');
+    cb(this);
+    return this;
+  }
+}
+
+export class DropdownComponent extends BaseComponent {
   readonly options = new Map<string, string>();
   value = '';
   changeHandler: ChangeHandler | null = null;
@@ -295,7 +311,7 @@ export class DropdownComponent {
   }
 }
 
-export class ToggleComponent {
+export class ToggleComponent extends BaseComponent {
   value = false;
   changeHandler: ((value: boolean) => unknown) | null = null;
   setValue(value: boolean): this {
@@ -308,7 +324,7 @@ export class ToggleComponent {
   }
 }
 
-export class TextComponent {
+export class TextComponent extends BaseComponent {
   inputEl: HTMLInputElement = document.createElement('input');
   value = '';
   changeHandler: ChangeHandler | null = null;

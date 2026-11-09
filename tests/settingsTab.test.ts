@@ -166,6 +166,16 @@ test('a max width of 5000 is clamped to 800 and the field shows 800; non-numbers
   expect(plugin.settings.levelGap).toBe(80);
 });
 
+test('committing a number field settles: the component is never resolved as a promise value', async () => {
+  // Obsidian components are thenables; resolving a promise with one loops forever and froze
+  // Obsidian when a number was committed.
+  const { mock } = await setup();
+  display(mock);
+  await commit('Max node width', '5000');
+  expect(row('Max node width').text?.value).toBe('800');
+  expect(row('Max node width').text?.thenCalls).toBe(0);
+});
+
 test('typing in a number field does not save until it is committed', async () => {
   const { plugin, mock } = await setup();
   const save = vi.spyOn(plugin, 'saveData');

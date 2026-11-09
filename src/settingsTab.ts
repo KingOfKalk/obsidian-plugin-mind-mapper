@@ -64,9 +64,12 @@ export class MindMapSettingTab extends PluginSettingTab {
             const value = text.inputEl.value;
             const parsed = Number(value);
             if (value.trim() !== '' && Number.isFinite(parsed)) {
-              void this.mindMapper
-                .updateSettings({ [key]: parsed })
-                .then(() => text.setValue(String(this.mindMapper.settings[key])));
+              // Block body: `setValue` returns the component, and Obsidian components are
+              // thenables (`then(cb)` calls `cb(this)`), so returning it would resolve the
+              // promise with itself forever and freeze Obsidian.
+              void this.mindMapper.updateSettings({ [key]: parsed }).then(() => {
+                text.setValue(String(this.mindMapper.settings[key]));
+              });
             } else {
               text.setValue(String(this.mindMapper.settings[key]));
             }
