@@ -27,7 +27,7 @@
 ## Workflow
 
 - Git workflow (branches, worktrees, commits, merging, releases): [CONTRIBUTING.md](CONTRIBUTING.md).
-- Testing, screenshots, devcontainer, dev vault: [docs/developer.md](docs/developer.md).
+- Testing, screenshots, devcontainer, sandbox vault: [docs/developer.md](docs/developer.md).
 - Anything that only matters once the repo is public (issue links, CI, submission, doc changes): add it to [docs/going-public.md](docs/going-public.md) instead of doing it now.
 
 ## Commands
@@ -35,8 +35,8 @@
 - `npm run check`: format check, lint, typecheck, unit tests, production build
 - `npm test`: unit tests (Vitest + jsdom)
 - `npm run test:e2e`: E2E in real headless Obsidian
-- `npm run dev`: watch build into `dev-vault/`
-- `npm run dev:build`: one dev build into `dev-vault/`, then exit
+- `npm run dev`: watch build into `sandbox-vault/`
+- `npm run dev:build`: one dev build into `sandbox-vault/`, then exit
 - `npm run screenshots:e2e`: screenshots to `e2e/screenshots/`
 - `npm run fixtures:record`: re-record parser fixtures from real Obsidian
 - `npm run perf:e2e`: performance benchmark (1,000 and 5,000 nodes)
@@ -55,4 +55,4 @@
 - `tests/`: unit and view integration tests; hand-written `obsidian` mock in `tests/mocks/obsidian.ts`
 - `e2e/`: E2E specs (`e2e/specs/`), screenshot, README image, fixture recording and perf runs
 - `tests/vault/`: versioned test notes, parser fixtures in `tests/vault/fixtures/`
-- `dev-vault/`: git-ignored vault in the main checkout, shared by all worktrees
+- `sandbox-vault/`: git-ignored vault in the main checkout, shared by all worktrees

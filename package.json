@@ -19,7 +19,7 @@
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "version": "node scripts/version-bump.mjs",
     "release": "npm run check && node scripts/release.mjs",
-    "fixtures:pull": "node scripts/dev-vault.mjs pull-fixtures",
+    "fixtures:pull": "node scripts/sandbox-vault.mjs pull-fixtures",
     "test:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts",
     "fixtures:record": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/recordFixtures.e2e.ts",
     "perf:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/perf/perf.e2e.ts",

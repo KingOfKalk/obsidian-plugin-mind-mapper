@@ -52,7 +52,7 @@ This repo is developed locally. There is no forge workflow yet: no issues, no pu
   - `npm run test:e2e` (real headless Obsidian)
   - UI changes: `npm run screenshots:e2e`, then look at the PNGs in `e2e/screenshots/`
   - Review of the diff
-- After every merge, run `npm run dev:build` so `dev-vault/` has the new build.
+- After every merge, run `npm run dev:build` so `sandbox-vault/` has the new build.
 - Keep scope tight: unrelated work goes on a separate branch.
 
 ## Releases

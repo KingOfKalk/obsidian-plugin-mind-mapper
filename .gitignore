@@ -3,7 +3,7 @@ main.js
 release/
 tests/vault/.obsidian/
 *.log
-dev-vault/
+sandbox-vault/
 .obsidian-cache/
 e2e/perf/last-run.json
 e2e/screenshots/

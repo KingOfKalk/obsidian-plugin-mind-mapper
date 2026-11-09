@@ -18,7 +18,7 @@ import {
   pullFixtures,
   syncFiles,
   syncNotes,
-} from '../../scripts/dev-vault.mjs';
+} from '../../scripts/sandbox-vault.mjs';
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'mm-vault-'));
@@ -78,7 +78,7 @@ test('pullFixtures without recordings returns an empty list', () => {
   expect(pullFixtures(tmp(), tmp())).toEqual([]);
 });
 
-test('syncNotes never overwrites recordings in the dev vault', () => {
+test('syncNotes never overwrites recordings in the sandbox vault', () => {
   const src = tmp();
   const dest = tmp();
   write(join(src, 'fixtures', 'a.md'), 'note');
@@ -221,7 +221,7 @@ afterAll(() => {
   rmSync(join(__dirname, '..', '..', '.test-tmp'), { recursive: true, force: true });
 });
 
-describe('docs in the dev vault', () => {
+describe('docs in the sandbox vault', () => {
   function makeDocs(): string {
     const docs = tmp();
     write(join(docs, 'user-manual.md'), '# Manual\n![x](images/manual/a.png)');

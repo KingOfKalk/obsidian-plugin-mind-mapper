@@ -1,4 +1,4 @@
-// Dev vault helpers: copy test notes in, enable the plugin, pull recorded fixtures back.
+// Sandbox vault helpers: copy test notes in, enable the plugin, pull recorded fixtures back.
 import {
   chmodSync,
   copyFileSync,
@@ -154,7 +154,7 @@ export function syncFiles(destDir, mappings) {
 
 /**
  * Copies every file of `srcDir` into `destDir` (see `syncFiles`).
- * Skips `.obsidian/` and recordings (`*.cache.json`): those only flow dev vault → repo.
+ * Skips `.obsidian/` and recordings (`*.cache.json`): those only flow sandbox vault → repo.
  * @param {string} srcDir
  * @param {string} destDir
  */
@@ -179,7 +179,7 @@ export function enablePlugin(vaultDir, pluginId) {
 }
 
 /**
- * Copies `fixtures/*.cache.json` from the dev vault into the repo's test vault.
+ * Copies `fixtures/*.cache.json` from the sandbox vault into the repo's test vault.
  * @param {string} vaultDir
  * @param {string} repoVaultDir
  * @returns {string[]} copied file names
@@ -193,11 +193,13 @@ export function pullFixtures(vaultDir, repoVaultDir) {
   return names;
 }
 
-// `node scripts/dev-vault.mjs pull-fixtures`
+// `node scripts/sandbox-vault.mjs pull-fixtures`
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { vaultDir } = resolveDevTargets(process.env, gitCommonDir);
   if (process.argv[2] !== 'pull-fixtures' || !vaultDir) {
-    throw new Error('usage: node scripts/dev-vault.mjs pull-fixtures (default dev vault only)');
+    throw new Error(
+      'usage: node scripts/sandbox-vault.mjs pull-fixtures (default sandbox vault only)',
+    );
   }
   const names = pullFixtures(vaultDir, 'tests/vault');
   console.log(`Pulled ${names.length} fixtures from ${vaultDir}`);

@@ -5,6 +5,6 @@ package-lock.json
 .worktrees/
 tests/vault/.obsidian/
 *.md
-dev-vault/
+sandbox-vault/
 tests/vault/fixtures/*.cache.json
 .obsidian-cache/

@@ -6,14 +6,15 @@
 - `npm install`
 - Vaults
   - `tests/vault/`: versioned test notes (source, tracked in git)
-  - `dev-vault/` in the main checkout: the one vault you open in Obsidian, ignored by git, shared by all worktrees
-- `npm run dev` (from the main checkout or any worktree): watch build into `dev-vault/.obsidian/plugins/mind-mapper/` (also copies `manifest.json`, `styles.css`, writes `.hotreload`)
-  - On start it copies the current checkout's `tests/vault/` notes into `dev-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `tests/vault/`, not in `dev-vault/`), recordings (`*.cache.json`) are never overwritten
-  - It also copies the docs so you can read them (and open them as mind maps) in Obsidian: `docs/user-manual.md` becomes `Docs/User manual.md`, `docs/developer.md` becomes `Docs/Developer guide.md`, and `docs/images/` becomes `Docs/images/` (so the manual's relative image links work). Other docs (`mvp.md`, `going-public.md`, `superpowers/`) are not copied. Edit the docs in `docs/`, not in `dev-vault/`; links that leave `docs/` (e.g. `../README.md`) do not resolve inside the vault
-  - Pruning: test notes and docs share one sync (`syncFiles` in `scripts/dev-vault.mjs`, fed by `notesMappings` and `docsMappings`) and one manifest. Each sync writes the copied paths to `dev-vault/.mind-mapper-sync.json` (a dot file in the vault root, which Obsidian does not index). The next sync deletes the files listed there that `tests/vault/` or the docs no longer have, then the folders they leave empty. Notes you create in `dev-vault/` are in no manifest and are never deleted; `.obsidian/` and recordings are never touched; without a manifest (first run) nothing is deleted
+  - `sandbox-vault/` in the main checkout: the one vault you open in Obsidian, ignored by git, shared by all worktrees
+    - Renamed from `dev-vault/`: if you opened the old folder in Obsidian, reopen the vault once via "Open folder as vault"
+- `npm run dev` (from the main checkout or any worktree): watch build into `sandbox-vault/.obsidian/plugins/mind-mapper/` (also copies `manifest.json`, `styles.css`, writes `.hotreload`)
+  - On start it copies the current checkout's `tests/vault/` notes into `sandbox-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `tests/vault/`, not in `sandbox-vault/`), recordings (`*.cache.json`) are never overwritten
+  - It also copies the docs so you can read them (and open them as mind maps) in Obsidian: `docs/user-manual.md` becomes `Docs/User manual.md`, `docs/developer.md` becomes `Docs/Developer guide.md`, and `docs/images/` becomes `Docs/images/` (so the manual's relative image links work). Other docs (`mvp.md`, `going-public.md`, `superpowers/`) are not copied. Edit the docs in `docs/`, not in `sandbox-vault/`; links that leave `docs/` (e.g. `../README.md`) do not resolve inside the vault
+  - Pruning: test notes and docs share one sync (`syncFiles` in `scripts/sandbox-vault.mjs`, fed by `notesMappings` and `docsMappings`) and one manifest. Each sync writes the copied paths to `sandbox-vault/.mind-mapper-sync.json` (a dot file in the vault root, which Obsidian does not index). The next sync deletes the files listed there that `tests/vault/` or the docs no longer have, then the folders they leave empty. Notes you create in `sandbox-vault/` are in no manifest and are never deleted; `.obsidian/` and recordings are never touched; without a manifest (first run) nothing is deleted
   - `MIND_MAPPER_PLUGIN_DIR=<vault>/.obsidian/plugins/mind-mapper npm run dev` targets another vault instead (plugin files only, no notes copied)
 - `npm run dev:build`: the same dev build and note sync once, then exits (no watch)
-- One-time setup on the host: open `dev-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
+- One-time setup on the host: open `sandbox-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
 - User manual images: `npm run manual:images` (headless, writes `docs/images/manual/`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
@@ -93,7 +94,7 @@
 - README images (`npm run readme:images`)
   - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `tests/vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes
-  - `tests/vault/Welcome.md` is the first note to open in the dev vault (how to open a map, where the notes are, frontmatter keys)
+  - `tests/vault/Welcome.md` is the first note to open in the sandbox vault (how to open a map, where the notes are, frontmatter keys)
   - Demo notes in `tests/vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
 - User manual images (`npm run manual:images`)
   - Runs `e2e/manualImages.e2e.ts`; writes the committed images in `docs/images/manual/`, used by `docs/user-manual.md`
@@ -120,7 +121,7 @@
   - Holds the Obsidian installer, app and chromedriver; the first E2E run downloads them (GitHub sometimes answers with 504: retry)
   - The installer is the AppImage for the host architecture, extracted; on ARM64 hosts (e.g. Apple silicon in Docker) that is the arm64 AppImage
   - Every git worktree has its own `.obsidian-cache/`: symlink it to the main checkout's to avoid a second download: `ln -s <main-checkout>/.obsidian-cache .obsidian-cache`
-- Dev vault flow
-  - `npm run dev` (watch) or `npm run dev:build` (once) always build into `dev-vault/` of the main checkout, from any worktree (`scripts/dev-paths.mjs` resolves it via the git common dir)
+- Sandbox vault flow
+  - `npm run dev` (watch) or `npm run dev:build` (once) always build into `sandbox-vault/` of the main checkout, from any worktree (`scripts/dev-paths.mjs` resolves it via the git common dir)
   - `MIND_MAPPER_PLUGIN_DIR=<vault>/.obsidian/plugins/mind-mapper` targets another vault's plugin folder; then no notes are synced
-  - After every merge run `npm run dev:build` so `dev-vault/` has the merged build
+  - After every merge run `npm run dev:build` so `sandbox-vault/` has the merged build

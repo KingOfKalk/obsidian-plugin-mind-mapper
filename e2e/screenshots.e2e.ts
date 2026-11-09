@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync } from 'node:fs';
-import { docsMappings } from '../scripts/dev-vault.mjs';
+import { docsMappings } from '../scripts/sandbox-vault.mjs';
 import { browser } from '@wdio/globals';
 import {
   openMindMap,

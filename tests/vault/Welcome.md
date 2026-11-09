@@ -46,5 +46,5 @@ mind-mapper-theme: ocean
 ## Docs
 
 - [[User manual]]: every feature, layout and theme
-- [[Developer guide]]: tests, screenshots, dev vault
+- [[Developer guide]]: tests, screenshots, sandbox vault
 - In the repository: `docs/user-manual.md`
