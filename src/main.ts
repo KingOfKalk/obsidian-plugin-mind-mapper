@@ -121,9 +121,12 @@ export default class MindMapperPlugin extends Plugin {
     const changed = (Object.keys(this.settings) as (keyof MindMapSettings)[]).filter(
       (key) => this.settings[key] !== previous[key],
     );
+    // The theme is pure CSS; the fit zoom cap is only read by the next fit.
     const themeOnly = changed.length === 1 && changed[0] === 'defaultTheme';
+    const fitCapOnly = changed.length === 1 && changed[0] === 'fitMaxZoom';
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_MIND_MAP)) {
       if (!(leaf.view instanceof MindMapView)) continue;
+      if (fitCapOnly) continue;
       if (themeOnly) leaf.view.applyTheme();
       else leaf.view.refresh();
     }

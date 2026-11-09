@@ -22,12 +22,13 @@ const THEME_LABELS: Record<MapThemeName, MessageKey> = {
 
 const REPOSITORY_URL = 'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper';
 
-/** Slider steps: every range bound and default is on the step grid, so the slider reaches it. */
+/** Slider steps (px; percent for the fit zoom): every range bound and default is on the step grid, so the slider reaches it. */
 const SLIDER_STEPS: Record<NumericSetting, number> = {
   maxNodeWidth: 10,
   maxNodeHeight: 10,
   siblingGap: 2,
   levelGap: 10,
+  fitMaxZoom: 25,
 };
 
 /**
@@ -71,6 +72,7 @@ export class MindMapSettingTab extends PluginSettingTab {
               options: Object.fromEntries(THEME_NAMES.map((name) => [name, t(THEME_LABELS[name])])),
             },
           },
+          slider('fitMaxZoom', 'fitMaxZoomName', 'fitMaxZoomDesc', 'zoomPercent', 'percent'),
         ],
       },
       {
@@ -115,8 +117,14 @@ export class MindMapSettingTab extends PluginSettingTab {
   }
 }
 
-/** Obsidian's built-in slider: shows the value in px and a "Restore default" button. */
-function slider(key: NumericSetting, name: MessageKey, desc: MessageKey): SettingDefinition {
+/** Obsidian's built-in slider: shows the value (px by default) and a "Restore default" button. */
+function slider(
+  key: NumericSetting,
+  name: MessageKey,
+  desc: MessageKey,
+  format: MessageKey = 'pixels',
+  param: 'value' | 'percent' = 'value',
+): SettingDefinition {
   const { min, max } = SETTING_RANGES[key];
   return {
     name: t(name),
@@ -128,7 +136,7 @@ function slider(key: NumericSetting, name: MessageKey, desc: MessageKey): Settin
       max,
       step: SLIDER_STEPS[key],
       defaultValue: DEFAULT_SETTINGS[key],
-      displayFormat: (value) => t('pixels', { value }),
+      displayFormat: (value) => t(format, { [param]: value }),
     },
   };
 }

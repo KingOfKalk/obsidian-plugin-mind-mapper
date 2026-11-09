@@ -122,8 +122,9 @@ Project (root, H1)
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
 - Plugin settings tab: global defaults for layout, start collapsed and colour theme, frontmatter overrides per note
-  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
+  - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 200), shown as "200%" (German "200 %" with a no-break space)
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
 ## Colour themes (decided)
  
@@ -202,6 +203,7 @@ Project (root, H1)
   - Drag on empty canvas: pan
   - Double click on empty canvas: fit to view, also in full screen; only when both presses were clicks without dragging, so a pan never fits
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
+  - Fit zoom cap (decided): fit shows the whole map at the largest zoom that fits, at most the plugin setting "Max zoom for fit" (100 % to 400 %, steps of 25 %, default 200 %), so a small map (e.g. after Collapse all) is enlarged and a large one still shrinks; applies to every fit (open, control and command, double click, full screen, layout change); changing the setting does not re-fit open maps, the next fit uses it
   - Fit to view icon: Lucide `group` (two boxes in a frame: the whole map in view), visually distinct from full screen (`maximize-2`, diagonal arrows) and back to root (`locate`, crosshair)
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
 - Collapse / expand: toggle button on the node edge for single node

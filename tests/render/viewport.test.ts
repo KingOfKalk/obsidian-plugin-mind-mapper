@@ -42,14 +42,27 @@ test('zoomAt clamps to the zoom limits and keeps the anchor', () => {
   expect(toWorld(t, at).y).toBeCloseTo(anchor.y, 9);
 });
 
-test('fitToBounds centers and never zooms above 1', () => {
-  const t = fitToBounds({ x: 0, y: -10, width: 100, height: 20 }, { width: 800, height: 600 });
-  expect(t?.zoom).toBe(1);
+const SMALL = { x: 0, y: -10, width: 100, height: 20 };
+const SIZE = { width: 800, height: 600 };
+
+test.each([1, 2, 4])('fitToBounds zooms a small map up to the cap %s and centers it', (cap) => {
+  const t = fitToBounds(SMALL, SIZE, cap);
+  expect(t?.zoom).toBe(cap);
   expect(t && { x: 50 * t.zoom + t.x, y: 0 * t.zoom + t.y }).toEqual({ x: 400, y: 300 });
 });
 
-test('fitToBounds shrinks large maps', () => {
-  const t = fitToBounds({ x: 0, y: 0, width: 2000, height: 400 }, { width: 800, height: 600 });
+test('fitToBounds zooms to the ratio when it is below the cap', () => {
+  // width ratio 720 / 300 = 2.4, height ratio 520 / 400 = 1.3
+  const t = fitToBounds({ x: 0, y: 0, width: 300, height: 400 }, SIZE, 4);
+  expect(t?.zoom).toBeCloseTo(1.3);
+});
+
+test('fitToBounds clamps the cap to the zoom limits', () => {
+  expect(fitToBounds(SMALL, SIZE, 10)?.zoom).toBe(4);
+});
+
+test('fitToBounds shrinks large maps whatever the cap', () => {
+  const t = fitToBounds({ x: 0, y: 0, width: 2000, height: 400 }, SIZE, 2);
   expect(t?.zoom).toBeCloseTo(720 / 2000);
   expect(t && 1000 * t.zoom + t.x).toBeCloseTo(400);
 });
@@ -58,7 +71,7 @@ test.each([
   [0, 600],
   [800, 0],
 ])('fitToBounds returns null for zero size (%i x %i)', (width, height) => {
-  expect(fitToBounds({ x: 0, y: 0, width: 10, height: 10 }, { width, height })).toBeNull();
+  expect(fitToBounds({ x: 0, y: 0, width: 10, height: 10 }, { width, height }, 1)).toBeNull();
 });
 
 test('resetZoom sets zoom 1 and keeps the viewport center', () => {

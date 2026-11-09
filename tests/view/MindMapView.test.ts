@@ -166,7 +166,7 @@ function expectedFit(fixture: string, name: string, width: number, height: numbe
     levelGap: DEFAULT_LAYOUT.levelGap,
     nodeSize: estimateSize,
   });
-  return fitToBounds(layout.bounds, { width, height });
+  return fitToBounds(layout.bounds, { width, height }, DEFAULT_SETTINGS.fitMaxZoom / 100);
 }
 
 test('fit waits for a non-zero size and runs once', async () => {
@@ -213,6 +213,46 @@ test('zoom actions change the transform and the controls label', async () => {
   expect(view.getTransform().zoom).toBeCloseTo(1 / 1.2);
   view.fitToView();
   expect(view.getTransform()).toEqual(expectedFit('worked-example', 'Note', 800, 600));
+});
+
+describe('fit zoom cap', () => {
+  async function openCollapsed(fitMaxZoom: number) {
+    const ws = new FakeWorkspace();
+    const settings = { ...LTR_SETTINGS, fitMaxZoom };
+    const leaf = { app: ws.app, setViewState: vi.fn() };
+    const view = new MindMapView(leaf as unknown as WorkspaceLeaf, { settings: () => settings });
+    ws.addNote('Note.md', 'worked-example');
+    await setSize(view, 800, 600);
+    await view.setState(...state('Note.md'));
+    return { view, settings };
+  }
+
+  test('a small map after Collapse all fits up to the cap', async () => {
+    const { view } = await openCollapsed(200);
+    const before = view.getTransform().zoom;
+    view.collapseAll();
+    view.fitToView();
+    expect(view.getTransform().zoom).toBe(2);
+    expect(view.getTransform().zoom).toBeGreaterThan(before);
+    expect(resetLabel(view)).toBe('200%');
+  });
+
+  test('the cap 100% never zooms above 1', async () => {
+    const { view } = await openCollapsed(100);
+    view.collapseAll();
+    view.fitToView();
+    expect(view.getTransform().zoom).toBe(1);
+  });
+
+  test('a changed setting is used by the next fit', async () => {
+    const { view, settings } = await openCollapsed(200);
+    view.collapseAll();
+    settings.fitMaxZoom = 300;
+    view.fitToView();
+    // The collapsed map is limited by its size here (about 2.34), not by the cap.
+    expect(view.getTransform().zoom).toBeGreaterThan(2.3);
+    expect(view.getTransform().zoom).toBeLessThanOrEqual(3);
+  });
 });
 
 test('fit and zoom center use the canvas size, not the view padding box', async () => {
@@ -371,7 +411,9 @@ describe('measuring', () => {
       width: Math.max(...boxes.map((b) => b.x + b.width)) - minX,
       height: Math.max(...boxes.map((b) => b.y + b.height)) - minY,
     };
-    expect(view.getTransform()).toEqual(fitToBounds(bounds, { width: 800, height: 600 }));
+    expect(view.getTransform()).toEqual(
+      fitToBounds(bounds, { width: 800, height: 600 }, DEFAULT_SETTINGS.fitMaxZoom / 100),
+    );
     expect(view.getTransform()).not.toEqual(fittedBefore);
   });
 
@@ -541,12 +583,13 @@ describe('live update', () => {
   test('a fitted map is not re-fitted by a live update', async () => {
     const { view, ws } = await openLive();
     const before = screenOf(view, 'Live');
+    const zoom = view.getTransform().zoom;
     change(ws, 'Live.md', 'live-after');
     await vi.advanceTimersByTimeAsync(300);
     // a later re-measure must not fit either: the live update ended the automatic fit
     report(view, 'Live/#1', 300, 200);
     await vi.advanceTimersByTimeAsync(100);
-    expect(view.getTransform().zoom).toBe(1);
+    expect(view.getTransform().zoom).toBe(zoom);
     expect(screenOf(view, 'Live').x).toBeCloseTo(before.x, 1);
   });
 

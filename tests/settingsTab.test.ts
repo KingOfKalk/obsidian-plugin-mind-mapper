@@ -70,7 +70,7 @@ test('the tab shows the settings in groups under headings', async () => {
       (group.items ?? []).map((d) => d.name),
     ]),
   ).toEqual([
-    ['Map', ['Default layout', 'Start collapsed', 'Default theme']],
+    ['Map', ['Default layout', 'Start collapsed', 'Default theme', 'Max zoom for fit']],
     ['Nodes', ['Max node width', 'Max node height']],
     ['Spacing', ['Sibling gap', 'Level gap']],
     ['About', ['Version', 'Source code']],
@@ -84,6 +84,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
     ['Map', 'Default layout'],
     ['Map', 'Start collapsed'],
     ['Map', 'Default theme'],
+    ['Map', 'Max zoom for fit'],
     ['Nodes', 'Max node width'],
     ['Nodes', 'Max node height'],
     ['Spacing', 'Sibling gap'],
@@ -98,6 +99,8 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(row('Max node width').slider?.value).toBe(400);
   expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
   expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
+  expect(row('Max zoom for fit').slider?.value).toBe(200);
+  expect(row('Max zoom for fit').slider?.getValuePretty()).toBe('200%');
 });
 
 test('every setting has a name and description, so Obsidian settings search finds it', async () => {
@@ -114,6 +117,36 @@ test('every setting has a name and description, so Obsidian settings search find
   // The slider shows the value and its bounds; the description no longer repeats the range.
   expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
   expect(definition(mock, 'Level gap').desc).toBe('Space between a node and its children.');
+  expect(definition(mock, 'Max zoom for fit').desc).toBe(
+    'Fit to view enlarges small maps up to this zoom. Open maps use it the next time they fit.',
+  );
+});
+
+test('Max zoom for fit is a built-in slider from 100% to 400% in 25% steps', async () => {
+  const { mock } = await setup();
+  const def = definition(mock, 'Max zoom for fit');
+  expect(def.render).toBeUndefined();
+  expect(def.control).toMatchObject({
+    type: 'slider',
+    key: 'fitMaxZoom',
+    min: 100,
+    max: 400,
+    step: 25,
+    defaultValue: 200,
+  });
+  expect(def.control?.displayFormat?.(250)).toBe('250%');
+});
+
+test('moving the fit zoom slider saves the value but does not re-lay out open maps', async () => {
+  const { ws, plugin, mock } = await setup();
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  ws.addLeaf({ type: 'mind-mapper-view' }).view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
+  display(mock);
+  await slider('Max zoom for fit').changeHandler?.(300);
+  expect(plugin.settings.fitMaxZoom).toBe(300);
+  expect(mock.data).toMatchObject({ fitMaxZoom: 300 });
+  expect(refresh).not.toHaveBeenCalled();
 });
 
 test.each([
@@ -286,6 +319,7 @@ test('in German the groups, rows and values are German; layout values stay', asy
     ['Mindmap', 'Standard-Layout'],
     ['Mindmap', 'Eingeklappt starten'],
     ['Mindmap', 'Standard-Farbschema'],
+    ['Mindmap', 'Maximaler Zoom beim Einpassen'],
     ['Knoten', 'Maximale Knotenbreite'],
     ['Knoten', 'Maximale Knotenhöhe'],
     ['Abstände', 'Geschwisterabstand'],
@@ -300,5 +334,9 @@ test('in German the groups, rows and values are German; layout values stay', asy
     'Höherer Inhalt wird abgeschnitten und ausgeblendet.',
   );
   expect(slider('Maximale Knotenbreite').getValuePretty()).toBe('320 px');
+  expect(slider('Maximaler Zoom beim Einpassen').getValuePretty()).toBe('200\u00a0%');
+  expect(row('Maximaler Zoom beim Einpassen').desc).toBe(
+    'Einpassen vergrößert kleine Mindmaps bis zu diesem Zoom. Geöffnete Mindmaps nutzen ihn beim nächsten Einpassen.',
+  );
   expect([...(row('Standard-Layout').dropdown?.options.keys() ?? [])]).toEqual([...LAYOUT_NAMES]);
 });

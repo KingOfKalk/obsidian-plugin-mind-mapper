@@ -818,7 +818,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Fits once the view has a real size; a hidden tab keeps the fit pending for `onResize`. */
   private tryFit(): void {
     if (!this.layout) return;
-    const fitted = fitToBounds(this.layout.bounds, this.size());
+    const fitted = fitToBounds(
+      this.layout.bounds,
+      this.size(),
+      this.services.settings().fitMaxZoom / 100,
+    );
     if (!fitted) return;
     this.pendingFit = false;
     this.applyTransform(fitted);

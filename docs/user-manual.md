@@ -107,7 +107,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 |---|---|
 | Pan | mouse wheel, two-finger scroll, or drag on the empty canvas |
 | Zoom at the pointer | `Ctrl/Cmd` + wheel, or trackpad pinch (10 % to 400 %) |
-| Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button |
+| Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button; small maps are enlarged up to the setting "Max zoom for fit" (default 200 %) |
 
 The controls bar at the bottom center, left to right:
 
@@ -116,7 +116,7 @@ The controls bar at the bottom center, left to right:
 | Zoom out | zooms out one step |
 | Zoom level (e.g. `60%`) | shows the zoom; click resets it to 100 % |
 | Zoom in | zooms in one step |
-| Fit to view (two boxes in a frame) | shows the whole map (also done when the map opens, or on a double click on the empty canvas) |
+| Fit to view (two boxes in a frame) | shows the whole map, enlarging a small one up to "Max zoom for fit" (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
 | Back to root | centers the root |
 | Full screen | see [Full screen](#full-screen) |
@@ -235,22 +235,23 @@ mind-mapper-theme: ocean
 
 ## Settings
 
-Settings → Mind Mapper (in the Community plugins part of the sidebar), in four groups. All settings also show up in Obsidian's settings search. Changes apply to open maps right away.
+Settings → Mind Mapper (in the Community plugins part of the sidebar), in four groups. All settings also show up in Obsidian's settings search. Changes apply to open maps right away; "Max zoom for fit" is used the next time a map fits.
 
 | Group | Setting | Control | Range | Default | Does |
 |---|---|---|---|---|---|
 | Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
+| Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 200 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |
 | Spacing | Level gap | slider, steps of 10 px | 20–400 px | 60 px | space between a node and its children |
 
-- Each slider shows its value (e.g. "320 px") and has a "Restore default" button
+- Each slider shows its value (e.g. "320 px" or "200 %") and has a "Restore default" button
 - About group: the plugin version and a link to the source code
 
-![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and four sliders](images/manual/settings.png)
+![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and five sliders](images/manual/settings.png)
 
 ## Commands
 

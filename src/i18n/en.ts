@@ -52,6 +52,9 @@ export const en = {
   defaultThemeName: 'Default theme',
   defaultThemeDesc:
     'Colours each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
+  fitMaxZoomName: 'Max zoom for fit',
+  fitMaxZoomDesc:
+    'Fit to view enlarges small maps up to this zoom. Open maps use it the next time they fit.',
   themeNone: 'None',
   themeRainbow: 'Rainbow',
   themeOcean: 'Ocean',

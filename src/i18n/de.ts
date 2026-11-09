@@ -58,6 +58,9 @@ export const de: Messages = {
   defaultThemeName: 'Standard-Farbschema',
   defaultThemeDesc:
     'Färbt jeden Hauptast und alles darunter in einer eigenen Farbe, für Notizen ohne mind-mapper-theme im Frontmatter.',
+  fitMaxZoomName: 'Maximaler Zoom beim Einpassen',
+  fitMaxZoomDesc:
+    'Einpassen vergrößert kleine Mindmaps bis zu diesem Zoom. Geöffnete Mindmaps nutzen ihn beim nächsten Einpassen.',
   themeNone: 'Keins',
   themeRainbow: 'Regenbogen',
   themeOcean: 'Ozean',

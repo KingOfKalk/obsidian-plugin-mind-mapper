@@ -9,6 +9,7 @@ test('defaults match the spec', () => {
     maxNodeHeight: 240,
     siblingGap: 12,
     levelGap: 60,
+    fitMaxZoom: 200,
   });
 });
 
@@ -29,6 +30,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
       maxNodeHeight: 5,
       siblingGap: 'wide',
       levelGap: 1000,
+      fitMaxZoom: 900,
       extra: true,
     }),
   ).toEqual({
@@ -39,6 +41,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
     maxNodeHeight: 120,
     siblingGap: 12,
     levelGap: 400,
+    fitMaxZoom: 400,
   });
 });
 
@@ -52,6 +55,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
       maxNodeHeight: 300,
       siblingGap: 0,
       levelGap: 20,
+      fitMaxZoom: 150,
     }),
   ).toEqual({
     defaultLayout: 'top-to-bottom',
@@ -61,6 +65,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
     maxNodeHeight: 300,
     siblingGap: 0,
     levelGap: 20,
+    fitMaxZoom: 150,
   });
 });
 
@@ -85,3 +90,17 @@ test.each(['Rainbow', '', 3, null, ['ocean']])(
     expect(sanitizeSettings({ defaultTheme: value }).defaultTheme).toBe('rainbow');
   },
 );
+
+test.each([
+  [50, 100],
+  [100, 100],
+  [225, 225],
+  [233.4, 233],
+  ['300', 300],
+  [400, 400],
+  [401, 400],
+  ['wide', 200],
+  [NaN, 200],
+])('fitMaxZoom %j becomes %j', (value, expected) => {
+  expect(sanitizeSettings({ fitMaxZoom: value }).fitMaxZoom).toBe(expected);
+});

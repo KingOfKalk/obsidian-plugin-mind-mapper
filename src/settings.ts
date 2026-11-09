@@ -11,6 +11,8 @@ export interface MindMapSettings {
   maxNodeHeight: number;
   siblingGap: number;
   levelGap: number;
+  /** Upper zoom limit of "Fit to view" in percent: small maps are enlarged up to it. */
+  fitMaxZoom: number;
 }
 
 export const DEFAULT_SETTINGS: MindMapSettings = {
@@ -21,16 +23,19 @@ export const DEFAULT_SETTINGS: MindMapSettings = {
   maxNodeHeight: 240,
   siblingGap: 12,
   levelGap: 60,
+  fitMaxZoom: 200,
 };
 
-export type NumericSetting = 'maxNodeWidth' | 'maxNodeHeight' | 'siblingGap' | 'levelGap';
+export type NumericSetting =
+  'maxNodeWidth' | 'maxNodeHeight' | 'siblingGap' | 'levelGap' | 'fitMaxZoom';
 
-/** Allowed ranges in px; input outside is clamped. */
+/** Allowed ranges (px; percent for `fitMaxZoom`); input outside is clamped. */
 export const SETTING_RANGES: Record<NumericSetting, { min: number; max: number }> = {
   maxNodeWidth: { min: 160, max: 800 },
   maxNodeHeight: { min: 120, max: 800 },
   siblingGap: { min: 0, max: 200 },
   levelGap: { min: 20, max: 400 },
+  fitMaxZoom: { min: 100, max: 400 },
 };
 
 /** Settings from `data.json` (any shape, e.g. older or hand-edited): unknown keys dropped, values checked. */
@@ -52,6 +57,7 @@ export function sanitizeSettings(raw: unknown): MindMapSettings {
     maxNodeHeight: numberSetting(data.maxNodeHeight, 'maxNodeHeight'),
     siblingGap: numberSetting(data.siblingGap, 'siblingGap'),
     levelGap: numberSetting(data.levelGap, 'levelGap'),
+    fitMaxZoom: numberSetting(data.fitMaxZoom, 'fitMaxZoom'),
   };
 }
 

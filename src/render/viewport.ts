@@ -31,14 +31,14 @@ export function zoomAt(t: Transform, factor: number, at: Point): Transform {
   return { x: at.x - (at.x - t.x) * ratio, y: at.y - (at.y - t.y) * ratio, zoom };
 }
 
-/** `null` while the viewport has no size (hidden tab); never zooms above 1. */
-export function fitToBounds(bounds: Rect, size: Size): Transform | null {
+/** `null` while the viewport has no size (hidden tab); never zooms above `maxZoom`. */
+export function fitToBounds(bounds: Rect, size: Size, maxZoom: number): Transform | null {
   if (size.width <= 0 || size.height <= 0) return null;
   const zoom = clampZoom(
     Math.min(
       (size.width - 2 * FIT_PADDING) / bounds.width,
       (size.height - 2 * FIT_PADDING) / bounds.height,
-      1,
+      maxZoom,
     ),
   );
   return {
