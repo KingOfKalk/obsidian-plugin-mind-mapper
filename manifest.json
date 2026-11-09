@@ -1,7 +1,7 @@
 {
   "id": "mind-mapper",
   "name": "Mind Mapper",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "minAppVersion": "1.15.0",
   "description": "Show any Markdown note as a live mind map: headings, lists and blocks become nodes, rendered like reading view.",
   "author": "KingOfKalk",

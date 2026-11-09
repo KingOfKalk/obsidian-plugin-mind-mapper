@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.3.0...1.3.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* fit the map to view after drilling out ([#28](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/28)) ([63d8ab1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/63d8ab15cc2a9643625c73ab04a687acc5f10684))
+
 ## [1.3.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.2.0...1.3.0) (2026-11-09)
 
 
