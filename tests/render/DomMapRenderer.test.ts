@@ -1,4 +1,4 @@
-import type { MapLayout } from '../../src/layout/types';
+import type { MapLayout, PositionedNode } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
 import { DomMapRenderer, RENDER_BUDGET } from '../../src/render/DomMapRenderer';
 import { useGerman } from '../helpers';
@@ -16,6 +16,7 @@ const layout: MapLayout = {
       width: 200,
       height: 36,
       childSide: 'right',
+      align: 'left',
       depth: 0,
       branch: -1,
     },
@@ -26,6 +27,7 @@ const layout: MapLayout = {
       width: 200,
       height: 36,
       childSide: 'right',
+      align: 'left',
       depth: 1,
       branch: 0,
     },
@@ -36,6 +38,7 @@ const layout: MapLayout = {
       width: 200,
       height: 36,
       childSide: 'right',
+      align: 'left',
       depth: 1,
       branch: 1,
     },
@@ -101,6 +104,7 @@ test('long labels keep fixed size; node elements have no title tooltip', () => {
         width: 200,
         height: 36,
         childSide: 'right',
+        align: 'left',
         depth: 1,
         branch: 0,
       },
@@ -139,6 +143,7 @@ function withMarkdown(id: string, markdown: string): MapLayout {
         width: 200,
         height: 36,
         childSide: 'right',
+        align: 'left',
         depth: 1,
         branch: 0,
       },
@@ -167,6 +172,7 @@ test('same markdown keeps the element and does not re-render; position updates',
         width: 120,
         height: 40,
         childSide: 'right',
+        align: 'left',
         depth: 1,
         branch: 0,
       },
@@ -354,6 +360,7 @@ test('a node whose id shifts keeps its rendered content element (render hook cal
     width: 200,
     height: 36,
     childSide: 'right' as const,
+    align: 'left' as const,
     depth: 1,
     branch: 0,
   });
@@ -427,6 +434,7 @@ describe('culling', () => {
         width: 100,
         height: 20,
         childSide: 'right',
+        align: 'left',
         depth: i === 0 ? 0 : 1,
         branch: i === 0 ? -1 : i - 1,
       });
@@ -616,6 +624,7 @@ function chain(depth: number): MapLayout {
     width: 200,
     height: 36,
     childSide: 'right',
+    align: 'left',
     depth: d,
     branch: d === 0 ? -1 : 0,
   }));
@@ -658,6 +667,7 @@ function star(count: number): MapLayout {
         width: 200,
         height: 36,
         childSide: 'right',
+        align: 'left',
         depth,
         branch: i,
       });
@@ -771,6 +781,7 @@ test('block nodes (code, tables, callouts, …) and image embeds are marked is-b
         width: 200,
         height: 36,
         childSide: 'right' as const,
+        align: 'left' as const,
         depth: 3,
         branch: i,
       })),
@@ -798,6 +809,52 @@ test('block nodes (code, tables, callouts, …) and image embeds are marked is-b
     ]),
   );
   expect(['code', 'image', 'text', 'item'].map(isBlock)).toEqual([true, false, false, true]);
+});
+
+/** The `is-align-*` classes of the node with this ID. */
+function alignOf(parent: HTMLElement, id: string): string[] {
+  const el = parent.querySelector(`.mind-mapper-node[data-node-id="${id}"]`);
+  return [...(el?.classList ?? [])].filter((c) => c.startsWith('is-align-'));
+}
+
+test('nodes carry the alignment of the layout (is-align-*), updated on reused elements', () => {
+  const { parent, renderer } = setup();
+  const aligned = (aligns: Record<string, PositionedNode['align']>): MapLayout => ({
+    ...layout,
+    nodes: layout.nodes.map((p) => ({ ...p, align: aligns[p.node.id] ?? 'left' })),
+  });
+  renderer.setLayout(aligned({ R: 'center', 'R/A': 'left', 'R/B': 'right' }));
+  const rootEl = parent.querySelector('[data-node-id="R"]');
+  expect(['R', 'R/A', 'R/B'].map((id) => alignOf(parent, id))).toEqual([
+    ['is-align-center'],
+    ['is-align-left'],
+    ['is-align-right'],
+  ]);
+  // a layout switch keeps the node elements and changes only the alignment
+  renderer.setLayout(aligned({ R: 'right', 'R/A': 'center', 'R/B': 'left' }));
+  expect(parent.querySelector('[data-node-id="R"]')).toBe(rootEl);
+  expect(['R', 'R/A', 'R/B'].map((id) => alignOf(parent, id))).toEqual([
+    ['is-align-right'],
+    ['is-align-center'],
+    ['is-align-left'],
+  ]);
+});
+
+test('nodes created later by culling get their alignment', () => {
+  const parent = document.createElement('div');
+  const renderer = new DomMapRenderer(parent, undefined, { culling: true });
+  const canvas = renderer.canvasEl;
+  Object.defineProperty(canvas, 'clientWidth', { value: 400 });
+  Object.defineProperty(canvas, 'clientHeight', { value: 100 });
+  const map = star(9);
+  renderer.setLayout({
+    ...map,
+    nodes: map.nodes.map((p) => (p.node.id === 'b8/c' ? { ...p, align: 'right' } : p)),
+  });
+  expect(parent.querySelector('[data-node-id="b8/c"]')).toBeNull();
+  renderer.setTransform({ x: -2 * 260, y: -8 * 60, zoom: 1 });
+  renderer.updateVisible();
+  expect(alignOf(parent, 'b8/c')).toEqual(['is-align-right']);
 });
 
 test('the canvas has a theme class: none by default, setTheme switches it live', () => {

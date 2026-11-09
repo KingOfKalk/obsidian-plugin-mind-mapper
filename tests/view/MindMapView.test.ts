@@ -1067,6 +1067,55 @@ describe('layouts, frontmatter and settings', () => {
     }
   });
 
+  test('node text is aligned towards the parent; the root centred, or towards its branches', async () => {
+    const settings = { ...DEFAULT_SETTINGS };
+    const { view, ws } = await openWith('worked-example', { settings: () => settings });
+    const align = (id: string) => {
+      const el = view.contentEl.querySelector(`.mind-mapper-node[data-node-id="${id}"]`);
+      return [...(el?.classList ?? [])].filter((c) => c.startsWith('is-align-')).join(' ');
+    };
+    const aligns = () =>
+      ['Project', 'Project/Tasks', 'Project/Tasks/#1', 'Project/Notes'].map(align);
+    // balanced: Tasks on the right, Notes on the left
+    expect(aligns()).toEqual([
+      'is-align-center',
+      'is-align-left',
+      'is-align-left',
+      'is-align-right',
+    ]);
+    // the control-bar switcher
+    view.chooseLayout('left-to-right');
+    await vi.advanceTimersByTimeAsync(20);
+    expect(aligns()).toEqual(['is-align-right', 'is-align-left', 'is-align-left', 'is-align-left']);
+    view.chooseLayout('right-to-left');
+    await vi.advanceTimersByTimeAsync(20);
+    expect(aligns()).toEqual([
+      'is-align-left',
+      'is-align-right',
+      'is-align-right',
+      'is-align-right',
+    ]);
+    // the setting
+    view.chooseLayout(null);
+    settings.defaultLayout = 'bottom-to-top';
+    view.refresh();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(aligns()).toEqual([
+      'is-align-center',
+      'is-align-center',
+      'is-align-center',
+      'is-align-center',
+    ]);
+    // the frontmatter (top-to-bottom) after a live edit
+    change(ws, 'Note.md', 'fm-layout');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(['Root', 'Root/A', 'Root/A/#1'].map(align)).toEqual([
+      'is-align-center',
+      'is-align-center',
+      'is-align-center',
+    ]);
+  });
+
   test('mind-mapper-title replaces the root label, the root id stays', async () => {
     const { view } = await openWith('fm-layout', {});
     expect(contentOf(view, 'Root').textContent).toBe('Custom title');

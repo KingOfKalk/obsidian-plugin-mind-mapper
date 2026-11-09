@@ -144,6 +144,23 @@
   object-fit: contain;
 }
 
+/* Text nodes (headings, paragraphs, list items) sit flush towards their parent (`is-align-*`, from
+   the layout); blocks keep their own alignment. The margin moves a content box narrower than its
+   node (e.g. before measuring) to the same side; sizes do not change. */
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-left .mind-mapper-node-content {
+  text-align: left;
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-right .mind-mapper-node-content {
+  margin-inline-start: auto;
+  text-align: right;
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-center .mind-mapper-node-content {
+  margin-inline: auto;
+  text-align: center;
+}
+
 /* Fade the overflowing edge (the content box is capped at the max size, see above). */
 .mind-mapper-node.is-clipped-y .mind-mapper-node-content {
   -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5em), transparent);

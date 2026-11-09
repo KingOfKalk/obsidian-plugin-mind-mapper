@@ -2,7 +2,7 @@ import { setIcon } from 'obsidian';
 import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
-import type { MapLayout, PositionedNode, Side } from '../layout/types';
+import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
 import { detailLevel, SpatialIndex, worldViewport } from './culling';
@@ -40,6 +40,7 @@ export interface CollapseInfo {
 }
 
 const SIDES: readonly Side[] = ['right', 'left', 'bottom', 'top'];
+const ALIGNS: readonly TextAlign[] = ['left', 'right', 'center'];
 
 const NO_COLLAPSE: CollapseInfo = { hidden: new Map(), hasChildren: () => false };
 
@@ -412,7 +413,7 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   private placeNode(
-    { node, x, y, width, height, depth, branch }: PositionedNode,
+    { node, x, y, width, height, depth, branch, align }: PositionedNode,
     pool: Map<string, HTMLElement[]>,
   ): void {
     let dom = this.nodes.get(node.id);
@@ -436,6 +437,8 @@ export class DomMapRenderer implements MapRenderer {
     el.toggleClass('is-root', node.kind === 'root');
     // Colour themes: blocks keep a border at every level instead of becoming plain text.
     el.toggleClass('is-block', node.kind === 'block' || isImageOnly(node.markdown));
+    // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
+    for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);
     setAttr(el, 'data-level', levelAttr(depth));
     this.setBranch(el, branch);
     el.style.left = `${x}px`;
