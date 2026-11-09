@@ -198,7 +198,7 @@ function expectNoOverlap(layout: MapLayout, label: string): void {
   }
 }
 
-const fixtureNames = readdirSync(join(process.cwd(), 'test-vault', 'fixtures'))
+const fixtureNames = readdirSync(join(process.cwd(), 'tests', 'vault', 'fixtures'))
   .filter((file) => file.endsWith('.cache.json'))
   .map((file) => file.replace(/\.cache\.json$/, ''));
 

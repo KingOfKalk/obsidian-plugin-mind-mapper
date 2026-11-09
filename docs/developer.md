@@ -5,25 +5,25 @@
 - Requirements: Node.js and npm (the devcontainer has both)
 - `npm install`
 - Vaults
-  - `test-vault/`: versioned test notes (source, tracked in git)
+  - `tests/vault/`: versioned test notes (source, tracked in git)
   - `dev-vault/` in the main checkout: the one vault you open in Obsidian, ignored by git, shared by all worktrees
 - `npm run dev` (from the main checkout or any worktree): watch build into `dev-vault/.obsidian/plugins/mind-mapper/` (also copies `manifest.json`, `styles.css`, writes `.hotreload`)
-  - On start it copies the current checkout's `test-vault/` notes into `dev-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `test-vault/`, not in `dev-vault/`), recordings (`*.cache.json`) are never overwritten
+  - On start it copies the current checkout's `tests/vault/` notes into `dev-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `tests/vault/`, not in `dev-vault/`), recordings (`*.cache.json`) are never overwritten
   - It also copies the docs so you can read them (and open them as mind maps) in Obsidian: `docs/user-manual.md` becomes `Docs/User manual.md`, `docs/developer.md` becomes `Docs/Developer guide.md`, and `docs/images/` becomes `Docs/images/` (so the manual's relative image links work). Other docs (`mvp.md`, `going-public.md`, `superpowers/`) are not copied. Edit the docs in `docs/`, not in `dev-vault/`; links that leave `docs/` (e.g. `../README.md`) do not resolve inside the vault
-  - Pruning: test notes and docs share one sync (`syncFiles` in `scripts/dev-vault.mjs`, fed by `notesMappings` and `docsMappings`) and one manifest. Each sync writes the copied paths to `dev-vault/.mind-mapper-sync.json` (a dot file in the vault root, which Obsidian does not index). The next sync deletes the files listed there that `test-vault/` or the docs no longer have, then the folders they leave empty. Notes you create in `dev-vault/` are in no manifest and are never deleted; `.obsidian/` and recordings are never touched; without a manifest (first run) nothing is deleted
+  - Pruning: test notes and docs share one sync (`syncFiles` in `scripts/dev-vault.mjs`, fed by `notesMappings` and `docsMappings`) and one manifest. Each sync writes the copied paths to `dev-vault/.mind-mapper-sync.json` (a dot file in the vault root, which Obsidian does not index). The next sync deletes the files listed there that `tests/vault/` or the docs no longer have, then the folders they leave empty. Notes you create in `dev-vault/` are in no manifest and are never deleted; `.obsidian/` and recordings are never touched; without a manifest (first run) nothing is deleted
   - `MIND_MAPPER_PLUGIN_DIR=<vault>/.obsidian/plugins/mind-mapper npm run dev` targets another vault instead (plugin files only, no notes copied)
 - `npm run dev:build`: the same dev build and note sync once, then exits (no watch)
 - One-time setup on the host: open `dev-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
 - User manual images: `npm run manual:images` (headless, writes `docs/images/manual/`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
-- Parser fixtures: notes in `test-vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
+- Parser fixtures: notes in `tests/vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
   - Manual: in Obsidian run "Record parser fixtures (dev)", then `npm run fixtures:pull`
 - `npm run check`: format check, lint, typecheck, unit tests, production build
 - `npm test` / `npm run test:watch`: unit tests (Vitest, `obsidian` is mocked in `tests/mocks/obsidian.ts`)
 - `npm run test:e2e`: end-to-end tests in real, headless Obsidian (`e2e/specs/`)
-  - Uses [wdio-obsidian-service](https://github.com/jesse-r-s-hines/wdio-obsidian-service), which downloads Obsidian into `.obsidian-cache/` and opens a temp copy of `test-vault/`
+  - Uses [wdio-obsidian-service](https://github.com/jesse-r-s-hines/wdio-obsidian-service), which downloads Obsidian into `.obsidian-cache/` and opens a temp copy of `tests/vault/`
   - Needs Xvfb and Electron libraries: `scripts/install-e2e-deps.sh` (run automatically when the devcontainer is created)
 - `npm run perf:e2e`: performance spike on generated 1,000 and 5,000 node notes in headless Obsidian
   - Prints time to first layout, time until the layout settles, re-layout count and the longest frame while panning; writes `e2e/perf/last-run.json`
@@ -43,7 +43,7 @@
   - `obsidian` is aliased to the hand-written mock `tests/mocks/obsidian.ts`; `tests/setup.ts` polyfills Obsidian's DOM helpers (`createEl` etc.)
   - Cover parser, layout (pure), renderer and controls, commands, settings, manifest, and the dev scripts (`tests/scripts/`)
 - Recorded parser fixtures
-  - Notes in `test-vault/fixtures/*.md`; next to each one `*.cache.json` = `{ obsidianVersion, text, cache }`, the metadata cache as real Obsidian produced it
+  - Notes in `tests/vault/fixtures/*.md`; next to each one `*.cache.json` = `{ obsidianVersion, text, cache }`, the metadata cache as real Obsidian produced it
   - `tests/parser/fixtures.test.ts` builds trees from these without Obsidian
   - Re-record (after adding or changing a fixture note, or when Obsidian changes its cache): `npm run fixtures:record` (headless, all fixtures), then commit the `*.cache.json` files
   - Manual alternative: dev command "Record parser fixtures (dev)" in Obsidian, then `npm run fixtures:pull`
@@ -51,7 +51,7 @@
   - `tests/view/` (`MindMapView`, collapse state, frontmatter, full screen, link targets) run in the same Vitest setup with the mock; part of `npm test`
 - E2E (`npm run test:e2e`)
   - Real headless Obsidian via wdio-obsidian-service, WebdriverIO + Mocha; specs in `e2e/specs/*.e2e.ts`
-  - Opens a temp copy of `test-vault/` with this checkout as plugin (`plugins: ['.']`); builds first (`npm run build`)
+  - Opens a temp copy of `tests/vault/` with this checkout as plugin (`plugins: ['.']`); builds first (`npm run build`)
   - Not part of `npm run check`: run it before every merge
 - Performance benchmark (`npm run perf:e2e`)
   - Generated notes with 1,000 and 5,000 nodes (`e2e/perf/generateNote.ts`)
@@ -91,14 +91,14 @@
     - `--text-error`: raspberry; render-error node border
   - Anything that Obsidian styles itself (checkboxes, links, table borders, list markers, code background) also takes the loud colours; ignore those
 - README images (`npm run readme:images`)
-  - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `test-vault/demo/Feature tour.md`)
+  - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `tests/vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes
-  - `test-vault/Welcome.md` is the first note to open in the dev vault (how to open a map, where the notes are, frontmatter keys)
-  - Demo notes in `test-vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
+  - `tests/vault/Welcome.md` is the first note to open in the dev vault (how to open a map, where the notes are, frontmatter keys)
+  - Demo notes in `tests/vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
 - User manual images (`npm run manual:images`)
   - Runs `e2e/manualImages.e2e.ts`; writes the committed images in `docs/images/manual/`, used by `docs/user-manual.md`
   - One topic per image, cropped by the window size (Electron `setContentSize`), not by image editing; sidebars closed, window buttons and status bar hidden
-  - Uses `test-vault/demo/` notes plus small notes written by the spec into the temporary vault (`Trip to Lisbon.md`, `Reading notes.md`, `Team offsite.md`)
+  - Uses `tests/vault/demo/` notes plus small notes written by the spec into the temporary vault (`Trip to Lisbon.md`, `Reading notes.md`, `Team offsite.md`)
   - Not part of `test:e2e` (`wdio.conf.mts` only runs `e2e/specs/`); re-run, look at every image and commit when the look changes
 
 ## Devcontainer and headless Obsidian
@@ -115,7 +115,7 @@
 - `wdio.conf.mts`
   - Obsidian 1.15.0 is pinned (the minimum supported version): `browserVersion` and `installerVersion`
   - `OBSIDIAN_VERSION` and `OBSIDIAN_INSTALLER` override them, e.g. to run the suite against another version
-  - Vault `test-vault`, plugin `.` (the checkout), `maxInstances: 1`, Mocha timeout 120 s
+  - Vault `tests/vault`, plugin `.` (the checkout), `maxInstances: 1`, Mocha timeout 120 s
 - Obsidian download cache `.obsidian-cache/` (git-ignored)
   - Holds the Obsidian installer, app and chromedriver; the first E2E run downloads them (GitHub sometimes answers with 504: retry)
   - The installer is the AppImage for the host architecture, extracted; on ARM64 hosts (e.g. Apple silicon in Docker) that is the arm64 AppImage

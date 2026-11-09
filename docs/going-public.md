@@ -52,5 +52,5 @@ Checklist for the day the repository and the plugin go public. Collected while t
 
 - [ ] README hero image and user manual images are current (`npm run readme:images`, `npm run manual:images`)
 - [ ] Changelog or release notes for the first release
-- [ ] Check `test-vault/` for anything personal before it becomes public (e.g. the `Notizen` folder)
+- [ ] Check `tests/vault/` for anything personal before it becomes public (e.g. the `Notizen` folder)
 - [ ] Secrets check over the whole history (no tokens, no `.env`) before the first push

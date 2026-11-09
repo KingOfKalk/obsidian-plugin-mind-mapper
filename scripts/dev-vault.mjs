@@ -199,6 +199,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (process.argv[2] !== 'pull-fixtures' || !vaultDir) {
     throw new Error('usage: node scripts/dev-vault.mjs pull-fixtures (default dev vault only)');
   }
-  const names = pullFixtures(vaultDir, 'test-vault');
+  const names = pullFixtures(vaultDir, 'tests/vault');
   console.log(`Pulled ${names.length} fixtures from ${vaultDir}`);
 }

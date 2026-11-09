@@ -6,7 +6,7 @@ export default defineConfig([
     'node_modules',
     'main.js',
     'release',
-    'test-vault',
+    'tests/vault',
     'dev-vault',
     '.superpowers',
     '.worktrees',

@@ -54,5 +54,5 @@
 - `src/dev`: dev-only code (fixture recording)
 - `tests/`: unit and view integration tests; hand-written `obsidian` mock in `tests/mocks/obsidian.ts`
 - `e2e/`: E2E specs (`e2e/specs/`), screenshot, README image, fixture recording and perf runs
-- `test-vault/`: versioned test notes, parser fixtures in `test-vault/fixtures/`
+- `tests/vault/`: versioned test notes, parser fixtures in `tests/vault/fixtures/`
 - `dev-vault/`: git-ignored vault in the main checkout, shared by all worktrees

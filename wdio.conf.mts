@@ -15,7 +15,7 @@ export const config: WebdriverIO.Config = {
       'wdio:obsidianOptions': {
         installerVersion: process.env.OBSIDIAN_INSTALLER ?? '1.15.0',
         plugins: ['.'],
-        vault: 'test-vault',
+        vault: 'tests/vault',
       },
     },
   ],

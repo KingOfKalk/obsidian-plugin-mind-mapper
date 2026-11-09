@@ -3,8 +3,8 @@ release/
 package-lock.json
 .superpowers/
 .worktrees/
-test-vault/.obsidian/
+tests/vault/.obsidian/
 *.md
 dev-vault/
-test-vault/fixtures/*.cache.json
+tests/vault/fixtures/*.cache.json
 .obsidian-cache/

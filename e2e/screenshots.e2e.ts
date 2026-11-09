@@ -165,7 +165,7 @@ describe('screenshots', function () {
   });
 
   it('start collapsed', async function () {
-    const text = readFileSync('test-vault/fixtures/worked-example.md', 'utf8');
+    const text = readFileSync('tests/vault/fixtures/worked-example.md', 'utf8');
     await writeNote('start-collapsed.md', `---\nmind-mapper-collapsed: true\n---\n${text}`);
     await openMindMap('start-collapsed.md');
     await settle();

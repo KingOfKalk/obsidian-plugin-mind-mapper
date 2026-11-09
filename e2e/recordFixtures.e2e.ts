@@ -5,7 +5,7 @@ import { waitForCache } from './helpers';
 
 /**
  * Records parser fixtures from real Obsidian: for every note directly in `fixtures/`, writes
- * `test-vault/fixtures/<name>.cache.json` = { obsidianVersion, text, cache } (same format as the
+ * `tests/vault/fixtures/<name>.cache.json` = { obsidianVersion, text, cache } (same format as the
  * dev command "Record parser fixtures"). Run with `npm run fixtures:record`.
  */
 describe('record parser fixtures', function () {
@@ -34,7 +34,7 @@ describe('record parser fixtures', function () {
     }, paths);
 
     for (const { name, json } of fixtures) {
-      writeFileSync(join('test-vault', 'fixtures', `${name}.cache.json`), `${json}\n`);
+      writeFileSync(join('tests', 'vault', 'fixtures', `${name}.cache.json`), `${json}\n`);
     }
     console.log(`Recorded ${fixtures.length} parser fixtures`);
   });

@@ -12,7 +12,7 @@ const devPluginDir = dev?.pluginDir ?? '';
 
 if (dev?.vaultDir) {
   // One sync (and one manifest) for the test notes and the docs, so pruning covers both.
-  syncFiles(dev.vaultDir, [...notesMappings('test-vault'), ...docsMappings('docs')]);
+  syncFiles(dev.vaultDir, [...notesMappings('tests/vault'), ...docsMappings('docs')]);
   enablePlugin(dev.vaultDir, 'mind-mapper');
   console.log(`Dev vault: ${dev.vaultDir}`);
 }

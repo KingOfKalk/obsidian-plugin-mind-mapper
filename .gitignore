@@ -1,7 +1,7 @@
 node_modules/
 main.js
 release/
-test-vault/.obsidian/
+tests/vault/.obsidian/
 *.log
 dev-vault/
 .obsidian-cache/
