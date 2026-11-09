@@ -359,6 +359,38 @@ describe('screenshots', function () {
     await withLoudPalette(() => saveControlsShots(`${dir}/loud-controls`));
   });
 
+  // Issue #21: a clicked link line, its ends ringed (light, dark and loud palette).
+  for (const [mode, loud] of [
+    ['light', false],
+    ['dark', false],
+    ['light', true],
+  ] as const) {
+    it(`link highlight ${loud ? 'loud' : mode}`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('fixtures/crosslinks.md');
+      await settle();
+      await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+      await browser.execute(() => {
+        const hit = document.querySelector(
+          '.mind-mapper-crosslink-hit[data-from-id="Links/Gamma/#1"][data-to-id="Links/Beta/Inner"]',
+        );
+        const canvas = document.querySelector('.mind-mapper-canvas');
+        const init = { bubbles: true, button: 0, pointerId: 1, clientX: 1, clientY: 1 };
+        hit?.dispatchEvent(new PointerEvent('pointerdown', { ...init, buttons: 1 }));
+        canvas?.dispatchEvent(new PointerEvent('pointerup', { ...init, buttons: 0 }));
+      });
+      const shoot = async () => {
+        await browser.pause(300);
+        await browser.saveScreenshot(
+          `${dir}/${loud ? 'loud-crosslinks-highlight' : `crosslinks-highlight-${mode}`}.png`,
+        );
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+      await browser.keys('Escape');
+    });
+  }
+
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
   });

@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { leafSummary, openMindMap, openNote, settle } from '../helpers';
+import { leafSummary, mouseOnNode, openMindMap, openNote, settle } from '../helpers';
 
 const CANVAS = '.mind-mapper-canvas';
 
@@ -22,6 +22,126 @@ describe('cross-links', function () {
     expect(await crossLinkCount()).toBe(3);
     await browser.executeObsidianCommand('mind-mapper:expand-all');
     expect(await crossLinkCount()).toBe(6);
+  });
+});
+
+/**
+ * A viewport point on the link line from `fromId` to `toId` where its hit path is the topmost
+ * element (not covered by a node, a toggle or another line).
+ */
+async function linkLinePoint(fromId: string, toId: string): Promise<{ x: number; y: number }> {
+  const point = await browser.execute(
+    (from, to) => {
+      const hit = document.querySelector<SVGPathElement>(
+        `.mind-mapper-crosslink-hit[data-from-id="${from}"][data-to-id="${to}"]`,
+      );
+      const matrix = hit?.getScreenCTM();
+      if (!hit || !matrix) return null;
+      const length = hit.getTotalLength();
+      for (let f = 0.5; f > 0.05; f -= 0.05) {
+        for (const at of [f, 1 - f]) {
+          const p = new DOMPoint(
+            hit.getPointAtLength(length * at).x,
+            hit.getPointAtLength(length * at).y,
+          ).matrixTransform(matrix);
+          const x = Math.round(p.x);
+          const y = Math.round(p.y);
+          if (document.elementFromPoint(x, y) === hit) return { x, y };
+        }
+      }
+      return null;
+    },
+    fromId,
+    toId,
+  );
+  if (!point) throw new Error(`no free point on the link line ${fromId} -> ${toId}`);
+  return point;
+}
+
+function linkEnds(): Promise<string[]> {
+  return browser.execute(() =>
+    Array.from(document.querySelectorAll<HTMLElement>('.mind-mapper-node.is-link-end'))
+      .map((el) => el.dataset.nodeId ?? '')
+      .sort(),
+  );
+}
+
+function highlightedLines(): Promise<number> {
+  return browser.execute(
+    () => document.querySelectorAll('path.mind-mapper-crosslink.is-highlighted').length,
+  );
+}
+
+describe('clicking a link line', function () {
+  it('rings both end nodes in the accent colour; a node selection highlights no links', async function () {
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    const { x, y } = await linkLinePoint('Links/Gamma/#1', 'Links/Beta/Inner');
+    // hover: pointer cursor and a slightly thicker line
+    await browser.action('pointer').move({ x, y, origin: 'viewport' }).perform();
+    const hover = await browser.execute(() => {
+      const hit = document.querySelector(
+        '.mind-mapper-crosslink-hit[data-from-id="Links/Gamma/#1"][data-to-id="Links/Beta/Inner"]',
+      );
+      const line = hit?.previousElementSibling;
+      return {
+        cursor: hit ? getComputedStyle(hit).cursor : '',
+        width: line ? getComputedStyle(line).strokeWidth : '',
+      };
+    });
+    expect(hover).toEqual({ cursor: 'pointer', width: '2.5px' });
+    await browser.action('pointer').move({ x, y, origin: 'viewport' }).down().up().perform();
+    await browser.waitUntil(async () => (await linkEnds()).length === 2, {
+      timeout: 5000,
+      timeoutMsg: 'a click on the line did not highlight its ends',
+    });
+    expect(await linkEnds()).toEqual(['Links/Beta/Inner', 'Links/Gamma/#1']);
+    expect(await highlightedLines()).toBe(1);
+    // the same ring as a selected node, in the accent colour
+    const ring = await browser.execute(() => {
+      const el = document.querySelector('.mind-mapper-node.is-link-end');
+      const accent = getComputedStyle(document.body).getPropertyValue('--interactive-accent');
+      const probe = document.body.appendChild(document.createElement('div'));
+      probe.style.color = accent;
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return { shadow: el ? getComputedStyle(el).boxShadow : '', color };
+    });
+    expect(ring.shadow).toContain(ring.color);
+    expect(ring.shadow).toContain('2px');
+
+    await mouseOnNode('Links/Alpha', 'click');
+    await expect(browser.$('.mind-mapper-node[data-node-id="Links/Alpha"]')).toHaveElementClass(
+      'is-selected',
+    );
+    expect(await linkEnds()).toEqual([]);
+    expect(await highlightedLines()).toBe(0);
+  });
+
+  it('a double click on a line puts the cursor on the line the link is written on', async function () {
+    await openNote('fixtures/crosslinks.md');
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    // a small pan: the map is no longer fitted, the line stays in view
+    await browser.execute((canvasSelector) => {
+      document
+        .querySelector(canvasSelector)
+        ?.dispatchEvent(
+          new WheelEvent('wheel', { deltaX: 20, deltaY: 15, bubbles: true, cancelable: true }),
+        );
+    }, CANVAS);
+    const before = await worldTransform();
+    await doubleClickAt(await linkLinePoint('Links/Gamma/#1', 'Links/Beta/Inner'));
+    await browser.waitUntil(
+      () =>
+        browser.executeObsidian(({ app, obsidian }) => {
+          const view = app.workspace.getActiveViewOfType(obsidian.MarkdownView);
+          return view?.editor.getCursor().line === 14;
+        }),
+      { timeout: 10000, timeoutMsg: 'cursor is not on the line of [[#Beta#Inner]] (line 14)' },
+    );
+    // no fit: a double click on a line is not one on the empty canvas
+    expect(await worldTransform()).toBe(before);
   });
 });
 

@@ -11,16 +11,19 @@ const NO_PAN_SELECTOR = '.mind-mapper-node, .mind-mapper-controls, .mind-mapper-
 const TAP_TOLERANCE = 4;
 
 /**
- * Canvas-style input: wheel pans, Ctrl/Cmd + wheel and pinch zoom, drag on empty canvas pans.
- * `onTap`: a press and release on the empty canvas without dragging.
- * `onDoubleTap`: a double click on the empty canvas whose two presses were both taps.
+ * Canvas-style input: wheel pans, Ctrl/Cmd + wheel and pinch zoom, drag on empty canvas (or a link
+ * line) pans.
+ * `onTap`: a press and release on the empty canvas (or a link line) without dragging.
+ * `onDoubleTap`: a double click there whose two presses were both taps.
+ * Both get the element the (last) press started on: after a press the canvas captures the pointer,
+ * so the release and the click events no longer target it.
  */
 export function attachPanZoom(
   component: Component,
   canvasEl: HTMLElement,
   target: PanZoomTarget,
-  onTap?: () => void,
-  onDoubleTap?: () => void,
+  onTap?: (target: EventTarget | null) => void,
+  onDoubleTap?: (target: EventTarget | null) => void,
 ): void {
   component.registerDomEvent(
     canvasEl,
@@ -48,7 +51,9 @@ export function attachPanZoom(
   );
 
   let last: { x: number; y: number; pointerId: number } | null = null;
-  let start: { x: number; y: number; moved: boolean } | null = null;
+  let start: { x: number; y: number; moved: boolean; target: EventTarget | null } | null = null;
+  /** Where the last tap started (handed to `onDoubleTap`). */
+  let tapTarget: EventTarget | null = null;
   /** Taps in a row on the empty canvas; a drag or a press on a node or the controls resets it. */
   let taps = 0;
 
@@ -59,7 +64,7 @@ export function attachPanZoom(
       return;
     }
     last = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
-    start = { x: e.clientX, y: e.clientY, moved: false };
+    start = { x: e.clientX, y: e.clientY, moved: false, target: e.target };
     canvasEl.setPointerCapture(e.pointerId);
     canvasEl.addClass('is-panning');
   });
@@ -91,9 +96,12 @@ export function attachPanZoom(
   component.registerDomEvent(canvasEl, 'pointerup', (e) => {
     if (last?.pointerId !== e.pointerId || start === null) return end(e);
     const tap = !start.moved;
+    const target = start.target;
     taps = tap ? taps + 1 : 0;
     end(e);
-    if (tap) onTap?.();
+    if (!tap) return;
+    tapTarget = target;
+    onTap?.(target);
   });
   component.registerDomEvent(canvasEl, 'pointercancel', (e) => {
     taps = 0;
@@ -105,7 +113,7 @@ export function attachPanZoom(
   component.registerDomEvent(canvasEl, 'dblclick', (e) => {
     const double = taps >= 2 && !isNoPan(e.target);
     taps = 0;
-    if (double) onDoubleTap?.();
+    if (double) onDoubleTap?.(tapTarget);
   });
 }
 

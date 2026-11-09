@@ -1664,6 +1664,147 @@ describe('cross-links', () => {
   });
 });
 
+describe('clicking a link line', () => {
+  afterEach(() => document.body.empty());
+
+  const canvasOf = (view: MindMapView): HTMLElement => {
+    const el = view.contentEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+    if (!el) throw new Error('no canvas');
+    return el;
+  };
+
+  function hitOf(view: MindMapView, fromId: string, toId: string): HTMLElement {
+    const el = view.contentEl.querySelector<HTMLElement>(
+      `.mind-mapper-crosslink-hit[data-from-id="${fromId}"][data-to-id="${toId}"]`,
+    );
+    if (!el) throw new Error(`no link line ${fromId} -> ${toId}`);
+    return el;
+  }
+
+  function press(el: Element, type: string, x: number, y: number): void {
+    el.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        buttons: type === 'pointerup' ? 0 : 1,
+        clientX: x,
+        clientY: y,
+        pointerId: 1,
+      }),
+    );
+  }
+
+  /** A press and release without movement (the release goes to the capturing canvas). */
+  function tap(view: MindMapView, el: Element): void {
+    press(el, 'pointerdown', 5, 5);
+    press(canvasOf(view), 'pointerup', 5, 5);
+  }
+
+  function linkEnds(view: MindMapView): (string | undefined)[] {
+    return [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node.is-link-end')]
+      .map((el) => el.dataset.nodeId)
+      .sort();
+  }
+
+  function highlightedLines(view: MindMapView): number {
+    return view.contentEl.querySelectorAll('path.mind-mapper-crosslink.is-highlighted').length;
+  }
+
+  test('a tap on a line rings both end nodes and emphasises the line; it is no node selection', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    contentOf(view, 'Links/Beta').click();
+    expect(view.selectedId).toBe('Links/Beta');
+    tap(view, hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner'));
+    expect(linkEnds(view)).toEqual(['Links/Beta/Inner', 'Links/Gamma/#1']);
+    expect(highlightedLines(view)).toBe(1);
+    expect(view.selectedId).toBeNull();
+    expect(selectedIds(view)).toEqual([]);
+  });
+
+  test('a tap on the empty canvas, a node or another line ends the highlight', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    tap(view, hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner'));
+    tap(view, canvasOf(view));
+    expect(linkEnds(view)).toEqual([]);
+    expect(highlightedLines(view)).toBe(0);
+
+    tap(view, hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner'));
+    contentOf(view, 'Links/Beta').click();
+    expect(linkEnds(view)).toEqual([]);
+    expect(highlightedLines(view)).toBe(0);
+    expect(view.selectedId).toBe('Links/Beta');
+
+    tap(view, hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner'));
+    tap(view, hitOf(view, 'Links/Gamma/#2', 'Links/Gamma'));
+    expect(linkEnds(view)).toEqual(['Links/Gamma', 'Links/Gamma/#2']);
+    expect(highlightedLines(view)).toBe(1);
+  });
+
+  test('a drag that starts on a line pans and highlights nothing', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    const before = view.getTransform();
+    press(hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner'), 'pointerdown', 5, 5);
+    press(canvasOf(view), 'pointermove', 45, 25);
+    press(canvasOf(view), 'pointerup', 45, 25);
+    expect(view.getTransform()).toEqual({ ...before, x: before.x + 40, y: before.y + 20 });
+    expect(linkEnds(view)).toEqual([]);
+    expect(highlightedLines(view)).toBe(0);
+  });
+
+  test('selecting a node highlights none of its links or linked nodes', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    contentOf(view, 'Links/Alpha').click();
+    expect(selectedIds(view)).toEqual(['Links/Alpha']);
+    expect(linkEnds(view)).toEqual([]);
+    expect(highlightedLines(view)).toBe(0);
+  });
+
+  test('a line to a collapsed node rings its nearest visible ancestor', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    view.toggleCollapse('Links/Beta');
+    tap(view, hitOf(view, 'Links/Gamma/#1', 'Links/Beta'));
+    expect(linkEnds(view)).toEqual(['Links/Beta', 'Links/Gamma/#1']);
+  });
+
+  test('works in full screen', async () => {
+    const { view } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    view.toggleFullScreen();
+    tap(view, hitOf(view, 'Links/Gamma/#2', 'Links/Gamma'));
+    expect(view.isFullScreen).toBe(true);
+    expect(linkEnds(view)).toEqual(['Links/Gamma', 'Links/Gamma/#2']);
+  });
+
+  test('a double click on a line jumps to the line the link is written on and does not fit', async () => {
+    const { view, ws } = await openWith('crosslinks', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    const noteLeaf = ws.addLeaf({ type: 'markdown', state: { file: 'Note.md' } });
+    noteLeaf.view = { getViewType: () => 'empty' };
+    const openFile = vi.fn(() => Promise.resolve());
+    Object.assign(noteLeaf, { openFile });
+    view.toggleFullScreen();
+    const moved = { x: -700, y: 40, zoom: 2 };
+    view.setTransform(moved);
+    const hit = hitOf(view, 'Links/Gamma/#1', 'Links/Beta/Inner');
+    tap(view, hit);
+    tap(view, hit);
+    hit.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    // full screen exits first, which restores the transform from before it
+    expect(view.isFullScreen).toBe(false);
+    await vi.waitFor(() =>
+      expect(openFile).toHaveBeenCalledWith(expect.anything(), {
+        active: true,
+        eState: { line: 14 },
+      }),
+    );
+    view.setTransform(moved);
+    tap(view, hit);
+    tap(view, hit);
+    hit.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(view.getTransform()).toEqual(moved);
+  });
+});
+
 function escHandlers(view: MindMapView): MockScope['handlers'] {
   return ((view.scope as unknown as MockScope | null)?.handlers ?? []).filter(
     (h) => h.key === 'Escape',

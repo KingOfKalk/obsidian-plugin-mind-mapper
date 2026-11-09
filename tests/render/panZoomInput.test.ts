@@ -2,13 +2,19 @@ import { Component } from 'obsidian';
 import { attachPanZoom } from '../../src/render/panZoomInput';
 import { IDENTITY, type Transform } from '../../src/render/viewport';
 
-function setup(onTap?: () => void, onDoubleTap?: () => void) {
+function setup(
+  onTap?: (target: EventTarget | null) => void,
+  onDoubleTap?: (target: EventTarget | null) => void,
+) {
   const canvas = document.createElement('div');
   const nodeEl = canvas.appendChild(document.createElement('div'));
   nodeEl.className = 'mind-mapper-node';
   const nodeLabel = nodeEl.appendChild(document.createElement('span'));
   const controls = canvas.appendChild(document.createElement('div'));
   controls.className = 'mind-mapper-controls';
+  // A link line's hit path: not a node, so a drag on it pans.
+  const line = canvas.appendChild(document.createElement('div'));
+  line.className = 'mind-mapper-crosslink-hit';
   document.body.appendChild(canvas);
   let transform: Transform = IDENTITY;
   const target = {
@@ -19,7 +25,7 @@ function setup(onTap?: () => void, onDoubleTap?: () => void) {
   };
   const component = new Component();
   attachPanZoom(component, canvas, target, onTap, onDoubleTap);
-  return { canvas, nodeLabel, controls, target, component, get: () => transform };
+  return { canvas, nodeLabel, controls, line, target, component, get: () => transform };
 }
 
 function wheel(el: HTMLElement, init: WheelEventInit): WheelEvent {
@@ -129,6 +135,24 @@ test('onTap does not fire after a drag of 10 px, even when it ends at the start'
   pointer(canvas, 'pointermove', 110, 100);
   pointer(canvas, 'pointermove', 100, 100);
   pointer(canvas, 'pointerup', 100, 100, 0);
+  expect(onTap).not.toHaveBeenCalled();
+});
+
+test('onTap and onDoubleTap get the element the press started on (a link line)', () => {
+  const onTap = vi.fn();
+  const onDoubleTap = vi.fn();
+  const { canvas, line } = setup(onTap, onDoubleTap);
+  doubleClick(line, canvas);
+  expect(onTap).toHaveBeenCalledTimes(2);
+  expect(onTap).toHaveBeenLastCalledWith(line);
+  expect(onDoubleTap).toHaveBeenCalledWith(line);
+});
+
+test('a drag that starts on a link line pans and is no tap', () => {
+  const onTap = vi.fn();
+  const { canvas, line, get } = setup(onTap);
+  drag(line, canvas);
+  expect(get()).toEqual({ x: 30, y: 20, zoom: 1 });
   expect(onTap).not.toHaveBeenCalled();
 });
 

@@ -70,6 +70,27 @@
   opacity: 0.8;
 }
 
+/* Invisible, wide hit area along each link line: hover and click (issue #21). */
+.mind-mapper-crosslink-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.mind-mapper-crosslink:has(+ .mind-mapper-crosslink-hit:hover) {
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+/* A clicked link: thicker and solid; its end nodes get the selection ring. */
+.mind-mapper-crosslink.is-highlighted {
+  stroke-width: 3;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+
 .mind-mapper-node {
   position: absolute;
   box-sizing: border-box;
@@ -85,7 +106,8 @@
   user-select: text;
 }
 
-.mind-mapper-node.is-selected {
+.mind-mapper-node.is-selected,
+.mind-mapper-node.is-link-end {
   box-shadow: 0 0 0 2px var(--interactive-accent);
 }
 

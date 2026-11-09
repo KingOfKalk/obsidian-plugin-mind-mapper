@@ -80,7 +80,7 @@
   - Look for: clipped or overlapping nodes, wrong fades, missing content (code, Mermaid, math, tables, callouts), edges not attached to nodes, dashed link lines and dividers, layout direction and balance, controls and collapse buttons
 - Loud palette (same run, `loud-*.png`)
   - Obsidian's real colours are subtle, so a colour on the wrong element is hard to see; the spec injects `<style id="loud-palette">` (body variables, `!important`) around the loud shots and removes it afterwards; test-only, not shipped
-  - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-{rainbow,none}-branches` (9 branches with blocks at level 3), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`
+  - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-{rainbow,none}-branches` (9 branches with blocks at level 3), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`, `loud-crosslinks-highlight` (a clicked link line with both ends ringed; also `crosslinks-highlight-{light,dark}` without the loud palette)
   - Legend (variable: loud colour; used by):
     - `--color-red`: magenta; rainbow branch 1 and 8
     - `--color-orange`: lime; rainbow branch 2 and 9, forest branch 3

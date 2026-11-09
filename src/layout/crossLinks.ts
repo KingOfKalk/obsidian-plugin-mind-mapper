@@ -10,6 +10,8 @@ export interface CrossLinkInput {
 export interface CrossLink {
   fromId: string;
   toId: string;
+  /** Line the link is written on (double click on its line jumps there). */
+  line: number;
 }
 
 /** The node with the smallest line span containing `line`, or null (blank line, skipped content). */
@@ -57,6 +59,7 @@ export function crossLinks(tree: MindMapTree, inputs: CrossLinkInput[]): CrossLi
     inputs.map((input) => ({
       fromId: at(input.fromLine)?.id,
       toId: at(input.toLine)?.id,
+      line: input.fromLine,
     })),
   );
 }
@@ -79,18 +82,23 @@ export function visibleCrossLinks(
     while (current !== undefined && !visible.has(current)) current = parents.get(current);
     return current;
   };
-  return unique(links.map((link) => ({ fromId: shown(link.fromId), toId: shown(link.toId) })));
+  return unique(
+    links.map((link) => ({ fromId: shown(link.fromId), toId: shown(link.toId), line: link.line })),
+  );
 }
 
-function unique(links: { fromId: string | undefined; toId: string | undefined }[]): CrossLink[] {
+/** Duplicates (same ends) keep the first link's line. */
+function unique(
+  links: { fromId: string | undefined; toId: string | undefined; line: number }[],
+): CrossLink[] {
   const seen = new Set<string>();
   const result: CrossLink[] = [];
-  for (const { fromId, toId } of links) {
+  for (const { fromId, toId, line } of links) {
     if (fromId === undefined || toId === undefined || fromId === toId) continue;
     const key = `${fromId}\n${toId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    result.push({ fromId, toId });
+    result.push({ fromId, toId, line });
   }
   return result;
 }
