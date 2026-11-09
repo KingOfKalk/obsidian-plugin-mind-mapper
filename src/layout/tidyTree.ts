@@ -9,6 +9,7 @@ import type {
   Rect,
   Side,
   Size,
+  TextAlign,
 } from './types';
 
 export const DEFAULT_LAYOUT = { siblingGap: 12, levelGap: 60, nodeWidth: 200, nodeHeight: 36 };
@@ -46,9 +47,9 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
     case 'circle-counter-clockwise': {
       const clockwise = circle(tree.root, options);
       const raw = layout === 'circle-clockwise' ? clockwise : mirrorX(clockwise, tree.root);
-      // The root has children on both sides; it gets no collapse toggle.
+      // The root has children on both sides; it gets no collapse toggle and centred text.
       const nodes = raw.nodes.map((p) =>
-        p.node === tree.root ? { ...p, childSide: 'right' as const } : p,
+        p.node === tree.root ? { ...p, childSide: 'right' as const, align: 'center' as const } : p,
       );
       return finish({ ...raw, nodes }, 'x');
     }
@@ -122,6 +123,8 @@ function canonical(
       y: centerY - size.height / 2,
       ...size,
       childSide: 'right',
+      // Flush towards the parent; the root towards its children.
+      align: depth === 0 ? 'right' : 'left',
       depth,
       branch,
     };
@@ -174,6 +177,7 @@ function mirrorX(raw: Raw, root: MindMapNode): Raw {
       ...p,
       x: axis - p.x - p.width,
       childSide: flip(p.childSide),
+      align: flipAlign(p.align),
     })),
     edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
     dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
@@ -203,6 +207,7 @@ function swapAxes(raw: Raw): Raw {
       width: p.height,
       height: p.width,
       childSide: 'bottom',
+      align: 'center',
     })),
     edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
     dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
@@ -242,6 +247,10 @@ function flip(side: Side): Side {
     case 'bottom':
       return 'top';
   }
+}
+
+function flipAlign(align: TextAlign): TextAlign {
+  return align === 'left' ? 'right' : align === 'right' ? 'left' : align;
 }
 
 function finish(raw: Raw, axis: 'x' | 'y'): MapLayout {

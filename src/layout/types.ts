@@ -33,6 +33,9 @@ export const LAYOUT_NAMES: readonly MapLayoutName[] = [
 /** Edge of a node its children grow from. */
 export type Side = 'right' | 'left' | 'bottom' | 'top';
 
+/** Text alignment of a node: flush towards the edge its line attaches to (towards the parent). */
+export type TextAlign = 'left' | 'right' | 'center';
+
 export interface LayoutOptions {
   siblingGap: number;
   levelGap: number;
@@ -46,6 +49,11 @@ export interface PositionedNode extends Rect {
   node: MindMapNode;
   /** Edge the children grow from (collapse toggle position). */
   childSide: Side;
+  /**
+   * Text alignment: towards the parent (left on the right side, right on the left side, centred in
+   * vertical layouts); the root centred, or towards its branches in left-to-right and right-to-left.
+   */
+  align: TextAlign;
   /** Tree depth: 0 for the root, 1 for the first level (colour themes). */
   depth: number;
   /**

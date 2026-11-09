@@ -151,6 +151,57 @@ test('childSide per layout', () => {
   expect(sides('circle-counter-clockwise')).toEqual({ r: 'right', c1: 'left', c2: 'right' });
 });
 
+test('align per layout: towards the parent; the root towards its branches or centred', () => {
+  const tree = n('r', n('c1', n('c1x')), n('c2', n('c2x')));
+  const aligns = (layout: MapLayoutName) =>
+    Object.fromEntries(
+      layoutTree({ root: tree }, options(layout)).nodes.map((p) => [p.node.id, p.align]),
+    );
+  expect(aligns('left-to-right')).toEqual({
+    r: 'right',
+    c1: 'left',
+    c1x: 'left',
+    c2: 'left',
+    c2x: 'left',
+  });
+  expect(aligns('right-to-left')).toEqual({
+    r: 'left',
+    c1: 'right',
+    c1x: 'right',
+    c2: 'right',
+    c2x: 'right',
+  });
+  expect(aligns('top-to-bottom')).toEqual({
+    r: 'center',
+    c1: 'center',
+    c1x: 'center',
+    c2: 'center',
+    c2x: 'center',
+  });
+  expect(aligns('bottom-to-top')).toEqual({
+    r: 'center',
+    c1: 'center',
+    c1x: 'center',
+    c2: 'center',
+    c2x: 'center',
+  });
+  // c1 sits on the right, c2 on the left (mirrored counter-clockwise)
+  expect(aligns('circle-clockwise')).toEqual({
+    r: 'center',
+    c1: 'left',
+    c1x: 'left',
+    c2: 'right',
+    c2x: 'right',
+  });
+  expect(aligns('circle-counter-clockwise')).toEqual({
+    r: 'center',
+    c1: 'right',
+    c1x: 'right',
+    c2: 'left',
+    c2x: 'left',
+  });
+});
+
 test.each(LAYOUT_NAMES)('%s: depth is the tree depth, the root 0', (layout) => {
   const tree = n('r', n('a', n('a1', n('a1x'))), n('b'), n('c', n('c1')));
   const depths = Object.fromEntries(

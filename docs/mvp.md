@@ -179,6 +179,10 @@ Project (root, H1)
   - Sibling gap and level gap: constants until M4, then plugin settings
 - Optional later: tighter contour-based packing for variable node sizes (non-layered tidy tree, e.g. van der Ploeg 2014); same interface, internal swap, only if maps look too sparse
 - Edges: cubic bezier from parent edge to child edge; no routing or crossing avoidance in MVP
+- Text alignment: text nodes (headings, paragraphs, list items) sit flush towards the edge their line attaches to
+  - Right side: left-aligned; left side: right-aligned; `top-to-bottom`, `bottom-to-top`: centred
+  - Root: centred in circle and vertical layouts, right-aligned in `left-to-right`, left-aligned in `right-to-left`
+  - Blocks (code, tables, math, quotes, callouts, diagrams, images) keep their own alignment; alignment never changes node sizes or positions
 ## MVP features
  
 - Open

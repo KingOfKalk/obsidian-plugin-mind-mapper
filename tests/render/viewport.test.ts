@@ -168,7 +168,7 @@ test.each(['', '   ', '%', 'abc', '12a', '-5', '1,2,3', '1e3', '12 34'])(
 
 function positioned(id: string, rect: Rect, childSide: Side = 'right'): PositionedNode {
   const node = { id, kind: id === 'R' ? 'root' : 'heading' } as MindMapNode;
-  return { ...rect, node, childSide, depth: id === 'R' ? 0 : 1, branch: 0 };
+  return { ...rect, node, childSide, align: 'left', depth: id === 'R' ? 0 : 1, branch: 0 };
 }
 
 function mapLayout(nodes: PositionedNode[], edges: [string, string][] = []): MapLayout {
