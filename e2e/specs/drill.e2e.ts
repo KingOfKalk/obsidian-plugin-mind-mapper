@@ -71,19 +71,18 @@ async function animationEnd(): Promise<void> {
   await settle();
 }
 
-/** Distance of the node's centre from the canvas centre, in screen px. */
-function offCentre(id: string): Promise<number> {
-  return browser.execute((nodeId) => {
-    const canvas = document.querySelector('.mind-mapper-canvas')?.getBoundingClientRect();
-    const node = document
-      .querySelector(`.mind-mapper-node[data-node-id="${nodeId}"]`)
-      ?.getBoundingClientRect();
-    if (!canvas || !node) throw new Error(`no canvas or node ${nodeId}`);
-    return Math.hypot(
-      node.x + node.width / 2 - (canvas.x + canvas.width / 2),
-      node.y + node.height / 2 - (canvas.y + canvas.height / 2),
-    );
-  }, id);
+/** The map's CSS transform (pan and zoom) as shown. */
+function worldTransform(): Promise<string> {
+  return browser.execute(
+    () => document.querySelector<HTMLElement>('.mind-mapper-world')?.style.transform ?? '',
+  );
+}
+
+/** The map shows exactly what "Fit to view" would show. */
+async function expectFitted(): Promise<void> {
+  const shown = await worldTransform();
+  await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+  expect(await worldTransform()).toBe(shown);
 }
 
 /** The note's bytes as hex and its modification time. */
@@ -149,12 +148,12 @@ describe('drill-down', function () {
     await animationEnd();
     expect(await shownIds()).toEqual(PHASE_2_SUBTREE);
 
-    // D with the centre selected: out one level, Phase 2 selected and centred.
+    // D with the centre selected: out one level, Phase 2 still selected, fitted like "Fit to view".
     await browser.keys('d');
     await animationEnd();
     expect(await shownIds()).toEqual(TASKS_SUBTREE);
     expect(await selectedId()).toBe(PHASE_2);
-    expect(await offCentre(PHASE_2)).toBeLessThan(2);
+    await expectFitted();
 
     await browser.executeObsidianCommand('mind-mapper:drill-down');
     await animationEnd();
@@ -163,7 +162,7 @@ describe('drill-down', function () {
     await animationEnd();
     expect(await shownIds()).toHaveLength(ALL);
     expect(await selectedId()).toBe(TASKS);
-    expect(await offCentre(TASKS)).toBeLessThan(2);
+    await expectFitted();
     expect(await browser.$('.mind-mapper-drill-marker').isExisting()).toBe(false);
     expect(await browser.$$('.mind-mapper-crosslink')).toHaveLength(1);
     expect(await noteFile()).toEqual(before);

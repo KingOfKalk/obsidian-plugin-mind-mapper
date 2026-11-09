@@ -176,7 +176,7 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
   - The map is fitted to view
 - `D` works only while the map has focus (it is not a hotkey): typing a "d" in the note or in the zoom level field is not affected
 - Drill again inside a drilled view: e.g. Project → Tasks → Phase 2
-- Drill out one level: the button or `D` while the centre (or nothing) is selected, or the command "Drill out one level"; the command "Show the whole map" goes straight back. The node you drilled out of is selected and centred
+- Drill out one level: the button or `D` while the centre (or nothing) is selected, or the command "Drill out one level"; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view, exactly like "Fit to view"
 - While drilled in, the centre has a small target icon above it (below it in the bottom → top layout) and the button is highlighted. The button is disabled when there is nothing to drill into or out of
 - Link lines to nodes outside the drilled part are hidden
 - "Back to root" centres the current centre node; collapse, layouts, colour themes, full screen and double click to jump work as usual
