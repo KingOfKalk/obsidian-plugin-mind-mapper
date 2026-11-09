@@ -34,12 +34,13 @@ import { attachLinkHandling } from '../render/linkHandling';
 import { type MapActions, MapControls } from '../render/MapControls';
 import { attachPanZoom, type PanZoomTarget } from '../render/panZoomInput';
 import {
+  fitBounds,
   fitToBounds,
   IDENTITY,
+  nextZoomStep,
   resetZoom,
   type Transform,
-  ZOOM_STEP,
-  zoomAt,
+  zoomTo,
 } from '../render/viewport';
 import { jumpToSource } from '../commands/jumpToSource';
 import { t } from '../i18n';
@@ -239,7 +240,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.beforeFullScreen = this.transform;
     this.fullScreen.enter();
     this.scope ??= new Scope(this.app.scope);
-    this.escHandler = this.scope.register([], 'Escape', () => {
+    this.escHandler = this.scope.register([], 'Escape', (evt) => {
+      // Obsidian runs scope keys before the input sees them: there Esc only restores its value.
+      if (this.dom?.controls.ownsKeys(evt.target)) return true;
       this.exitFullScreen();
       return false;
     });
@@ -415,12 +418,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.dom?.controls.setZoom(t.zoom);
   }
 
+  /** Next zoom step (spec "Zoom and pan"); wheel and pinch zoom smoothly instead. */
   zoomIn(): void {
-    this.setTransform(zoomAt(this.transform, ZOOM_STEP, this.center()));
+    this.zoomTo(nextZoomStep(this.transform.zoom, 1));
   }
 
   zoomOut(): void {
-    this.setTransform(zoomAt(this.transform, 1 / ZOOM_STEP, this.center()));
+    this.zoomTo(nextZoomStep(this.transform.zoom, -1));
+  }
+
+  /** Zoom (1 = 100 %, clamped to the limits), centred on the canvas. */
+  zoomTo(zoom: number): void {
+    this.setTransform(zoomTo(this.transform, zoom, this.center()));
   }
 
   resetZoom(): void {
@@ -819,7 +828,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private tryFit(): void {
     if (!this.layout) return;
     const fitted = fitToBounds(
-      this.layout.bounds,
+      fitBounds(this.layout, this.collapseInfo.hidden),
       this.size(),
       this.services.settings().fitMaxZoom / 100,
     );

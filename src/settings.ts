@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: MindMapSettings = {
   maxNodeHeight: 240,
   siblingGap: 12,
   levelGap: 60,
-  fitMaxZoom: 200,
+  fitMaxZoom: 150,
 };
 
 export type NumericSetting =

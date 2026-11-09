@@ -56,8 +56,9 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - `Ctrl/Cmd` + wheel, trackpad pinch: zoom at the pointer
 - Drag on empty canvas: pan
 - Double click the empty canvas: fit the whole map into view (also in full screen)
-- Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 200%); large maps shrink to fit
-- Floating controls (bottom center): zoom out, current zoom (click resets to 100%), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, full screen
+- Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 150%); large maps shrink to fit; a margin keeps nodes and collapse badges off the edges
+- Zoom in / out snap to steps: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400%
+- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
@@ -97,7 +98,7 @@ Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's
 | Map | Default layout | dropdown | the layouts above | `circle-clockwise` |
 | Map | Start collapsed | toggle | on / off | off |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow |
-| Map | Max zoom for fit | slider, steps of 25% | 100–400% | 200% |
+| Map | Max zoom for fit | slider, steps of 25% | 100–400% | 150% |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px |

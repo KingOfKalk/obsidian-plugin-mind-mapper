@@ -15,6 +15,8 @@ export const de: Messages = {
   resetZoom: 'Vergrößerung auf 100 % zurücksetzen',
   // No-break space: German writes "100 %", the number and sign stay on one line.
   zoomPercent: '{percent}\u00a0%',
+  zoomLevel: 'Zoomstufe',
+  zoomPresets: 'Zoomvorgaben',
   collapseAll: 'Alle einklappen',
   expandAll: 'Alle ausklappen',
   backToRoot: 'Zurück zum Hauptthema',

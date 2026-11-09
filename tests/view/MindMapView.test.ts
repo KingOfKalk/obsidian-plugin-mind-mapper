@@ -4,7 +4,7 @@ import { DEFAULT_LAYOUT, layoutTree } from '../../src/layout/tidyTree';
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
 import { DomMapRenderer } from '../../src/render/DomMapRenderer';
-import { fitToBounds, IDENTITY } from '../../src/render/viewport';
+import { fitBounds, fitMargin, fitToBounds, IDENTITY } from '../../src/render/viewport';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../../src/settings';
 import { MindMapView, type ViewServices } from '../../src/view/MindMapView';
@@ -57,7 +57,7 @@ function nodeIds(view: MindMapView): (string | undefined)[] {
 }
 
 function resetLabel(view: MindMapView): string | null | undefined {
-  return view.contentEl.querySelector('[aria-label="Reset zoom to 100%"]')?.textContent;
+  return view.contentEl.querySelector<HTMLInputElement>('.mind-mapper-zoom-input')?.value;
 }
 
 const state = (file: unknown) => [{ file }, { history: false }] as const;
@@ -166,7 +166,11 @@ function expectedFit(fixture: string, name: string, width: number, height: numbe
     levelGap: DEFAULT_LAYOUT.levelGap,
     nodeSize: estimateSize,
   });
-  return fitToBounds(layout.bounds, { width, height }, DEFAULT_SETTINGS.fitMaxZoom / 100);
+  return fitToBounds(
+    fitBounds(layout, new Map()),
+    { width, height },
+    DEFAULT_SETTINGS.fitMaxZoom / 100,
+  );
 }
 
 test('fit waits for a non-zero size and runs once', async () => {
@@ -206,14 +210,120 @@ test('zoom actions change the transform and the controls label', async () => {
   expect(view.getTransform().zoom).toBe(1);
   expect(resetLabel(view)).toBe('100%');
   view.zoomIn();
-  expect(view.getTransform().zoom).toBeCloseTo(1.2);
-  expect(resetLabel(view)).toBe('120%');
+  expect(view.getTransform().zoom).toBe(1.25);
+  expect(resetLabel(view)).toBe('125%');
   view.zoomOut();
   view.zoomOut();
-  expect(view.getTransform().zoom).toBeCloseTo(1 / 1.2);
+  expect(view.getTransform().zoom).toBe(0.75);
   view.fitToView();
   expect(view.getTransform()).toEqual(expectedFit('worked-example', 'Note', 800, 600));
 });
+
+test('zoom in / out snap to the next step, centred on the canvas', async () => {
+  const { view, ws } = newView();
+  ws.addNote('Note.md', 'worked-example');
+  await setSize(view, 800, 600);
+  await view.setState(...state('Note.md'));
+  const center = { x: 400, y: 300 };
+  const worldAt = (p: { x: number; y: number }) => {
+    const t = view.getTransform();
+    return { x: (p.x - t.x) / t.zoom, y: (p.y - t.y) / t.zoom };
+  };
+  view.zoomTo(1.29);
+  expect(view.getTransform().zoom).toBe(1.29);
+  expect(resetLabel(view)).toBe('129%');
+  const before = worldAt(center);
+  view.zoomIn();
+  expect(view.getTransform().zoom).toBe(1.5);
+  expect(worldAt(center).x).toBeCloseTo(before.x, 9);
+  expect(worldAt(center).y).toBeCloseTo(before.y, 9);
+  view.zoomTo(1.29);
+  view.zoomOut();
+  expect(view.getTransform().zoom).toBe(1.25);
+  view.zoomTo(4);
+  view.zoomIn();
+  expect(view.getTransform().zoom).toBe(4);
+  view.zoomTo(0.01);
+  expect(view.getTransform().zoom).toBe(0.1);
+  view.zoomOut();
+  expect(view.getTransform().zoom).toBe(0.1);
+});
+
+test('the zoom input applies a typed zoom', async () => {
+  const { view, ws } = newView();
+  ws.addNote('Note.md', 'worked-example');
+  await setSize(view, 800, 600);
+  await view.setState(...state('Note.md'));
+  const input = view.contentEl.querySelector<HTMLInputElement>('.mind-mapper-zoom-input');
+  if (!input) throw new Error('no zoom input');
+  input.focus();
+  input.value = '129';
+  input.dispatchEvent(new Event('input'));
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+  expect(view.getTransform().zoom).toBe(1.29);
+  expect(input.value).toBe('129%');
+});
+
+test('the default fit cap is 150 %', async () => {
+  expect(DEFAULT_SETTINGS.fitMaxZoom).toBe(150);
+  const { view, ws } = newView();
+  ws.addNote('Small.md', 'empty');
+  await setSize(view, 800, 600);
+  await view.setState(...state('Small.md'));
+  expect(view.getTransform().zoom).toBe(1.5);
+});
+
+test.each([
+  [800, 600],
+  // Narrow: the width limits the fit, the badges on the right decide it.
+  [400, 1000],
+  [1000, 2400],
+])(
+  'fit of a collapsed map (%i x %i) keeps every node and badge inside the margin',
+  async (width, height) => {
+    // Cap 400 %: the size limits the fit, not the cap.
+    const ws = new FakeWorkspace();
+    const settings = { ...LTR_SETTINGS, fitMaxZoom: 400 };
+    const leaf = { app: ws.app, setViewState: vi.fn() };
+    const view = new MindMapView(leaf as unknown as WorkspaceLeaf, { settings: () => settings });
+    // Collapsed, its badges are the rightmost part of the map.
+    ws.addNote('Note.md', 'numbered');
+    await setSize(view, width, height);
+    await view.setState(...state('Note.md'));
+    view.collapseAll();
+    view.fitToView();
+    expect(view.getTransform().zoom).toBeLessThan(4);
+    const t = view.getTransform();
+    const margin = fitMargin({ width, height });
+    const screen = (r: { x: number; y: number; width: number; height: number }) => ({
+      left: r.x * t.zoom + t.x,
+      top: r.y * t.zoom + t.y,
+      right: (r.x + r.width) * t.zoom + t.x,
+      bottom: (r.y + r.height) * t.zoom + t.y,
+    });
+    const boxes = [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node')].map((el) =>
+      nodeBox(view, el.dataset.nodeId ?? ''),
+    );
+    // Badges (left-to-right: right of the node, 18 px high, about 8 px per digit + 10).
+    const toggles = [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-collapse')];
+    expect(toggles.some((el) => el.classList.contains('is-collapsed'))).toBe(true);
+    for (const el of toggles) {
+      const w = Math.max(18, 10 + 7 * (el.textContent ?? '').length);
+      boxes.push({
+        x: parseFloat(el.style.left) + 3,
+        y: parseFloat(el.style.top) - 9,
+        width: w,
+        height: 18,
+      });
+    }
+    const all = boxes.map(screen);
+    const eps = 1e-6;
+    expect(Math.min(...all.map((b) => b.left))).toBeGreaterThanOrEqual(margin - eps);
+    expect(Math.min(...all.map((b) => b.top))).toBeGreaterThanOrEqual(margin - eps);
+    expect(Math.max(...all.map((b) => b.right))).toBeLessThanOrEqual(width - margin + eps);
+    expect(Math.max(...all.map((b) => b.bottom))).toBeLessThanOrEqual(height - margin + eps);
+  },
+);
 
 describe('fit zoom cap', () => {
   async function openCollapsed(fitMaxZoom: number) {
@@ -249,8 +359,8 @@ describe('fit zoom cap', () => {
     view.collapseAll();
     settings.fitMaxZoom = 300;
     view.fitToView();
-    // The collapsed map is limited by its size here (about 2.34), not by the cap.
-    expect(view.getTransform().zoom).toBeGreaterThan(2.3);
+    // The collapsed map is limited by its size here (about 2.29), not by the cap.
+    expect(view.getTransform().zoom).toBeGreaterThan(2.2);
     expect(view.getTransform().zoom).toBeLessThanOrEqual(3);
   });
 });
@@ -1261,6 +1371,12 @@ describe('back to root and full screen', () => {
     expect(view.getTransform()).not.toEqual({ x: -700, y: 40, zoom: 0.6 });
     const [esc] = escHandlers(view);
     expect(esc).toBeDefined();
+    // Esc in the zoom input only restores the input.
+    const input = document.body.querySelector<HTMLInputElement>('.mind-mapper-zoom-input');
+    const inInput = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+    input?.dispatchEvent(inInput);
+    esc?.func(inInput);
+    expect(view.isFullScreen).toBe(true);
     esc?.func(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(view.isFullScreen).toBe(false);
     expect(view.getTransform()).toEqual({ x: -700, y: 40, zoom: 0.6 });

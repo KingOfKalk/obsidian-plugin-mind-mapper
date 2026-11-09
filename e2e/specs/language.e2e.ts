@@ -22,13 +22,15 @@ describe('language', function () {
     await settle();
     expect(await controlLabels()).toEqual([
       'Verkleinern',
-      'Vergrößerung auf 100 % zurücksetzen',
+      'Zoomvorgaben',
       'Vergrößern',
       'An Ansicht anpassen',
       'Alle einklappen',
       'Zurück zum Hauptthema',
       'Vollbild umschalten',
     ]);
+    expect(await browser.$('.mind-mapper-zoom-input').getAttribute('aria-label')).toBe('Zoomstufe');
+    expect(await browser.$('.mind-mapper-zoom-input').getValue()).toMatch(/^\d+\u00a0%$/);
     const command = await browser.executeObsidian(
       ({ app }) =>
         (app as unknown as { commands: { commands: Record<string, { name: string }> } }).commands

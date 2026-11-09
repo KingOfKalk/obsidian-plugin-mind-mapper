@@ -13,7 +13,7 @@ async function setFitMaxZoom(percent: number): Promise<void> {
 }
 
 function zoomLabel(): Promise<string> {
-  return browser.$('.mind-mapper-controls button[aria-label="Reset zoom to 100%"]').getText();
+  return browser.$('.mind-mapper-zoom-input').getValue();
 }
 
 async function clickFit(): Promise<void> {
@@ -31,7 +31,7 @@ describe('fit zoom cap', function () {
   this.timeout(45000);
 
   after(async function () {
-    await setFitMaxZoom(200);
+    await setFitMaxZoom(150);
   });
 
   it('Fit to view enlarges a small map up to the "Max zoom for fit" setting', async function () {

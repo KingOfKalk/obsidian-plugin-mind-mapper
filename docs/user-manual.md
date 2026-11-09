@@ -107,15 +107,16 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 |---|---|
 | Pan | mouse wheel, two-finger scroll, or drag on the empty canvas |
 | Zoom at the pointer | `Ctrl/Cmd` + wheel, or trackpad pinch (10 % to 400 %) |
-| Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button; small maps are enlarged up to the setting "Max zoom for fit" (default 200 %) |
+| Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button; small maps are enlarged up to the setting "Max zoom for fit" (default 150 %); a margin keeps nodes and badges off the edges |
 
 The controls bar at the bottom center, left to right:
 
 | Button | Does |
 |---|---|
-| Zoom out | zooms out one step |
-| Zoom level (e.g. `60%`) | shows the zoom; click resets it to 100 % |
-| Zoom in | zooms in one step |
+| Zoom out | zooms out to the next step: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400 % |
+| Zoom level (e.g. `60%`) | shows the zoom; click it, type a zoom (e.g. `129`, `87,5 %`) and press `Enter`; `Esc` cancels |
+| Chevron next to the zoom level | menu with 50 % to 200 % and Fit to view; the current zoom is checked |
+| Zoom in | zooms in to the next step (from 129 %: 150 %) |
 | Fit to view (two boxes in a frame) | shows the whole map, enlarging a small one up to "Max zoom for fit" (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
 | Back to root | centers the root |
@@ -242,7 +243,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 | Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
-| Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 200 % | how far Fit to view enlarges a small map; large maps shrink to fit |
+| Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |

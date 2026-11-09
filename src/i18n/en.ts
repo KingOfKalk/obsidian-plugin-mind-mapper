@@ -12,6 +12,8 @@ export const en = {
   fitToView: 'Fit to view',
   resetZoom: 'Reset zoom to 100%',
   zoomPercent: '{percent}%',
+  zoomLevel: 'Zoom level',
+  zoomPresets: 'Zoom presets',
   collapseAll: 'Collapse all',
   expandAll: 'Expand all',
   backToRoot: 'Back to root',

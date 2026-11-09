@@ -124,7 +124,7 @@ Project (root, H1)
 - Plugin settings tab: global defaults for layout, start collapsed and colour theme, frontmatter overrides per note
   - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
-  - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 200), shown as "200%" (German "200 %" with a no-break space)
+  - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
 ## Colour themes (decided)
  
@@ -196,14 +196,18 @@ Project (root, H1)
   - Entering: fit to view; exiting: restore previous pan and zoom
   - Jump to source from full screen exits full screen first
   - Static map with free pan and zoom; no step-through (see Future features)
-- Map controls (decided): floating Canvas-style controls, bottom center
+- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, full screen
+  - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centred on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
+  - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
 - Zoom and pan (decided, like Canvas)
   - Mouse wheel / two-finger scroll: pan
   - Ctrl/Cmd + wheel and trackpad pinch (arrives as wheel event with `ctrlKey`): zoom
   - Drag on empty canvas: pan
   - Double click on empty canvas: fit to view, also in full screen; only when both presses were clicks without dragging, so a pan never fits
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
-  - Fit zoom cap (decided): fit shows the whole map at the largest zoom that fits, at most the plugin setting "Max zoom for fit" (100 % to 400 %, steps of 25 %, default 200 %), so a small map (e.g. after Collapse all) is enlarged and a large one still shrinks; applies to every fit (open, control and command, double click, full screen, layout change); changing the setting does not re-fit open maps, the next fit uses it
+  - Zoom steps (decided): zoom in / out (controls and commands) snap to 10, 25, 50, 75, 100, 125, 150, 200, 300, 400 %: zoom in goes to the next step above the current zoom, zoom out to the next step below (from 129 %: in 150 %, out 125 %); at either end they stay; centred on the canvas; wheel and pinch zoom stay smooth
+  - Fit margin (decided): per side 8 % of the shorter canvas side, at least 48 px (screen pixels); the fitted area includes the collapse toggles and hidden-count badges outside the node boxes
+  - Fit zoom cap (decided): fit shows the whole map at the largest zoom that fits, at most the plugin setting "Max zoom for fit" (100 % to 400 %, steps of 25 %, default 150 %), so a small map (e.g. after Collapse all) is enlarged and a large one still shrinks; applies to every fit (open, control and command, double click, full screen, layout change); changing the setting does not re-fit open maps, the next fit uses it
   - Fit to view icon: Lucide `group` (two boxes in a frame: the whole map in view), visually distinct from full screen (`maximize-2`, diagonal arrows) and back to root (`locate`, crosshair)
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
 - Collapse / expand: toggle button on the node edge for single node

@@ -580,6 +580,7 @@ export class Scope {
 export class MenuItem {
   title = '';
   icon = '';
+  checked: boolean | null = null;
   clickHandler: (() => unknown) | null = null;
   setTitle(title: string): this {
     this.title = title;
@@ -589,18 +590,45 @@ export class MenuItem {
     this.icon = icon;
     return this;
   }
+  setChecked(checked: boolean | null): this {
+    this.checked = checked;
+    return this;
+  }
   onClick(handler: () => unknown): this {
     this.clickHandler = handler;
     return this;
   }
 }
 
+export interface MockMenuPosition {
+  x: number;
+  y: number;
+  width?: number;
+  overlap?: boolean;
+  left?: boolean;
+}
+
 export class Menu {
+  /** The last menu shown; tests reset it. */
+  static lastShown: Menu | null = null;
   readonly items: MenuItem[] = [];
+  /** Items and separators in order. */
+  readonly entries: (MenuItem | 'separator')[] = [];
+  shownAt: { position: MockMenuPosition; doc: Document | undefined } | null = null;
   addItem(cb: (item: MenuItem) => unknown): this {
     const item = new MenuItem();
     this.items.push(item);
+    this.entries.push(item);
     cb(item);
+    return this;
+  }
+  addSeparator(): this {
+    this.entries.push('separator');
+    return this;
+  }
+  showAtPosition(position: MockMenuPosition, doc?: Document): this {
+    this.shownAt = { position, doc };
+    Menu.lastShown = this;
     return this;
   }
 }

@@ -466,3 +466,42 @@ button.mind-mapper-collapse.is-collapsed {
   min-width: 2.5em;
   font-variant-numeric: tabular-nums;
 }
+
+/* Zoom field: the editable zoom percentage and the preset menu chevron, one child of the bar. */
+.mind-mapper-zoom-field {
+  display: flex;
+  align-items: center;
+}
+
+.mind-mapper-controls input.mind-mapper-zoom-input {
+  width: 4.5em;
+  height: auto;
+  align-self: stretch;
+  padding: 0 var(--size-2-2);
+  border: none;
+  border-radius: var(--clickable-icon-radius);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.mind-mapper-controls input.mind-mapper-zoom-input:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.mind-mapper-controls input.mind-mapper-zoom-input:focus {
+  background: var(--background-modifier-form-field);
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  color: var(--text-normal);
+}
+
+.mind-mapper-controls button.mind-mapper-zoom-menu {
+  min-width: 0;
+  padding-inline: var(--size-2-1);
+  --icon-size: var(--icon-xs);
+  --icon-stroke: var(--icon-xs-stroke-width);
+}

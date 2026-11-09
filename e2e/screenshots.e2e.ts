@@ -172,6 +172,23 @@ describe('screenshots', function () {
     await browser.saveScreenshot(`${dir}/start-collapsed.png`);
   });
 
+  // Zoom controls and a fit that keeps the badges of a collapsed map inside the margin.
+  for (const mode of ['light', 'dark'] as const) {
+    it(`zoom controls and fitted collapsed map ${mode}`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('fixtures/numbered.md');
+      await settle();
+      await browser.executeObsidianCommand('mind-mapper:collapse-all');
+      await settle();
+      await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+      await browser.pause(300);
+      await browser.saveScreenshot(`${dir}/fit-collapsed-${mode}.png`);
+      await saveFullScreenShot(`${dir}/fit-collapsed-full-screen-${mode}.png`);
+      await saveControlsShots(`${dir}/controls-${mode}`);
+      await browser.executeObsidianCommand('mind-mapper:expand-all');
+    });
+  }
+
   // Colour themes in light and dark mode, in full screen so the nodes are readable.
   for (const theme of ['rainbow', 'ocean', 'forest', 'accent', 'none']) {
     for (const mode of ['light', 'dark'] as const) {
@@ -333,6 +350,15 @@ describe('screenshots', function () {
     await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-none-full-screen.png`));
   });
 
+  it('loud controls', async function () {
+    await useTheme('rainbow', 'light');
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    // 100 % is a preset: the menu shows it checked.
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await withLoudPalette(() => saveControlsShots(`${dir}/loud-controls`));
+  });
+
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
   });
@@ -376,6 +402,7 @@ describe('screenshots', function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();
     await browser.saveScreenshot(`${dir}/german-map.png`);
+    await saveControlsShots(`${dir}/german-controls`);
     await saveSettingsScreenshots(`${dir}/german-settings`);
     await setObsidianLanguage(null);
   });
@@ -453,6 +480,26 @@ async function withLoudPalette(shoot: () => Promise<void>): Promise<void> {
   } finally {
     await browser.execute(() => document.getElementById('loud-palette')?.remove());
   }
+}
+
+/**
+ * The controls bar as is, while typing a zoom ("87,5") and the window with the zoom preset menu
+ * open. Leaves the zoom unchanged.
+ */
+async function saveControlsShots(prefix: string): Promise<void> {
+  const controls = browser.$('.mind-mapper-controls');
+  await browser.$('.mind-mapper-world').moveTo();
+  await controls.saveScreenshot(`${prefix}.png`);
+  await browser.$('.mind-mapper-zoom-input').click();
+  await browser.keys(['8', '7', ',', '5']);
+  await controls.saveScreenshot(`${prefix}-editing.png`);
+  await browser.keys('Escape');
+  await browser.$('.mind-mapper-zoom-menu').click();
+  await browser.$('.menu').waitForExist({ timeout: 5000 });
+  await browser.pause(200);
+  await browser.saveScreenshot(`${prefix}-menu.png`);
+  await browser.keys('Escape');
+  await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
 }
 
 /** Full screen fits the map to the whole window; Esc leaves it again. */

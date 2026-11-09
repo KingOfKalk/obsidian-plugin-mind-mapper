@@ -9,7 +9,7 @@ test('defaults match the spec', () => {
     maxNodeHeight: 240,
     siblingGap: 12,
     levelGap: 60,
-    fitMaxZoom: 200,
+    fitMaxZoom: 150,
   });
 });
 
@@ -99,8 +99,8 @@ test.each([
   ['300', 300],
   [400, 400],
   [401, 400],
-  ['wide', 200],
-  [NaN, 200],
+  ['wide', 150],
+  [NaN, 150],
 ])('fitMaxZoom %j becomes %j', (value, expected) => {
   expect(sanitizeSettings({ fitMaxZoom: value }).fitMaxZoom).toBe(expected);
 });

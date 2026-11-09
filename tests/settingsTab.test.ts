@@ -99,8 +99,8 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(row('Max node width').slider?.value).toBe(400);
   expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
   expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
-  expect(row('Max zoom for fit').slider?.value).toBe(200);
-  expect(row('Max zoom for fit').slider?.getValuePretty()).toBe('200%');
+  expect(row('Max zoom for fit').slider?.value).toBe(150);
+  expect(row('Max zoom for fit').slider?.getValuePretty()).toBe('150%');
 });
 
 test('every setting has a name and description, so Obsidian settings search finds it', async () => {
@@ -132,7 +132,7 @@ test('Max zoom for fit is a built-in slider from 100% to 400% in 25% steps', asy
     min: 100,
     max: 400,
     step: 25,
-    defaultValue: 200,
+    defaultValue: 150,
   });
   expect(def.control?.displayFormat?.(250)).toBe('250%');
 });
@@ -334,7 +334,7 @@ test('in German the groups, rows and values are German; layout values stay', asy
     'Höherer Inhalt wird abgeschnitten und ausgeblendet.',
   );
   expect(slider('Maximale Knotenbreite').getValuePretty()).toBe('320 px');
-  expect(slider('Maximaler Zoom beim Einpassen').getValuePretty()).toBe('200\u00a0%');
+  expect(slider('Maximaler Zoom beim Einpassen').getValuePretty()).toBe('150\u00a0%');
   expect(row('Maximaler Zoom beim Einpassen').desc).toBe(
     'Einpassen vergrößert kleine Mindmaps bis zu diesem Zoom. Geöffnete Mindmaps nutzen ihn beim nächsten Einpassen.',
   );
