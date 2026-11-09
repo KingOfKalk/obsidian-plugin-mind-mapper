@@ -242,7 +242,7 @@ describe('user manual images', function () {
     const settings = (await browser.getWindowHandles()).find((h) => h !== main);
     if (!settings) throw new Error('no settings window');
     await browser.switchToWindow(settings);
-    await setWindowSize(860, 600);
+    await setWindowSize(860, 960);
     // the window title holds the random name of the temporary vault
     await browser.execute(() => {
       const style = document.head.createEl('style');

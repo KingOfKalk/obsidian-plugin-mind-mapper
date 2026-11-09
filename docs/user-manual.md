@@ -34,6 +34,7 @@ Make the note active, then use one of:
 
 - The map opens in a split next to the note
 - It stays pinned to that note: switching to another note does not change the map; a rename is followed
+- The map's tab and header show the note's name
 - Opening the same note again shows the map that is already open
 - The ribbon icon without an active Markdown note shows "Open a markdown note first"
 - An open map is restored after an Obsidian restart
@@ -74,8 +75,10 @@ Make the note active, then use one of:
 
 ### Dividers
 
-- `---`, `***`, `___` (also `- - -`) are not nodes: they show as a dashed line in a wider gap between the two nodes they separate
-- Not shown: directly before a heading, before the first or after the last node of a section; several in a row count as one
+- `---`, `***`, `___` (also `- - -`) are not nodes: they show as a dashed line in a wider gap between the two branches they separate
+- The line spans both neighbouring branches, down to their deepest visible nodes
+- Also shown before a heading, e.g. `***` between two `##` sections
+- Not shown: before the first or after the last node of a section, and in the circle layouts exactly at the split between the right and left side; several in a row count as one
 - Inside a list item, quote or callout a divider is part of that node
 - Gotcha: `---` directly under a line of text turns that text into a heading (Markdown rule, same in reading view). Leave a blank line above the divider, or use `***`
 
@@ -196,20 +199,21 @@ mind-mapper-collapsed: true
 
 ## Settings
 
-Settings → Community plugins → Mind Mapper. All rows also show up in Obsidian's settings search. Changes apply to open maps right away.
+Settings → Mind Mapper (in the Community plugins part of the sidebar), in four groups. All settings also show up in Obsidian's settings search. Changes apply to open maps right away.
 
-| Setting | Range | Default | Does |
-|---|---|---|---|
-| Default layout | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
-| Start collapsed | on / off | off | for notes without `mind-mapper-collapsed` |
-| Max node width | 160–800 px | 320 px | wider content is clipped with a fade |
-| Max node height | 120–800 px | 240 px | taller content is clipped with a fade |
-| Sibling gap | 0–200 px | 12 px | space between neighbouring branches |
-| Level gap | 20–400 px | 60 px | space between a node and its children |
+| Group | Setting | Control | Range | Default | Does |
+|---|---|---|---|---|---|
+| Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
+| Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
+| Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
+| Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
+| Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |
+| Spacing | Level gap | slider, steps of 10 px | 20–400 px | 60 px | space between a node and its children |
 
-- Number fields apply on `Enter` or when you leave the field; a value outside the range is set to the nearest limit
+- Each slider shows its value (e.g. "320 px") and has a "Restore default" button
+- About group: the plugin version and a link to the source code
 
-![The Mind Mapper settings tab with all six rows](images/manual/settings.png)
+![The Mind Mapper settings tab: Map, Nodes and Spacing groups with a dropdown, a toggle and four sliders](images/manual/settings.png)
 
 ## Commands
 
