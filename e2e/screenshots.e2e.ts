@@ -424,6 +424,8 @@ describe('screenshots', function () {
         await browser.saveScreenshot(`${prefix}-3-stacked.png`);
         await browser.executeObsidianCommand('mind-mapper:show-whole-map');
         await drillEnd();
+        await pointerAway();
+        await browser.saveScreenshot(`${prefix}-4-drilled-out.png`);
         await browser.keys('Escape');
       };
       if (loud) await withLoudPalette(shoot);

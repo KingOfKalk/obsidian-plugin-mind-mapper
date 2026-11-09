@@ -635,7 +635,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     ]);
   }
 
-  /** One level up; the node drilled out of is selected and centred. */
+  /** One level up; the node drilled out of stays selected, the map is fitted. */
   drillOut(): void {
     this.finishDrillAnimation();
     const left = this.drillPath.at(-1);
@@ -643,7 +643,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.drillOutTo(this.drillPath.slice(0, -1), left);
   }
 
-  /** Straight back to the whole map; the outermost drilled node is selected and centred. */
+  /** Straight back to the whole map; the outermost drilled node is selected, the map fitted. */
   showWholeMap(): void {
     this.finishDrillAnimation();
     const first = this.drillPath[0];
@@ -651,7 +651,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.drillOutTo([], first);
   }
 
-  /** Drilling in reversed: cross-fade with `left` kept in place, then glide until it is centred. */
+  /**
+   * Drilling in reversed: cross-fade with `left` kept in place, then glide to the same transform
+   * "Fit to view" sets (and the map counts as fitted, like after it).
+   */
   private drillOutTo(path: string[], left: string): void {
     this.setDrillPath(path);
     const centre = path.at(-1) ?? null;
@@ -659,7 +662,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.runDrillAnimation([
       this.fade('out'),
       this.fade('in', () => this.showCentre(centre, left)),
-      this.glide(() => this.centredAtFitZoom()),
+      this.glide(
+        () => (this.layout ? this.fitTransform(this.layout, this.collapseInfo) : null),
+        () => {
+          this.fitted = true;
+          this.pendingFit = false;
+        },
+      ),
     ]);
   }
 
@@ -731,21 +740,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     };
   }
 
-  /** Glide target after drilling out: the selected node centred, at the zoom that fits the map. */
-  private centredAtFitZoom(): Transform | null {
-    const node = this.layout?.nodes.find((p) => p.node.id === this.selected);
-    if (!this.layout || !node) return null;
-    const zoom = this.fitTransform(this.layout, this.collapseInfo)?.zoom ?? this.transform.zoom;
-    const center = this.center();
-    return {
-      x: center.x - (node.x + node.width / 2) * zoom,
-      y: center.y - (node.y + node.height / 2) * zoom,
-      zoom,
-    };
-  }
-
-  /** Moves the view to `target` (evaluated when the glide starts), eased. */
-  private glide(target: () => Transform | null): Phase {
+  /** Moves the view to `target` (evaluated when the glide starts), eased; then `arrived`. */
+  private glide(target: () => Transform | null, arrived?: () => void): Phase {
     let from = this.transform;
     let to: Transform | null = null;
     return {
@@ -756,6 +752,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       },
       frame: (progress) => {
         if (to) this.applyTransform(lerpTransform(from, to, easeInOut(progress)));
+        if (to && progress >= 1) arrived?.();
       },
     };
   }

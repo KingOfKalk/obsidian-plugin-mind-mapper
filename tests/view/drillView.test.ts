@@ -226,7 +226,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     );
   });
 
-  test('stacking; drilling out goes one level up, selects and centres the node drilled out of', async () => {
+  test('stacking; drilling out goes one level up, selects the node drilled out of and fits like "Fit to view"', async () => {
     const { view } = await open('crosslinks');
     view.select('Links/Beta');
     view.drill();
@@ -240,8 +240,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
     expect(nodeIds(view)).toEqual(BETA);
     expect(view.selectedId).toBe('Links/Beta/Inner');
-    expect(screenCentre(view, 'Links/Beta/Inner').x).toBeCloseTo(400);
-    expect(screenCentre(view, 'Links/Beta/Inner').y).toBeCloseTo(300);
+    expect(view.getTransform()).toEqual(fitted(view));
     expect(nodeEl(view, 'Links/Beta/Inner').classList.contains('is-root')).toBe(false);
     // Nothing selected while drilled in: the button still drills out.
     view.select(null);
@@ -250,22 +249,43 @@ describe('drilling in and out (reduced motion: instant)', () => {
     expect(view.isDrilled).toBe(false);
     expect(nodeIds(view)).toHaveLength(10);
     expect(view.selectedId).toBe('Links/Beta');
-    expect(screenCentre(view, 'Links/Beta').x).toBeCloseTo(400);
     expect(view.contentEl.querySelector('.mind-mapper-drill-marker')).toBeNull();
     expect(drillButton(view).classList.contains('is-active')).toBe(false);
-    // Drilled out to the fit zoom of the whole map, the node centred.
-    expect(view.getTransform().zoom).toBeCloseTo(fitted(view).zoom);
+    // The whole map, fitted (margin, badges, "Max zoom for fit"), not the node centred.
+    expect(view.getTransform()).toEqual(fitted(view));
   });
 
-  test('"Show the whole map" goes straight out and centres the outermost drilled node', async () => {
+  test('"Show the whole map" goes straight out, selects the outermost drilled node and fits', async () => {
     const { view } = await open('crosslinks');
     drillInto(view, 'Links/Beta', 'Links/Beta/Inner');
     view.showWholeMap();
     expect(view.getState()).toMatchObject({ drill: [] });
     expect(nodeIds(view)).toHaveLength(10);
     expect(view.selectedId).toBe('Links/Beta');
-    expect(screenCentre(view, 'Links/Beta').x).toBeCloseTo(400);
-    expect(screenCentre(view, 'Links/Beta').y).toBeCloseTo(300);
+    expect(view.getTransform()).toEqual(fitted(view));
+  });
+
+  test('after drilling out the map counts as fitted: a re-layout (measured sizes) fits again', async () => {
+    const { view } = await open('crosslinks');
+    drillInto(view, 'Links/Beta');
+    view.showWholeMap();
+    const content = nodeEl(view, 'Links/Gamma').querySelector('.mind-mapper-node-content');
+    if (!content) throw new Error('no content');
+    for (const [key, value] of [
+      ['offsetWidth', 300],
+      ['scrollWidth', 300],
+      ['offsetHeight', 200],
+      ['scrollHeight', 200],
+    ] as const) {
+      Object.defineProperty(content, key, { configurable: true, value });
+    }
+    const before = view.getTransform();
+    (
+      globalThis as unknown as { FakeResizeObserver: { trigger(els: Element[]): void } }
+    ).FakeResizeObserver.trigger([content]);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(view.getTransform()).not.toEqual(before);
+    expect(view.getTransform()).toEqual(fitted(view));
   });
 
   test('the button is disabled for no selection, a leaf, and the root of the whole map', async () => {
@@ -509,7 +529,7 @@ describe('animation', () => {
     expect(before.y).toBeCloseTo(after.y, 0);
   });
 
-  test('drilling out reverses it: fade out, swap, fade in, then glide to the node centred', async () => {
+  test('drilling out reverses it: fade out, swap, fade in, then glide to the fitted whole map', async () => {
     const { view } = await open('crosslinks');
     drillInto(view, 'Links/Beta');
     view.drill();
@@ -522,12 +542,16 @@ describe('animation', () => {
     expect(nodeIds(view)).toHaveLength(10);
     frames(Math.ceil(FADE_MS / 16) + 1);
     expect(opacity(view)).toBe('');
-    const gliding = screenCentre(view, 'Links/Beta');
+    const gliding = shown(view);
     settleFrames();
-    const end = screenCentre(view, 'Links/Beta');
-    expect(end.x).toBeCloseTo(400);
-    expect(end.y).toBeCloseTo(300);
-    expect(gliding).not.toEqual(end);
+    expect(view.selectedId).toBe('Links/Beta');
+    expect(view.getTransform()).toEqual(fitted(view));
+    // On screen too (the CSS transform rounds the zoom).
+    const fit = fitted(view);
+    expect(shown(view).x).toBeCloseTo(fit.x);
+    expect(shown(view).y).toBeCloseTo(fit.y);
+    expect(shown(view).zoom).toBeCloseTo(fit.zoom);
+    expect(gliding).not.toEqual(shown(view));
   });
 
   test('pressing again during an animation finishes it at once and continues (no pile-up)', async () => {

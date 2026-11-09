@@ -86,7 +86,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 
 - Select a node with children, then the drill down button in the control bar (arrow down to a dot) or the key `D` (while the map has focus): the node becomes the centre, large and without a box like the root; its children become the first level with their own branch colours; the map is fitted
 - Inside a drilled view, select another node and drill again (e.g. Project → Tasks → Phase 2)
-- The button or `D` with nothing to drill into (the centre or nothing selected) goes back out one level; the command "Show the whole map" goes straight back. The node you drilled out of is selected and centred
+- The button or `D` with nothing to drill into (the centre or nothing selected) goes back out one level; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view like after "Fit to view"
 - While drilled in, the centre has a small target icon above it and the button is highlighted; the button is disabled when there is nothing to drill into or out of
 - Link lines to nodes outside the drilled part are hidden
 - "Back to root" goes to the current centre; collapse, layout, theme, full screen and double click to jump work as usual
