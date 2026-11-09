@@ -128,13 +128,25 @@ The About group shows the plugin version and a link to the source code on GitHub
 
 ## Installation
 
-- From the community directory: once published, search for "Mind Mapper" in Settings > Community plugins
-- Manually: download `main.js`, `manifest.json` and `styles.css` from a release into `<vault>/.obsidian/plugins/mind-mapper/`, then enable Mind Mapper in Settings > Community plugins
-- Requires Obsidian 1.15.0 or later (desktop)
+Requires Obsidian 1.15.0 or later (desktop).
+
+1. Via [BRAT](https://github.com/TfTHacker/obsidian42-brat) (current way, updates automatically):
+   - Install the BRAT community plugin and enable it
+   - Run the command "BRAT: Add a beta plugin for testing" and enter `KingOfKalk/obsidian-plugin-mind-mapper`
+   - Enable Mind Mapper in Settings > Community plugins
+2. Manually from the [latest release](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/releases/latest):
+   - Download `main.js`, `manifest.json` and `styles.css`
+   - Put them into `<vault>/.obsidian/plugins/mind-mapper/`
+   - Enable Mind Mapper in Settings > Community plugins
+3. Community directory: planned
 
 ## Development
 
 Development: see [docs/developer.md](docs/developer.md)
+
+## Report an issue
+
+Bugs and ideas: [open an issue](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues) (please include your Obsidian and Mind Mapper versions and, if you can, the note's Markdown).
 
 ## Credits
 

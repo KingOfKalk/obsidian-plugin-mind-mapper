@@ -9,14 +9,14 @@
 ## Rules
 
 - This is an MVP.
-- Build locally, no need for a forge like GitHub.
-- Do not push to `origin` for now.
-- Squash-merge only things into `main` that are tested and working.
+- Work via issues and pull requests: open or claim an issue, branch `<type>/<issue-number>-<slug>` in a worktree, open a PR. The owner merges; PRs are squash-merged and only things that are tested and working.
 - This environment is a devcontainer, set up for development of TypeScript projects.
 - TDD: write the failing test first, see it fail for the right reason, then implement.
-- All gates before a merge: `npm run check`, `npm run test:e2e`, and for UI changes `npm run screenshots:e2e` plus a look at the PNGs.
-- Run `npm run dev:build` after every merge.
-- Never push. Never commit on `main`.
+- All gates before opening a PR: `npm run check`, `npm run test:e2e`, and for UI changes `npm run screenshots:e2e` plus a look at the PNGs.
+- Agents push their branch to `origin` and open a PR with `gh pr create`: Conventional Commit title, PR template filled in (`Closes #<issue>`, summary, test plan).
+- Never push to `main` directly. Never force-push. Never commit on `main`. Never merge a PR (the owner does).
+- After a merge, run `npm run dev:build` in the main checkout to update the sandbox vault.
+- No AI attribution in commits, branch names, issues or PRs.
 - MVP scope: YAGNI. Do not add features the spec does not list.
 - Obsidian plugin guidelines:
   - No default hotkeys for commands.
@@ -26,7 +26,7 @@
 
 ## Workflow
 
-- Git workflow (branches, worktrees, commits, merging, releases): [CONTRIBUTING.md](CONTRIBUTING.md).
+- Git workflow (issues, branches, worktrees, commits, pull requests, releases): [CONTRIBUTING.md](CONTRIBUTING.md).
 - Testing, screenshots, devcontainer, sandbox vault: [docs/developer.md](docs/developer.md).
 - Anything that only matters once the repo is public (issue links, CI, submission, doc changes): add it to [docs/going-public.md](docs/going-public.md) instead of doing it now.
 
@@ -40,7 +40,6 @@
 - `npm run screenshots:e2e`: screenshots to `e2e/screenshots/`
 - `npm run fixtures:record`: re-record parser fixtures from real Obsidian
 - `npm run perf:e2e`: performance benchmark (1,000 and 5,000 nodes)
-- `npm run release`: check, then package `release/<version>/`
 
 ## Code map
 

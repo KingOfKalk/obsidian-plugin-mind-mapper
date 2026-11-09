@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an idea or improvement for Mind Mapper
+title: 'feat: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mind Mapper keeps a small scope (a read-only live map of a note). Please check the [user manual](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/blob/main/docs/user-manual.md) and the open issues first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Mind Mapper do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context (optional)
+      description: Example notes, mockups or screenshots.

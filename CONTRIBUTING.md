@@ -1,24 +1,25 @@
 # Contributing
 
-This repo is developed locally. There is no forge workflow yet: no issues, no pull requests, nothing is pushed to `origin` until the owner decides. This doc defines the branch, commit, merge and release workflow.
+Work happens through issues and pull requests on [GitHub](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper). This doc defines the issue, branch, commit, pull request and release workflow.
 
 ## Before You Start
 
 - Read [AGENTS.md](AGENTS.md) (rules) and [docs/mvp.md](docs/mvp.md) (binding spec).
 - Set up and run things as described in [docs/developer.md](docs/developer.md).
-- Do not push to `origin`. Do not open issues or pull requests.
+- Open an issue first (bug report or feature request template), or claim an existing one. Wait for a go before starting larger changes: the scope is small on purpose (a read-only live map of a note).
+- Never push to `main` directly.
 
 ## Branching
 
-- One branch per change.
-- Naming: `<type>/<slug>`, e.g. `feat/dashed-dividers`, `fix/collapse-all`. Once issues exist: `<type>/<issue-number>-<slug>`.
+- One branch per issue.
+- Naming: `<type>/<issue-number>-<slug>`, e.g. `feat/42-dashed-dividers`, `fix/57-collapse-all`. Without an issue (rare, e.g. a typo): `<type>/<slug>`.
 - `<type>` is the dominant Conventional Commit type of the change; `<slug>` is a short kebab-case description.
 - Each branch lives in its own git worktree at `.worktrees/<branch>` in the repo root, with `/` in the branch name replaced by `-`:
-  - `git worktree add -b docs/project-docs .worktrees/docs-project-docs`
+  - `git worktree add -b docs/12-project-docs .worktrees/docs-12-project-docs`
   - `.worktrees/` is listed in `.git/info/exclude`.
   - Keep the main checkout on `main`.
   - Remove the worktree after the branch is merged or abandoned.
-- Never commit directly to `main`.
+- Never commit directly to `main`. Never force-push.
 
 ## Commits
 
@@ -40,26 +41,27 @@ This repo is developed locally. There is no forge workflow yet: no issues, no pu
 - Description: imperative mood, lowercase, no trailing period.
 - Breaking changes: add `!` after type/scope and a `BREAKING CHANGE: <details>` footer.
 - Atomic: one logical concern per commit. Do not mix unrelated changes.
-- No AI attribution: no `Co-Authored-By` trailers, no "generated with" lines.
+- No AI attribution: no `Co-Authored-By` trailers, no "generated with" lines, not in commits, branch names, issues or pull requests.
 - Format with Prettier before committing (`npm run format`); `*.md` files are ignored by Prettier.
 
-## Merging
+## Pull requests
 
-- Work is merged locally, not through pull requests.
-- Squash-merge into `main` only what is tested and working. The squash commit message is a Conventional Commit.
-- Gates, all must pass before the merge:
+- Push the branch to `origin` and open a pull request against `main` (`gh pr create` or the web UI). Fill in the pull request template: `Closes #<issue>`, summary, test plan.
+- The PR title is a Conventional Commit (`<type>[optional scope][!]: <description>`). It becomes the squash commit message, and release-please builds the changelog from it.
+- Before opening the PR, all gates pass locally:
   - `npm run check` (format, lint, typecheck, unit tests, build)
   - `npm run test:e2e` (real headless Obsidian)
   - UI changes: `npm run screenshots:e2e`, then look at the PNGs in `e2e/screenshots/`
-  - Review of the diff
-- After every merge, run `npm run dev:build` so `sandbox-vault/` has the new build.
-- Keep scope tight: unrelated work goes on a separate branch.
+- CI must pass before a merge.
+- The owner reviews and merges. Pull requests are squash-merged; the branch is deleted afterwards.
+- After a merge, run `npm run dev:build` in the main checkout so `sandbox-vault/` has the new build.
+- Keep scope tight: unrelated work goes on a separate issue and branch.
 
 ## Releases
 
-- Local only for now. Push and GitHub release only when the owner decides.
-- Bump the version: `npm version <x.y.z>` (or `patch|minor|major`).
-  - Runs `scripts/version-bump.mjs`: syncs `manifest.json` and `versions.json`.
-  - Commits `chore: release <x.y.z>` and tags `<x.y.z>`. The tag has no `v` prefix (`.npmrc`): Obsidian needs the tag to equal the manifest version.
-- Package: `npm run release` runs `npm run check`, then `scripts/release.mjs` writes `main.js`, `manifest.json` and `styles.css` to `release/<x.y.z>/` (and `release/mind-mapper-<x.y.z>.zip` when `zip` is installed).
-- Do not edit `manifest.json` / `versions.json` versions by hand.
+- Releases are automated with [release-please](https://github.com/googleapis/release-please). Do not bump versions or tag by hand; do not edit `manifest.json` / `versions.json` versions by hand.
+- release-please keeps a release pull request open on `main`. It collects the Conventional Commits since the last release, proposes the next version (`feat` = minor, `fix` = patch, `!` = major) and updates the changelog, `package.json`, `manifest.json` and `versions.json`.
+- The owner merges the release pull request. That publishes the GitHub release and the tag, and CI attaches `main.js`, `manifest.json` and `styles.css` to it.
+- Tags and release titles have no `v` prefix (`release-please-config.json`): Obsidian needs the tag to equal the manifest version, e.g. `1.0.0`.
+- Install channel for now: [BRAT](https://github.com/TfTHacker/obsidian42-brat) picks up each GitHub release. The community directory submission comes later (see [docs/going-public.md](docs/going-public.md)).
+- Details of the release workflow and CI: [docs/developer.md](docs/developer.md) (Release).

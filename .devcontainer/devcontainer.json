@@ -3,8 +3,9 @@
   "image": "mcr.microsoft.com/devcontainers/typescript-node:5.2.5-26-trixie",
   "features": {
     "ghcr.io/devcontainers-extra/features/claude-code:latest": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/kingofkalk/devcontainer-features/home-persistence:1": {
-      "directories": "~/.claude",
+      "directories": "~/.claude;~/.config/gh",
       "files": "~/.claude.json"
     }
   },

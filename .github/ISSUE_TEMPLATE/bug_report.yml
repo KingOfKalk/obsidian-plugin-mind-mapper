@@ -1,0 +1,71 @@
+name: Bug report
+description: Something in Mind Mapper does not work as expected
+title: 'bug: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please check the [user manual](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/blob/main/docs/user-manual.md) and the open issues first.
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      description: Settings > General > Installer version and Current version.
+      placeholder: '1.15.0'
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Mind Mapper version
+      description: Settings > Community plugins, or Settings > Mind Mapper > About.
+      placeholder: '1.0.0'
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: 'Windows 11, macOS 15, Ubuntu 24.04'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a note with ...
+        2. Run "Open as mind map"
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: note-markdown
+    attributes:
+      label: The note's Markdown (optional)
+      description: The smallest note that shows the problem, including its frontmatter. Do not paste private content.
+      render: markdown
+  - type: input
+    id: layout-theme
+    attributes:
+      label: Layout and theme
+      description: The `mind-mapper-layout` and `mind-mapper-theme` frontmatter values of the note, or the plugin defaults if the note has none.
+      placeholder: 'mind-mapper-layout: circle-clockwise, mind-mapper-theme: rainbow'
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag an image into this field. A screenshot of the map, and of the note next to it, often shows the problem faster than words.
