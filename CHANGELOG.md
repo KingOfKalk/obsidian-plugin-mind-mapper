@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.1.1...1.2.0) (2026-11-09)
+
+
+### Features
+
+* highlight both ends of a link line when it is clicked ([#22](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/22)) ([953e432](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/953e4323a4fbf840452a8fb4f496a175c74fff56))
+
 ## [1.1.1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.1.0...1.1.1) (2026-11-09)
 
 
