@@ -64,8 +64,9 @@
   - Run it for every UI change, then open the PNGs and look at them: tests have missed visual bugs (checkboxes, code, diagrams)
   - Look for: clipped or overlapping nodes, wrong fades, missing content (code, Mermaid, math, tables, callouts), edges not attached to nodes, dashed link lines and dividers, layout direction and balance, controls and collapse buttons
 - README images (`npm run readme:images`)
-  - Runs `e2e/readmeImages.e2e.ts`; writes the committed images to `docs/images/` (`circle.png`, `content.png`)
-  - Full-screen maps without Obsidian chrome; re-run and commit when the look changes
+  - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `test-vault/demo/Feature tour.md`)
+  - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes
+  - Demo notes in `test-vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
 
 ## Devcontainer and headless Obsidian
 

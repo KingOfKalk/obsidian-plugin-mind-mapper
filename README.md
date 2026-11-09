@@ -2,7 +2,7 @@
 
 Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lists and blocks become nodes, rendered the way reading view renders them, and the map follows the note while you write.
 
-![A note shown as a balanced mind map](docs/images/circle.png)
+![Obsidian with the file explorer and a note shown as a balanced mind map: a table, math, code, an image, a quote, a callout and tasks as nodes, dashed link lines, a divider and a collapsed branch](docs/images/hero.png)
 
 ## Features
 
@@ -11,8 +11,6 @@ Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lis
 - **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
-
-![Code, a Mermaid diagram, a table, math, a quote and a callout as nodes](docs/images/content.png)
 
 ## How a note becomes a map
 
@@ -117,3 +115,7 @@ Content larger than the max node size is clipped with a fade; the expand icon sh
 ## Development
 
 Development: see [docs/developer.md](docs/developer.md)
+
+## Credits
+
+- Built with the help of [obra/superpowers](https://github.com/obra/superpowers), skills for coding agents

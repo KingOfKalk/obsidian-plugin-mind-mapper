@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="240" rx="16" fill="url(#sky)"/>
+  <circle cx="60" cy="50" r="3" fill="#fff" opacity="0.8"/>
+  <circle cx="250" cy="40" r="2" fill="#fff" opacity="0.7"/>
+  <circle cx="280" cy="110" r="3" fill="#fff" opacity="0.6"/>
+  <circle cx="40" cy="150" r="2" fill="#fff" opacity="0.7"/>
+  <g transform="translate(160 118) rotate(35)">
+    <path d="M0 -70 C 22 -48 24 -10 18 30 L -18 30 C -24 -10 -22 -48 0 -70 Z" fill="#f8fafc"/>
+    <circle cx="0" cy="-22" r="10" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+    <path d="M-18 8 L -36 40 L -16 32 Z" fill="#f43f5e"/>
+    <path d="M18 8 L 36 40 L 16 32 Z" fill="#f43f5e"/>
+    <path d="M-10 32 L 0 62 L 10 32 Z" fill="#fbbf24"/>
+  </g>
+  <text x="160" y="222" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">Lumen 2.0</text>
+</svg>
