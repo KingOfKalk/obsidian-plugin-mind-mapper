@@ -1,5 +1,13 @@
 import { browser, expect } from '@wdio/globals';
-import { mouseOnNode, openMindMap, openNote, settle, waitForCache, writeNote } from '../helpers';
+import {
+  mouseOnNode,
+  openMindMap,
+  openNote,
+  settle,
+  waitForAnimation,
+  waitForCache,
+  writeNote,
+} from '../helpers';
 
 /** Drill-down (issue #23) in real Obsidian. */
 
@@ -67,7 +75,7 @@ function hasClass(selector: string, cls: string): Promise<boolean> {
 
 /** Waits until a drill animation has run (glide, cross-fade) and the layout has settled. */
 async function animationEnd(): Promise<void> {
-  await browser.$('.mind-mapper-canvas.is-drilling').waitForExist({ reverse: true, timeout: 5000 });
+  await waitForAnimation();
   await settle();
 }
 
@@ -78,10 +86,11 @@ function worldTransform(): Promise<string> {
   );
 }
 
-/** The map shows exactly what "Fit to view" would show. */
+/** The map shows exactly what "Fit to view" would show (after its glide, if it moved at all). */
 async function expectFitted(): Promise<void> {
   const shown = await worldTransform();
   await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+  await waitForAnimation();
   expect(await worldTransform()).toBe(shown);
 }
 
@@ -128,7 +137,7 @@ describe('drill-down', function () {
     expect(await drillButton().isEnabled()).toBe(true);
     await drillButton().click();
     // Animated: the glide and cross-fade run first.
-    expect(await hasClass('.mind-mapper-canvas', 'is-drilling')).toBe(true);
+    expect(await hasClass('.mind-mapper-canvas', 'is-animating')).toBe(true);
     await animationEnd();
     expect(await shownIds()).toEqual(TASKS_SUBTREE);
     const centre = `.mind-mapper-node[data-node-id="${TASKS}"]`;
@@ -220,7 +229,7 @@ describe('drill-down', function () {
         );
         button?.click();
         return {
-          drilling: document.querySelector('.mind-mapper-canvas.is-drilling') !== null,
+          drilling: document.querySelector('.mind-mapper-canvas.is-animating') !== null,
           nodes: document.querySelectorAll('.mind-mapper-node').length,
         };
       } finally {

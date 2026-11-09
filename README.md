@@ -70,6 +70,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Double click the empty canvas: fit the whole map into view (also in full screen)
 - Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 150%); large maps shrink to fit; a margin keeps nodes and collapse badges off the edges
 - Zoom in / out snap to steps: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400%
+- Fit to view, the zoom controls, back to root and layout changes glide smoothly (a layout change cross-fades first); wheel and trackpad stay immediate; with the system setting "reduce motion" everything jumps at once
 - Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, drill down (arrow down to a dot), layout, colour theme, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
@@ -98,7 +99,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 The layout button (boxes joined by a line) and the colour theme button (palette) in the control bar, also in full screen, change only the map on screen, never the note:
 
 - The menu lists the six layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top) or the five themes; the shown one is checked
-- A layout change re-arranges the map and fits it to view; a theme change only recolours it
+- A layout change cross-fades into the new arrangement and glides to fit it to view; a theme change only recolours it
 - "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the plugin setting
 - While a choice is active the button is highlighted, and it wins over later frontmatter edits and setting changes
 - The choice belongs to the map tab: it survives closing and reopening Obsidian and following a rename; the note file is never written

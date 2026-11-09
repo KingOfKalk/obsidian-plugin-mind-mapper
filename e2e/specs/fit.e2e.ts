@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle, writeNote } from '../helpers';
+import { openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
 
 type MindMapper = { updateSettings(patch: object): Promise<void> };
 type ObsidianApp = { plugins: { plugins: Record<string, MindMapper> } };
@@ -18,6 +18,7 @@ function zoomLabel(): Promise<string> {
 
 async function clickFit(): Promise<void> {
   await browser.$('.mind-mapper-controls button[aria-label="Fit to view"]').click();
+  await waitForAnimation();
 }
 
 async function expectZoomLabel(expected: string): Promise<void> {

@@ -65,7 +65,20 @@ export async function nodeBoxes(): Promise<NodeBox[]> {
   );
 }
 
-/** Waits until the layout no longer changes (rendering, measuring and re-layout have settled). */
+/**
+ * Waits until no animation runs (drill-down, fit, zoom controls, layout switch: the canvas has
+ * `is-animating` meanwhile).
+ */
+export async function waitForAnimation(): Promise<void> {
+  await browser
+    .$('.mind-mapper-canvas.is-animating')
+    .waitForExist({ reverse: true, timeout: 5000, timeoutMsg: 'animation did not end' });
+}
+
+/**
+ * Waits until the layout no longer changes (rendering, measuring and re-layout have settled) and
+ * no animation runs.
+ */
 export async function settle(quietMs = 500, timeout = 30000): Promise<void> {
   let previous = '';
   let stableSince = Date.now();
@@ -81,6 +94,7 @@ export async function settle(quietMs = 500, timeout = 30000): Promise<void> {
     },
     { timeout, interval: 100, timeoutMsg: 'layout did not settle' },
   );
+  await waitForAnimation();
 }
 
 export function overlaps(a: NodeBox, b: NodeBox): boolean {

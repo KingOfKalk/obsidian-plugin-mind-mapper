@@ -1,4 +1,4 @@
-import { easeInOut, lerpTransform, type Phase, PhaseRunner } from '../../src/view/drillAnimation';
+import { easeInOut, lerpTransform, type Phase, PhaseRunner } from '../../src/view/animation';
 
 /** requestAnimationFrame stub: frames run only when the test calls `frame(time)`. */
 function frames() {

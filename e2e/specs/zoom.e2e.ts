@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle } from '../helpers';
+import { openMindMap, settle, waitForAnimation } from '../helpers';
 
 interface Box {
   left: number;
@@ -47,7 +47,9 @@ function worldZoom(): Promise<number> {
   });
 }
 
+/** After the zoom glide: the label and the transform show `zoom`. */
 async function expectZoom(label: string, zoom: number): Promise<void> {
+  await waitForAnimation();
   await browser.waitUntil(async () => (await zoomValue()) === label, {
     timeout: 5000,
     timeoutMsg: `zoom label is "${await zoomValue()}", expected "${label}"`,

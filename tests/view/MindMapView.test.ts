@@ -18,6 +18,21 @@ import {
   type Scope as MockScope,
 } from '../mocks/obsidian';
 
+// Camera moves are instant here (reduced motion): these tests check where actions put the view.
+// The animations themselves have their own tests (cameraView.test.ts, drillView.test.ts).
+beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      media: query,
+      matches: query === '(prefers-reduced-motion: reduce)',
+    }),
+  });
+});
+afterEach(() => {
+  Reflect.deleteProperty(window, 'matchMedia');
+});
+
 function newView(ws = new FakeWorkspace()): { view: MindMapView; ws: FakeWorkspace } {
   // Like Obsidian: setViewState with the same view type passes the state to the view.
   const leaf = {

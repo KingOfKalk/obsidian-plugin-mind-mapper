@@ -123,6 +123,8 @@ describe('performance spike', function () {
           commands.executeCommandById('mind-mapper:reset-zoom');
           // at 100 % the panned fit view may show empty space: start at the root
           commands.executeCommandById('mind-mapper:back-to-root');
+          // both glide (issue #24): measure at their end
+          while (document.querySelector('.mind-mapper-canvas.is-animating')) await frame();
           for (let i = 0; i < 10; i++) await frame();
           const renderedAt100 = rendered();
           const [pan100Frames, pan100LongestFrameMs] = await measureFrames(() =>
