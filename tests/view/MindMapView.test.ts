@@ -919,7 +919,7 @@ describe('layouts, frontmatter and settings', () => {
 
   test('an invalid mind-mapper-layout falls back to the setting and is reported on every load', async () => {
     const warnOnce = vi.fn();
-    const { view, ws } = await openWith('fm-invalid', {
+    const { view, ws } = await openWith('fm-invalid (warning expected)', {
       warnOnce,
       settings: () => LTR_SETTINGS,
     });
@@ -928,7 +928,7 @@ describe('layouts, frontmatter and settings', () => {
       'Note.md\0mind-mapper-layout\0spiral',
       'Mind Mapper: unknown mind-mapper-layout "spiral" in Note.md, using left-to-right',
     );
-    change(ws, 'Note.md', 'fm-invalid');
+    change(ws, 'Note.md', 'fm-invalid (warning expected)');
     await vi.advanceTimersByTimeAsync(300);
     // the plugin's warnOnce keeps it to one notice
     expect(warnOnce).toHaveBeenCalledTimes(2);
@@ -1050,7 +1050,10 @@ describe('colour themes', () => {
   test('an unknown mind-mapper-theme falls back to the setting with a notice', async () => {
     const warnOnce = vi.fn();
     const settings = { ...LTR_SETTINGS, defaultTheme: 'ocean' as const };
-    const { view } = await openWith('fm-theme-invalid', { warnOnce, settings: () => settings });
+    const { view } = await openWith('fm-theme-invalid (warning expected)', {
+      warnOnce,
+      settings: () => settings,
+    });
     expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
     expect(warnOnce).toHaveBeenCalledWith(
       'Note.md\0mind-mapper-theme\0neon',
@@ -1463,7 +1466,7 @@ describe('start collapsed', () => {
     async (startCollapsed, expected) => {
       const warnOnce = vi.fn();
       const settings = { ...LTR_SETTINGS, startCollapsed };
-      const { view } = await openWith('fm-collapsed-invalid', {
+      const { view } = await openWith('fm-collapsed-invalid (warning expected)', {
         warnOnce,
         settings: () => settings,
       });
@@ -1511,7 +1514,7 @@ describe('start collapsed', () => {
 
   test('an invalid value with the setting on, edited to true, is no flip: the clicks stay', async () => {
     const settings = { ...LTR_SETTINGS, startCollapsed: true };
-    const { view, ws } = await openWith('fm-collapsed-invalid', {
+    const { view, ws } = await openWith('fm-collapsed-invalid (warning expected)', {
       warnOnce: () => {},
       settings: () => settings,
     });
