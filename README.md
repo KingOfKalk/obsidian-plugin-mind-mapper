@@ -121,6 +121,7 @@ Content larger than the max node size is clipped with a fade; the expand icon sh
 - `npm run dev` (from the main checkout or any worktree): watch build into `dev-vault/.obsidian/plugins/mind-mapper/` (also copies `manifest.json`, `styles.css`, writes `.hotreload`)
   - On start it copies the current checkout's `test-vault/` notes into `dev-vault/` and enables Mind Mapper there; notes of the same name are overwritten (edit test notes in `test-vault/`, not in `dev-vault/`), nothing is deleted, recordings (`*.cache.json`) are never overwritten
   - `MIND_MAPPER_PLUGIN_DIR=<vault>/.obsidian/plugins/mind-mapper npm run dev` targets another vault instead (plugin files only, no notes copied)
+- `npm run dev:build`: the same dev build and note sync once, then exits (no watch)
 - One-time setup on the host: open `dev-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=1.7.4 OBSIDIAN_INSTALLER=earliest npm run test:e2e` (default 1.15.0; 1.7.4 is the `minAppVersion`)

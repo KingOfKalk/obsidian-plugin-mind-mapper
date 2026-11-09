@@ -5,6 +5,8 @@ import { gitCommonDir, resolveDevTargets } from './scripts/dev-paths.mjs';
 import { enablePlugin, syncNotes } from './scripts/dev-vault.mjs';
 
 const production = process.argv[2] === 'production';
+/** `once`: one dev build into the dev vault, then exit (no watch). */
+const once = process.argv[2] === 'once';
 const dev = production ? null : resolveDevTargets(process.env, gitCommonDir);
 const devPluginDir = dev?.pluginDir ?? '';
 
@@ -43,7 +45,7 @@ const context = await esbuild.context({
   plugins: production ? [] : [devAssets],
 });
 
-if (production) {
+if (production || once) {
   await context.rebuild();
   await context.dispose();
 } else {

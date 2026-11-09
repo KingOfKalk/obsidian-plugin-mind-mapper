@@ -8,6 +8,7 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "dev": "node esbuild.config.mjs",
+    "dev:build": "node esbuild.config.mjs once",
     "build": "node esbuild.config.mjs production",
     "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
     "lint": "eslint .",
