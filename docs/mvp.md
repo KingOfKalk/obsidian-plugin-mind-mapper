@@ -139,7 +139,7 @@ Project (root, H1)
 | `rainbow` | red, orange, yellow, green, blue, purple |
 | `ocean` | blue, cyan, green, purple |
 | `forest` | green, yellow, orange, olive (green and orange mixed) |
-| `accent` | Obsidian's accent colour at 100 %, 70 %, 50 %, 35 % (mixed into the background) |
+| `accent` | Obsidian's accent colour at 100 %, 75 %, 55 %, 40 % (mixed into the background) |
  
 - Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--background-primary`), so light and dark mode and community themes keep working
 - Choice: frontmatter `mind-mapper-theme`, else the plugin setting "Default theme"

@@ -226,17 +226,17 @@
   --mind-mapper-level-1: var(--interactive-accent);
   --mind-mapper-level-2: color-mix(
     in srgb,
-    var(--interactive-accent) 70%,
+    var(--interactive-accent) 75%,
     var(--background-primary)
   );
   --mind-mapper-level-3: color-mix(
     in srgb,
-    var(--interactive-accent) 50%,
+    var(--interactive-accent) 55%,
     var(--background-primary)
   );
   --mind-mapper-level-4: color-mix(
     in srgb,
-    var(--interactive-accent) 35%,
+    var(--interactive-accent) 40%,
     var(--background-primary)
   );
   --mind-mapper-level-5: var(--mind-mapper-level-1);
