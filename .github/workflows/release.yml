@@ -14,7 +14,7 @@ permissions:
 # trigger workflows.
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     outputs:
       prs_created: ${{ steps.release.outputs.prs_created }}
@@ -68,7 +68,7 @@ jobs:
   versions-json:
     needs: release-please
     if: ${{ needs.release-please.outputs.prs_created == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
 
     steps:

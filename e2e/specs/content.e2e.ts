@@ -17,18 +17,34 @@ describe('node content in real Obsidian', function () {
   it('worked example renders the spec tree', async function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();
-    const ids = (await nodeBoxes()).map((b) => b.id).sort();
-    expect(ids).toEqual(
-      [
-        'Project',
-        'Project/#1',
-        'Project/Notes',
-        'Project/Notes/#1',
-        'Project/Tasks',
-        'Project/Tasks/#1',
-        'Project/Tasks/#2',
-      ].sort(),
-    );
+    const expected = [
+      'Project',
+      'Project/#1',
+      'Project/Notes',
+      'Project/Notes/#1',
+      'Project/Tasks',
+      'Project/Tasks/#1',
+      'Project/Tasks/#2',
+    ].sort();
+    // Content nodes appear over a few frames (render budget); slower CI runners need longer
+    // than `settle`. On a timeout, report what was rendered to tell timing from culling.
+    let ids: string[] = [];
+    await browser
+      .waitUntil(
+        async () => {
+          ids = (await nodeBoxes()).map((b) => b.id).sort();
+          return ids.length === expected.length;
+        },
+        { timeout: 10000, interval: 200 },
+      )
+      .catch(async () => {
+        const state = await browser.execute(() => ({
+          transform: document.querySelector<HTMLElement>('.mind-mapper-world')?.style.transform,
+          canvas: document.querySelector('.mind-mapper-canvas')?.getBoundingClientRect().width,
+        }));
+        console.log('worked example rendered', JSON.stringify({ ids, state }));
+      });
+    expect(ids).toEqual(expected);
     await expect(node('Project/Notes/#1').$('blockquote')).toExist();
   });
 
