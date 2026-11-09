@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.3.1...1.4.0) (2026-11-09)
+
+
+### Features
+
+* smooth camera for fit, zoom and layout switches ([#30](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/30)) ([0075f59](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/0075f599185d261470abc49b8a477a3abd40f3b4))
+
 ## [1.3.1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.3.0...1.3.1) (2026-11-09)
 
 
