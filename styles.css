@@ -79,15 +79,17 @@
   cursor: pointer;
 }
 
-.mind-mapper-crosslink:has(+ .mind-mapper-crosslink-hit:hover) {
+/* Hover emphasis (still dashed); a highlighted line keeps its own, larger width. */
+.mind-mapper-crosslink:not(.is-highlighted):has(+ .mind-mapper-crosslink-hit:hover) {
   stroke-width: 2.5;
   opacity: 1;
 }
 
-/* A clicked link: thicker and solid; its end nodes get the selection ring. */
+/* A clicked link: thicker, still dashed (a link, not a tree edge), the dashes scaled with the
+   width; its end nodes get the selection ring. */
 .mind-mapper-crosslink.is-highlighted {
   stroke-width: 3;
-  stroke-dasharray: none;
+  stroke-dasharray: 10 6;
   opacity: 1;
 }
 

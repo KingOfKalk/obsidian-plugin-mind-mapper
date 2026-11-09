@@ -87,9 +87,10 @@ describe('clicking a link line', function () {
       return {
         cursor: hit ? getComputedStyle(hit).cursor : '',
         width: line ? getComputedStyle(line).strokeWidth : '',
+        dashed: line ? getComputedStyle(line).strokeDasharray !== 'none' : false,
       };
     });
-    expect(hover).toEqual({ cursor: 'pointer', width: '2.5px' });
+    expect(hover).toEqual({ cursor: 'pointer', width: '2.5px', dashed: true });
     await browser.action('pointer').move({ x, y, origin: 'viewport' }).down().up().perform();
     await browser.waitUntil(async () => (await linkEnds()).length === 2, {
       timeout: 5000,
@@ -97,6 +98,15 @@ describe('clicking a link line', function () {
     });
     expect(await linkEnds()).toEqual(['Links/Beta/Inner', 'Links/Gamma/#1']);
     expect(await highlightedLines()).toBe(1);
+    // still a link (dashed), not a tree edge: only thicker
+    const line = await browser.execute(() => {
+      const el = document.querySelector('path.mind-mapper-crosslink.is-highlighted');
+      const style = el ? getComputedStyle(el) : null;
+      return { dash: style?.strokeDasharray ?? '', width: style?.strokeWidth ?? '' };
+    });
+    expect(line.dash).not.toBe('none');
+    expect(line.dash).not.toBe('');
+    expect(line.width).toBe('3px');
     // the same ring as a selected node, in the accent colour
     const ring = await browser.execute(() => {
       const el = document.querySelector('.mind-mapper-node.is-link-end');

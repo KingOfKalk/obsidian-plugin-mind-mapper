@@ -99,7 +99,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 - Links to a heading or block in the same note are also drawn as dashed lines between the two nodes:
   - `[[#Heading]]`, `[[#Heading#Subheading]]`, `[[#^block-id]]`, `[[This note#Heading]]`
   - If one end is inside a collapsed branch, the line ends at the nearest visible node above it
-- Click a dashed line to see which two nodes it connects: both nodes get the selection ring and the line turns solid; click the empty canvas, a node or another line to end it
+- Click a dashed line to see which two nodes it connects: both nodes get the selection ring and the line gets thicker (still dashed); click the empty canvas, a node or another line to end it
   - Only a click on the line highlights a link: selecting a node does not highlight its links
   - Dragging that starts on a line pans the map
 - Double click a dashed line to jump to the place in the note where the link is written
