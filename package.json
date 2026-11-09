@@ -1,6 +1,6 @@
 {
   "name": "mind-mapper",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Show any Markdown note as a live mind map: headings, lists and blocks become nodes, rendered like reading view.",
   "private": true,
   "type": "module",
