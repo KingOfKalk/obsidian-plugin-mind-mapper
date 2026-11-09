@@ -1,5 +1,6 @@
 import type { MindMapNode, MindMapTree } from '../parser/types';
 import type {
+  LayoutDivider,
   LayoutEdge,
   LayoutOptions,
   MapLayout,
@@ -11,6 +12,8 @@ import type {
 } from './types';
 
 export const DEFAULT_LAYOUT = { siblingGap: 12, levelGap: 60, nodeWidth: 200, nodeHeight: 36 };
+/** Extra space between two siblings with a divider between them (spec "Dividers"). */
+export const DIVIDER_GAP = 16;
 
 /**
  * Spec "Layout": bounding-box tidy tree. Every layout is computed as a canonical left-to-right
@@ -53,21 +56,30 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
 interface Raw {
   nodes: PositionedNode[];
   edges: Omit<LayoutEdge, 'axis'>[];
+  dividers: LayoutDivider[];
 }
 
+/**
+ * `reversed`: a parent whose children are stacked in reverse source order (left side of the
+ * circle layouts); a divider belongs between two source-order neighbors, wherever they stack.
+ */
 function canonical(
   root: MindMapNode,
   nodeSize: (node: MindMapNode) => Size,
   options: LayoutOptions,
+  reversed: MindMapNode | null = null,
 ): Raw {
   const sizes = new Map<MindMapNode, Size>();
   const boxHeights = new Map<MindMapNode, number>();
 
+  /** Divider between the stacked children `i - 1` and `i`. */
+  const dividerAt = (node: MindMapNode, i: number): boolean =>
+    i > 0 && (node === reversed ? node.children[i - 1] : node.children[i])?.dividerBefore === true;
+  const gapBefore = (node: MindMapNode, i: number): number =>
+    i === 0 ? 0 : options.siblingGap + (dividerAt(node, i) ? DIVIDER_GAP : 0);
+
   const childrenBlockHeight = (node: MindMapNode, height: (n: MindMapNode) => number): number =>
-    node.children.length === 0
-      ? 0
-      : node.children.reduce((sum, child) => sum + height(child), 0) +
-        options.siblingGap * (node.children.length - 1);
+    node.children.reduce((sum, child, i) => sum + gapBefore(node, i) + height(child), 0);
 
   const measure = (node: MindMapNode): number => {
     const size = nodeSize(node);
@@ -79,6 +91,7 @@ function canonical(
 
   const nodes: PositionedNode[] = [];
   const edges: Omit<LayoutEdge, 'axis'>[] = [];
+  const dividers: LayoutDivider[] = [];
 
   const place = (node: MindMapNode, x: number, top: number): PositionedNode => {
     const size = sizes.get(node) ?? { width: 0, height: 0 };
@@ -96,7 +109,15 @@ function canonical(
     const block = childrenBlockHeight(node, (child) => boxHeights.get(child) ?? 0);
     let childTop = centerY - block / 2;
     const childX = x + size.width + options.levelGap;
-    for (const child of node.children) {
+    let previous: MindMapNode | null = null;
+    node.children.forEach((child, i) => {
+      const gap = gapBefore(node, i);
+      if (previous && dividerAt(node, i)) {
+        const y = childTop + gap / 2;
+        const width = Math.max(sizes.get(previous)?.width ?? 0, sizes.get(child)?.width ?? 0);
+        dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + width, y } });
+      }
+      childTop += gap;
       const placed = place(child, childX, childTop);
       edges.push({
         fromId: node.id,
@@ -104,14 +125,15 @@ function canonical(
         source: { x: x + size.width, y: centerY },
         target: { x: placed.x, y: placed.y + placed.height / 2 },
       });
-      childTop += (boxHeights.get(child) ?? 0) + options.siblingGap;
-    }
+      childTop += boxHeights.get(child) ?? 0;
+      previous = child;
+    });
     return positioned;
   };
 
   const rootBox = measure(root);
   place(root, 0, -rootBox / 2);
-  return { nodes, edges };
+  return { nodes, edges, dividers };
 }
 
 /** Mirrors about the root's vertical center line (the root keeps its position). */
@@ -126,6 +148,7 @@ function mirrorX(raw: Raw, root: MindMapNode): Raw {
       childSide: flip(p.childSide),
     })),
     edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
 
@@ -137,6 +160,7 @@ function mirrorY(raw: Raw, root: MindMapNode): Raw {
   return {
     nodes: raw.nodes.map((p) => ({ ...p, y: axis - p.y - p.height, childSide: flip(p.childSide) })),
     edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
 
@@ -153,6 +177,7 @@ function swapAxes(raw: Raw): Raw {
       childSide: 'bottom',
     })),
     edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
 
@@ -164,14 +189,18 @@ function circle(root: MindMapNode, options: LayoutOptions): Raw {
   const nodeSize = (node: MindMapNode): Size =>
     options.nodeSize(node === rightRoot || node === leftRoot ? root : node);
   const right = canonical(rightRoot, nodeSize, options);
-  const left = mirrorX(canonical(leftRoot, nodeSize, options), leftRoot);
+  const left = mirrorX(canonical(leftRoot, nodeSize, options, leftRoot), leftRoot);
   const rootRect = right.nodes[0];
   const nodes = [
     ...(rootRect ? [{ ...rootRect, node: root }] : []),
     ...right.nodes.slice(1),
     ...left.nodes.slice(1),
   ];
-  return { nodes, edges: [...right.edges, ...left.edges] };
+  return {
+    nodes,
+    edges: [...right.edges, ...left.edges],
+    dividers: [...right.dividers, ...left.dividers],
+  };
 }
 
 function flip(side: Side): Side {
@@ -191,6 +220,7 @@ function finish(raw: Raw, axis: 'x' | 'y'): MapLayout {
   return {
     nodes: raw.nodes,
     edges: raw.edges.map((e) => ({ ...e, axis })),
+    dividers: raw.dividers,
     bounds: boundsOf(raw.nodes),
   };
 }

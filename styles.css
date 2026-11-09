@@ -53,6 +53,14 @@
   stroke-width: 1;
 }
 
+/* Spec "Dividers": like a horizontal rule in reading view, dashed. */
+.mind-mapper-divider {
+  fill: none;
+  stroke: var(--hr-color);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
 /* Same-note heading and block links (spec "Links"). */
 .mind-mapper-crosslink {
   fill: none;

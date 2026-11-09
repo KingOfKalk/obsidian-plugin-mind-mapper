@@ -57,8 +57,16 @@ export interface LayoutEdge {
   axis: 'x' | 'y';
 }
 
+/** Spec "Dividers": a line in the gap between two siblings, across the wider of the two. */
+export interface LayoutDivider {
+  parentId: string;
+  from: Point;
+  to: Point;
+}
+
 export interface MapLayout {
   nodes: PositionedNode[];
   edges: LayoutEdge[];
+  dividers: LayoutDivider[];
   bounds: Rect;
 }

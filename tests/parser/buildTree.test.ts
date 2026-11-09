@@ -259,3 +259,76 @@ test('endLine is set for headings, sections and list items', () => {
   expect(span('Links/Gamma/#2')).toEqual([16, 16]);
   expect(span('Links/Gamma/#2/#1')).toEqual([17, 17]);
 });
+
+describe('dividers (spec "Dividers")', () => {
+  const flagged = (node: MindMapNode): string[] => [
+    ...(node.dividerBefore ? [node.id] : []),
+    ...node.children.flatMap(flagged),
+  ];
+
+  test('a divider between two siblings marks the second one', () => {
+    const input = noteInput(
+      ['# R', 'A.', '---', 'B.'],
+      [
+        ['heading', 0, 0],
+        ['paragraph', 1, 1],
+        ['thematicBreak', 2, 2],
+        ['paragraph', 3, 3],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual(['R/#2']);
+  });
+
+  test('before the first child, after the last child and before a heading it is ignored', () => {
+    const input = noteInput(
+      ['# R', '---', 'A.', '***', '## H', 'B.', '___'],
+      [
+        ['heading', 0, 0],
+        ['thematicBreak', 1, 1],
+        ['paragraph', 2, 2],
+        ['thematicBreak', 3, 3],
+        ['heading', 4, 4],
+        ['paragraph', 5, 5],
+        ['thematicBreak', 6, 6],
+      ],
+    );
+    expect(flagged(buildTree(input, 'note').root)).toEqual([]);
+  });
+
+  test('several in a row count as one; skipped sections in between do not break it', () => {
+    const input = noteInput(
+      ['# R', 'A.', '---', '***', '%% note %%', 'B.'],
+      [
+        ['heading', 0, 0],
+        ['paragraph', 1, 1],
+        ['thematicBreak', 2, 2],
+        ['thematicBreak', 3, 3],
+        ['comment', 4, 4],
+        ['paragraph', 5, 5],
+      ],
+    );
+    const root = buildTree(input, 'note').root;
+    expect(flagged(root)).toEqual(['R/#2']);
+    expect(root.children).toHaveLength(2);
+  });
+
+  test('a list after a divider marks its first top-level item', () => {
+    const lines = ['# R', 'A.', '---', '- one', '- two'];
+    const input = noteInput(lines, [
+      ['heading', 0, 0],
+      ['paragraph', 1, 1],
+      ['thematicBreak', 2, 2],
+      ['list', 3, 4],
+    ]);
+    const lineStart = (line: number) => lines.slice(0, line).join('\n').length + 1;
+    input.listItems = [3, 4].map((line) => ({
+      startLine: line,
+      endLine: line,
+      startOffset: lineStart(line),
+      endOffset: lineStart(line) + (lines[line]?.length ?? 0),
+      parentLine: -3,
+      task: null,
+    }));
+    expect(flagged(buildTree(input, 'note').root)).toEqual(['R/#2']);
+  });
+});

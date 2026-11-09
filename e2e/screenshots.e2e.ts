@@ -12,7 +12,14 @@ describe('screenshots', function () {
   before(function () {
     mkdirSync(dir, { recursive: true });
   });
-  for (const note of ['worked-example', 'blocks', 'lists', 'embeds', 'long-content']) {
+  for (const note of [
+    'worked-example',
+    'blocks',
+    'lists',
+    'embeds',
+    'long-content',
+    'thematic-breaks',
+  ]) {
     it(note, async function () {
       await openMindMap(`fixtures/${note}.md`);
       await settle();
@@ -21,6 +28,15 @@ describe('screenshots', function () {
       await browser.saveScreenshot(`${dir}/${note}.png`);
     });
   }
+
+  it('dividers at 100 %', async function () {
+    await openMindMap('fixtures/thematic-breaks.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/thematic-breaks-100.png`);
+  });
 
   for (const layout of [
     'circle-clockwise',

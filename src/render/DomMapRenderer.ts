@@ -306,6 +306,19 @@ export class DomMapRenderer implements MapRenderer {
       }
       path.setAttribute('d', edgePath(edge));
     });
+    this.renderDividers(layout, svg);
+  }
+
+  /** Spec "Dividers": few per map, so they are simply redrawn; above the edges, below cross-links. */
+  private renderDividers(layout: MapLayout, svg: SVGSVGElement): void {
+    for (const old of Array.from(svg.querySelectorAll('.mind-mapper-divider'))) old.remove();
+    const firstCrossLink = svg.querySelector('.mind-mapper-crosslink');
+    for (const { from, to } of layout.dividers) {
+      const path = this.worldEl.doc.createElementNS(SVG_NS, 'path');
+      path.classList.add('mind-mapper-divider');
+      path.setAttribute('d', `M ${from.x} ${from.y} L ${to.x} ${to.y}`);
+      svg.insertBefore(path, firstCrossLink);
+    }
   }
 
   private nodeIdOf(event: Event): string | null {

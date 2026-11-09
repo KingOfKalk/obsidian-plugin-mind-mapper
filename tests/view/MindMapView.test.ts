@@ -1016,6 +1016,23 @@ function escHandlers(view: MindMapView): MockScope['handlers'] {
   );
 }
 
+describe('dividers', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const dividerCount = (view: MindMapView) =>
+    view.contentEl.querySelectorAll('path.mind-mapper-divider').length;
+
+  test('dividers of the thematic-breaks note are drawn; a collapsed parent hides its own', async () => {
+    const { view } = await openWith('thematic-breaks', {});
+    expect(dividerCount(view)).toBe(5);
+    view.toggleCollapse('Dividers/Paragraph directly above dashes');
+    expect(dividerCount(view)).toBe(4);
+    view.toggleCollapse('Dividers/Paragraph directly above dashes');
+    expect(dividerCount(view)).toBe(5);
+  });
+});
+
 describe('back to root and full screen', () => {
   afterEach(() => document.body.empty());
 

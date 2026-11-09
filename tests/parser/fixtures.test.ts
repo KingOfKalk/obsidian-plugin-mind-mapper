@@ -186,3 +186,19 @@ test('thematic breaks: every variant is skipped, setext dashes make a heading, a
   const { cache } = loadFixture('thematic-breaks');
   expect(cache?.frontmatter).toEqual({ 'mind-mapper-layout': 'left-to-right' });
 });
+
+test('thematic breaks: dividers mark the following sibling, never before a heading', () => {
+  const flagged: string[] = [];
+  const visit = (node: MindMapNode): void => {
+    if (node.dividerBefore) flagged.push(node.id);
+    node.children.forEach(visit);
+  };
+  visit(treeOf('thematic-breaks'));
+  expect(flagged).toEqual([
+    'Dividers/#2',
+    'Dividers/#3',
+    'Dividers/#4',
+    'Dividers/#5',
+    'Dividers/Paragraph directly above dashes/#3',
+  ]);
+});

@@ -19,7 +19,8 @@ Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lis
 - The root is the note's single H1 (if nothing comes before it), else the file name; `mind-mapper-title` overrides it
 - Every heading is a branch, nested by level (skipped levels attach to the nearest heading above)
 - Every paragraph, list item and block (code, table, math, quote, callout) is a node under its heading; nested list items nest their nodes
-- Frontmatter, comments (`%% %%`), horizontal rules, HTML blocks and footnote definitions are left out
+- Frontmatter, comments (`%% %%`), HTML blocks and footnote definitions are left out
+- Horizontal rules (`---`, `***`, `___`) are not nodes: they show as a dashed line in a wider gap between the two nodes they separate; one directly before a heading, before the first or after the last node of a section is not shown
 - Large nodes are capped at the max node size (default 320 × 240 px) with a fade; the expand icon shows all of it
 - Image embeds show a thumbnail; other embeds become plain links (no transclusion)
 

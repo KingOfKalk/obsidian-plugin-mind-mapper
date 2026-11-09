@@ -131,3 +131,29 @@ describe('frontmatter', function () {
     expect(notices).toBe(1);
   });
 });
+
+describe('dividers', function () {
+  it('are drawn in the gap between their two neighbours', async function () {
+    await openMindMap('fixtures/thematic-breaks.md');
+    await settle();
+    const result = await browser.execute(() => {
+      const rect = (id: string) =>
+        document.querySelector(`.mind-mapper-node[data-node-id="${id}"]`)?.getBoundingClientRect();
+      const lines = [...document.querySelectorAll('path.mind-mapper-divider')].map((p) =>
+        p.getBoundingClientRect(),
+      );
+      const above = rect('Dividers/#1');
+      const below = rect('Dividers/#2');
+      const first = lines.sort((a, b) => a.top - b.top)[0];
+      return {
+        count: lines.length,
+        stroke: getComputedStyle(document.querySelector('path.mind-mapper-divider')!).stroke,
+        between:
+          !!above && !!below && !!first && first.top > above.bottom && first.bottom < below.top,
+      };
+    });
+    expect(result.count).toBe(5);
+    expect(result.between).toBe(true);
+    expect(result.stroke).not.toBe('none');
+  });
+});

@@ -16,6 +16,7 @@ const layout: MapLayout = {
     { fromId: 'R', toId: 'R/A', source: { x: 200, y: 0 }, target: { x: 260, y: -24 }, axis: 'x' },
     { fromId: 'R', toId: 'R/B', source: { x: 200, y: 0 }, target: { x: 260, y: 24 }, axis: 'x' },
   ],
+  dividers: [],
   bounds: { x: 0, y: -42, width: 460, height: 84 },
 };
 
@@ -385,7 +386,7 @@ describe('culling', () => {
       target: { x: p.x, y: p.y + 10 },
       axis: 'x' as const,
     }));
-    return { nodes, edges, bounds: { x: 0, y: 0, width: 3900, height: 3820 } };
+    return { nodes, edges, dividers: [], bounds: { x: 0, y: 0, width: 3900, height: 3820 } };
   }
 
   function culled() {
@@ -528,4 +529,28 @@ test('a new layout reuses the edge path elements', () => {
   expect(after[0]?.getAttribute('d')).toBe('M 200 0 C 235 0, 235 -24, 270 -24');
   renderer.setLayout({ ...layout, edges: layout.edges.slice(0, 1) });
   expect(parent.querySelectorAll('path.mind-mapper-edge')).toHaveLength(1);
+});
+
+test('dividers are drawn as dashed lines below cross-links and replaced on each layout', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout({
+    ...layout,
+    dividers: [{ parentId: 'R', from: { x: 260, y: 0 }, to: { x: 460, y: 0 } }],
+  });
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B' }]);
+  const svg = parent.querySelector('svg.mind-mapper-edges');
+  const dividers = [...(svg?.querySelectorAll('path.mind-mapper-divider') ?? [])];
+  expect(dividers.map((d) => d.getAttribute('d'))).toEqual(['M 260 0 L 460 0']);
+  renderer.setLayout({
+    ...layout,
+    dividers: [{ parentId: 'R', from: { x: 260, y: 5 }, to: { x: 460, y: 5 } }],
+  });
+  const classes = [...(svg?.children ?? [])].map((el) => el.getAttribute('class'));
+  expect(classes.filter((c) => c === 'mind-mapper-divider')).toHaveLength(1);
+  expect(classes.indexOf('mind-mapper-divider')).toBeLessThan(
+    classes.indexOf('mind-mapper-crosslink'),
+  );
+  expect(svg?.querySelector('path.mind-mapper-divider')?.getAttribute('d')).toBe('M 260 5 L 460 5');
+  renderer.setLayout(layout);
+  expect(svg?.querySelectorAll('path.mind-mapper-divider')).toHaveLength(0);
 });

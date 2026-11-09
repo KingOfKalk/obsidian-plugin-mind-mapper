@@ -60,6 +60,8 @@ export interface MindMapNode {
   line: number | null;
   /** Last source line of the node's own content (cross-link mapping); absent for the virtual root. */
   endLine?: number;
+  /** A divider (thematic break) sits between this node and its previous sibling (spec "Dividers"). */
+  dividerBefore?: boolean;
   children: MindMapNode[];
 }
 

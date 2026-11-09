@@ -48,20 +48,28 @@ export function buildTree(
   const builder = new ChildBuilder();
   const stack: MindMapNode[] = [root];
   const current = (): MindMapNode => stack[stack.length - 1] ?? root;
+  // Parent under which a divider is waiting for the next sibling (spec "Dividers").
+  let dividerParent: MindMapNode | null = null;
 
   for (const item of orderedItems(input)) {
     if ('heading' in item) {
       const heading = item.heading;
+      dividerParent = null; // directly before a heading: ignored
       if (h1IsRoot && heading === onlyH1) continue;
       while (stack.length > 1 && current().level >= heading.level) stack.pop();
       const parent = current();
       const child = headingNode(builder.headingId(parent, heading.text), heading, 'heading');
       parent.children.push(child);
       stack.push(child);
+    } else if (item.section.type === 'thematicBreak') {
+      // Before the first child there is nothing to separate.
+      if (current().children.length > 0) dividerParent = current();
     } else {
-      for (const child of sectionNodes(item.section, input, current(), builder)) {
-        current().children.push(child);
-      }
+      const children = sectionNodes(item.section, input, current(), builder);
+      const first = children[0];
+      if (first && dividerParent === current()) first.dividerBefore = true;
+      if (first) dividerParent = null;
+      current().children.push(...children);
     }
   }
   return { root };

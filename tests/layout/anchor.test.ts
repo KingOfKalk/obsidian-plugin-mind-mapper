@@ -19,6 +19,7 @@ function positioned(id: string, x: number, y: number): PositionedNode {
 const layout: MapLayout = {
   nodes: [positioned('a', 0, 0), positioned('b', 200, 0), positioned('c', 200, 100)],
   edges: [],
+  dividers: [],
   bounds: { x: 0, y: 0, width: 300, height: 120 },
 };
 
