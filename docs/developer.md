@@ -65,6 +65,29 @@
   - Writes PNGs to `e2e/screenshots/` (git-ignored); `SCREENSHOT_DIR=<dir>` overrides the directory
   - Run it for every UI change, then open the PNGs and look at them: tests have missed visual bugs (checkboxes, code, diagrams)
   - Look for: clipped or overlapping nodes, wrong fades, missing content (code, Mermaid, math, tables, callouts), edges not attached to nodes, dashed link lines and dividers, layout direction and balance, controls and collapse buttons
+- Loud palette (same run, `loud-*.png`)
+  - Obsidian's real colours are subtle, so a colour on the wrong element is hard to see; the spec injects `<style id="loud-palette">` (body variables, `!important`) around the loud shots and removes it afterwards; test-only, not shipped
+  - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`
+  - Legend (variable: loud colour; used by):
+    - `--color-red`: magenta; rainbow level 1 and 7
+    - `--color-orange`: lime; rainbow level 2 and 8, forest level 3
+    - `--color-yellow`: blue; rainbow level 3, forest level 2
+    - `--color-green`: yellow; rainbow level 4, ocean level 3, forest level 1
+    - `--color-blue`: red; rainbow level 5, ocean level 1
+    - `--color-cyan`: black; ocean level 2
+    - `--color-purple`: cyan; rainbow level 6, ocean level 4
+    - `--color-pink`: orange; unused by the plugin
+    - `--interactive-accent` (and `--color-accent`): violet; root border, selection ring, cross-links, collapsed badge, accent theme
+    - `--text-on-accent`: gold; count in the collapsed badge
+    - `--text-faint`: sky blue; edges without a colour theme
+    - `--hr-color`: teal; dividers
+    - `--background-modifier-border`: brown; node border without a theme, collapse button and controls border, skeleton stroke
+    - `--background-primary`: pale yellow; canvas, node tint base, buttons, controls
+    - `--background-secondary`: pale pink; skeleton rects (below 20 % zoom)
+    - `--text-normal`: dark purple; node text
+    - `--text-muted`: dark green; title chip, collapse button text, controls, expand button
+    - `--text-error`: raspberry; render-error node border
+  - Anything that Obsidian styles itself (checkboxes, links, table borders, list markers, code background) also takes the loud colours; ignore those
 - README images (`npm run readme:images`)
   - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `test-vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes

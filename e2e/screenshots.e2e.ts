@@ -193,6 +193,83 @@ describe('screenshots', function () {
     });
   }
 
+  // Loud palette (see LOUD_PALETTE): wrong, missing or leaking colours stand out. Review by eye.
+  const deepNote = [
+    '---',
+    'mind-mapper-layout: left-to-right',
+    '---',
+    '# Deep',
+    '## Level 1',
+    '### Level 2',
+    '#### Level 3',
+    '##### Level 4',
+    '###### Level 5',
+    '- Level 6',
+    '  - Level 7',
+    '    - Level 8',
+    '## Level 1 again',
+    'A paragraph on level 2.',
+    '',
+  ].join('\n');
+
+  it('loud rainbow, deep map with a selected node', async function () {
+    await useTheme('rainbow', 'light');
+    await writeNote('theme-deep.md', deepNote);
+    await openMindMap('theme-deep.md');
+    await settle();
+    await browser.execute(() => {
+      document
+        .querySelector<HTMLElement>('.mind-mapper-node[data-level="3"] .mind-mapper-node-content')
+        ?.click();
+    });
+    await settle();
+    await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-rainbow-deep.png`));
+  });
+
+  it('loud rainbow, collapsed branch, cross-links and divider', async function () {
+    await useTheme('rainbow', 'light');
+    await openMindMap('demo/Feature tour.md');
+    await settle();
+    await browser.execute(() => {
+      const node = Array.from(
+        document.querySelectorAll<HTMLElement>('.mind-mapper-node[data-node-id]'),
+      ).find((el) => el.dataset.nodeId?.endsWith('/Timeline'));
+      document
+        .querySelector<HTMLElement>(`.mind-mapper-collapse[data-node-id="${node?.dataset.nodeId}"]`)
+        ?.click();
+    });
+    await settle();
+    await withLoudPalette(async () => {
+      await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+      await browser.pause(300);
+      await browser.saveScreenshot(`${dir}/loud-rainbow-tour-window.png`);
+      await saveFullScreenShot(`${dir}/loud-rainbow-tour.png`);
+    });
+  });
+
+  it('loud rainbow, clipped nodes', async function () {
+    await useTheme('rainbow', 'light');
+    await openMindMap('fixtures/long-content.md');
+    await settle();
+    await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-rainbow-clipped.png`));
+  });
+
+  for (const theme of ['none', 'accent', 'ocean', 'forest']) {
+    it(`loud ${theme}, tour`, async function () {
+      await useTheme(theme, 'light');
+      await openMindMap('demo/Feature tour.md');
+      await settle();
+      await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-${theme}-tour.png`));
+    });
+  }
+
+  it('loud none, full screen lists', async function () {
+    await useTheme('none', 'light');
+    await openMindMap('fixtures/lists.md');
+    await settle();
+    await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-none-full-screen.png`));
+  });
+
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
   });
@@ -211,6 +288,79 @@ describe('screenshots', function () {
     await setObsidianLanguage(null);
   });
 });
+
+/**
+ * Loud palette (test-only, never shipped): Obsidian's real colours are subtle, so a colour on the
+ * wrong element is hard to see. These overrides give every variable that styles.css uses its own
+ * unmistakable colour. Legend (variable -> colour; the plugin element that uses it):
+ *   --color-red     magenta  #ff00ff  rainbow level 1 / 7, forest/ocean: unused
+ *   --color-orange  lime     #00ff00  rainbow level 2 / 8, forest level 3
+ *   --color-yellow  blue     #0000ff  rainbow level 3, forest level 2
+ *   --color-green   yellow   #ffff00  rainbow level 4, ocean level 3, forest level 1
+ *   --color-blue    red      #ff0000  rainbow level 5, ocean level 1
+ *   --color-cyan    black    #000000  ocean level 2
+ *   --color-purple  cyan     #00ffff  rainbow level 6, ocean level 4
+ *   --color-pink    orange   #ff8000  (unused by the plugin)
+ *   --interactive-accent  violet   #8000ff  accent theme, cross-links, selection ring, collapsed badge, hover
+ *   --text-on-accent      gold     #ffcc00  count in the collapsed badge
+ *   --text-faint          sky blue #00a0ff  edges without a colour theme
+ *   --hr-color            teal     #008080  dividers
+ *   --background-modifier-border  brown #996633  node border (no theme), skeleton stroke, collapse button and controls border
+ *   --background-primary  pale yellow #ffffcc  canvas, nodes (10 % tint base), buttons, controls
+ *   --background-secondary pale pink  #ffccee  skeleton rects below 20 % zoom
+ *   --text-normal         dark purple #330066  node text, button hover
+ *   --text-muted          dark green  #006633  canvas text, collapse count, controls
+ *   --text-error          raspberry   #cc0066  render-error node border
+ */
+const LOUD_PALETTE: Record<string, string> = {
+  '--color-red': '#ff00ff',
+  '--color-red-rgb': '255, 0, 255',
+  '--color-orange': '#00ff00',
+  '--color-orange-rgb': '0, 255, 0',
+  '--color-yellow': '#0000ff',
+  '--color-yellow-rgb': '0, 0, 255',
+  '--color-green': '#ffff00',
+  '--color-green-rgb': '255, 255, 0',
+  '--color-blue': '#ff0000',
+  '--color-blue-rgb': '255, 0, 0',
+  '--color-cyan': '#000000',
+  '--color-cyan-rgb': '0, 0, 0',
+  '--color-purple': '#00ffff',
+  '--color-purple-rgb': '0, 255, 255',
+  '--color-pink': '#ff8000',
+  '--color-pink-rgb': '255, 128, 0',
+  '--color-accent': '#8000ff',
+  '--interactive-accent': '#8000ff',
+  '--interactive-accent-hover': '#8000ff',
+  '--text-on-accent': '#ffcc00',
+  '--text-faint': '#00a0ff',
+  '--hr-color': '#008080',
+  '--background-modifier-border': '#996633',
+  '--background-primary': '#ffffcc',
+  '--background-secondary': '#ffccee',
+  '--text-normal': '#330066',
+  '--text-muted': '#006633',
+  '--text-error': '#cc0066',
+};
+
+/** Runs `shoot` with the loud palette injected (light mode); the style is removed afterwards. */
+async function withLoudPalette(shoot: () => Promise<void>): Promise<void> {
+  const css = Object.entries(LOUD_PALETTE)
+    .map(([name, value]) => `${name}: ${value} !important;`)
+    .join(' ');
+  await browser.execute((rules) => {
+    const style = document.createElement('style');
+    style.id = 'loud-palette';
+    style.textContent = `body, body.theme-light, body.theme-dark { ${rules} }`;
+    document.head.appendChild(style);
+  }, css);
+  try {
+    await browser.pause(300);
+    await shoot();
+  } finally {
+    await browser.execute(() => document.getElementById('loud-palette')?.remove());
+  }
+}
 
 /** Full screen fits the map to the whole window; Esc leaves it again. */
 async function saveFullScreenShot(path: string): Promise<void> {
