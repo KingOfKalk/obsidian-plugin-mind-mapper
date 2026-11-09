@@ -14,6 +14,8 @@ export interface MapActions {
 /** Floating Canvas-style controls, bottom center. */
 export class MapControls {
   private readonly resetButton: HTMLButtonElement;
+  private readonly collapseButton: HTMLButtonElement;
+  private anyCollapsed = false;
 
   constructor(parentEl: HTMLElement, actions: MapActions) {
     const el = parentEl.createDiv({ cls: 'mind-mapper-controls' });
@@ -27,11 +29,23 @@ export class MapControls {
     this.resetButton = button('Reset zoom to 100%', () => actions.resetZoom());
     button('Zoom in', () => actions.zoomIn(), 'zoom-in');
     button('Fit to view', () => actions.fitToView(), 'maximize');
-    button('Collapse all', () => actions.collapseAll(), 'chevrons-down-up');
-    button('Expand all', () => actions.expandAll(), 'chevrons-up-down');
+    // One button for both (spec "Collapse / expand"): it shows the state, see setCollapsed.
+    this.collapseButton = button('Collapse all', () =>
+      this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),
+    );
     button('Back to root', () => actions.backToRoot(), 'locate');
     button('Toggle full screen', () => actions.toggleFullScreen(), 'maximize-2');
     this.setZoom(1);
+    this.setCollapsed(false);
+  }
+
+  /** While any node is collapsed the button expands all (highlighted), otherwise it collapses all. */
+  setCollapsed(anyCollapsed: boolean): void {
+    this.anyCollapsed = anyCollapsed;
+    const b = this.collapseButton;
+    b.setAttribute('aria-label', anyCollapsed ? 'Expand all' : 'Collapse all');
+    b.toggleClass('is-active', anyCollapsed);
+    setIcon(b, anyCollapsed ? 'chevrons-up-down' : 'chevrons-down-up');
   }
 
   setZoom(zoom: number): void {

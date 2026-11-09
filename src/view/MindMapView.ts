@@ -640,6 +640,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     dom.placeholderEl.hidden = true;
     dom.renderer.canvasEl.hidden = false;
     dom.renderer.setLayout(layout, this.collapseInfo);
+    dom.controls.setCollapsed(this.collapse.size > 0);
     if (this.tree) {
       const shown = new Set(layout.nodes.map((p) => p.node.id));
       dom.renderer.setCrossLinks(visibleCrossLinks(this.tree, this.links, shown));

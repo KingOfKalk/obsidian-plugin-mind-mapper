@@ -108,18 +108,22 @@ describe('live update', function () {
     await expect(node('Project/Tasks/#1')).toExist();
   });
 
-  it('collapse all and expand all buttons in the controls work', async function () {
+  it('one collapse button collapses and expands all and shows the state', async function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();
-    const collapseButton = browser.$('.mind-mapper-controls button[aria-label="Collapse all"]');
-    const expandButton = browser.$('.mind-mapper-controls button[aria-label="Expand all"]');
-    await expect(collapseButton.$('svg')).toExist();
-    await expect(expandButton.$('svg')).toExist();
-    await collapseButton.click();
+    const button = () => browser.$('.mind-mapper-controls button:nth-child(5)');
+    await expect(button()).toHaveAttribute('aria-label', 'Collapse all');
+    await button().click();
     await expect(node('Project/Tasks/#1')).not.toExist();
     await expect(node('Project/Tasks')).toExist();
-    await expandButton.click();
+    await expect(button()).toHaveAttribute('aria-label', 'Expand all');
+    await expect(button()).toHaveElementClass('is-active');
+    // the icon is swapped, not added
+    expect(await button().$$('svg').length).toBe(1);
+    await button().click();
     await expect(node('Project/Tasks/#1')).toExist();
+    await expect(button()).toHaveAttribute('aria-label', 'Collapse all');
+    expect(await button().$$('svg').length).toBe(1);
   });
 });
 

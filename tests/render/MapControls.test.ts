@@ -17,7 +17,7 @@ function setup() {
   return { actions, controls, buttons };
 }
 
-test('renders eight buttons in order with aria labels', () => {
+test('renders seven buttons in order with aria labels', () => {
   const { buttons } = setup();
   expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
     'Zoom out',
@@ -25,7 +25,6 @@ test('renders eight buttons in order with aria labels', () => {
     'Zoom in',
     'Fit to view',
     'Collapse all',
-    'Expand all',
     'Back to root',
     'Toggle full screen',
   ]);
@@ -35,7 +34,6 @@ test('renders eight buttons in order with aria labels', () => {
     'zoom-in',
     'maximize',
     'chevrons-down-up',
-    'chevrons-up-down',
     'locate',
     'maximize-2',
   ]);
@@ -44,12 +42,12 @@ test('renders eight buttons in order with aria labels', () => {
 test('each button calls its action once', () => {
   const { actions, buttons } = setup();
   buttons.forEach((b) => b.click());
+  expect(actions.expandAll).not.toHaveBeenCalled();
   expect(actions.zoomOut).toHaveBeenCalledTimes(1);
   expect(actions.resetZoom).toHaveBeenCalledTimes(1);
   expect(actions.zoomIn).toHaveBeenCalledTimes(1);
   expect(actions.fitToView).toHaveBeenCalledTimes(1);
   expect(actions.collapseAll).toHaveBeenCalledTimes(1);
-  expect(actions.expandAll).toHaveBeenCalledTimes(1);
   expect(actions.backToRoot).toHaveBeenCalledTimes(1);
   expect(actions.toggleFullScreen).toHaveBeenCalledTimes(1);
 });
@@ -61,4 +59,22 @@ test('reset button shows the zoom percentage', () => {
   expect(buttons[1]?.textContent).toBe('50%');
   controls.setZoom(1.234);
   expect(buttons[1]?.textContent).toBe('123%');
+});
+
+test('the collapse button shows the state: expand all while anything is collapsed', () => {
+  const { actions, controls, buttons } = setup();
+  const toggle = buttons[4];
+  controls.setCollapsed(true);
+  expect(toggle?.getAttribute('aria-label')).toBe('Expand all');
+  expect(toggle?.dataset.icon).toBe('chevrons-up-down');
+  expect(toggle?.classList.contains('is-active')).toBe(true);
+  toggle?.click();
+  expect(actions.expandAll).toHaveBeenCalledTimes(1);
+  expect(actions.collapseAll).not.toHaveBeenCalled();
+  controls.setCollapsed(false);
+  expect(toggle?.getAttribute('aria-label')).toBe('Collapse all');
+  expect(toggle?.dataset.icon).toBe('chevrons-down-up');
+  expect(toggle?.classList.contains('is-active')).toBe(false);
+  toggle?.click();
+  expect(actions.collapseAll).toHaveBeenCalledTimes(1);
 });

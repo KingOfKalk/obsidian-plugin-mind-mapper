@@ -659,6 +659,21 @@ describe('collapse and selection', () => {
     expect(nodeIds(view)).toContain('Live/Gamma/#1');
   });
 
+  test('the collapse button follows the collapse state', async () => {
+    const { view } = await openWorked();
+    const button = () =>
+      view.contentEl.querySelector<HTMLElement>('.mind-mapper-controls button:nth-child(5)');
+    expect(button()?.getAttribute('aria-label')).toBe('Collapse all');
+    button()?.click();
+    expect(nodeIds(view)).not.toContain('Project/Tasks/#1');
+    expect(button()?.getAttribute('aria-label')).toBe('Expand all');
+    button()?.click();
+    expect(nodeIds(view)).toContain('Project/Tasks/#1');
+    expect(button()?.getAttribute('aria-label')).toBe('Collapse all');
+    view.toggleCollapse('Project/Notes');
+    expect(button()?.getAttribute('aria-label')).toBe('Expand all');
+  });
+
   test('click selects a node; the selection survives a live update and stays in place', async () => {
     const { view, ws } = await openLive();
     view.setTransform({ x: 20, y: 280, zoom: 1 });
