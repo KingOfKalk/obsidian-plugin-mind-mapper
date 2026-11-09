@@ -70,6 +70,8 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
 - Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), hover shows the page preview
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
+- Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
+- Double click a dashed link line: jump to the line in the note where the link is written
 - Full screen covers the whole Obsidian window (previews, menus and notices stay on top); `Esc` or the button top right exits and restores the previous view; the controls fade after 2 s without mouse movement
 
 ## Layout and theme of the open map

@@ -241,9 +241,17 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     return this.selected;
   }
 
+  /** Selecting (or clearing) a node ends a link highlight; it never highlights links itself. */
   select(id: string | null): void {
     this.selected = id;
     this.dom?.renderer.setSelected(id);
+    this.dom?.renderer.setHighlightedLink(null);
+  }
+
+  /** A tap on a link line highlights that link instead of a node (issue #21). */
+  private highlightLink(link: CrossLink): void {
+    this.select(null);
+    this.dom?.renderer.setHighlightedLink(link);
   }
 
   get isFullScreen(): boolean {
@@ -793,8 +801,17 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       this,
       renderer.canvasEl,
       this,
-      () => this.select(null),
-      () => this.fitToView(),
+      (target) => {
+        const link = renderer.crossLinkAt(target);
+        if (link) this.highlightLink(link);
+        else this.select(null);
+      },
+      (target) => {
+        // A double click on a link line jumps to where the link is written; elsewhere it fits.
+        const link = renderer.crossLinkAt(target);
+        if (link) this.jumpTo(link.line);
+        else this.fitToView();
+      },
     );
     attachLinkHandling(renderer.canvasEl, {
       app: this.app,

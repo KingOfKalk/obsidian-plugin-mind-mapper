@@ -21,7 +21,7 @@ test('nodeAtLine picks the innermost node', () => {
   expect(nodeAtLine(t, 3)).toBeNull();
 });
 
-test('crossLinks maps lines to node ids, drops self links and duplicates', () => {
+test('crossLinks maps lines to node ids and keeps the source line; drops self links and duplicates', () => {
   expect(
     crossLinks(tree(), [
       { fromLine: 4, toLine: 6 },
@@ -31,8 +31,8 @@ test('crossLinks maps lines to node ids, drops self links and duplicates', () =>
       { fromLine: 16, toLine: 12 },
     ]),
   ).toEqual([
-    { fromId: 'Links/Alpha/#1', toId: 'Links/Beta' },
-    { fromId: 'Links/Gamma/#2', toId: 'Links/Gamma' },
+    { fromId: 'Links/Alpha/#1', toId: 'Links/Beta', line: 4 },
+    { fromId: 'Links/Gamma/#2', toId: 'Links/Gamma', line: 16 },
   ]);
 });
 
@@ -46,16 +46,16 @@ test('visibleCrossLinks moves hidden ends to the nearest visible ancestor', () =
     visibleCrossLinks(
       t,
       [
-        { fromId: 'Links/Gamma/#2/#1', toId: 'Links/Beta/Inner' },
-        { fromId: 'Links/Gamma/#1', toId: 'Links/Beta' },
-        { fromId: 'Links/Gamma/#2', toId: 'Links/Gamma' },
-        { fromId: 'Links/Alpha/#1', toId: 'Links/Beta/Inner/#1' },
+        { fromId: 'Links/Gamma/#2/#1', toId: 'Links/Beta/Inner', line: 17 },
+        { fromId: 'Links/Gamma/#1', toId: 'Links/Beta', line: 14 },
+        { fromId: 'Links/Gamma/#2', toId: 'Links/Gamma', line: 16 },
+        { fromId: 'Links/Alpha/#1', toId: 'Links/Beta/Inner/#1', line: 4 },
       ],
       visible,
     ),
   ).toEqual([
-    { fromId: 'Links/Gamma', toId: 'Links/Beta' },
-    { fromId: 'Links/Alpha/#1', toId: 'Links/Beta' },
+    { fromId: 'Links/Gamma', toId: 'Links/Beta', line: 17 },
+    { fromId: 'Links/Alpha/#1', toId: 'Links/Beta', line: 4 },
   ]);
 });
 

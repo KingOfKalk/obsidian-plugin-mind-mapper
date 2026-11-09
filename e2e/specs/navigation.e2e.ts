@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { leafSummary, openMindMap, openNote, settle } from '../helpers';
+import { leafSummary, mouseOnNode, openMindMap, openNote, settle } from '../helpers';
 
 const CANVAS = '.mind-mapper-canvas';
 
@@ -22,6 +22,214 @@ describe('cross-links', function () {
     expect(await crossLinkCount()).toBe(3);
     await browser.executeObsidianCommand('mind-mapper:expand-all');
     expect(await crossLinkCount()).toBe(6);
+  });
+
+  it('do not show through nodes without a box (root, level 3)', async function () {
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    const probe = await browser.execute(() => {
+      const canvasColor = (): string => {
+        const el = document.body.appendChild(document.createElement('div'));
+        el.style.color = 'var(--background-primary)';
+        const color = getComputedStyle(el).color;
+        el.remove();
+        return color;
+      };
+      const root = document.querySelector<HTMLElement>('.mind-mapper-node.is-root');
+      const plain = document.querySelector<HTMLElement>(
+        '.mind-mapper-node[data-level="3"]:not(.is-block)',
+      );
+      const r = root?.getBoundingClientRect();
+      if (!root || !plain || !r) return null;
+      // a point of a link line inside the root's box: the root is on top there
+      let onRoot: boolean | null = null;
+      for (const path of Array.from(
+        document.querySelectorAll<SVGPathElement>('path.mind-mapper-crosslink'),
+      )) {
+        const matrix = path.getScreenCTM();
+        if (!matrix || onRoot !== null) continue;
+        const length = path.getTotalLength();
+        for (let i = 1; i < 200 && onRoot === null; i++) {
+          const q = path.getPointAtLength((length * i) / 200);
+          const p = new DOMPoint(q.x, q.y).matrixTransform(matrix);
+          if (p.x > r.left + 2 && p.x < r.right - 2 && p.y > r.top + 2 && p.y < r.bottom - 2) {
+            onRoot = root.contains(document.elementFromPoint(p.x, p.y));
+          }
+        }
+      }
+      return {
+        onRoot,
+        root: getComputedStyle(root).backgroundColor,
+        plain: getComputedStyle(plain).backgroundColor,
+        canvas: canvasColor(),
+      };
+    });
+    if (!probe) throw new Error('no root or level 3 node');
+    // the fixture has a line crossing the root (circle layout)
+    expect(probe.onRoot).toBe(true);
+    // opaque in the canvas colour: no box to see, but lines behind it are covered
+    expect(probe.root).toBe(probe.canvas);
+    expect(probe.plain).toBe(probe.canvas);
+  });
+});
+
+/**
+ * A viewport point on the link line from `fromId` to `toId` where its hit path is the topmost
+ * element (not covered by a node, a toggle or another line).
+ */
+async function linkLinePoint(fromId: string, toId: string): Promise<{ x: number; y: number }> {
+  const point = await browser.execute(
+    (from, to) => {
+      const hit = document.querySelector<SVGPathElement>(
+        `.mind-mapper-crosslink-hit[data-from-id="${from}"][data-to-id="${to}"]`,
+      );
+      const matrix = hit?.getScreenCTM();
+      if (!hit || !matrix) return null;
+      const length = hit.getTotalLength();
+      for (let f = 0.5; f > 0.05; f -= 0.05) {
+        for (const at of [f, 1 - f]) {
+          const p = new DOMPoint(
+            hit.getPointAtLength(length * at).x,
+            hit.getPointAtLength(length * at).y,
+          ).matrixTransform(matrix);
+          const x = Math.round(p.x);
+          const y = Math.round(p.y);
+          if (document.elementFromPoint(x, y) === hit) return { x, y };
+        }
+      }
+      return null;
+    },
+    fromId,
+    toId,
+  );
+  if (!point) throw new Error(`no free point on the link line ${fromId} -> ${toId}`);
+  return point;
+}
+
+function linkEnds(): Promise<string[]> {
+  return browser.execute(() =>
+    Array.from(document.querySelectorAll<HTMLElement>('.mind-mapper-node.is-link-end'))
+      .map((el) => el.dataset.nodeId ?? '')
+      .sort(),
+  );
+}
+
+function highlightedLines(): Promise<number> {
+  return browser.execute(
+    () => document.querySelectorAll('path.mind-mapper-crosslink.is-highlighted').length,
+  );
+}
+
+describe('clicking a link line', function () {
+  it('rings both end nodes in the accent colour; a node selection highlights no links', async function () {
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    const { x, y } = await linkLinePoint('Links/Gamma/#1', 'Links/Beta/Inner');
+    // hover: pointer cursor and a slightly thicker line
+    await browser.action('pointer').move({ x, y, origin: 'viewport' }).perform();
+    const hover = await browser.execute(() => {
+      const hit = document.querySelector(
+        '.mind-mapper-crosslink-hit[data-from-id="Links/Gamma/#1"][data-to-id="Links/Beta/Inner"]',
+      );
+      const line = hit?.previousElementSibling;
+      return {
+        cursor: hit ? getComputedStyle(hit).cursor : '',
+        width: line ? getComputedStyle(line).strokeWidth : '',
+        dashed: line ? getComputedStyle(line).strokeDasharray !== 'none' : false,
+      };
+    });
+    expect(hover).toEqual({ cursor: 'pointer', width: '2.5px', dashed: true });
+    await browser.action('pointer').move({ x, y, origin: 'viewport' }).down().up().perform();
+    await browser.waitUntil(async () => (await linkEnds()).length === 2, {
+      timeout: 5000,
+      timeoutMsg: 'a click on the line did not highlight its ends',
+    });
+    expect(await linkEnds()).toEqual(['Links/Beta/Inner', 'Links/Gamma/#1']);
+    expect(await highlightedLines()).toBe(1);
+    // still a link (dashed), not a tree edge: only thicker
+    const line = await browser.execute(() => {
+      const el = document.querySelector('path.mind-mapper-crosslink.is-highlighted');
+      const style = el ? getComputedStyle(el) : null;
+      return { dash: style?.strokeDasharray ?? '', width: style?.strokeWidth ?? '' };
+    });
+    expect(line.dash).not.toBe('none');
+    expect(line.dash).not.toBe('');
+    expect(line.width).toBe('3px');
+    // a copy of it is drawn above every node (all other lines stay behind the nodes)
+    const overlay = await browser.execute(() => {
+      const path = document.querySelector<SVGPathElement>(
+        'svg.mind-mapper-highlight-layer path.mind-mapper-crosslink-highlight',
+      );
+      if (!path) return null;
+      const style = getComputedStyle(path);
+      return {
+        aboveNodes: Array.from(document.querySelectorAll('.mind-mapper-node')).every(
+          (node) => (node.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+        ),
+        d: path.getAttribute('d'),
+        lineD: document
+          .querySelector('path.mind-mapper-crosslink.is-highlighted')
+          ?.getAttribute('d'),
+        dash: style.strokeDasharray,
+        width: style.strokeWidth,
+        pointerEvents: path.ownerSVGElement
+          ? getComputedStyle(path.ownerSVGElement).pointerEvents
+          : '',
+      };
+    });
+    expect(overlay).not.toBeNull();
+    expect(overlay?.aboveNodes).toBe(true);
+    expect(overlay?.d).toBe(overlay?.lineD);
+    expect(overlay?.dash).not.toBe('none');
+    expect(overlay?.dash).not.toBe('');
+    expect(overlay?.width).toBe('3px');
+    expect(overlay?.pointerEvents).toBe('none');
+    // the same ring as a selected node, in the accent colour
+    const ring = await browser.execute(() => {
+      const el = document.querySelector('.mind-mapper-node.is-link-end');
+      const accent = getComputedStyle(document.body).getPropertyValue('--interactive-accent');
+      const probe = document.body.appendChild(document.createElement('div'));
+      probe.style.color = accent;
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return { shadow: el ? getComputedStyle(el).boxShadow : '', color };
+    });
+    expect(ring.shadow).toContain(ring.color);
+    expect(ring.shadow).toContain('2px');
+
+    await mouseOnNode('Links/Alpha', 'click');
+    await expect(browser.$('.mind-mapper-node[data-node-id="Links/Alpha"]')).toHaveElementClass(
+      'is-selected',
+    );
+    expect(await linkEnds()).toEqual([]);
+    expect(await highlightedLines()).toBe(0);
+    await expect(browser.$('svg.mind-mapper-highlight-layer')).not.toExist();
+  });
+
+  it('a double click on a line puts the cursor on the line the link is written on', async function () {
+    await openNote('fixtures/crosslinks.md');
+    await openMindMap('fixtures/crosslinks.md');
+    await settle();
+    // a small pan: the map is no longer fitted, the line stays in view
+    await browser.execute((canvasSelector) => {
+      document
+        .querySelector(canvasSelector)
+        ?.dispatchEvent(
+          new WheelEvent('wheel', { deltaX: 20, deltaY: 15, bubbles: true, cancelable: true }),
+        );
+    }, CANVAS);
+    const before = await worldTransform();
+    await doubleClickAt(await linkLinePoint('Links/Gamma/#1', 'Links/Beta/Inner'));
+    await browser.waitUntil(
+      () =>
+        browser.executeObsidian(({ app, obsidian }) => {
+          const view = app.workspace.getActiveViewOfType(obsidian.MarkdownView);
+          return view?.editor.getCursor().line === 14;
+        }),
+      { timeout: 10000, timeoutMsg: 'cursor is not on the line of [[#Beta#Inner]] (line 14)' },
+    );
+    // no fit: a double click on a line is not one on the empty canvas
+    expect(await worldTransform()).toBe(before);
   });
 });
 

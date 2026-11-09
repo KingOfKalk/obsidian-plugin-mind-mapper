@@ -410,8 +410,8 @@ test('setCrossLinks draws one dashed path per link from layout rects; unknown no
   const { parent, renderer } = setup();
   renderer.setLayout(layout);
   renderer.setCrossLinks([
-    { fromId: 'R/A', toId: 'R/B' },
-    { fromId: 'R/A', toId: 'Gone' },
+    { fromId: 'R/A', toId: 'R/B', line: 3 },
+    { fromId: 'R/A', toId: 'Gone', line: 4 },
   ]);
   const paths = [...parent.querySelectorAll('svg.mind-mapper-edges path.mind-mapper-crosslink')];
   expect(paths).toHaveLength(1);
@@ -419,6 +419,123 @@ test('setCrossLinks draws one dashed path per link from layout rects; unknown no
   expect(paths[0]?.getAttribute('d')).toBe('M 360 -6 C 360 34, 360 -34, 360 6');
   renderer.setCrossLinks([]);
   expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(0);
+});
+
+const linkEnds = (parent: HTMLElement) =>
+  [...parent.querySelectorAll<HTMLElement>('.mind-mapper-node.is-link-end')].map(
+    (el) => el.dataset.nodeId,
+  );
+
+test('each cross-link gets a wide invisible hit path right after its line; crossLinkAt maps it back', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([
+    { fromId: 'R/A', toId: 'R/B', line: 3 },
+    { fromId: 'R', toId: 'R/B', line: 7 },
+  ]);
+  const svg = parent.querySelector('svg.mind-mapper-edges');
+  const hits = [...(svg?.querySelectorAll('path.mind-mapper-crosslink-hit') ?? [])];
+  expect(hits).toHaveLength(2);
+  const lines = [...(svg?.querySelectorAll('path.mind-mapper-crosslink') ?? [])];
+  expect(hits.map((h) => h.getAttribute('d'))).toEqual(lines.map((l) => l.getAttribute('d')));
+  expect(hits.map((h) => h.previousElementSibling)).toEqual(lines);
+  expect(hits.map((h) => [h.getAttribute('data-from-id'), h.getAttribute('data-to-id')])).toEqual([
+    ['R/A', 'R/B'],
+    ['R', 'R/B'],
+  ]);
+  expect(renderer.crossLinkAt(hits[1] ?? null)).toEqual({ fromId: 'R', toId: 'R/B', line: 7 });
+  expect(renderer.crossLinkAt(lines[0] ?? null)).toBeNull();
+  expect(renderer.crossLinkAt(parent.querySelector('.mind-mapper-node'))).toBeNull();
+  expect(renderer.crossLinkAt(null)).toBeNull();
+  renderer.setCrossLinks([]);
+  expect(parent.querySelectorAll('path.mind-mapper-crosslink-hit')).toHaveLength(0);
+});
+
+test('setHighlightedLink rings both end nodes and emphasises the line; null clears', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([
+    { fromId: 'R/A', toId: 'R/B', line: 3 },
+    { fromId: 'R', toId: 'R/B', line: 7 },
+  ]);
+  const highlighted = () =>
+    [...parent.querySelectorAll('path.mind-mapper-crosslink.is-highlighted')].length;
+  renderer.setHighlightedLink({ fromId: 'R', toId: 'R/B', line: 7 });
+  expect(linkEnds(parent)).toEqual(['R', 'R/B']);
+  expect(highlighted()).toBe(1);
+  const lines = [...parent.querySelectorAll('path.mind-mapper-crosslink')];
+  expect(lines[1]?.classList.contains('is-highlighted')).toBe(true);
+  // a link highlight is not a node selection
+  expect(parent.querySelectorAll('.mind-mapper-node.is-selected')).toHaveLength(0);
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  expect(linkEnds(parent)).toEqual(['R/A', 'R/B']);
+  expect(lines[0]?.classList.contains('is-highlighted')).toBe(true);
+  expect(highlighted()).toBe(1);
+  renderer.setHighlightedLink(null);
+  expect(linkEnds(parent)).toEqual([]);
+  expect(highlighted()).toBe(0);
+});
+
+test('the link highlight survives new cross-links with the same ends and ends with them', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 5 }]);
+  expect(linkEnds(parent)).toEqual(['R/A', 'R/B']);
+  expect(parent.querySelector('path.mind-mapper-crosslink')?.classList).toContain('is-highlighted');
+  expect(renderer.highlightedLink).toEqual({ fromId: 'R/A', toId: 'R/B', line: 5 });
+  renderer.setCrossLinks([{ fromId: 'R', toId: 'R/B', line: 5 }]);
+  expect(linkEnds(parent)).toEqual([]);
+  expect(renderer.highlightedLink).toBeNull();
+});
+
+/** The copy of the highlighted line drawn above the nodes, or null. */
+function highlightOverlay(parent: HTMLElement): SVGPathElement | null {
+  return parent.querySelector<SVGPathElement>(
+    'svg.mind-mapper-highlight-layer path.mind-mapper-crosslink-highlight',
+  );
+}
+
+test('the highlighted line is copied into a layer above all nodes only while highlighted', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  const overlay = highlightOverlay(parent);
+  expect(overlay?.getAttribute('d')).toBe(
+    parent.querySelector('path.mind-mapper-crosslink')?.getAttribute('d'),
+  );
+  // after every node in the world (painted above them); not a second cross-link
+  const world = parent.querySelector('.mind-mapper-world');
+  expect(world?.lastElementChild).toBe(overlay?.ownerSVGElement);
+  expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(1);
+  renderer.setHighlightedLink(null);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
+});
+
+test('the overlay follows a re-layout and goes when its link is no longer drawn', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  const before = highlightOverlay(parent)?.getAttribute('d');
+  const moved: MapLayout = {
+    ...layout,
+    nodes: layout.nodes.map((p) => (p.node.id === 'R/B' ? { ...p, y: p.y + 100 } : p)),
+  };
+  renderer.setLayout(moved);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  const after = highlightOverlay(parent)?.getAttribute('d');
+  expect(after).not.toBe(before);
+  expect(after).toBe(parent.querySelector('path.mind-mapper-crosslink')?.getAttribute('d'));
+  expect(parent.querySelector('.mind-mapper-world')?.lastElementChild).toBe(
+    highlightOverlay(parent)?.ownerSVGElement,
+  );
+  renderer.setCrossLinks([]);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
 });
 
 describe('culling', () => {
@@ -484,9 +601,25 @@ describe('culling', () => {
   test('edges and cross-links stay complete when nodes are culled', () => {
     const { parent, renderer } = culled();
     renderer.setLayout(grid());
-    renderer.setCrossLinks([{ fromId: 'n1', toId: 'n399' }]);
+    renderer.setCrossLinks([{ fromId: 'n1', toId: 'n399', line: 1 }]);
     expect(parent.querySelectorAll('path.mind-mapper-edge')).toHaveLength(399);
     expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(1);
+  });
+
+  test('a link end rendered later (panned into view) gets the ring', () => {
+    const { parent, renderer } = culled();
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.setLayout(grid());
+    renderer.setCrossLinks([{ fromId: 'n1', toId: 'n399', line: 1 }]);
+    renderer.setHighlightedLink({ fromId: 'n1', toId: 'n399', line: 1 });
+    expect(linkEnds(parent)).toEqual(['n1']);
+    renderer.setTransform({ x: -3600, y: -3600, zoom: 1 });
+    renderer.updateVisible();
+    expect(linkEnds(parent)).toEqual(['n399']);
+    // nodes created by culling stay below the highlighted line
+    expect(parent.querySelector('.mind-mapper-world')?.lastElementChild).toBe(
+      highlightOverlay(parent)?.ownerSVGElement,
+    );
   });
 
   test('below 0.2 zoom the map is a skeleton path; all node content released', () => {
@@ -597,7 +730,7 @@ test('dividers are drawn as dashed lines below cross-links and replaced on each 
     ...layout,
     dividers: [{ parentId: 'R', from: { x: 260, y: 0 }, to: { x: 460, y: 0 } }],
   });
-  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B' }]);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
   const svg = parent.querySelector('svg.mind-mapper-edges');
   const dividers = [...(svg?.querySelectorAll('path.mind-mapper-divider') ?? [])];
   expect(dividers.map((d) => d.getAttribute('d'))).toEqual(['M 260 0 L 460 0']);

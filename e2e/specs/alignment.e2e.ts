@@ -116,7 +116,19 @@ async function chooseLayout(item: string): Promise<void> {
 
 async function expectAligns(layout: string): Promise<void> {
   await settle();
-  expect({ layout, ...(await aligns()) }).toEqual({ layout, ...BY_LAYOUT[layout] });
+  // Node content renders asynchronously over several frames (slower on CI): wait until every
+  // probed node has rendered content before comparing.
+  let current = await aligns();
+  await browser
+    .waitUntil(
+      async () => {
+        current = await aligns();
+        return Object.values(current).every((value) => !value.startsWith('no content for'));
+      },
+      { timeout: 10000, interval: 100 },
+    )
+    .catch(() => {});
+  expect({ layout, ...current }).toEqual({ layout, ...BY_LAYOUT[layout] });
 }
 
 describe('text alignment', function () {
