@@ -64,7 +64,7 @@ test('in German the view commands have German names', async () => {
     'Vergrößerung auf 100 % zurücksetzen',
     'Alle einklappen',
     'Alle ausklappen',
-    'Zurück zur Wurzel',
+    'Zurück zum Hauptthema',
     'Vollbild umschalten',
   ]);
 });

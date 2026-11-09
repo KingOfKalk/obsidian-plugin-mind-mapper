@@ -6,6 +6,7 @@ import { FakeWorkspace, fakeApp, fakeManifest, useGerman } from './helpers';
 import { LAYOUT_NAMES } from '../src/layout/types';
 import {
   type MockSettingDefinition,
+  type MockSettingGroup,
   type Plugin as MockPlugin,
   type PluginSettingTab as MockPluginSettingTab,
   Setting,
@@ -32,10 +33,15 @@ function tab(mock: MockPlugin): MockPluginSettingTab {
   return found;
 }
 
-function definition(mock: MockPlugin, name: string): MockSettingDefinition {
-  const found = tab(mock)
+/** Every definition, groups flattened. */
+function definitions(mock: MockPlugin): MockSettingDefinition[] {
+  return tab(mock)
     .getSettingDefinitions()
-    .find((d) => d.name === name);
+    .flatMap((item) => ('type' in item ? (item.items ?? []) : [item]));
+}
+
+function definition(mock: MockPlugin, name: string): MockSettingDefinition {
+  const found = definitions(mock).find((d) => d.name === name);
   if (!found) throw new Error(`no definition ${name}`);
   return found;
 }
@@ -54,51 +60,71 @@ test('plugin loads saved settings (sanitized) and registers the tab', async () =
   expect(mock.settingTabs[0]).toBeInstanceOf(MindMapSettingTab);
 });
 
-test('the tab shows one row per setting with its range', async () => {
+test('the tab shows the settings in groups under headings', async () => {
   const { mock } = await setup();
+  const items = tab(mock).getSettingDefinitions();
+  expect(items.every((item) => 'type' in item && item.type === 'group')).toBe(true);
+  expect(
+    (items as MockSettingGroup[]).map((group) => [
+      group.heading,
+      (group.items ?? []).map((d) => d.name),
+    ]),
+  ).toEqual([
+    ['Map', ['Default layout', 'Start collapsed']],
+    ['Nodes', ['Max node width', 'Max node height']],
+    ['Spacing', ['Sibling gap', 'Level gap']],
+    ['About', ['Version', 'Source code']],
+  ]);
+});
+
+test('the rendered tab shows each row in its group with the current value', async () => {
+  const { mock } = await setup({ maxNodeWidth: 400 });
   display(mock);
-  expect(Setting.rows.map((s) => s.name)).toEqual([
-    'Default layout',
-    'Start collapsed',
-    'Max node width',
-    'Max node height',
-    'Sibling gap',
-    'Level gap',
+  expect(Setting.rows.map((s) => [s.group, s.name])).toEqual([
+    ['Map', 'Default layout'],
+    ['Map', 'Start collapsed'],
+    ['Nodes', 'Max node width'],
+    ['Nodes', 'Max node height'],
+    ['Spacing', 'Sibling gap'],
+    ['Spacing', 'Level gap'],
+    ['About', 'Version'],
+    ['About', 'Source code'],
   ]);
   expect(row('Default layout').dropdown?.options.size).toBe(6);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
   expect(row('Start collapsed').toggle?.value).toBe(false);
-  expect(row('Max node width').desc).toContain('160');
-  expect(row('Max node width').desc).toContain('800');
-  expect(row('Max node width').text?.value).toBe('320');
+  expect(row('Max node width').slider?.value).toBe(400);
+  expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
+  expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
 });
 
-test('every setting is a definition, so Obsidian settings search finds it by name and range', async () => {
+test('every setting has a name and description, so Obsidian settings search finds it', async () => {
   const { mock } = await setup();
-  expect(
-    tab(mock)
-      .getSettingDefinitions()
-      .map((d) => d.name),
-  ).toEqual([
-    'Default layout',
-    'Start collapsed',
-    'Max node width',
-    'Max node height',
-    'Sibling gap',
-    'Level gap',
-  ]);
   expect(definition(mock, 'Start collapsed').desc).toBe(
     'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
   );
   expect(definition(mock, 'Default layout').desc).toBe(
     'For notes without mind-mapper-layout in their frontmatter.',
   );
-  expect(definition(mock, 'Max node width').desc).toBe(
-    'Wider content is clipped with a fade. 160–800 px.',
-  );
-  expect(definition(mock, 'Level gap').desc).toBe(
-    'Space between a node and its children. 20–400 px.',
-  );
+  // The slider shows the value and its bounds; the description no longer repeats the range.
+  expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
+  expect(definition(mock, 'Level gap').desc).toBe('Space between a node and its children.');
+});
+
+test.each([
+  ['Max node width', 'maxNodeWidth', 160, 800, 10, 320],
+  ['Max node height', 'maxNodeHeight', 120, 800, 10, 240],
+  ['Sibling gap', 'siblingGap', 0, 200, 2, 12],
+  ['Level gap', 'levelGap', 20, 400, 10, 60],
+])('%s is a built-in slider: range, step, default and a px value', async (...args) => {
+  const [name, key, min, max, step, defaultValue] = args;
+  const { mock } = await setup();
+  const def = definition(mock, name);
+  expect(def.render).toBeUndefined();
+  expect(def.control).toMatchObject({ type: 'slider', key, min, max, step, defaultValue });
+  expect(def.control?.displayFormat?.(defaultValue)).toBe(`${defaultValue} px`);
+  // Every bound and the default sit on the step grid, so the slider can reach them.
+  for (const value of [min, max, defaultValue]) expect((value - min) % step).toBe(0);
 });
 
 test('the default layout is a dropdown control bound to defaultLayout', async () => {
@@ -143,64 +169,84 @@ test('switching start collapsed in the tab saves it and refreshes open maps', as
   expect(refresh).toHaveBeenCalledTimes(1);
 });
 
-/** Types into a number field and commits it (blur / Enter fire `change`). */
-async function commit(name: string, value: string): Promise<void> {
-  const text = row(name).text;
-  if (!text) throw new Error(`no text field ${name}`);
-  text.inputEl.value = value;
-  text.inputEl.dispatchEvent(new Event('change'));
-  await vi.waitFor(() => expect(text.value).not.toBe('pending'));
-  await new Promise((resolve) => setTimeout(resolve, 0));
+function slider(name: string) {
+  const found = row(name).slider;
+  if (!found) throw new Error(`no slider ${name}`);
+  return found;
 }
 
-test('a max width of 5000 is clamped to 800 and the field shows 800; non-numbers are ignored', async () => {
-  const { plugin, mock } = await setup();
+test('moving a slider saves the value and re-lays out open maps', async () => {
+  const { ws, plugin, mock } = await setup();
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  const leaf = ws.addLeaf({ type: 'mind-mapper-view' });
+  leaf.view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
   display(mock);
-  await commit('Max node width', '5000');
-  expect(plugin.settings.maxNodeWidth).toBe(800);
-  expect(row('Max node width').text?.value).toBe('800');
-  await commit('Max node width', 'abc');
-  await commit('Max node width', '');
-  expect(plugin.settings.maxNodeWidth).toBe(800);
-  await commit('Level gap', '80');
+  await slider('Level gap').changeHandler?.(80);
   expect(plugin.settings.levelGap).toBe(80);
+  expect(mock.data).toMatchObject({ levelGap: 80 });
+  expect(refresh).toHaveBeenCalledTimes(1);
 });
 
-test('committing a number field settles: the component is never resolved as a promise value', async () => {
-  // Obsidian components are thenables; resolving a promise with one loops forever and froze
-  // Obsidian when a number was committed.
-  const { mock } = await setup();
-  display(mock);
-  await commit('Max node width', '5000');
-  expect(row('Max node width').text?.value).toBe('800');
-  expect(row('Max node width').text?.thenCalls).toBe(0);
-});
-
-test('typing in a number field does not save until it is committed', async () => {
+test('a slider value outside the range is clamped when saved', async () => {
   const { plugin, mock } = await setup();
-  const save = vi.spyOn(plugin, 'saveData');
   display(mock);
-  const text = row('Max node width').text;
-  await text?.changeHandler?.('4');
-  text?.inputEl.dispatchEvent(new Event('input'));
-  expect(save).not.toHaveBeenCalled();
-  expect(plugin.settings.maxNodeWidth).toBe(320);
+  await slider('Max node width').changeHandler?.(5000);
+  expect(plugin.settings.maxNodeWidth).toBe(800);
 });
 
-test('in German the rows have German names and descriptions; layout values stay', async () => {
+test('the restore-default button of a slider saves the default again', async () => {
+  const { plugin, mock } = await setup({ siblingGap: 40 });
+  display(mock);
+  const reset = row('Sibling gap').extraButtons[0];
+  expect(reset?.icon).toBe('lucide-rotate-ccw');
+  reset?.clickHandler?.();
+  await vi.waitFor(() => expect(plugin.settings.siblingGap).toBe(12));
+  expect(mock.data).toMatchObject({ siblingGap: 12 });
+});
+
+test('saving a slider settles: no component is resolved as a promise value', async () => {
+  // Obsidian components are thenables; resolving a promise with one loops forever and once froze
+  // Obsidian when a number setting was committed.
+  const { plugin, mock } = await setup();
+  display(mock);
+  await slider('Max node width').changeHandler?.(500);
+  expect(plugin.settings.maxNodeWidth).toBe(500);
+  expect(slider('Max node width').thenCalls).toBe(0);
+});
+
+test('the About group shows the plugin version and links to the repository', async () => {
+  const { mock } = await setup();
+  expect(definition(mock, 'Version').desc).toBe('0.1.0');
+  display(mock);
+  const link = row('Source code').descEl?.querySelector('a');
+  expect(link?.getAttribute('href')).toBe(
+    'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper',
+  );
+  expect(link?.textContent).toBe('github.com/KingOfKalk/obsidian-plugin-mind-mapper');
+  expect(row('Source code').desc).toContain('github.com/KingOfKalk/obsidian-plugin-mind-mapper');
+});
+
+test('in German the groups, rows and values are German; layout values stay', async () => {
   useGerman();
   const { mock } = await setup();
   display(mock);
-  expect(Setting.rows.map((s) => s.name)).toEqual([
-    'Standard-Layout',
-    'Eingeklappt starten',
-    'Maximale Knotenbreite',
-    'Maximale Knotenhöhe',
-    'Abstand zwischen Geschwistern',
-    'Ebenenabstand',
+  expect(Setting.rows.map((s) => [s.group, s.name])).toEqual([
+    ['Mindmap', 'Standard-Layout'],
+    ['Mindmap', 'Eingeklappt starten'],
+    ['Knoten', 'Maximale Knotenbreite'],
+    ['Knoten', 'Maximale Knotenhöhe'],
+    ['Abstände', 'Geschwisterabstand'],
+    ['Abstände', 'Ebenenabstand'],
+    ['Über', 'Version'],
+    ['Über', 'Quellcode'],
   ]);
   expect(row('Maximale Knotenbreite').desc).toBe(
-    'Breiterer Inhalt wird mit einem Verlauf abgeschnitten. 160–800 px.',
+    'Breiterer Inhalt wird abgeschnitten und ausgeblendet.',
   );
+  expect(row('Maximale Knotenhöhe').desc).toBe(
+    'Höherer Inhalt wird abgeschnitten und ausgeblendet.',
+  );
+  expect(slider('Maximale Knotenbreite').getValuePretty()).toBe('320 px');
   expect([...(row('Standard-Layout').dropdown?.options.keys() ?? [])]).toEqual([...LAYOUT_NAMES]);
 });

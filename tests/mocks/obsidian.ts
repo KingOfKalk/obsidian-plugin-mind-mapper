@@ -227,10 +227,29 @@ export class Keymap {
 /** The parts of Obsidian's `SettingDefinition` the mock renders. */
 export interface MockSettingDefinition {
   name: string;
-  desc?: string;
+  desc?: string | DocumentFragment;
   render?: (setting: Setting, group: unknown) => unknown;
-  control?: { type: string; key: string; options?: Record<string, string>; defaultValue?: unknown };
+  action?: (el: HTMLElement, index: number) => void;
+  control?: {
+    type: string;
+    key: string;
+    options?: Record<string, string>;
+    defaultValue?: unknown;
+    min?: number;
+    max?: number;
+    step?: number;
+    displayFormat?: (value: number) => string;
+  };
 }
+
+/** The parts of Obsidian's `SettingDefinitionGroup` the mock renders. */
+export interface MockSettingGroup {
+  type: 'group';
+  heading?: string;
+  items?: MockSettingDefinition[];
+}
+
+export type MockSettingItem = MockSettingDefinition | MockSettingGroup;
 
 export class PluginSettingTab {
   containerEl: HTMLElement = document.createElement('div');
@@ -238,7 +257,7 @@ export class PluginSettingTab {
     public app: App,
     public plugin: Plugin,
   ) {}
-  getSettingDefinitions(): MockSettingDefinition[] {
+  getSettingDefinitions(): MockSettingItem[] {
     return [];
   }
   /** Like Obsidian: reads `plugin.settings`. */
@@ -255,31 +274,73 @@ export class PluginSettingTab {
 }
 
 /**
- * Renders a tab's definitions like Obsidian's settings modal (1.15.0): a row per definition with
- * its name and description, then `render(setting)` or the control bound through
- * `getControlValue` / `setControlValue`. Only dropdown and toggle controls are implemented.
+ * Renders a tab's definitions like Obsidian's settings modal (1.15.0): groups under their heading,
+ * a row per definition with its name and description, then `action`, `render(setting)` or the
+ * control bound through `getControlValue` / `setControlValue`. Only dropdown, toggle and slider
+ * controls are implemented.
  */
 export function renderSettingDefinitions(tab: PluginSettingTab): void {
-  for (const def of tab.getSettingDefinitions()) {
-    const setting = new Setting(tab.containerEl).setName(def.name).setDesc(def.desc ?? '');
-    if (def.render) {
-      def.render(setting, null);
-    } else if (def.control) {
-      const { type, key, options = {}, defaultValue } = def.control;
-      const value = tab.getControlValue(key) ?? defaultValue;
-      if (type === 'toggle') {
-        setting.addToggle((toggle) =>
-          toggle.setValue(value === true).onChange((next) => tab.setControlValue(key, next)),
-        );
-        continue;
-      }
-      if (type !== 'dropdown') throw new Error(`mock does not render ${type} controls`);
-      setting.addDropdown((dropdown) => {
-        for (const [option, display] of Object.entries(options))
-          dropdown.addOption(option, display);
-        dropdown.setValue(String(value)).onChange((next) => tab.setControlValue(key, next));
-      });
+  for (const item of tab.getSettingDefinitions()) {
+    if ('type' in item) {
+      if (item.type !== 'group') throw new Error(`mock does not render ${String(item.type)}`);
+      for (const def of item.items ?? []) renderDefinition(tab, def, item.heading ?? null);
+    } else {
+      renderDefinition(tab, item, null);
     }
+  }
+}
+
+function renderDefinition(
+  tab: PluginSettingTab,
+  def: MockSettingDefinition,
+  group: string | null,
+): void {
+  const setting = new Setting(tab.containerEl).setName(def.name).setDesc(def.desc ?? '');
+  setting.group = group;
+  if (def.action) {
+    const action = def.action;
+    setting.action = () => action(setting.settingEl, 0);
+  } else if (def.render) {
+    def.render(setting, null);
+  } else if (def.control) {
+    renderControl(tab, setting, def.control);
+  }
+}
+
+function renderControl(
+  tab: PluginSettingTab,
+  setting: Setting,
+  control: NonNullable<MockSettingDefinition['control']>,
+): void {
+  const { type, key, options = {}, defaultValue } = control;
+  const value = tab.getControlValue(key) ?? defaultValue;
+  if (type === 'toggle') {
+    setting.addToggle((toggle) =>
+      toggle.setValue(value === true).onChange((next) => tab.setControlValue(key, next)),
+    );
+  } else if (type === 'dropdown') {
+    setting.addDropdown((dropdown) => {
+      for (const [option, display] of Object.entries(options)) dropdown.addOption(option, display);
+      dropdown.setValue(String(value)).onChange((next) => tab.setControlValue(key, next));
+    });
+  } else if (type === 'slider') {
+    let slider: SliderComponent | null = null;
+    // Like Obsidian: a default value adds a "Restore default" button.
+    if (defaultValue !== undefined) {
+      setting.addExtraButton((button) =>
+        button.setIcon('lucide-rotate-ccw').onClick(() => slider?.setValue(defaultValue as number)),
+      );
+    }
+    setting.addSlider((component) => {
+      slider = component;
+      if (control.displayFormat) component.setDisplayFormat(control.displayFormat);
+      component
+        .setLimits(control.min ?? 0, control.max ?? 100, control.step ?? 1)
+        .setValue(value as number)
+        .onChange((next) => tab.setControlValue(key, next));
+    });
+  } else {
+    throw new Error(`mock does not render ${type} controls`);
   }
 }
 
@@ -349,6 +410,57 @@ export class TextComponent extends BaseComponent {
   }
 }
 
+/** Like Obsidian's slider: `setValue` with a new value calls the change handler. */
+export class SliderComponent extends BaseComponent {
+  min = 0;
+  max = 100;
+  step = 1;
+  value = 50;
+  displayFormat: ((value: number) => string) | null = null;
+  changeHandler: ((value: number) => unknown) | null = null;
+  setLimits(min: number, max: number, step: number): this {
+    this.min = min;
+    this.max = max;
+    this.step = step;
+    return this;
+  }
+  setDisplayFormat(format: (value: number) => string): this {
+    this.displayFormat = format;
+    return this;
+  }
+  setValue(value: number): this {
+    if (value !== this.value) {
+      this.value = value;
+      void this.changeHandler?.(value);
+    }
+    return this;
+  }
+  /** The value shown next to the slider. */
+  getValuePretty(): string {
+    return this.displayFormat ? this.displayFormat(this.value) : String(this.value);
+  }
+  onChange(handler: (value: number) => unknown): this {
+    this.changeHandler = handler;
+    return this;
+  }
+}
+
+export class ExtraButtonComponent extends BaseComponent {
+  icon = '';
+  clickHandler: (() => unknown) | null = null;
+  setIcon(icon: string): this {
+    this.icon = icon;
+    return this;
+  }
+  setTooltip(_tooltip: string): this {
+    return this;
+  }
+  onClick(handler: () => unknown): this {
+    this.clickHandler = handler;
+    return this;
+  }
+}
+
 /** Records every created setting row, so tests can find a row by name and drive its control. */
 export class Setting {
   static rows: Setting[] = [];
@@ -357,6 +469,15 @@ export class Setting {
   dropdown: DropdownComponent | null = null;
   toggle: ToggleComponent | null = null;
   text: TextComponent | null = null;
+  slider: SliderComponent | null = null;
+  readonly extraButtons: ExtraButtonComponent[] = [];
+  /** A fragment description as rendered (`desc` holds its text, which search indexes). */
+  descEl: DocumentFragment | null = null;
+  /** Heading of the group the row is in. */
+  group: string | null = null;
+  /** Row click of an `action` definition. */
+  action: (() => void) | null = null;
+  readonly settingEl: HTMLElement = document.createElement('div');
 
   constructor(public containerEl: HTMLElement) {
     Setting.rows.push(this);
@@ -365,8 +486,9 @@ export class Setting {
     this.name = name;
     return this;
   }
-  setDesc(desc: string): this {
-    this.desc = desc;
+  setDesc(desc: string | DocumentFragment): this {
+    this.desc = typeof desc === 'string' ? desc : (desc.textContent ?? '');
+    this.descEl = typeof desc === 'string' ? null : desc;
     return this;
   }
   setHeading(): this {
@@ -385,6 +507,17 @@ export class Setting {
   addText(cb: (text: TextComponent) => unknown): this {
     this.text = new TextComponent();
     cb(this.text);
+    return this;
+  }
+  addSlider(cb: (slider: SliderComponent) => unknown): this {
+    this.slider = new SliderComponent();
+    cb(this.slider);
+    return this;
+  }
+  addExtraButton(cb: (button: ExtraButtonComponent) => unknown): this {
+    const button = new ExtraButtonComponent();
+    this.extraButtons.push(button);
+    cb(button);
     return this;
   }
 }

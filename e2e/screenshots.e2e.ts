@@ -136,28 +136,45 @@ describe('screenshots', function () {
     await browser.saveScreenshot(`${dir}/start-collapsed.png`);
   });
 
+  it('settings', async function () {
+    await saveSettingsScreenshots(`${dir}/settings`);
+  });
+
   // Last: restarts Obsidian in German.
   it('German UI', async function () {
     await setObsidianLanguage('de');
     await openMindMap('fixtures/worked-example.md');
     await settle();
     await browser.saveScreenshot(`${dir}/german-map.png`);
-    // Obsidian 1.15 opens the settings in their own window.
-    const main = await browser.getWindowHandle();
-    await browser.executeObsidianCommand('app:open-settings');
-    await browser.waitUntil(async () => (await browser.getWindowHandles()).length > 1);
-    const settings = (await browser.getWindowHandles()).find((h) => h !== main);
-    if (!settings) throw new Error('no settings window');
-    await browser.switchToWindow(settings);
-    await browser.executeObsidian(async ({ app }) => {
-      await (
-        app as unknown as { setting: { openTabById(id: string): Promise<unknown> } }
-      ).setting.openTabById('mind-mapper');
-    });
-    await browser.pause(500);
-    await browser.saveScreenshot(`${dir}/german-settings.png`);
-    await browser.closeWindow();
-    await browser.switchToWindow(main);
+    await saveSettingsScreenshots(`${dir}/german-settings`);
     await setObsidianLanguage(null);
   });
 });
+
+/**
+ * Obsidian 1.15 opens the settings in their own window; shoots the Mind Mapper tab there:
+ * `<path>.png` from the top, `<path>-bottom.png` scrolled to the end (the About group).
+ */
+async function saveSettingsScreenshots(path: string): Promise<void> {
+  const main = await browser.getWindowHandle();
+  await browser.executeObsidianCommand('app:open-settings');
+  await browser.waitUntil(async () => (await browser.getWindowHandles()).length > 1);
+  const settings = (await browser.getWindowHandles()).find((h) => h !== main);
+  if (!settings) throw new Error('no settings window');
+  await browser.switchToWindow(settings);
+  await browser.executeObsidian(async ({ app }) => {
+    await (
+      app as unknown as { setting: { openTabById(id: string): Promise<unknown> } }
+    ).setting.openTabById('mind-mapper');
+  });
+  await browser.pause(500);
+  await browser.saveScreenshot(`${path}.png`);
+  await browser.execute(() => {
+    const rows = document.querySelectorAll('.vertical-tab-content .setting-item');
+    rows[rows.length - 1]?.scrollIntoView({ block: 'end' });
+  });
+  await browser.pause(300);
+  await browser.saveScreenshot(`${path}-bottom.png`);
+  await browser.closeWindow();
+  await browser.switchToWindow(main);
+}

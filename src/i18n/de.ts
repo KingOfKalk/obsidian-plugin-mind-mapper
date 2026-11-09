@@ -17,7 +17,7 @@ export const de: Messages = {
   zoomPercent: '{percent}\u00a0%',
   collapseAll: 'Alle einklappen',
   expandAll: 'Alle ausklappen',
-  backToRoot: 'Zurück zur Wurzel',
+  backToRoot: 'Zurück zum Hauptthema',
   toggleFullScreen: 'Vollbild umschalten',
   exitFullScreen: 'Vollbild beenden',
 
@@ -44,18 +44,24 @@ export const de: Messages = {
     'Mind Mapper: mind-mapper-title in {path} ist kein Text, der Standardtitel wird verwendet',
 
   // Settings
+  mapHeading: 'Mindmap',
+  nodesHeading: 'Knoten',
+  spacingHeading: 'Abstände',
+  aboutHeading: 'Über',
   defaultLayoutName: 'Standard-Layout',
   defaultLayoutDesc: 'Für Notizen ohne mind-mapper-layout im Frontmatter.',
   startCollapsedName: 'Eingeklappt starten',
   startCollapsedDesc:
-    'Mindmaps nur mit der Wurzel und der ersten Ebene öffnen, für Notizen ohne mind-mapper-collapsed im Frontmatter.',
+    'Mindmaps nur mit dem Hauptthema und der ersten Ebene öffnen, für Notizen ohne mind-mapper-collapsed im Frontmatter.',
   maxNodeWidthName: 'Maximale Knotenbreite',
-  maxNodeWidthDesc: 'Breiterer Inhalt wird mit einem Verlauf abgeschnitten.',
+  maxNodeWidthDesc: 'Breiterer Inhalt wird abgeschnitten und ausgeblendet.',
   maxNodeHeightName: 'Maximale Knotenhöhe',
-  maxNodeHeightDesc: 'Höherer Inhalt wird mit einem Verlauf abgeschnitten.',
-  siblingGapName: 'Abstand zwischen Geschwistern',
+  maxNodeHeightDesc: 'Höherer Inhalt wird abgeschnitten und ausgeblendet.',
+  siblingGapName: 'Geschwisterabstand',
   siblingGapDesc: 'Abstand zwischen benachbarten Zweigen.',
   levelGapName: 'Ebenenabstand',
   levelGapDesc: 'Abstand zwischen einem Knoten und seinen Kindknoten.',
-  pixelRange: '{desc} {min}–{max} px.',
+  pixels: '{value} px',
+  versionName: 'Version',
+  sourceCodeName: 'Quellcode',
 };

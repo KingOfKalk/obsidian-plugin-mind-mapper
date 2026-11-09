@@ -5,17 +5,19 @@ import { loadLanguage } from '../src/i18n';
 interface ElOptions {
   cls?: string;
   text?: string;
+  href?: string;
   attr?: Record<string, string>;
 }
 
 function createEl<K extends keyof HTMLElementTagNameMap>(
-  this: HTMLElement,
+  this: HTMLElement | DocumentFragment,
   tag: K,
   options: ElOptions = {},
 ): HTMLElementTagNameMap[K] {
   const el = this.ownerDocument.createElement(tag);
   if (options.cls) el.className = options.cls;
   if (options.text !== undefined) el.textContent = options.text;
+  if (options.href !== undefined) el.setAttribute('href', options.href);
   for (const [name, value] of Object.entries(options.attr ?? {})) el.setAttribute(name, value);
   this.appendChild(el);
   return el;
@@ -40,6 +42,16 @@ Object.assign(HTMLElement.prototype, {
   },
   setText(this: HTMLElement, text: string) {
     this.textContent = text;
+  },
+});
+
+Object.assign(DocumentFragment.prototype, { createEl });
+
+Object.assign(globalThis, {
+  createFragment(callback?: (el: DocumentFragment) => void): DocumentFragment {
+    const fragment = document.createDocumentFragment();
+    callback?.(fragment);
+    return fragment;
   },
 });
 

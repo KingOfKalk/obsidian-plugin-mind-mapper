@@ -2,6 +2,7 @@ import { browser, expect } from '@wdio/globals';
 import { nodeBoxes, openMindMap, settle, writeNote } from '../helpers';
 
 type MindMapper = {
+  manifest: { version: string };
   settings: { maxNodeWidth: number };
   loadData(): Promise<{ maxNodeWidth?: number } | null>;
   updateSettings(patch: object): Promise<void>;
@@ -75,45 +76,79 @@ describe('settings', function () {
     for (const name of ['Default layout', 'Max node height', 'Sibling gap', 'Level gap']) {
       expect(await settingRow(name).isExisting()).toBe(true);
     }
+    for (const heading of ['Map', 'Nodes', 'Spacing', 'About']) {
+      const el = browser.$(
+        `//div[contains(@class,"setting-item-heading")][.//div[contains(@class,"setting-item-name") and normalize-space()="${heading}"]]`,
+      );
+      expect(await el.isExisting()).toBe(true);
+    }
     await browser.executeObsidian(({ app }) => (app as unknown as ObsidianApp).setting.close());
   });
 
-  it('typing a number and pressing Tab clamps it, saves it and re-lays out the open map', async function () {
+  it('moving a slider saves the value and re-lays out the open map', async function () {
     await openMindMap(NOTE);
     await settle();
     expect(await nodeWidth('Wide/#1')).toBeLessThanOrEqual(320);
 
-    await browser.executeObsidian(({ app }) => {
-      const setting = (
-        app as unknown as { setting: { open(): void; openTabById(id: string): void } }
-      ).setting;
-      setting.open();
-      setting.openTabById('mind-mapper');
-    });
-    const input = settingRow('Max node width').$('input');
-    await input.waitForDisplayed();
-    expect(await input.getAttribute('type')).toBe('number');
+    await openMindMapperSettings();
+    const slider = settingRow('Max node width').$('input[type="range"]');
+    await slider.waitForDisplayed();
+    expect(await slider.getValue()).toBe('320');
+    expect(await settingRow('Max node width').$('.slider-value').getText()).toBe('320 px');
 
-    // Type like a user; Tab moves focus on and the browser fires `change` itself.
-    await input.click();
-    await browser.keys(['Control', 'a']);
-    await browser.keys('5000');
-    await browser.keys('Tab');
-
-    await browser.waitUntil(async () => (await input.getValue()) === '800', {
+    // Like a user with the keyboard: the browser fires `input` and `change` itself.
+    await browser.execute((el) => el.focus(), await slider.getElement());
+    await browser.keys('ArrowRight');
+    await browser.waitUntil(
+      async () => (await settingRow('Max node width').$('.slider-value').getText()) === '330 px',
+      { timeout: 5000, timeoutMsg: 'the slider does not show the new value' },
+    );
+    await browser.keys('End');
+    await browser.waitUntil(async () => (await slider.getValue()) === '800', {
       timeout: 5000,
-      timeoutMsg: 'the field does not show the clamped value',
+      timeoutMsg: 'the slider does not move to its maximum',
     });
-    const saved = await browser.executeObsidian(async ({ app }) => {
-      const plugin = (app as unknown as ObsidianApp).plugins.plugins['mind-mapper']!;
-      return {
-        settings: plugin.settings.maxNodeWidth,
-        data: (await plugin.loadData())?.maxNodeWidth,
-      };
+
+    await browser.waitUntil(async () => (await savedMaxNodeWidth()).data === 800, {
+      timeout: 5000,
+      timeoutMsg: 'the slider value is not saved',
     });
-    expect(saved).toEqual({ settings: 800, data: 800 });
+    expect(await savedMaxNodeWidth()).toEqual({ settings: 800, data: 800 });
 
     await settle();
     expect(await nodeWidth('Wide/#1')).toBeGreaterThan(320);
   });
+
+  it('the About group shows the plugin version and the repository link', async function () {
+    await openMindMapperSettings();
+    const version = await browser.executeObsidian(
+      ({ app }) => (app as unknown as ObsidianApp).plugins.plugins['mind-mapper']!.manifest.version,
+    );
+    const row = settingRow('Version');
+    await row.waitForDisplayed();
+    expect(await row.$('.setting-item-description').getText()).toBe(version);
+    const link = settingRow('Source code').$('.setting-item-description a');
+    expect(await link.getAttribute('href')).toBe(
+      'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper',
+    );
+  });
 });
+
+async function openMindMapperSettings(): Promise<void> {
+  await browser.executeObsidian(({ app }) => {
+    const setting = (app as unknown as { setting: { open(): void; openTabById(id: string): void } })
+      .setting;
+    setting.open();
+    setting.openTabById('mind-mapper');
+  });
+}
+
+async function savedMaxNodeWidth(): Promise<{ settings: number; data: number | undefined }> {
+  return await browser.executeObsidian(async ({ app }) => {
+    const plugin = (app as unknown as ObsidianApp).plugins.plugins['mind-mapper']!;
+    return {
+      settings: plugin.settings.maxNodeWidth,
+      data: (await plugin.loadData())?.maxNodeWidth,
+    };
+  });
+}

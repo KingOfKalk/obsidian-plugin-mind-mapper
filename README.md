@@ -84,16 +84,20 @@ An unknown layout, a title that is not text or a `mind-mapper-collapsed` that is
 
 ## Settings
 
-| Setting | Range | Default |
-|---|---|---|
-| Default layout | the layouts above | `circle-clockwise` |
-| Start collapsed | on / off | off |
-| Max node width | 160–800 px | 320 px |
-| Max node height | 120–800 px | 240 px |
-| Sibling gap | 0–200 px | 12 px |
-| Level gap | 20–400 px | 60 px |
+Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's settings search.
 
-Content larger than the max node size is clipped with a fade; the expand icon shows all of it. Changes apply to open maps right away.
+| Group | Setting | Control | Range | Default |
+|---|---|---|---|---|
+| Map | Default layout | dropdown | the layouts above | `circle-clockwise` |
+| Map | Start collapsed | toggle | on / off | off |
+| Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px |
+| Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px |
+| Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px |
+| Spacing | Level gap | slider, steps of 10 px | 20–400 px | 60 px |
+
+Each slider shows its value (e.g. "320 px") and has a "Restore default" button. Content larger than the max node size is clipped with a fade; the expand icon shows all of it. Changes apply to open maps right away.
+
+The About group shows the plugin version and a link to the source code on GitHub.
 
 ## Large notes
 

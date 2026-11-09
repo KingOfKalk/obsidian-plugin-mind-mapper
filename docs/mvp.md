@@ -120,6 +120,8 @@ Project (root, H1)
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
 - Plugin settings tab: global defaults for layout and start collapsed, frontmatter overrides per note
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
+  - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
 ## Layout (decided)
  
 - Input: tree, layout, measured or estimated node sizes; output: positioned nodes and edges; pure function

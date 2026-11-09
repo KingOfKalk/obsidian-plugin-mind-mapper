@@ -39,6 +39,10 @@ export const en = {
   invalidTitle: 'Mind Mapper: mind-mapper-title in {path} is not text, using the default title',
 
   // Settings
+  mapHeading: 'Map',
+  nodesHeading: 'Nodes',
+  spacingHeading: 'Spacing',
+  aboutHeading: 'About',
   defaultLayoutName: 'Default layout',
   defaultLayoutDesc: 'For notes without mind-mapper-layout in their frontmatter.',
   startCollapsedName: 'Start collapsed',
@@ -52,7 +56,9 @@ export const en = {
   siblingGapDesc: 'Space between neighbouring branches.',
   levelGapName: 'Level gap',
   levelGapDesc: 'Space between a node and its children.',
-  pixelRange: '{desc} {min}–{max} px.',
+  pixels: '{value} px',
+  versionName: 'Version',
+  sourceCodeName: 'Source code',
 };
 
 export type MessageKey = keyof typeof en;

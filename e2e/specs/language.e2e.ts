@@ -26,7 +26,7 @@ describe('language', function () {
       'Vergrößern',
       'An Ansicht anpassen',
       'Alle einklappen',
-      'Zurück zur Wurzel',
+      'Zurück zum Hauptthema',
       'Vollbild umschalten',
     ]);
     const command = await browser.executeObsidian(

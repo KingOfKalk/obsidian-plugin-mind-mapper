@@ -89,7 +89,7 @@ test('in German the labels, the collapse state and the zoom percentage are Germa
     'Vergrößern',
     'An Ansicht anpassen',
     'Alle einklappen',
-    'Zurück zur Wurzel',
+    'Zurück zum Hauptthema',
     'Vollbild umschalten',
   ]);
   expect(buttons[1]?.textContent).toBe('100\u00a0%');
