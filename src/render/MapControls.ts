@@ -20,7 +20,12 @@ export interface MapActions {
   chooseLayout(layout: MapLayoutName | null): void;
   /** Colour theme of this map view only; null: the note's theme again. */
   chooseTheme(theme: MapThemeName | null): void;
+  /** Drill-down (issue #23): into the selected node, else out one level. */
+  drill(): void;
 }
+
+/** What the drill-down button does now; null: nothing (disabled). */
+export type DrillAction = 'in' | 'out' | null;
 
 /** Zoom presets of the menu next to the zoom input, in percent. */
 const ZOOM_PRESETS = [50, 75, 100, 125, 150, 200];
@@ -31,6 +36,7 @@ export class MapControls {
   private readonly collapseButton: HTMLButtonElement;
   private readonly layoutButton: HTMLButtonElement;
   private readonly themeButton: HTMLButtonElement;
+  private readonly drillButton: HTMLButtonElement;
   private anyCollapsed = false;
   private layout: MapLayoutName | null = null;
   private theme: MapThemeName | null = null;
@@ -69,6 +75,8 @@ export class MapControls {
       this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),
     );
     button(t('backToRoot'), () => actions.backToRoot(), 'locate');
+    this.drillButton = button(t('drillDown'), () => actions.drill(), 'arrow-down-to-dot');
+    this.drillButton.addClass('mind-mapper-drill');
     // `workflow` (boxes joined by a line): the arrangement of the nodes; distinct from `group` (fit)
     // and the view icon `network`.
     this.layoutButton = button(t('layoutMenu'), () => this.showLayoutMenu(), 'workflow');
@@ -76,6 +84,18 @@ export class MapControls {
     button(t('toggleFullScreen'), () => actions.toggleFullScreen(), 'maximize-2');
     this.setZoom(1);
     this.setCollapsed(false);
+    this.setDrill(null, false);
+  }
+
+  /**
+   * Drill-down button (issue #23): enabled while it can drill in (a selected node with children) or
+   * out (drilled in); highlighted while drilled in.
+   */
+  setDrill(action: DrillAction, drilled: boolean): void {
+    const b = this.drillButton;
+    b.disabled = action === null;
+    b.setAttribute('aria-label', t(action === 'out' ? 'drillOut' : 'drillDown'));
+    b.toggleClass('is-active', drilled);
   }
 
   /** While any node is collapsed the button expands all (highlighted), otherwise it collapses all. */

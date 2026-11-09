@@ -27,6 +27,7 @@ describe('language', function () {
       'An Ansicht anpassen',
       'Alle einklappen',
       'Zurück zum Hauptthema',
+      'In die Auswahl eintauchen',
       'Layout',
       'Farbschema',
       'Vollbild umschalten',

@@ -13,6 +13,7 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 - **Balanced layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom and bottom-to-top; per note via frontmatter, or for the open map from the control bar
 - **Colour themes:** every main branch in its own colour (`rainbow` by default, `ocean`, `forest`, your `accent` colour or plain grey), with filled first-level nodes and a large root; per note or as default, or for the open map from the control bar; follows light and dark mode
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, links to headings and blocks in the same note are drawn as dashed lines
+- **Drill down:** show one branch as a map of its own, with the branch as the centre; step back out one level at a time
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
 - **Languages:** English and German; follows Obsidian's language setting (Settings → General → Language)
 
@@ -53,8 +54,13 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | Next layout | a mind map is active | `Shift + L` |
 | Change colour theme… | a mind map is active | |
 | Next colour theme | a mind map is active | `Shift + T` |
+| Drill down into selection | a node with children is selected | |
+| Drill out one level | the map is drilled in | |
+| Show the whole map | the map is drilled in | |
 
 "Change layout…" and "Change colour theme…" open the menu of the control bar button; arrow keys and Enter choose without the mouse. "Next layout" and "Next colour theme" step to the next one (after the last, the first again), handy while presenting.
+
+The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); it only works while the map has focus, so typing a "d" in a note is not affected.
 
 ## Map navigation
 
@@ -64,7 +70,7 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Double click the empty canvas: fit the whole map into view (also in full screen)
 - Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 150%); large maps shrink to fit; a margin keeps nodes and collapse badges off the edges
 - Zoom in / out snap to steps: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400%
-- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, layout, colour theme, full screen
+- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, drill down (arrow down to a dot), layout, colour theme, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
@@ -73,6 +79,19 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written
 - Full screen covers the whole Obsidian window (previews, menus and notices stay on top); `Esc` or the button top right exits and restores the previous view; the controls fade after 2 s without mouse movement
+
+## Drill down
+
+Focus on one branch: the selected node becomes the centre of the map, and only it and everything below it are shown.
+
+- Select a node with children, then the drill down button in the control bar (arrow down to a dot) or the key `D` (while the map has focus): the node becomes the centre, large and without a box like the root; its children become the first level with their own branch colours; the map is fitted
+- Inside a drilled view, select another node and drill again (e.g. Project → Tasks → Phase 2)
+- The button or `D` with nothing to drill into (the centre or nothing selected) goes back out one level; the command "Show the whole map" goes straight back. The node you drilled out of is selected and centred
+- While drilled in, the centre has a small target icon above it and the button is highlighted; the button is disabled when there is nothing to drill into or out of
+- Link lines to nodes outside the drilled part are hidden
+- "Back to root" goes to the current centre; collapse, layout, theme, full screen and double click to jump work as usual
+- The view glides towards the node, then the map cross-fades into the drilled view (drilling out runs it in reverse); with the system setting "reduce motion" it switches instantly. Pressing `D` again during the animation finishes it at once
+- The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted or its heading renamed, the map quietly shows the whole note again. The note file is never written
 
 ## Layout and theme of the open map
 

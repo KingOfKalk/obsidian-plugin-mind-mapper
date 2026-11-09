@@ -144,3 +144,58 @@ test('"Next layout" and "Next colour theme" cycle through all values of the acti
   // From the default rainbow.
   expect(themes).toEqual(['ocean', 'forest', 'accent', 'none', 'rainbow', 'ocean']);
 });
+
+describe('drill-down commands (issue #23)', () => {
+  const DRILL = [
+    ['drill-down', 'Drill down into selection', 'drillDown', 'In die Auswahl eintauchen'],
+    ['drill-out', 'Drill out one level', 'drillOut', 'Eine Ebene zurück'],
+    ['show-whole-map', 'Show the whole map', 'showWholeMap', 'Ganze Mindmap anzeigen'],
+  ] as const;
+
+  test.each(DRILL)('%s is registered as "%s" without hotkeys', async (id, name) => {
+    const { commands } = await setup();
+    expect(find(commands, id).name).toBe(name);
+    expect(find(commands, id).hotkeys).toBeUndefined();
+  });
+
+  test.each(DRILL)('%s has a German name', async (id, _name, _method, german) => {
+    useGerman();
+    const { commands } = await setup();
+    expect(find(commands, id).name).toBe(german);
+  });
+
+  test.each(DRILL)('%s is hidden without an active mind map view', async (id) => {
+    const { commands, ws } = await setup();
+    ws.activeView = {};
+    expect(find(commands, id).checkCallback?.(true)).toBe(false);
+  });
+
+  test('available only when it does something: into a selected node with children, out while drilled in', async () => {
+    const { commands, ws, view } = await setup();
+    ws.addNote('Note.md', 'crosslinks');
+    await view.setState({ file: 'Note.md' }, { history: false });
+    ws.activeView = view;
+    const available = () => DRILL.map(([id]) => find(commands, id).checkCallback?.(true));
+    expect(available()).toEqual([false, false, false]);
+    view.select('Links/Alpha/#1'); // no children
+    expect(available()).toEqual([false, false, false]);
+    view.select('Links/Beta');
+    expect(available()).toEqual([true, false, false]);
+    find(commands, 'drill-down').checkCallback?.(false);
+    expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
+    // The centre itself is selected: only out.
+    expect(available()).toEqual([false, true, true]);
+    view.select('Links/Beta/Inner');
+    expect(available()).toEqual([true, true, true]);
+    find(commands, 'drill-down').checkCallback?.(false);
+    expect(view.getState()).toMatchObject({ drill: ['Links/Beta', 'Links/Beta/Inner'] });
+    find(commands, 'drill-out').checkCallback?.(false);
+    expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
+    find(commands, 'drill-down').checkCallback?.(true);
+    view.select('Links/Beta/Inner');
+    find(commands, 'drill-down').checkCallback?.(false);
+    find(commands, 'show-whole-map').checkCallback?.(false);
+    expect(view.getState()).toMatchObject({ drill: [] });
+    expect(available()).toEqual([true, false, false]);
+  });
+});

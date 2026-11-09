@@ -917,7 +917,7 @@ describe('rename, delete, empty note', () => {
     expect(headerTitle(view)).toBe('Renamed');
     expect(setViewState).toHaveBeenCalledWith({
       type: 'mind-mapper-view',
-      state: { file: 'Folder/Renamed.md', layout: null, theme: null },
+      state: { file: 'Folder/Renamed.md', layout: null, theme: null, drill: [] },
     });
     expect(view.getTransform()).toEqual({ x: -60, y: 311, zoom: 0.8 });
     expect(nodeIds(view)).toContain('Project/Tasks');
@@ -1458,7 +1458,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(setViewState).toHaveBeenCalledWith({
       type: 'mind-mapper-view',
-      state: { file: 'Renamed.md', layout: 'top-to-bottom', theme: 'none' },
+      state: { file: 'Renamed.md', layout: 'top-to-bottom', theme: 'none', drill: [] },
     });
     expect(view.getState()).toMatchObject({
       file: 'Renamed.md',

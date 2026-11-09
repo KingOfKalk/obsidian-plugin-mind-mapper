@@ -13,6 +13,7 @@ Mind Mapper shows a Markdown note as a mind map in Obsidian. Headings, paragraph
 - [Select nodes and jump to the note](#select-nodes-and-jump-to-the-note)
 - [Collapse and expand](#collapse-and-expand)
 - [Full screen](#full-screen)
+- [Drill down](#drill-down)
 - [Layouts](#layouts)
 - [Colour themes](#colour-themes)
 - [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
@@ -124,7 +125,8 @@ The controls bar at the bottom center, left to right:
 | Zoom in | zooms in to the next step (from 129 %: 150 %) |
 | Fit to view (two boxes in a frame) | shows the whole map, enlarging a small one up to "Max zoom for fit" (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
-| Back to root | centers the root |
+| Back to root | centers the root (drilled in: the centre node) |
+| Drill down (arrow down to a dot) | shows the selected branch as a map of its own, or goes back out one level; see [Drill down](#drill-down) |
 | Layout (boxes joined by a line) | menu with the six layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
 | Colour theme (palette) | menu with the colour themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
@@ -163,6 +165,25 @@ The controls bar at the bottom center, left to right:
 - Page previews, menus and notices still show on top
 
 ![The feature tour note in full screen with title, exit button and controls](images/manual/full-screen.png)
+
+## Drill down
+
+Focus on one branch, e.g. while presenting or exploring a large map: the selected node becomes the centre of the map, and only it and everything below it are shown.
+
+- Drill in: select a node with children, then the drill down button in the controls bar (arrow down to a dot), the key `D` or the command "Drill down into selection"
+  - The node becomes the centre: large and without a box, like the root
+  - Its children become the first level: filled boxes, each with its own branch colour
+  - The map is fitted to view
+- `D` works only while the map has focus (it is not a hotkey): typing a "d" in the note or in the zoom level field is not affected
+- Drill again inside a drilled view: e.g. Project → Tasks → Phase 2
+- Drill out one level: the button or `D` while the centre (or nothing) is selected, or the command "Drill out one level"; the command "Show the whole map" goes straight back. The node you drilled out of is selected and centred
+- While drilled in, the centre has a small target icon above it (below it in the bottom → top layout) and the button is highlighted. The button is disabled when there is nothing to drill into or out of
+- Link lines to nodes outside the drilled part are hidden
+- "Back to root" centres the current centre node; collapse, layouts, colour themes, full screen and double click to jump work as usual
+- Animation: the view glides towards the node, then the map cross-fades into the drilled view; drilling out runs it in reverse. With the system setting "reduce motion" the map switches instantly. Pressing `D` again during the animation finishes it at once and goes on
+- The drilled branch belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. If the branch is deleted, or its heading renamed, the map quietly shows the whole note again. The note itself is never changed
+
+![The feature tour drilled into Timeline: Timeline as the centre with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the controls bar](images/manual/drill-down.png)
 
 ## Layouts
 
@@ -295,8 +316,12 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Next layout | a mind map is active | `Shift + L` |
 | Change colour theme… | a mind map is active | |
 | Next colour theme | a mind map is active | `Shift + T` |
+| Drill down into selection | a node with children is selected in the active mind map | |
+| Drill out one level | the active mind map is drilled in | |
+| Show the whole map | the active mind map is drilled in | |
 
 - Collapse all and Expand all are two commands, so a hotkey always does the same; the controls bar has one button for both
+- The key `D` drills in and out without a hotkey, while the map has focus; see [Drill down](#drill-down)
 
 ## Languages
 

@@ -203,7 +203,7 @@ Project (root, H1)
   - Entering: fit to view; exiting: restore previous pan and zoom
   - Jump to source from full screen exits full screen first
   - Static map with free pan and zoom; no step-through (see Future features)
-- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, layout, colour theme, full screen
+- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, drill down, layout, colour theme, full screen
   - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centred on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
   - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
 - Layout and colour theme switcher (decided, issues #6 and #7): change the layout or colour theme of one map view without changing the note
@@ -213,6 +213,18 @@ Project (root, H1)
   - The choice (override) is per map view: stored in the view state (`layout`, `theme` next to `file`), so it survives an Obsidian restart and follows a rename (also of a deferred tab); the note and its frontmatter are never written. A view state without the keys (older versions) or with an unknown value has no override. A map opened anew (command, file menu, ribbon) starts without overrides
   - Precedence: override, else frontmatter, else plugin setting. An active override wins over later frontmatter edits and setting changes; while active, its button is highlighted (`is-active`, like the collapse button)
   - Commands (no default hotkeys, `checkCallback` on an active map view): "Change layout…" and "Change colour theme…" open the same menus at their buttons (Obsidian's menu works with arrow keys and Enter; one picker for mouse and keyboard, no second UI); "Next layout" and "Next colour theme" step to the next value in menu order from the shown one, wrapping after the last
+- Drill-down (decided, issue #23): show one branch as a map of its own; the note is never changed
+  - Drilling in: a selected node with children, then the control-bar button (Lucide `arrow-down-to-dot`, between back to root and layout), the key `D` or the command "Drill down into selection". The node becomes the centre, styled like the root (kind `root`: large, bold, no box, no collapse toggle, never collapsed even when collapsed in the whole map); only it and its subtree are shown; its children are level 1, branch colours recomputed from the new centre; the map is fitted
+  - Key `D` (no modifiers): registered in the view's `Scope` (active with the map's leaf), not a command hotkey; ignored while typing in a text field (the zoom field, any input, textarea or contenteditable), so the editor and the zoom field are unaffected
+  - Stacking: inside a drilled view, another selected node with children drills further; the drill path holds the drilled node IDs, outermost first, each inside the one before
+  - Drilling out: the button and `D` go back one level when no node to drill into is selected (the centre, nothing, a leaf), the command "Drill out one level" always; "Show the whole map" goes straight back. After drilling out the node drilled out of (whole map: the outermost one) is selected and centred, at the zoom that fits the shown map
+  - Indicators: the centre carries `is-drill-centre` and a small Lucide `focus` icon centred above it (below it when its children grow upwards); the button is highlighted (`is-active`) while drilled in, labelled "Drill out one level" when it drills out, and disabled when there is nothing to drill into or out of
+  - Link lines to nodes outside the drilled part (also to its ancestors) are hidden
+  - Robustness: when a live edit removes or renames a drilled node (the path no longer fits the tree), the map quietly shows the whole note, fitted, and saves the empty path
+  - Persistence: the path is stored in the view state (`drill`, next to `layout` and `theme`), restored after a restart (fitted), kept on a rename; a view state without `drill` (older versions) or with a malformed one shows the whole map
+  - Unchanged: collapse state, layout, theme, full screen and jump to source; "Back to root" centres the current centre; "Collapse all" keeps collapsing all nodes of the note (the centre and its children stay visible)
+  - Animation: drilling in, the view glides (about 250 ms, ease in-out, transform only) until the node sits where and as large as it will be in the fitted drilled view; then the map fades out and the drilled map fades in (about 150 ms each, opacity only). Drilling out reverses it: fade out, swap with the node kept in place, fade in, then glide until it is centred. With `prefers-reduced-motion: reduce` (the view's window) it switches instantly. A new drill step, pan, zoom, fit, collapse, layout choice or live edit during an animation first finishes it at once (no pile-up). The canvas has `is-drilling` while it runs; the drill state (path, selection, commands) changes at once
+  - Commands (no default hotkeys): "Drill down into selection" (a node with children selected), "Drill out one level" and "Show the whole map" (drilled in)
 - Zoom and pan (decided, like Canvas)
   - Mouse wheel / two-finger scroll: pan
   - Ctrl/Cmd + wheel and trackpad pinch (arrives as wheel event with `ctrlKey`): zoom
@@ -228,7 +240,7 @@ Project (root, H1)
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
-  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change colour theme…, next colour theme
+  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change colour theme…, next colour theme, drill down into selection, drill out one level, show the whole map
   - Each command is registered in the same milestone as its control
   - Commands use `checkCallback` and act on the active mind map view; hidden when no mind map view is active
   - No default hotkeys (Obsidian plugin guidelines discourage them because of conflicts); users assign their own
@@ -248,7 +260,7 @@ Project (root, H1)
 ## View lifecycle and error states
  
 - View state
-  - `getState` / `setState` persist the pinned file path and the view's layout and theme overrides (see "Layout and colour theme switcher"), so the map is restored after an Obsidian restart (views can be deferred until shown)
+  - `getState` / `setState` persist the pinned file path, the view's layout and theme overrides (see "Layout and colour theme switcher") and the drill-down path (see "Drill-down"), so the map is restored after an Obsidian restart (views can be deferred until shown)
   - File renamed or moved (`vault` `rename` event): follow the file, update title
   - File deleted: keep the view, show an empty state "Note was deleted"
 - Loading and empty states

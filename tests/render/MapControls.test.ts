@@ -17,6 +17,7 @@ function setup() {
     toggleFullScreen: vi.fn(),
     chooseLayout: vi.fn(),
     chooseTheme: vi.fn(),
+    drill: vi.fn(),
   };
   const controls = new MapControls(parent, actions);
   const buttons = [...parent.querySelectorAll<HTMLElement>('.mind-mapper-controls button')];
@@ -51,6 +52,7 @@ test('renders the buttons in order with aria labels', () => {
     'Fit to view',
     'Collapse all',
     'Back to root',
+    'Drill down into selection',
     'Layout',
     'Colour theme',
     'Toggle full screen',
@@ -62,6 +64,7 @@ test('renders the buttons in order with aria labels', () => {
     'group',
     'chevrons-down-up',
     'locate',
+    'arrow-down-to-dot',
     'workflow',
     'palette',
     'maximize-2',
@@ -78,7 +81,8 @@ test('the zoom field (input and menu button) sits between zoom out and zoom in',
 });
 
 test('each button calls its action once', () => {
-  const { actions, buttons } = setup();
+  const { actions, buttons, controls } = setup();
+  controls.setDrill('in', false);
   buttons.forEach((b) => b.click());
   expect(actions.expandAll).not.toHaveBeenCalled();
   expect(actions.zoomTo).not.toHaveBeenCalled();
@@ -88,6 +92,7 @@ test('each button calls its action once', () => {
   expect(actions.collapseAll).toHaveBeenCalledTimes(1);
   expect(actions.backToRoot).toHaveBeenCalledTimes(1);
   expect(actions.toggleFullScreen).toHaveBeenCalledTimes(1);
+  expect(actions.drill).toHaveBeenCalledTimes(1);
   // The layout and theme buttons only open their menus.
   expect(actions.chooseLayout).not.toHaveBeenCalled();
   expect(actions.chooseTheme).not.toHaveBeenCalled();
@@ -235,6 +240,7 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
     'An Ansicht anpassen',
     'Alle einklappen',
     'Zurück zum Hauptthema',
+    'In die Auswahl eintauchen',
     'Layout',
     'Farbschema',
     'Vollbild umschalten',
@@ -261,7 +267,7 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
   controls.setCollapsed(true);
   expect(buttons[4]?.getAttribute('aria-label')).toBe('Alle ausklappen');
   controls.setLayout('left-to-right', false);
-  buttons[6]?.click();
+  buttons[7]?.click();
   expect(titles(Menu.lastShown)).toEqual([
     'Ausgewogen im Uhrzeigersinn',
     'Ausgewogen gegen den Uhrzeigersinn',
@@ -273,7 +279,7 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
     'Layout der Notiz verwenden',
   ]);
   controls.setTheme('rainbow', false);
-  buttons[7]?.click();
+  buttons[8]?.click();
   expect(titles(Menu.lastShown)).toEqual([
     'Keins',
     'Regenbogen',
@@ -297,7 +303,7 @@ const LAYOUT_TITLES = [
 test('the layout button opens a menu of the six layouts, the current one checked, then "Use the note\'s layout"', () => {
   const { parent, actions, controls, buttons } = setup();
   controls.setLayout('top-to-bottom', false);
-  buttons[6]?.click();
+  buttons[7]?.click();
   const menu = Menu.lastShown;
   expect(titles(menu)).toEqual([...LAYOUT_TITLES, null, "Use the note's layout"]);
   expect(checked(menu)).toEqual(['Top → bottom']);
@@ -314,7 +320,7 @@ test('the layout button opens a menu of the six layouts, the current one checked
 test('the theme button opens a menu of the five themes, the current one checked, then "Use the note\'s theme"', () => {
   const { parent, actions, controls, buttons } = setup();
   controls.setTheme('ocean', true);
-  buttons[7]?.click();
+  buttons[8]?.click();
   const menu = Menu.lastShown;
   expect(titles(menu)).toEqual([
     'None',
@@ -336,7 +342,7 @@ test('the theme button opens a menu of the five themes, the current one checked,
 
 test('the layout and theme buttons are highlighted while their override is active', () => {
   const { controls, buttons } = setup();
-  const [layout, theme] = [buttons[6], buttons[7]];
+  const [layout, theme] = [buttons[7], buttons[8]];
   expect(layout?.classList.contains('is-active')).toBe(false);
   expect(theme?.classList.contains('is-active')).toBe(false);
   controls.setLayout('left-to-right', true);
@@ -358,5 +364,55 @@ test('the menus can be opened without a click (commands), at their buttons', () 
   expect(checked(Menu.lastShown)).toEqual(['Left → right']);
   controls.showThemeMenu();
   expect(checked(Menu.lastShown)).toEqual(['None']);
-  expect(buttons.length).toBe(9);
+  expect(buttons.length).toBe(10);
+});
+
+describe('drill-down button (issue #23)', () => {
+  function drillButton(parent: HTMLElement): HTMLButtonElement {
+    const b = parent.querySelector<HTMLButtonElement>('button.mind-mapper-drill');
+    if (!b) throw new Error('no drill button');
+    return b;
+  }
+
+  test('disabled until a node with children is selected or the map is drilled in', () => {
+    const { parent, actions } = setup();
+    const b = drillButton(parent);
+    expect(b.disabled).toBe(true);
+    expect(b.classList.contains('is-active')).toBe(false);
+    b.click();
+    expect(actions.drill).not.toHaveBeenCalled();
+  });
+
+  test('drills in for a selected node with children', () => {
+    const { parent, controls, actions } = setup();
+    controls.setDrill('in', false);
+    const b = drillButton(parent);
+    expect(b.disabled).toBe(false);
+    expect(b.getAttribute('aria-label')).toBe('Drill down into selection');
+    expect(b.classList.contains('is-active')).toBe(false);
+    b.click();
+    expect(actions.drill).toHaveBeenCalledTimes(1);
+  });
+
+  test('highlighted while drilled in; drills out one level unless a node to drill into is selected', () => {
+    const { parent, controls } = setup();
+    const b = drillButton(parent);
+    controls.setDrill('out', true);
+    expect(b.disabled).toBe(false);
+    expect(b.classList.contains('is-active')).toBe(true);
+    expect(b.getAttribute('aria-label')).toBe('Drill out one level');
+    controls.setDrill('in', true);
+    expect(b.classList.contains('is-active')).toBe(true);
+    expect(b.getAttribute('aria-label')).toBe('Drill down into selection');
+    controls.setDrill(null, false);
+    expect(b.disabled).toBe(true);
+    expect(b.classList.contains('is-active')).toBe(false);
+  });
+
+  test('German labels', () => {
+    useGerman();
+    const { parent, controls } = setup();
+    controls.setDrill('out', true);
+    expect(drillButton(parent).getAttribute('aria-label')).toBe('Eine Ebene zurück');
+  });
 });

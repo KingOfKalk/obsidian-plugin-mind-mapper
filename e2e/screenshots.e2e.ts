@@ -394,6 +394,43 @@ describe('screenshots', function () {
     });
   }
 
+  // Issue #23: a selected branch, drilled into (centre marker, highlighted button), then stacked
+  // (light, dark and loud palette). In full screen, the pointer moved just before each shot: the
+  // control bar shows.
+  for (const [mode, loud] of [
+    ['light', false],
+    ['dark', false],
+    ['light', true],
+  ] as const) {
+    it(`drill-down ${loud ? 'loud' : mode}`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('demo/Feature tour.md');
+      await settle();
+      const prefix = loud ? `${dir}/loud-drill` : `${dir}/drill-${mode}`;
+      const shoot = async () => {
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await clickNodeEndingWith('/Timeline');
+        await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await pointerAway();
+        await browser.saveScreenshot(`${prefix}-1-selected.png`);
+        await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+        await drillEnd();
+        await pointerAway();
+        await browser.saveScreenshot(`${prefix}-2-drilled.png`);
+        await clickNodeEndingWith('/Timeline/Launch day');
+        await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+        await drillEnd();
+        await pointerAway();
+        await browser.saveScreenshot(`${prefix}-3-stacked.png`);
+        await browser.executeObsidianCommand('mind-mapper:show-whole-map');
+        await drillEnd();
+        await browser.keys('Escape');
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
+
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
   });
@@ -536,10 +573,10 @@ async function saveControlsShots(prefix: string): Promise<void> {
   await browser.saveScreenshot(`${prefix}-menu.png`);
   await browser.keys('Escape');
   await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
-  // The layout (7th child) and colour theme (8th) menus; labels differ per language.
+  // The layout (8th child) and colour theme (9th) menus; labels differ per language.
   for (const [child, name] of [
-    [7, 'layout'],
-    [8, 'theme'],
+    [8, 'layout'],
+    [9, 'theme'],
   ] as const) {
     await browser.$(`.mind-mapper-controls > :nth-child(${child})`).click();
     await browser.$('.menu').waitForExist({ timeout: 5000 });
@@ -572,6 +609,29 @@ async function saveControlsShots(prefix: string): Promise<void> {
   await controls.saveScreenshot(`${prefix}-overridden.png`);
   await choose(null, null);
   await settle();
+}
+
+/** Clicks (selects) the node whose ID ends with `suffix`. */
+async function clickNodeEndingWith(suffix: string): Promise<void> {
+  await browser.execute((end) => {
+    const node = Array.from(
+      document.querySelectorAll<HTMLElement>('.mind-mapper-node[data-node-id]'),
+    ).find((el) => el.dataset.nodeId?.endsWith(end));
+    if (!node) throw new Error(`no node ending with ${end}`);
+    node.querySelector<HTMLElement>('.mind-mapper-node-content')?.click();
+  }, suffix);
+}
+
+/** Waits for the end of a drill-down animation and the re-layout after it. */
+async function drillEnd(): Promise<void> {
+  await browser.$('.mind-mapper-canvas.is-drilling').waitForExist({ reverse: true, timeout: 5000 });
+  await settle();
+}
+
+/** Pointer off the control bar (no tooltip in the shot), then a moment for the hover to end. */
+async function pointerAway(): Promise<void> {
+  await browser.action('pointer').move({ x: 5, y: 5 }).perform();
+  await browser.pause(300);
 }
 
 /** Full screen fits the map to the whole window; Esc leaves it again. */

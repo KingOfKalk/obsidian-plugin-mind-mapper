@@ -19,6 +19,9 @@ export const en = {
   backToRoot: 'Back to root',
   toggleFullScreen: 'Toggle full screen',
   exitFullScreen: 'Exit full screen',
+  drillDown: 'Drill down into selection',
+  drillOut: 'Drill out one level',
+  showWholeMap: 'Show the whole map',
 
   // Layout and colour theme of the map view (control bar menus and commands)
   layoutMenu: 'Layout',
@@ -40,6 +43,7 @@ export const en = {
   collapseNode: 'Collapse',
   expandNode: 'Expand',
   showFullContent: 'Show full content',
+  drillCentre: 'Drilled-in centre',
 
   // View
   viewTitle: 'Mind map',
