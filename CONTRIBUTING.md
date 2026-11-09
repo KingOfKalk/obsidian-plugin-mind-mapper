@@ -57,6 +57,42 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 - After a merge, run `npm run dev:build` in the main checkout so `sandbox-vault/` has the new build.
 - Keep scope tight: unrelated work goes on a separate issue and branch.
 
+## Screenshots in issues and pull requests
+
+Add screenshots whenever something is visible: they make reviews and bug reports much faster.
+
+- Bug issues: a screenshot of the problem (and the note's Markdown in the form).
+- Pull requests with a visible change: before and after, side by side in a table. For colour or styling changes, also a loud-palette shot (see [docs/developer.md](docs/developer.md), Screenshots).
+- Make them with the headless screenshot run: `npm run screenshots:e2e` on the branch ("after") and in a worktree of `origin/main` ("before"); use the same spec step for both so they are comparable.
+
+Screenshots never go to `main`. They live on the branch `screenshots` (images only, never merged), one folder per issue or PR, and are linked by commit SHA so the links stay stable:
+
+```sh
+# once per checkout: a worktree of the screenshots branch
+git fetch origin screenshots
+git worktree add .worktrees/screenshots screenshots
+
+# per issue or PR
+mkdir -p .worktrees/screenshots/pr-<n>
+cp before.png after.png .worktrees/screenshots/pr-<n>/
+cd .worktrees/screenshots
+git pull --ff-only
+git add pr-<n>
+git commit -m "chore: screenshots for #<n>"
+git push origin screenshots
+git rev-parse HEAD   # <sha> for the links
+```
+
+Link them in the PR description or a comment (`issue-<n>/` for issues):
+
+```markdown
+| Before | After |
+|---|---|
+| ![before](https://raw.githubusercontent.com/KingOfKalk/obsidian-plugin-mind-mapper/<sha>/pr-<n>/before.png) | ![after](https://raw.githubusercontent.com/KingOfKalk/obsidian-plugin-mind-mapper/<sha>/pr-<n>/after.png) |
+```
+
+Dragging an image into the GitHub web editor works too; `gh` cannot upload images.
+
 ## Releases
 
 - Releases are automated with [release-please](https://github.com/googleapis/release-please). Do not bump versions or tag by hand; do not edit `manifest.json` / `versions.json` versions by hand.
