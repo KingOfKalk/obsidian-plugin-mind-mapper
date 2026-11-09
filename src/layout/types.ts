@@ -48,6 +48,11 @@ export interface PositionedNode extends Rect {
   childSide: Side;
   /** Tree depth: 0 for the root, 1 for the first level (colour themes). */
   depth: number;
+  /**
+   * Source index of the first-level node this node belongs to (0 for the first branch, the node
+   * itself on the first level); -1 for the root (colour themes).
+   */
+  branch: number;
 }
 
 export interface LayoutEdge {

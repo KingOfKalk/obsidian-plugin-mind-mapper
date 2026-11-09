@@ -37,19 +37,26 @@ function chrome(limits: NodeLimits): Size {
 }
 
 const TEXT = { charWidth: 8, lineHeight: 24 };
+/** The root's font size relative to other nodes (styles.css `.mind-mapper-node.is-root`). */
+export const ROOT_FONT_SCALE = 1.5;
 const CODE = { charWidth: 7.8, lineHeight: 20 };
 const TABLE_ROW_HEIGHT = 32;
 const FENCE = /^\s*(```|~~~)/;
 const TABLE_SEPARATOR = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
 const IMAGE_ONLY = /^!\[\[([^\]]+)\]\]$|^!\[[^\]]*\]\(([^)]+)\)$/;
 
+/** The markdown is a single image embed (shown as a fixed-size thumbnail). */
+export function isImageOnly(markdown: string): boolean {
+  const image = IMAGE_ONLY.exec(markdown.trim());
+  const imageLink = image?.[1] ?? image?.[2];
+  return imageLink !== undefined && isImageLink(imageLink);
+}
+
 /** Instant size guess from the markdown, so the first layout needs no measuring. */
 export function estimateSize(node: MindMapNode, limits: NodeLimits = NODE_LIMITS): Size {
   const extra = chrome(limits);
   const markdown = node.markdown.trim();
-  const image = IMAGE_ONLY.exec(markdown);
-  const imageLink = image?.[1] ?? image?.[2];
-  if (imageLink && isImageLink(imageLink)) {
+  if (isImageOnly(markdown)) {
     return { width: limits.thumb.width + extra.width, height: limits.thumb.height + extra.height };
   }
 
@@ -68,12 +75,14 @@ export function estimateSize(node: MindMapNode, limits: NodeLimits = NODE_LIMITS
     return box(longest(rows) * TEXT.charWidth, rows.length * TABLE_ROW_HEIGHT, limits);
   }
 
+  const scale = node.kind === 'root' ? ROOT_FONT_SCALE : 1;
+  const charWidth = TEXT.charWidth * scale;
   const contentWidth = limits.maxWidth - extra.width;
   const wrapped = lines.reduce(
-    (sum, line) => sum + Math.max(1, Math.ceil((line.length * TEXT.charWidth) / contentWidth)),
+    (sum, line) => sum + Math.max(1, Math.ceil((line.length * charWidth) / contentWidth)),
     0,
   );
-  return box(longest(lines) * TEXT.charWidth, wrapped * TEXT.lineHeight, limits);
+  return box(longest(lines) * charWidth, wrapped * TEXT.lineHeight * scale, limits);
 }
 
 export interface ContentBox {

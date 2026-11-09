@@ -111,7 +111,7 @@ Project (root, H1)
 | `mind-mapper-title` | text | any string | single H1, else file name |
 | `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
-| `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `none`) |
+| `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `rainbow`) |
  
 - Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a colour theme (see Colour themes)
 - Validation
@@ -127,23 +127,32 @@ Project (root, H1)
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
 ## Colour themes (decided)
  
-- Colour by nesting level: first-level nodes get colour 1, second-level nodes colour 2, and so on; the root keeps its look
-- Colours repeat after the end of the palette (with 6 colours, level 7 is coloured like level 1)
-- Coloured: the node border, a light tint of the same colour as node background, and the edge leading into the node; text keeps the normal text colour
-- Not coloured: the root, cross-link lines, dividers, collapse toggles, the selection ring
+- Colour per branch: each first-level node starts a branch with its own colour from the palette, in source order (branch 1 colour 1, branch 2 colour 2, …); colours repeat when there are more branches than colours
+  - Everything below a first-level node takes its branch colour: the nodes and the lines leading into them
+  - The root has no branch colour
+  - Circle layouts: branch order is the order of the root's children in the note, regardless of side
+- Emphasis per level (every theme, also `none`)
+  - Root: large bold text (1.5 times the normal size), no border, no box; the selection ring still shows
+  - Level 1: box filled with the branch colour mixed into the background (50 % in light mode, 35 % in dark mode), normal text colour, no border; text contrast at least 4.5:1 (WCAG AA) on every palette colour in light and dark mode
+  - Level 2: light tint of the branch colour (18 %), no border
+  - Level 3 and deeper: plain text, no box; the coloured line leads into it
+  - Blocks (code, tables, math, quotes, callouts, Mermaid diagrams, image embeds) keep their box at every level: the normal background and a thin border in the branch colour
+  - Lines: branch colour; lines into first-level nodes slightly thicker
+  - Every theme and level has the same node size (borders stay, transparent), so a theme switch never changes the layout
+- Not coloured: cross-link lines, dividers, collapse toggles and badges, the selection ring; the expand button sits on the node's background (the canvas background on nodes without a box)
 - Themes
- 
-| Theme | Colours by level |
+
+| Theme | Branch colours |
 |---|---|
-| `none` (default) | none: the plain look |
-| `rainbow` | red, orange, yellow, green, blue, purple |
+| `rainbow` (default) | red, orange, yellow, green, cyan, blue, purple |
 | `ocean` | blue, cyan, green, purple |
 | `forest` | green, yellow, orange, olive (green and orange mixed) |
-| `accent` | Obsidian's accent colour at 100 %, 75 %, 55 %, 40 % (mixed into the background) |
+| `accent` | every branch in Obsidian's accent colour |
+| `none` | greys: level 1 and 2 from the faint text colour, lines faint, block borders the normal border colour |
  
-- Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--background-primary`), so light and dark mode and community themes keep working
-- Choice: frontmatter `mind-mapper-theme`, else the plugin setting "Default theme"
-- Live: a changed key or setting re-applies the theme while the map is open, without a re-layout (pure CSS)
+- Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--text-faint`, `--background-primary`), so light and dark mode and community themes keep working
+- Choice: frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
+- Live: a changed key or setting re-applies the theme while the map is open, without a re-layout
 ## Layout (decided)
  
 - Input: tree, layout, measured or estimated node sizes; output: positioned nodes and edges; pure function

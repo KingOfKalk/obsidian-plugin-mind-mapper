@@ -2,6 +2,7 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { estimateSize } from '../../src/layout/nodeSize';
 import { layoutTree } from '../../src/layout/tidyTree';
+import { visibleTree } from '../../src/layout/visibleTree';
 import {
   LAYOUT_NAMES,
   type LayoutOptions,
@@ -13,6 +14,7 @@ import {
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
 import type { MindMapNode } from '../../src/parser/types';
+import { CollapseState } from '../../src/view/collapseState';
 import { loadFixture } from '../fixtures';
 
 function n(id: string, ...children: MindMapNode[]): MindMapNode {
@@ -155,6 +157,29 @@ test.each(LAYOUT_NAMES)('%s: depth is the tree depth, the root 0', (layout) => {
     layoutTree({ root: tree }, options(layout)).nodes.map((p) => [p.node.id, p.depth]),
   );
   expect(depths).toEqual({ r: 0, a: 1, a1: 2, a1x: 3, b: 1, c: 1, c1: 2 });
+});
+
+test.each(LAYOUT_NAMES)(
+  '%s: branch is the source index of the first-level ancestor, the root -1',
+  (layout) => {
+    const tree = n('r', n('a', n('a1', n('a1x'))), n('b'), n('c', n('c1')), n('d', n('d1')));
+    const branches = Object.fromEntries(
+      layoutTree({ root: tree }, options(layout)).nodes.map((p) => [p.node.id, p.branch]),
+    );
+    // circle layouts: by source order, not by side (c and d sit on the left)
+    expect(branches).toEqual({ r: -1, a: 0, a1: 0, a1x: 0, b: 1, c: 2, c1: 2, d: 3, d1: 3 });
+  },
+);
+
+test('a collapsed first-level node keeps the branch indexes of the others', () => {
+  const tree = n('r', n('a', n('a1')), n('b', n('b1')), n('c'));
+  const collapsed = new CollapseState();
+  collapsed.toggle('a');
+  const { tree: shown } = visibleTree({ root: tree }, collapsed);
+  const branches = Object.fromEntries(
+    layoutTree(shown, options('circle-clockwise')).nodes.map((p) => [p.node.id, p.branch]),
+  );
+  expect(branches).toEqual({ r: -1, a: 0, b: 1, b1: 1, c: 2 });
 });
 
 function intersects(a: Rect, b: Rect): boolean {

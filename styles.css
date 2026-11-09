@@ -85,11 +85,6 @@
   user-select: text;
 }
 
-.mind-mapper-node.is-root {
-  border-color: var(--interactive-accent);
-  font-weight: var(--font-semibold);
-}
-
 .mind-mapper-node.is-selected {
   box-shadow: 0 0 0 2px var(--interactive-accent);
 }
@@ -171,225 +166,161 @@
   mask-composite: intersect;
 }
 
-/* Spec "Colour themes": the canvas carries `mind-mapper-theme-<name>`, which defines the colours of
-   levels 1..12 (a palette of 6 or 4 colours repeated); nodes and the edges into them carry
-   `data-level` 1..12 (the root none). Colours come only from Obsidian's variables, so light and
-   dark mode and community themes keep working. `none` defines nothing and keeps the plain look. */
+/* Spec "Colour themes": colour per first-level branch, emphasis per level.
+   The canvas carries `mind-mapper-theme-<name>`, which defines the palette
+   (`--mind-mapper-color-<n>`); nodes and the edges into them carry `data-branch` (their branch's
+   palette colour, cycled by the renderer) and `data-level` (1, 2, or 3 for everything deeper); the
+   root has neither. `none` (and a canvas without a known theme) defines no palette: the same
+   emphasis in greys. Colours come only from Obsidian's variables, so light and dark mode and
+   community themes keep working. Edges get their stroke directly, not through a custom property:
+   all edges are in the DOM (no culling), and a custom property on each of them slows down style
+   recalculation on large maps. */
 .mind-mapper-theme-rainbow {
-  --mind-mapper-level-1: var(--color-red);
-  --mind-mapper-level-2: var(--color-orange);
-  --mind-mapper-level-3: var(--color-yellow);
-  --mind-mapper-level-4: var(--color-green);
-  --mind-mapper-level-5: var(--color-blue);
-  --mind-mapper-level-6: var(--color-purple);
-  --mind-mapper-level-7: var(--mind-mapper-level-1);
-  --mind-mapper-level-8: var(--mind-mapper-level-2);
-  --mind-mapper-level-9: var(--mind-mapper-level-3);
-  --mind-mapper-level-10: var(--mind-mapper-level-4);
-  --mind-mapper-level-11: var(--mind-mapper-level-5);
-  --mind-mapper-level-12: var(--mind-mapper-level-6);
+  --mind-mapper-color-1: var(--color-red);
+  --mind-mapper-color-2: var(--color-orange);
+  --mind-mapper-color-3: var(--color-yellow);
+  --mind-mapper-color-4: var(--color-green);
+  --mind-mapper-color-5: var(--color-cyan);
+  --mind-mapper-color-6: var(--color-blue);
+  --mind-mapper-color-7: var(--color-purple);
 }
 
 .mind-mapper-theme-ocean {
-  --mind-mapper-level-1: var(--color-blue);
-  --mind-mapper-level-2: var(--color-cyan);
-  --mind-mapper-level-3: var(--color-green);
-  --mind-mapper-level-4: var(--color-purple);
-  --mind-mapper-level-5: var(--mind-mapper-level-1);
-  --mind-mapper-level-6: var(--mind-mapper-level-2);
-  --mind-mapper-level-7: var(--mind-mapper-level-3);
-  --mind-mapper-level-8: var(--mind-mapper-level-4);
-  --mind-mapper-level-9: var(--mind-mapper-level-1);
-  --mind-mapper-level-10: var(--mind-mapper-level-2);
-  --mind-mapper-level-11: var(--mind-mapper-level-3);
-  --mind-mapper-level-12: var(--mind-mapper-level-4);
+  --mind-mapper-color-1: var(--color-blue);
+  --mind-mapper-color-2: var(--color-cyan);
+  --mind-mapper-color-3: var(--color-green);
+  --mind-mapper-color-4: var(--color-purple);
 }
 
 /* Olive: Obsidian has no brown, so green and orange are mixed. */
 .mind-mapper-theme-forest {
-  --mind-mapper-level-1: var(--color-green);
-  --mind-mapper-level-2: var(--color-yellow);
-  --mind-mapper-level-3: var(--color-orange);
-  --mind-mapper-level-4: color-mix(in srgb, var(--color-green), var(--color-orange));
-  --mind-mapper-level-5: var(--mind-mapper-level-1);
-  --mind-mapper-level-6: var(--mind-mapper-level-2);
-  --mind-mapper-level-7: var(--mind-mapper-level-3);
-  --mind-mapper-level-8: var(--mind-mapper-level-4);
-  --mind-mapper-level-9: var(--mind-mapper-level-1);
-  --mind-mapper-level-10: var(--mind-mapper-level-2);
-  --mind-mapper-level-11: var(--mind-mapper-level-3);
-  --mind-mapper-level-12: var(--mind-mapper-level-4);
+  --mind-mapper-color-1: var(--color-green);
+  --mind-mapper-color-2: var(--color-yellow);
+  --mind-mapper-color-3: var(--color-orange);
+  --mind-mapper-color-4: color-mix(in srgb, var(--color-green), var(--color-orange));
 }
 
-/* The accent colour, fading into the background level by level. */
 .mind-mapper-theme-accent {
-  --mind-mapper-level-1: var(--interactive-accent);
-  --mind-mapper-level-2: color-mix(
+  --mind-mapper-color-1: var(--interactive-accent);
+}
+
+/* How much branch colour goes into the level 1 fill and the level 2 tint (the rest is the
+   background). Dark mode fills less, so the light text keeps a contrast of at least 4.5:1. */
+.mind-mapper-canvas {
+  --mind-mapper-fill: 50%;
+  --mind-mapper-tint: 18%;
+}
+
+.theme-dark .mind-mapper-canvas {
+  --mind-mapper-fill: 35%;
+}
+
+.mind-mapper-node[data-branch='1'] {
+  --mind-mapper-branch: var(--mind-mapper-color-1, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='1'] {
+  stroke: var(--mind-mapper-color-1, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='2'] {
+  --mind-mapper-branch: var(--mind-mapper-color-2, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='2'] {
+  stroke: var(--mind-mapper-color-2, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='3'] {
+  --mind-mapper-branch: var(--mind-mapper-color-3, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='3'] {
+  stroke: var(--mind-mapper-color-3, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='4'] {
+  --mind-mapper-branch: var(--mind-mapper-color-4, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='4'] {
+  stroke: var(--mind-mapper-color-4, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='5'] {
+  --mind-mapper-branch: var(--mind-mapper-color-5, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='5'] {
+  stroke: var(--mind-mapper-color-5, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='6'] {
+  --mind-mapper-branch: var(--mind-mapper-color-6, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='6'] {
+  stroke: var(--mind-mapper-color-6, var(--text-faint));
+}
+
+.mind-mapper-node[data-branch='7'] {
+  --mind-mapper-branch: var(--mind-mapper-color-7, var(--text-faint));
+}
+
+.mind-mapper-edge[data-branch='7'] {
+  stroke: var(--mind-mapper-color-7, var(--text-faint));
+}
+
+/* The root: large bold text, no box (the selection ring still shows). */
+.mind-mapper-node.is-root:not(.is-render-error) {
+  border-color: transparent;
+  background: transparent;
+  /* nodeSize.ts ROOT_FONT_SCALE */
+  font-size: calc(var(--font-text-size) * 1.5);
+  font-weight: var(--font-bold);
+}
+
+/* Borders stay (transparent) so every theme and level has the same node size. */
+.mind-mapper-node[data-level]:not(.is-render-error) {
+  border-color: transparent;
+}
+
+.mind-mapper-node[data-level='1'] {
+  background: color-mix(
     in srgb,
-    var(--interactive-accent) 75%,
+    var(--mind-mapper-branch) var(--mind-mapper-fill),
     var(--background-primary)
   );
-  --mind-mapper-level-3: color-mix(
+}
+
+.mind-mapper-node[data-level='2'] {
+  background: color-mix(
     in srgb,
-    var(--interactive-accent) 55%,
+    var(--mind-mapper-branch) var(--mind-mapper-tint),
     var(--background-primary)
   );
-  --mind-mapper-level-4: color-mix(
-    in srgb,
-    var(--interactive-accent) 40%,
-    var(--background-primary)
-  );
-  --mind-mapper-level-5: var(--mind-mapper-level-1);
-  --mind-mapper-level-6: var(--mind-mapper-level-2);
-  --mind-mapper-level-7: var(--mind-mapper-level-3);
-  --mind-mapper-level-8: var(--mind-mapper-level-4);
-  --mind-mapper-level-9: var(--mind-mapper-level-1);
-  --mind-mapper-level-10: var(--mind-mapper-level-2);
-  --mind-mapper-level-11: var(--mind-mapper-level-3);
-  --mind-mapper-level-12: var(--mind-mapper-level-4);
 }
 
-/* Each level picks its colour from the theme. Only the four theme classes colour anything, so a
-   canvas with `none`, with no theme class or with an unknown one keeps the plain look. */
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='1'] {
-  --mind-mapper-level: var(--mind-mapper-level-1);
+/* Level 3 and deeper: plain text, the coloured edge leads into it. */
+.mind-mapper-node[data-level='3'] {
+  background: transparent;
 }
 
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='2'] {
-  --mind-mapper-level: var(--mind-mapper-level-2);
+/* Blocks (code, tables, callouts, diagrams, images, …) keep a box at every level. */
+.mind-mapper-node.is-block[data-level] {
+  background: var(--background-primary);
 }
 
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='3'] {
-  --mind-mapper-level: var(--mind-mapper-level-3);
+.mind-mapper-node.is-block[data-level]:not(.is-render-error) {
+  border-color: var(--mind-mapper-branch);
 }
 
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='4'] {
-  --mind-mapper-level: var(--mind-mapper-level-4);
+.mind-mapper-theme-none .mind-mapper-node.is-block[data-level]:not(.is-render-error) {
+  border-color: var(--background-modifier-border);
 }
 
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='5'] {
-  --mind-mapper-level: var(--mind-mapper-level-5);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='6'] {
-  --mind-mapper-level: var(--mind-mapper-level-6);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='7'] {
-  --mind-mapper-level: var(--mind-mapper-level-7);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='8'] {
-  --mind-mapper-level: var(--mind-mapper-level-8);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='9'] {
-  --mind-mapper-level: var(--mind-mapper-level-9);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='10'] {
-  --mind-mapper-level: var(--mind-mapper-level-10);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='11'] {
-  --mind-mapper-level: var(--mind-mapper-level-11);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  [data-level='12'] {
-  --mind-mapper-level: var(--mind-mapper-level-12);
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  .mind-mapper-node[data-level]:not(.is-render-error) {
-  border-color: var(--mind-mapper-level);
-  background: color-mix(in srgb, var(--mind-mapper-level) 10%, var(--background-primary));
-}
-
-.mind-mapper-canvas:is(
-    .mind-mapper-theme-rainbow,
-    .mind-mapper-theme-ocean,
-    .mind-mapper-theme-forest,
-    .mind-mapper-theme-accent
-  )
-  .mind-mapper-edge[data-level] {
-  stroke: var(--mind-mapper-level);
+.mind-mapper-edge[data-level='1'] {
+  stroke-width: 2.5;
 }
 
 .mind-mapper-node-expand {
@@ -397,8 +328,13 @@
   position: absolute;
   top: var(--size-2-1);
   right: var(--size-2-1);
-  /* The node's own background, tinted by a colour theme (`--background-primary` without one). */
+  /* The node's own background (filled or tinted by the colour theme). */
   background: inherit;
+}
+
+/* Nodes without a box (root, level 3 and deeper): the canvas background, not the text behind. */
+.mind-mapper-node:is(.is-root, [data-level='3']):not(.is-block) .mind-mapper-node-expand {
+  background: var(--background-primary);
 }
 
 .mind-mapper-node.is-clipped .mind-mapper-node-expand {

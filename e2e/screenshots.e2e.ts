@@ -11,6 +11,24 @@ import {
 } from './helpers';
 import { generateNote } from './perf/generateNote';
 
+/** Nine first-level branches with a paragraph, a code block, a table and a callout below. */
+const branchesNote = [
+  '# Branches',
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((i) => [
+    `## Branch ${i}`,
+    `Text of branch ${i}.`,
+    `### Detail ${i}`,
+    i % 3 === 0
+      ? '```js\nconst branch = ' + i + ';\n```'
+      : i % 3 === 1
+        ? `| a | b |\n| - | - |\n| ${i} | x |`
+        : `> [!note] Callout ${i}\n> Inside.`,
+    `- Item ${i}`,
+    '  - Nested item',
+  ]),
+  '',
+].join('\n\n');
+
 /**
  * Visual check: saves screenshots of a few maps to SCREENSHOT_DIR (default: e2e/screenshots/).
  * Not part of `test:e2e`; run with `npm run screenshots:e2e`.
@@ -155,7 +173,7 @@ describe('screenshots', function () {
   });
 
   // Colour themes in light and dark mode, in full screen so the nodes are readable.
-  for (const theme of ['rainbow', 'accent', 'ocean', 'forest']) {
+  for (const theme of ['rainbow', 'ocean', 'forest', 'accent', 'none']) {
     for (const mode of ['light', 'dark'] as const) {
       it(`theme ${theme} ${mode}`, async function () {
         await useTheme(theme, mode);
@@ -166,12 +184,12 @@ describe('screenshots', function () {
     }
   }
 
-  // Eight levels: rainbow starts again at level 7, accent (4 steps) at level 5.
+  // Eight levels: level 1 filled, level 2 tinted, level 3 and deeper plain text, all in the branch colour.
   for (const [theme, mode] of [
     ['rainbow', 'light'],
     ['rainbow', 'dark'],
-    ['accent', 'light'],
-    ['accent', 'dark'],
+    ['none', 'light'],
+    ['none', 'dark'],
   ] as const) {
     it(`theme ${theme} ${mode}, deep nesting`, async function () {
       await useTheme(theme, mode);
@@ -201,6 +219,17 @@ describe('screenshots', function () {
     });
   }
 
+  // Nine first-level branches: rainbow (7 colours) starts again at branch 8; blocks at level 3.
+  for (const mode of ['light', 'dark'] as const) {
+    it(`theme rainbow ${mode}, nine branches`, async function () {
+      await useTheme('rainbow', mode);
+      await writeNote('theme-branches.md', branchesNote);
+      await openMindMap('theme-branches.md');
+      await settle();
+      await saveFullScreenShot(`${dir}/theme-rainbow-branches-${mode}.png`);
+    });
+  }
+
   // Clipped nodes: the expand button takes the tinted node background.
   for (const mode of ['light', 'dark'] as const) {
     it(`theme rainbow ${mode}, clipped nodes`, async function () {
@@ -210,6 +239,22 @@ describe('screenshots', function () {
       await saveFullScreenShot(`${dir}/theme-rainbow-clipped-${mode}.png`);
     });
   }
+
+  it('loud rainbow, nine branches', async function () {
+    await useTheme('rainbow', 'light');
+    await writeNote('theme-branches.md', branchesNote);
+    await openMindMap('theme-branches.md');
+    await settle();
+    await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-rainbow-branches.png`));
+  });
+
+  it('loud none, nine branches', async function () {
+    await useTheme('none', 'light');
+    await writeNote('theme-branches.md', branchesNote);
+    await openMindMap('theme-branches.md');
+    await settle();
+    await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-none-branches.png`));
+  });
 
   // Loud palette (see LOUD_PALETTE): wrong, missing or leaking colours stand out. Review by eye.
   const deepNote = [
@@ -340,20 +385,21 @@ describe('screenshots', function () {
  * Loud palette (test-only, never shipped): Obsidian's real colours are subtle, so a colour on the
  * wrong element is hard to see. These overrides give every variable that styles.css uses its own
  * unmistakable colour. Legend (variable -> colour; the plugin element that uses it):
- *   --color-red     magenta  #ff00ff  rainbow level 1 / 7, forest/ocean: unused
- *   --color-orange  lime     #00ff00  rainbow level 2 / 8, forest level 3
- *   --color-yellow  blue     #0000ff  rainbow level 3, forest level 2
- *   --color-green   yellow   #ffff00  rainbow level 4, ocean level 3, forest level 1
- *   --color-blue    red      #ff0000  rainbow level 5, ocean level 1
- *   --color-cyan    black    #000000  ocean level 2
- *   --color-purple  cyan     #00ffff  rainbow level 6, ocean level 4
+ *   --color-red     magenta  #ff00ff  rainbow branch 1 / 8
+ *   --color-orange  lime     #00ff00  rainbow branch 2 / 9, forest branch 3
+ *   --color-yellow  blue     #0000ff  rainbow branch 3, forest branch 2
+ *   --color-green   yellow   #ffff00  rainbow branch 4, ocean branch 3, forest branch 1
+ *   --color-cyan    black    #000000  rainbow branch 5, ocean branch 2
+ *   --color-blue    red      #ff0000  rainbow branch 6, ocean branch 1
+ *   --color-purple  cyan     #00ffff  rainbow branch 7, ocean branch 4
  *   --color-pink    orange   #ff8000  (unused by the plugin)
  *   --interactive-accent  violet   #8000ff  accent theme, cross-links, selection ring, collapsed badge, hover
+ *   (level 1 fill: 50 % branch colour, level 2: 18 %, mixed into --background-primary)
  *   --text-on-accent      gold     #ffcc00  count in the collapsed badge
- *   --text-faint          sky blue #00a0ff  edges without a colour theme
+ *   --text-faint          sky blue #00a0ff  theme none: edges, level 1 fill and level 2 tint (mixed)
  *   --hr-color            teal     #008080  dividers
- *   --background-modifier-border  brown #996633  node border (no theme), skeleton stroke, collapse button and controls border
- *   --background-primary  pale yellow #ffffcc  canvas, nodes (10 % tint base), buttons, controls
+ *   --background-modifier-border  brown #996633  block border (theme none), skeleton stroke, collapse button and controls border
+ *   --background-primary  pale yellow #ffffcc  canvas, fill and tint base, blocks, buttons, controls
  *   --background-secondary pale pink  #ffccee  skeleton rects below 20 % zoom
  *   --text-normal         dark purple #330066  node text, button hover
  *   --text-muted          dark green  #006633  canvas text, collapse count, controls

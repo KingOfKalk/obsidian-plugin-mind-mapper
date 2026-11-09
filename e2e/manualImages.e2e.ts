@@ -168,7 +168,7 @@ describe('user manual images', function () {
     await updateSettings({
       defaultLayout: 'circle-clockwise',
       startCollapsed: false,
-      defaultTheme: 'none',
+      defaultTheme: 'rainbow',
     });
   });
 
@@ -189,7 +189,6 @@ describe('user manual images', function () {
   });
 
   it('rainbow colour theme', async function () {
-    await updateSettings({ defaultTheme: 'rainbow' });
     await setWindowSize(820, 480);
     await showMap(SIMPLE);
     await fit();

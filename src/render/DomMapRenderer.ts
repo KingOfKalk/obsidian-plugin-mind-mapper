@@ -3,9 +3,10 @@ import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Side } from '../layout/types';
+import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
 import { detailLevel, SpatialIndex, worldViewport } from './culling';
-import { levelAttr, type MapThemeName, themeClass } from './themes';
+import { branchAttr, levelAttr, type MapThemeName, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -232,14 +233,28 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   /**
-   * Spec "Colour themes": one class on the canvas; styles.css colours nodes and edges by their
-   * `data-level`, so a switch is pure CSS (no re-render).
+   * Spec "Colour themes": one class on the canvas picks the palette; nodes and edges carry their
+   * palette colour (`data-branch`) and emphasis (`data-level`), so a switch only rewrites
+   * attributes (no re-render, no re-layout: every theme has the same node sizes).
    */
   setTheme(name: MapThemeName): void {
     if (name === this.theme) return;
     this.canvasEl.removeClass(themeClass(this.theme));
     this.theme = name;
     this.canvasEl.addClass(themeClass(name));
+    for (const [id, dom] of this.nodes) {
+      const rect = this.rects.get(id);
+      if (rect) this.setBranch(dom.el, rect.branch);
+    }
+    this.layout?.edges.forEach((edge, i) => {
+      const path = this.edgePaths[i];
+      if (path) this.setBranch(path, this.rects.get(edge.toId)?.branch ?? -1);
+    });
+  }
+
+  /** `data-branch` in the current theme; written only when it changes (reconcile runs per frame). */
+  private setBranch(el: Element, branch: number): void {
+    setAttr(el, 'data-branch', branchAttr(branch, this.theme));
   }
 
   /** `is-selected` on the node with this ID (kept for nodes created later). */
@@ -320,8 +335,10 @@ export class DomMapRenderer implements MapRenderer {
         this.edgePaths.push(path);
       }
       path.setAttribute('d', edgePath(edge));
-      // The level of the node the edge leads into (colour themes).
-      setLevel(path, this.rects.get(edge.toId)?.depth ?? 0);
+      // Colour themes: the edge takes the level and branch of the node it leads into.
+      const to = this.rects.get(edge.toId);
+      setAttr(path, 'data-level', levelAttr(to?.depth ?? 0));
+      this.setBranch(path, to?.branch ?? -1);
     });
     this.renderDividers(layout, svg);
   }
@@ -395,7 +412,7 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   private placeNode(
-    { node, x, y, width, height, depth }: PositionedNode,
+    { node, x, y, width, height, depth, branch }: PositionedNode,
     pool: Map<string, HTMLElement[]>,
   ): void {
     let dom = this.nodes.get(node.id);
@@ -417,7 +434,10 @@ export class DomMapRenderer implements MapRenderer {
     }
     const { el } = dom;
     el.toggleClass('is-root', node.kind === 'root');
-    setLevel(el, depth);
+    // Colour themes: blocks keep a border at every level instead of becoming plain text.
+    el.toggleClass('is-block', node.kind === 'block' || isImageOnly(node.markdown));
+    setAttr(el, 'data-level', levelAttr(depth));
+    this.setBranch(el, branch);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.style.width = `${width}px`;
@@ -461,12 +481,11 @@ export class DomMapRenderer implements MapRenderer {
   }
 }
 
-/** `data-level` for colour themes; written only when it changes (reconcile runs per frame). */
-function setLevel(el: Element, depth: number): void {
-  const level = levelAttr(depth);
-  if (el.getAttribute('data-level') === level) return;
-  if (level === null) el.removeAttribute('data-level');
-  else el.setAttribute('data-level', level);
+/** Sets or removes an attribute, only when it changes (reconcile runs per frame). */
+function setAttr(el: Element, name: string, value: string | null): void {
+  if (el.getAttribute(name) === value) return;
+  if (value === null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
 }
 
 /**

@@ -179,28 +179,35 @@ The controls bar at the bottom center, left to right:
 
 ## Colour themes
 
-A colour theme colours the map by level: every first-level node gets the first colour, every second-level node the second, and so on. Colours repeat after the last one.
+A colour theme gives every first-level branch its own colour: the first branch gets the first colour, the second branch the second, and so on, in the order of the note (also in the circle layouts, whichever side a branch is on). Colours repeat after the last one. Everything below a first-level node takes the colour of its branch.
 
-- Coloured: the node border, a light tint behind the text, and the line leading into the node
-- Unchanged: the root, the text, dashed link lines, dividers and the collapse buttons
+How a node looks depends on its level, in every theme:
 
-| Theme | Colours by level |
+- Root: large bold text, no box
+- First level: a box filled with the branch colour
+- Second level: a light tint of the branch colour
+- Third level and deeper: plain text; the coloured line leads into it
+- Code, tables, callouts, math, diagrams and images: a thin border in the branch colour at every level
+- Lines: the branch colour, slightly thicker into the first level
+- Unchanged: the text colour, dashed link lines, dividers, the collapse buttons and the selection ring
+
+| Theme | Branch colours |
 |---|---|
-| `none` (default) | the plain look |
-| `rainbow` | red, orange, yellow, green, blue, purple |
+| `rainbow` (default) | red, orange, yellow, green, cyan, blue, purple |
 | `ocean` | blue, cyan, green, purple |
 | `forest` | green, yellow, orange, olive |
-| `accent` | your accent colour (Settings → Appearance), fading level by level |
+| `accent` | your accent colour (Settings → Appearance) for every branch |
+| `none` | the same look in greys |
 
 - For all notes: setting "Default theme"
 - For one note: `mind-mapper-theme` in its frontmatter
 - The colours come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
 - Changing the theme applies to an open map right away
-- With `accent`, a selected first-level node's selection ring has the same colour as its border
+- If you chose "None" in an earlier version, the setting stays "None"; pick "Rainbow" to get the colours
 
 `rainbow`:
 
-![The garden plans map in rainbow: first-level nodes and their lines red, second-level nodes and their lines orange, the root unchanged](images/manual/theme-rainbow.png)
+![The garden plans map in rainbow: the root as large bold text, each first-level node filled in its own colour, the nodes below lightly tinted in the colour of their branch](images/manual/theme-rainbow.png)
 
 ## Frontmatter keys
 
@@ -233,7 +240,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 |---|---|---|---|---|---|
 | Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
-| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | None | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
 | Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |

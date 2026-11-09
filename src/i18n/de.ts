@@ -57,7 +57,7 @@ export const de: Messages = {
     'Mindmaps nur mit dem Hauptthema und der ersten Ebene öffnen, für Notizen ohne mind-mapper-collapsed im Frontmatter.',
   defaultThemeName: 'Standard-Farbschema',
   defaultThemeDesc:
-    'Färbt Knoten und Linien nach Ebene, für Notizen ohne mind-mapper-theme im Frontmatter.',
+    'Färbt jeden Hauptast und alles darunter in einer eigenen Farbe, für Notizen ohne mind-mapper-theme im Frontmatter.',
   themeNone: 'Keins',
   themeRainbow: 'Regenbogen',
   themeOcean: 'Ozean',

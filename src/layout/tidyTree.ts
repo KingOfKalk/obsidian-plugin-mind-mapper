@@ -27,16 +27,19 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
   const layout = options.layout ?? 'left-to-right';
   switch (layout) {
     case 'left-to-right':
-      return finish(canonical(tree.root, options.nodeSize, options), 'x');
+      return finish(canonical(tree.root, options.nodeSize, options, tree.root), 'x');
     case 'right-to-left':
-      return finish(mirrorX(canonical(tree.root, options.nodeSize, options), tree.root), 'x');
+      return finish(
+        mirrorX(canonical(tree.root, options.nodeSize, options, tree.root), tree.root),
+        'x',
+      );
     case 'top-to-bottom':
     case 'bottom-to-top': {
       const swapped = (node: MindMapNode): Size => {
         const { width, height } = options.nodeSize(node);
         return { width: height, height: width };
       };
-      const vertical = swapAxes(canonical(tree.root, swapped, options));
+      const vertical = swapAxes(canonical(tree.root, swapped, options, tree.root));
       return finish(layout === 'top-to-bottom' ? vertical : mirrorY(vertical, tree.root), 'y');
     }
     case 'circle-clockwise':
@@ -60,15 +63,20 @@ interface Raw {
 }
 
 /**
- * `reversed`: a parent whose children are stacked in reverse source order (left side of the
- * circle layouts); a divider belongs between two source-order neighbors, wherever they stack.
+ * `source`: the tree's real root; its children's order is the branch order (a circle side gets a
+ * copy of the root with a slice of them). `reversed`: a parent whose children are stacked in
+ * reverse source order (left side of the circle layouts); a divider belongs between two
+ * source-order neighbors, wherever they stack.
  */
 function canonical(
   root: MindMapNode,
   nodeSize: (node: MindMapNode) => Size,
   options: LayoutOptions,
+  source: MindMapNode,
   reversed: MindMapNode | null = null,
 ): Raw {
+  const branches = new Map(source.children.map((child, i) => [child, i]));
+  const branchOf = (child: MindMapNode): number => branches.get(child) ?? -1;
   const sizes = new Map<MindMapNode, Size>();
   const boxHeights = new Map<MindMapNode, number>();
 
@@ -98,7 +106,13 @@ function canonical(
   const edges: Omit<LayoutEdge, 'axis'>[] = [];
   const dividers: LayoutDivider[] = [];
 
-  const place = (node: MindMapNode, x: number, top: number, depth: number): PositionedNode => {
+  const place = (
+    node: MindMapNode,
+    x: number,
+    top: number,
+    depth: number,
+    branch: number,
+  ): PositionedNode => {
     const size = sizes.get(node) ?? { width: 0, height: 0 };
     const box = boxHeights.get(node) ?? size.height;
     const centerY = top + box / 2;
@@ -109,6 +123,7 @@ function canonical(
       ...size,
       childSide: 'right',
       depth,
+      branch,
     };
     nodes.push(positioned);
 
@@ -125,7 +140,13 @@ function canonical(
         dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + length, y } });
       }
       childTop += gap;
-      const placed = place(child, childX, childTop, depth + 1);
+      const placed = place(
+        child,
+        childX,
+        childTop,
+        depth + 1,
+        depth === 0 ? branchOf(child) : branch,
+      );
       edges.push({
         fromId: node.id,
         toId: child.id,
@@ -139,7 +160,7 @@ function canonical(
   };
 
   const rootBox = measure(root);
-  place(root, 0, -rootBox / 2, 0);
+  place(root, 0, -rootBox / 2, 0, -1);
   return { nodes, edges, dividers };
 }
 
@@ -195,8 +216,8 @@ function circle(root: MindMapNode, options: LayoutOptions): Raw {
   const leftRoot = { ...root, children: root.children.slice(half).reverse() };
   const nodeSize = (node: MindMapNode): Size =>
     options.nodeSize(node === rightRoot || node === leftRoot ? root : node);
-  const right = canonical(rightRoot, nodeSize, options);
-  const left = mirrorX(canonical(leftRoot, nodeSize, options, leftRoot), leftRoot);
+  const right = canonical(rightRoot, nodeSize, options, root);
+  const left = mirrorX(canonical(leftRoot, nodeSize, options, root, leftRoot), leftRoot);
   const rootRect = right.nodes[0];
   const nodes = [
     ...(rootRect ? [{ ...rootRect, node: root }] : []),

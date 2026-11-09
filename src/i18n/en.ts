@@ -51,7 +51,7 @@ export const en = {
     'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
   defaultThemeName: 'Default theme',
   defaultThemeDesc:
-    'Colours nodes and lines by level, for notes without mind-mapper-theme in their frontmatter.',
+    'Colours each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
   themeNone: 'None',
   themeRainbow: 'Rainbow',
   themeOcean: 'Ocean',

@@ -16,7 +16,7 @@ export interface MindMapSettings {
 export const DEFAULT_SETTINGS: MindMapSettings = {
   defaultLayout: 'circle-clockwise',
   startCollapsed: false,
-  defaultTheme: 'none',
+  defaultTheme: 'rainbow',
   maxNodeWidth: 320,
   maxNodeHeight: 240,
   siblingGap: 12,

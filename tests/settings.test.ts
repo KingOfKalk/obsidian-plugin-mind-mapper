@@ -4,7 +4,7 @@ test('defaults match the spec', () => {
   expect(DEFAULT_SETTINGS).toEqual({
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
-    defaultTheme: 'none',
+    defaultTheme: 'rainbow',
     maxNodeWidth: 320,
     maxNodeHeight: 240,
     siblingGap: 12,
@@ -34,7 +34,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
   ).toEqual({
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
-    defaultTheme: 'none',
+    defaultTheme: 'rainbow',
     maxNodeWidth: 500,
     maxNodeHeight: 120,
     siblingGap: 12,
@@ -47,7 +47,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
     sanitizeSettings({
       defaultLayout: 'top-to-bottom',
       startCollapsed: true,
-      defaultTheme: 'rainbow',
+      defaultTheme: 'ocean',
       maxNodeWidth: 400.6,
       maxNodeHeight: 300,
       siblingGap: 0,
@@ -56,7 +56,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
   ).toEqual({
     defaultLayout: 'top-to-bottom',
     startCollapsed: true,
-    defaultTheme: 'rainbow',
+    defaultTheme: 'ocean',
     maxNodeWidth: 401,
     maxNodeHeight: 300,
     siblingGap: 0,
@@ -80,8 +80,8 @@ test.each(['none', 'rainbow', 'ocean', 'forest', 'accent'])('defaultTheme %s is 
 });
 
 test.each(['Rainbow', '', 3, null, ['ocean']])(
-  'defaultTheme %j that is not a theme falls back to none',
+  'defaultTheme %j that is not a theme falls back to rainbow',
   (value) => {
-    expect(sanitizeSettings({ defaultTheme: value }).defaultTheme).toBe('none');
+    expect(sanitizeSettings({ defaultTheme: value }).defaultTheme).toBe('rainbow');
   },
 );

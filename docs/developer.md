@@ -68,22 +68,23 @@
   - Look for: clipped or overlapping nodes, wrong fades, missing content (code, Mermaid, math, tables, callouts), edges not attached to nodes, dashed link lines and dividers, layout direction and balance, controls and collapse buttons
 - Loud palette (same run, `loud-*.png`)
   - Obsidian's real colours are subtle, so a colour on the wrong element is hard to see; the spec injects `<style id="loud-palette">` (body variables, `!important`) around the loud shots and removes it afterwards; test-only, not shipped
-  - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`
+  - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-{rainbow,none}-branches` (9 branches with blocks at level 3), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`
   - Legend (variable: loud colour; used by):
-    - `--color-red`: magenta; rainbow level 1 and 7
-    - `--color-orange`: lime; rainbow level 2 and 8, forest level 3
-    - `--color-yellow`: blue; rainbow level 3, forest level 2
-    - `--color-green`: yellow; rainbow level 4, ocean level 3, forest level 1
-    - `--color-blue`: red; rainbow level 5, ocean level 1
-    - `--color-cyan`: black; ocean level 2
-    - `--color-purple`: cyan; rainbow level 6, ocean level 4
+    - `--color-red`: magenta; rainbow branch 1 and 8
+    - `--color-orange`: lime; rainbow branch 2 and 9, forest branch 3
+    - `--color-yellow`: blue; rainbow branch 3, forest branch 2
+    - `--color-green`: yellow; rainbow branch 4, ocean branch 3, forest branch 1
+    - `--color-cyan`: black; rainbow branch 5, ocean branch 2
+    - `--color-blue`: red; rainbow branch 6, ocean branch 1
+    - `--color-purple`: cyan; rainbow branch 7, ocean branch 4
+    - Branch colours: level 1 fill 50 %, level 2 tint 18 % (mixed into `--background-primary`), lines and block borders 100 %
     - `--color-pink`: orange; unused by the plugin
-    - `--interactive-accent` (and `--color-accent`): violet; root border, selection ring, cross-links, collapsed badge, accent theme
+    - `--interactive-accent` (and `--color-accent`): violet; selection ring, cross-links, collapsed badge, accent theme
     - `--text-on-accent`: gold; count in the collapsed badge
-    - `--text-faint`: sky blue; edges without a colour theme
+    - `--text-faint`: sky blue; theme none: lines, level 1 fill and level 2 tint
     - `--hr-color`: teal; dividers
-    - `--background-modifier-border`: brown; node border without a theme, collapse button and controls border, skeleton stroke
-    - `--background-primary`: pale yellow; canvas, node tint base, buttons, controls
+    - `--background-modifier-border`: brown; block border with theme none, collapse button and controls border, skeleton stroke
+    - `--background-primary`: pale yellow; canvas, fill and tint base, blocks, expand button on plain nodes, buttons, controls
     - `--background-secondary`: pale pink; skeleton rects (below 20 % zoom)
     - `--text-normal`: dark purple; node text
     - `--text-muted`: dark green; title chip, collapse button text, controls, expand button

@@ -94,7 +94,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(row('Default layout').dropdown?.options.size).toBe(6);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
   expect(row('Start collapsed').toggle?.value).toBe(false);
-  expect(row('Default theme').dropdown?.value).toBe('none');
+  expect(row('Default theme').dropdown?.value).toBe('rainbow');
   expect(row('Max node width').slider?.value).toBe(400);
   expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
   expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
@@ -109,7 +109,7 @@ test('every setting has a name and description, so Obsidian settings search find
     'For notes without mind-mapper-layout in their frontmatter.',
   );
   expect(definition(mock, 'Default theme').desc).toBe(
-    'Colours nodes and lines by level, for notes without mind-mapper-theme in their frontmatter.',
+    'Colours each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
   );
   // The slider shows the value and its bounds; the description no longer repeats the range.
   expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
@@ -187,9 +187,9 @@ test('choosing a default theme in the tab saves it and re-applies only the theme
   const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
   const applyTheme = vi.spyOn(view, 'applyTheme').mockImplementation(() => {});
   display(mock);
-  await row('Default theme').dropdown?.changeHandler?.('rainbow');
-  expect(plugin.settings.defaultTheme).toBe('rainbow');
-  expect(mock.data).toMatchObject({ defaultTheme: 'rainbow' });
+  await row('Default theme').dropdown?.changeHandler?.('forest');
+  expect(plugin.settings.defaultTheme).toBe('forest');
+  expect(mock.data).toMatchObject({ defaultTheme: 'forest' });
   // Spec "Colour themes": pure CSS, no re-measure and no re-layout.
   expect(applyTheme).toHaveBeenCalledTimes(1);
   expect(refresh).not.toHaveBeenCalled();

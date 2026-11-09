@@ -9,9 +9,36 @@ function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): Mi
 
 const layout: MapLayout = {
   nodes: [
-    { node: node('R', 'root'), x: 0, y: -18, width: 200, height: 36, childSide: 'right', depth: 0 },
-    { node: node('R/A'), x: 260, y: -42, width: 200, height: 36, childSide: 'right', depth: 1 },
-    { node: node('R/B'), x: 260, y: 6, width: 200, height: 36, childSide: 'right', depth: 1 },
+    {
+      node: node('R', 'root'),
+      x: 0,
+      y: -18,
+      width: 200,
+      height: 36,
+      childSide: 'right',
+      depth: 0,
+      branch: -1,
+    },
+    {
+      node: node('R/A'),
+      x: 260,
+      y: -42,
+      width: 200,
+      height: 36,
+      childSide: 'right',
+      depth: 1,
+      branch: 0,
+    },
+    {
+      node: node('R/B'),
+      x: 260,
+      y: 6,
+      width: 200,
+      height: 36,
+      childSide: 'right',
+      depth: 1,
+      branch: 1,
+    },
   ],
   edges: [
     { fromId: 'R', toId: 'R/A', source: { x: 200, y: 0 }, target: { x: 260, y: -24 }, axis: 'x' },
@@ -75,6 +102,7 @@ test('long labels keep fixed size; node elements have no title tooltip', () => {
         height: 36,
         childSide: 'right',
         depth: 1,
+        branch: 0,
       },
     ],
     edges: [],
@@ -112,6 +140,7 @@ function withMarkdown(id: string, markdown: string): MapLayout {
         height: 36,
         childSide: 'right',
         depth: 1,
+        branch: 0,
       },
     ],
     edges: [],
@@ -139,6 +168,7 @@ test('same markdown keeps the element and does not re-render; position updates',
         height: 40,
         childSide: 'right',
         depth: 1,
+        branch: 0,
       },
     ],
   });
@@ -325,6 +355,7 @@ test('a node whose id shifts keeps its rendered content element (render hook cal
     height: 36,
     childSide: 'right' as const,
     depth: 1,
+    branch: 0,
   });
   renderer.setLayout({ ...layout, nodes: [at('A/#2', 'x', 0)], edges: [] });
   const original = parent.querySelector('[data-node-id="A/#2"] .mind-mapper-node-content');
@@ -397,6 +428,7 @@ describe('culling', () => {
         height: 20,
         childSide: 'right',
         depth: i === 0 ? 0 : 1,
+        branch: i === 0 ? -1 : i - 1,
       });
     }
     const edges = nodes.slice(1).map((p) => ({
@@ -585,6 +617,7 @@ function chain(depth: number): MapLayout {
     height: 36,
     childSide: 'right',
     depth: d,
+    branch: d === 0 ? -1 : 0,
   }));
   const edges = nodes.slice(1).map((p, i) => ({
     fromId: `d${i}`,
@@ -601,64 +634,170 @@ function chain(depth: number): MapLayout {
   };
 }
 
-function levelsOf(parent: HTMLElement, selector: string): (string | null)[] {
-  return [...parent.querySelectorAll(selector)].map((el) => el.getAttribute('data-level'));
+function attrsOf(parent: HTMLElement, selector: string, name: string): (string | null)[] {
+  return [...parent.querySelectorAll(selector)].map((el) => el.getAttribute(name));
 }
 
-test('nodes and the edges into them carry their level, cycling after 12; the root has none', () => {
+function levelsOf(parent: HTMLElement, selector: string): (string | null)[] {
+  return attrsOf(parent, selector, 'data-level');
+}
+
+/** A root with `count` first-level nodes `b0`, `b1`, … (branch i), each with one child `b<i>/c`. */
+function star(count: number): MapLayout {
+  const nodes: MapLayout['nodes'] = [chain(0).nodes[0]!];
+  const edges: MapLayout['edges'] = [];
+  for (let i = 0; i < count; i++) {
+    for (const [id, depth, from] of [
+      [`b${i}`, 1, 'd0'],
+      [`b${i}/c`, 2, `b${i}`],
+    ] as const) {
+      nodes.push({
+        node: node(id),
+        x: depth * 260,
+        y: i * 60,
+        width: 200,
+        height: 36,
+        childSide: 'right',
+        depth,
+        branch: i,
+      });
+      edges.push({
+        fromId: from,
+        toId: id,
+        source: { x: 0, y: 0 },
+        target: { x: depth * 260, y: i * 60 },
+        axis: 'x',
+      });
+    }
+  }
+  return { nodes, edges, dividers: [], bounds: { x: 0, y: 0, width: 720, height: count * 60 } };
+}
+
+test('nodes and the edges into them carry their emphasis level 1, 2 or 3 (deeper); the root none', () => {
   const { parent, renderer } = setup();
-  renderer.setLayout(chain(14));
-  expect(levelsOf(parent, '.mind-mapper-node')).toEqual([
-    null,
-    ...['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '1', '2'],
-  ]);
+  renderer.setLayout(chain(5));
+  expect(levelsOf(parent, '.mind-mapper-node')).toEqual([null, '1', '2', '3', '3', '3']);
   // edge i leads into node d(i+1)
-  expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual([
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    '11',
-    '12',
-    '1',
-    '2',
-  ]);
+  expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual(['1', '2', '3', '3', '3']);
 });
 
-test('levels follow a new layout on reused node elements and edge paths', () => {
+test('nodes and the edges into them carry their branch colour, repeating after the palette; the root none', () => {
   const { parent, renderer } = setup();
-  renderer.setLayout(chain(2));
-  const nodeEl = parent.querySelector('[data-node-id="d1"]');
-  const edgeEl = parent.querySelector('path.mind-mapper-edge');
-  // the same node one level deeper (e.g. after a heading level change keeps its id in a test)
-  renderer.setLayout({
-    ...chain(2),
-    nodes: chain(2).nodes.map((p) => (p.node.id === 'd1' ? { ...p, depth: 3 } : p)),
-    edges: chain(2).edges.map((e, i) => (i === 0 ? { ...e, toId: 'd2' } : { ...e, toId: 'd1' })),
-  });
-  expect(parent.querySelector('[data-node-id="d1"]')).toBe(nodeEl);
-  expect(nodeEl?.getAttribute('data-level')).toBe('3');
-  expect(parent.querySelector('path.mind-mapper-edge')).toBe(edgeEl);
-  expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual(['2', '3']);
+  renderer.setTheme('rainbow');
+  renderer.setLayout(star(9));
+  const rainbow = ['1', '2', '3', '4', '5', '6', '7', '1', '2'];
+  // node order: root, b0, b0/c, b1, b1/c, …; the child takes its branch's colour
+  expect(attrsOf(parent, '.mind-mapper-node', 'data-branch')).toEqual([
+    null,
+    ...rainbow.flatMap((b) => [b, b]),
+  ]);
+  expect(attrsOf(parent, 'path.mind-mapper-edge', 'data-branch')).toEqual(
+    rainbow.flatMap((b) => [b, b]),
+  );
 });
 
-test('nodes created later by culling get their level too', () => {
+test.each([
+  ['rainbow', ['1', '2', '3', '4', '5', '6', '7', '1', '2']],
+  ['ocean', ['1', '2', '3', '4', '1', '2', '3', '4', '1']],
+  ['forest', ['1', '2', '3', '4', '1', '2', '3', '4', '1']],
+  ['accent', ['1', '1', '1', '1', '1', '1', '1', '1', '1']],
+  ['none', ['1', '1', '1', '1', '1', '1', '1', '1', '1']],
+] as const)(
+  'setTheme(%s) re-colours the existing nodes and edges without a re-render',
+  (theme, branches) => {
+    const { parent, renderer } = setup();
+    renderer.setTheme('rainbow');
+    renderer.setLayout(star(9));
+    const nodeEl = parent.querySelector('[data-node-id="b8"]');
+    const edgeEl = parent.querySelector('path.mind-mapper-edge');
+    renderer.setTheme(theme);
+    expect(parent.querySelector('[data-node-id="b8"]')).toBe(nodeEl);
+    expect(parent.querySelector('path.mind-mapper-edge')).toBe(edgeEl);
+    const firstLevel = (selector: string) =>
+      attrsOf(parent, selector, 'data-branch').filter((_, i) => i % 2 === 0);
+    expect(
+      firstLevel('.mind-mapper-node[data-level="1"], .mind-mapper-node[data-level="2"]'),
+    ).toEqual(branches);
+    expect(firstLevel('path.mind-mapper-edge')).toEqual(branches);
+  },
+);
+
+test('level and branch follow a new layout on reused node elements and edge paths', () => {
+  const { parent, renderer } = setup();
+  renderer.setTheme('rainbow');
+  renderer.setLayout(star(3));
+  const nodeEl = parent.querySelector('[data-node-id="b0/c"]');
+  const edgeEl = parent.querySelectorAll('path.mind-mapper-edge')[1];
+  // a live edit moved b0/c one level deeper into the third branch (same id in this test)
+  const moved = star(3);
+  renderer.setLayout({
+    ...moved,
+    nodes: moved.nodes.map((p) => (p.node.id === 'b0/c' ? { ...p, depth: 3, branch: 2 } : p)),
+  });
+  expect(parent.querySelector('[data-node-id="b0/c"]')).toBe(nodeEl);
+  expect(nodeEl?.getAttribute('data-level')).toBe('3');
+  expect(nodeEl?.getAttribute('data-branch')).toBe('3');
+  expect(parent.querySelectorAll('path.mind-mapper-edge')[1]).toBe(edgeEl);
+  expect(edgeEl?.getAttribute('data-level')).toBe('3');
+  expect(edgeEl?.getAttribute('data-branch')).toBe('3');
+});
+
+test("nodes created later by culling get their level and the current theme's branch colour", () => {
   const parent = document.createElement('div');
   const renderer = new DomMapRenderer(parent, undefined, { culling: true });
   const canvas = renderer.canvasEl;
   Object.defineProperty(canvas, 'clientWidth', { value: 400 });
   Object.defineProperty(canvas, 'clientHeight', { value: 100 });
-  renderer.setLayout(chain(6));
-  expect(parent.querySelector('[data-node-id="d5"]')).toBeNull();
-  renderer.setTransform({ x: -5 * 260, y: 0, zoom: 1 });
+  renderer.setTheme('ocean');
+  renderer.setLayout(star(9));
+  const b8 = () => parent.querySelector('[data-node-id="b8/c"]');
+  expect(b8()).toBeNull();
+  renderer.setTransform({ x: -2 * 260, y: -8 * 60, zoom: 1 });
   renderer.updateVisible();
-  expect(parent.querySelector('[data-node-id="d5"]')?.getAttribute('data-level')).toBe('5');
+  expect(b8()?.getAttribute('data-level')).toBe('2');
+  expect(b8()?.getAttribute('data-branch')).toBe('1');
+});
+
+test('block nodes (code, tables, callouts, …) and image embeds are marked is-block, also after an edit', () => {
+  const { parent, renderer } = setup();
+  const nodes = (markdowns: [string, MindMapNode['kind'], string][]): MapLayout => ({
+    ...star(0),
+    nodes: [
+      star(0).nodes[0]!,
+      ...markdowns.map(([id, kind, markdown], i) => ({
+        node: { ...node(id, kind), markdown, sectionType: kind === 'block' ? 'code' : null },
+        x: 260,
+        y: i * 60,
+        width: 200,
+        height: 36,
+        childSide: 'right' as const,
+        depth: 3,
+        branch: i,
+      })),
+    ],
+  });
+  renderer.setLayout(
+    nodes([
+      ['code', 'block', '```js\nx\n```'],
+      ['image', 'paragraph', '![[photo.png]]'],
+      ['text', 'paragraph', 'plain text with ![[photo.png]] inside'],
+      ['item', 'list-item', 'an item'],
+    ]),
+  );
+  const isBlock = (id: string) =>
+    parent.querySelector(`[data-node-id="${id}"]`)?.classList.contains('is-block');
+  expect(['code', 'image', 'text', 'item'].map(isBlock)).toEqual([true, true, false, false]);
+  expect(isBlock('d0')).toBe(false);
+  // the image paragraph becomes text, the item becomes an image
+  renderer.setLayout(
+    nodes([
+      ['code', 'block', '```js\nx\n```'],
+      ['image', 'paragraph', 'now text'],
+      ['text', 'paragraph', 'plain text'],
+      ['item', 'list-item', '![](photo.jpg)'],
+    ]),
+  );
+  expect(['code', 'image', 'text', 'item'].map(isBlock)).toEqual([true, false, false, true]);
 });
 
 test('the canvas has a theme class: none by default, setTheme switches it live', () => {

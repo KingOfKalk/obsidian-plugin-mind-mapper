@@ -994,21 +994,29 @@ describe('colour themes', () => {
     return [...(canvas?.classList ?? [])].filter((c) => c.startsWith('mind-mapper-theme-'));
   }
 
-  function level(view: MindMapView, id: string): string | null | undefined {
-    return view.contentEl.querySelector(`[data-node-id="${id}"]`)?.getAttribute('data-level');
+  function attr(view: MindMapView, id: string, name: string): string | null | undefined {
+    return view.contentEl.querySelector(`[data-node-id="${id}"]`)?.getAttribute(name);
   }
 
-  test('nodes carry their level: root none, headings 1, their paragraphs 2', async () => {
+  function level(view: MindMapView, id: string): string | null | undefined {
+    return attr(view, id, 'data-level');
+  }
+
+  test('nodes carry their level and branch: root none, headings 1, their paragraphs 2', async () => {
     const { view } = await openWith('fm-theme', { settings: () => LTR_SETTINGS });
     expect(level(view, 'Theme')).toBeNull();
     expect(level(view, 'Theme/Alpha')).toBe('1');
     expect(level(view, 'Theme/Alpha/#1')).toBe('2');
+    expect(attr(view, 'Theme', 'data-branch')).toBeNull();
+    expect(attr(view, 'Theme/Alpha', 'data-branch')).toBe('1');
+    expect(attr(view, 'Theme/Alpha/#1', 'data-branch')).toBe('1');
+    expect(attr(view, 'Theme/Beta', 'data-branch')).toBe('2');
   });
 
-  test('the setting gives the theme of notes without mind-mapper-theme; a change applies live', async () => {
+  test('the setting gives the theme of notes without mind-mapper-theme (default rainbow); a change applies live', async () => {
     const settings = { ...LTR_SETTINGS };
     const { view } = await openWith('live-before', { settings: () => settings });
-    expect(theme(view)).toEqual(['mind-mapper-theme-none']);
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
     settings.defaultTheme = 'ocean';
     view.refresh();
     expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
@@ -1018,9 +1026,9 @@ describe('colour themes', () => {
     const settings = { ...LTR_SETTINGS };
     const { view } = await openWith('live-before', { settings: () => settings });
     const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
-    settings.defaultTheme = 'rainbow';
+    settings.defaultTheme = 'accent';
     view.applyTheme();
-    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+    expect(theme(view)).toEqual(['mind-mapper-theme-accent']);
     await vi.advanceTimersByTimeAsync(300);
     expect(setLayout).not.toHaveBeenCalled();
     setLayout.mockRestore();

@@ -18,6 +18,15 @@ test('short heading: one line, width from text', () => {
   expect(estimateSize(node('Tasks', 'heading'))).toEqual({ width: 5 * 8 + 18, height: 24 + 14 });
 });
 
+test('root: large text (1.5 times the char width and line height)', () => {
+  expect(estimateSize(node('Project', 'root'))).toEqual({
+    width: 7 * 8 * 1.5 + 18,
+    height: 24 * 1.5 + 14,
+  });
+  // wraps earlier: 30 chars * 12 px = 360 px > 302 px content width
+  expect(estimateSize(node('z'.repeat(30), 'root')).height).toBe(2 * 24 * 1.5 + 14);
+});
+
 test('long paragraph is capped at the max size', () => {
   expect(estimateSize(node('x'.repeat(2000)))).toEqual({ width: 320, height: 240 });
 });
