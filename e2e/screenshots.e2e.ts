@@ -1,6 +1,14 @@
 import { mkdirSync, readFileSync } from 'node:fs';
+import { docsMappings } from '../scripts/dev-vault.mjs';
 import { browser } from '@wdio/globals';
-import { openMindMap, setObsidianLanguage, settle, waitForCache, writeNote } from './helpers';
+import {
+  openMindMap,
+  openNote,
+  setObsidianLanguage,
+  settle,
+  waitForCache,
+  writeNote,
+} from './helpers';
 import { generateNote } from './perf/generateNote';
 
 /**
@@ -288,6 +296,35 @@ describe('screenshots', function () {
     await saveSettingsScreenshots(`${dir}/settings`);
   });
 
+  it('docs copied into the vault: manual in reading view, images render', async function () {
+    await copyDocsIntoVault();
+    await openNote('Docs/User manual.md');
+    // Reading view renders section by section: scroll to the first image so it is drawn.
+    const imageLine = readFileSync('docs/user-manual.md', 'utf8')
+      .split('\n')
+      .findIndex((line) => line.startsWith('![') && line.includes('images/manual/'));
+    await browser.executeObsidian(async ({ app, obsidian }, line) => {
+      const view = app.workspace.getActiveViewOfType(obsidian.MarkdownView);
+      await view?.setState({ ...view.getState(), mode: 'preview' }, { history: false });
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      view?.previewMode.applyScroll(line);
+    }, imageLine);
+    await browser.pause(1500);
+    const images = await browser.executeObsidian(() => {
+      const found = Array.from(
+        activeDocument.querySelectorAll<HTMLImageElement>('.markdown-preview-view img'),
+      );
+      return found.map((img) => ({ src: img.getAttribute('src') ?? '', width: img.naturalWidth }));
+    });
+    if (
+      images.length === 0 ||
+      images.some((img) => img.width === 0 || !img.src.includes('/Docs/images/'))
+    ) {
+      throw new Error(`manual images do not render: ${JSON.stringify(images)}`);
+    }
+    await browser.saveScreenshot(`${dir}/docs-manual-reading-view.png`);
+  });
+
   // Last: restarts Obsidian in German.
   it('German UI', async function () {
     await setObsidianLanguage('de');
@@ -437,4 +474,24 @@ async function saveSettingsScreenshots(path: string): Promise<void> {
   await browser.saveScreenshot(`${path}-bottom.png`);
   await browser.closeWindow();
   await browser.switchToWindow(main);
+}
+
+/** Writes the docs into the vault like the dev build does (`docsMappings`): `Docs/User manual.md`, `Docs/images/…`. */
+async function copyDocsIntoVault(): Promise<void> {
+  for (const { from, to } of docsMappings('docs')) {
+    await browser.executeObsidian(
+      async ({ app }, path, base64) => {
+        const folder = path.split('/').slice(0, -1).join('/');
+        if (folder && !(await app.vault.adapter.exists(folder)))
+          await app.vault.adapter.mkdir(folder);
+        await app.vault.adapter.writeBinary(
+          path,
+          Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)).buffer,
+        );
+      },
+      to,
+      readFileSync(from).toString('base64'),
+    );
+  }
+  await waitForCache('Docs/User manual.md');
 }

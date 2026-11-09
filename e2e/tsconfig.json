@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework", "wdio-obsidian-service"],
-    "allowJs": false,
+    "allowJs": true,
     "checkJs": false
   },
   "include": ["./**/*.ts", "../wdio.conf.mts"]

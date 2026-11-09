@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, watch, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import esbuild from 'esbuild';
 import { gitCommonDir, resolveDevTargets } from './scripts/dev-paths.mjs';
-import { enablePlugin, syncNotes } from './scripts/dev-vault.mjs';
+import { docsMappings, enablePlugin, notesMappings, syncFiles } from './scripts/dev-vault.mjs';
 
 const production = process.argv[2] === 'production';
 /** `once`: one dev build into the dev vault, then exit (no watch). */
@@ -11,7 +11,8 @@ const dev = production ? null : resolveDevTargets(process.env, gitCommonDir);
 const devPluginDir = dev?.pluginDir ?? '';
 
 if (dev?.vaultDir) {
-  syncNotes('test-vault', dev.vaultDir);
+  // One sync (and one manifest) for the test notes and the docs, so pruning covers both.
+  syncFiles(dev.vaultDir, [...notesMappings('test-vault'), ...docsMappings('docs')]);
   enablePlugin(dev.vaultDir, 'mind-mapper');
   console.log(`Dev vault: ${dev.vaultDir}`);
 }

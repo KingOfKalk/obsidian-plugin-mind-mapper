@@ -11,7 +11,14 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { enablePlugin, pullFixtures, syncNotes } from '../../scripts/dev-vault.mjs';
+import {
+  docsMappings,
+  enablePlugin,
+  notesMappings,
+  pullFixtures,
+  syncFiles,
+  syncNotes,
+} from '../../scripts/dev-vault.mjs';
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'mm-vault-'));
@@ -212,4 +219,114 @@ test('syncNotes keeps notes readable: every sync gives copies the source permiss
 
 afterAll(() => {
   rmSync(join(__dirname, '..', '..', '.test-tmp'), { recursive: true, force: true });
+});
+
+describe('docs in the dev vault', () => {
+  function makeDocs(): string {
+    const docs = tmp();
+    write(join(docs, 'user-manual.md'), '# Manual\n![x](images/manual/a.png)');
+    write(join(docs, 'developer.md'), '# Developer');
+    write(join(docs, 'mvp.md'), 'spec');
+    write(join(docs, 'going-public.md'), 'plan');
+    write(join(docs, 'superpowers', 'plan.md'), 'plan');
+    write(join(docs, 'images', 'hero.png'), 'hero');
+    write(join(docs, 'images', 'manual', 'a.png'), 'a');
+    return docs;
+  }
+
+  test('docsMappings names the two docs and maps the images next to them', () => {
+    const mappings = docsMappings(makeDocs());
+    expect(mappings.map((mapping) => mapping.to).sort()).toEqual([
+      'Docs/Developer guide.md',
+      'Docs/User manual.md',
+      'Docs/images/hero.png',
+      'Docs/images/manual/a.png',
+    ]);
+  });
+
+  test('syncFiles copies the docs and images so relative image links resolve', () => {
+    const docs = makeDocs();
+    const dest = tmp();
+    syncFiles(dest, docsMappings(docs));
+    expect(readFileSync(join(dest, 'Docs', 'User manual.md'), 'utf8')).toContain(
+      'images/manual/a.png',
+    );
+    expect(readFileSync(join(dest, 'Docs', 'Developer guide.md'), 'utf8')).toBe('# Developer');
+    expect(readFileSync(join(dest, 'Docs', 'images', 'manual', 'a.png'), 'utf8')).toBe('a');
+    expect(readdirSync(join(dest, 'Docs')).sort()).toEqual([
+      'Developer guide.md',
+      'User manual.md',
+      'images',
+    ]);
+  });
+
+  test('notes and docs share one manifest: nothing of either source is pruned wrongly', () => {
+    const notes = tmp();
+    const docs = makeDocs();
+    const dest = tmp();
+    write(join(notes, 'Welcome.md'), 'hi');
+    const mappings = () => [...notesMappings(notes), ...docsMappings(docs)];
+    syncFiles(dest, mappings());
+    syncFiles(dest, mappings());
+    expect(existsSync(join(dest, 'Welcome.md'))).toBe(true);
+    expect(existsSync(join(dest, 'Docs', 'User manual.md'))).toBe(true);
+    const manifest = JSON.parse(readFileSync(join(dest, MANIFEST), 'utf8')) as string[];
+    expect(manifest).toContain('Welcome.md');
+    expect(manifest).toContain('Docs/images/manual/a.png');
+  });
+
+  test('a doc image removed from docs/ disappears from the vault, the user notes stay', () => {
+    const notes = tmp();
+    const docs = makeDocs();
+    const dest = tmp();
+    write(join(notes, 'Welcome.md'), 'hi');
+    const mappings = () => [...notesMappings(notes), ...docsMappings(docs)];
+    syncFiles(dest, mappings());
+    write(join(dest, 'Docs', 'My notes.md'), 'mine');
+    write(join(dest, 'Mine.md'), 'mine');
+
+    rmSync(join(docs, 'images', 'manual'), { recursive: true });
+    rmSync(join(docs, 'developer.md'));
+    syncFiles(dest, mappings());
+
+    expect(existsSync(join(dest, 'Docs', 'images', 'manual'))).toBe(false);
+    expect(existsSync(join(dest, 'Docs', 'Developer guide.md'))).toBe(false);
+    expect(existsSync(join(dest, 'Docs', 'images', 'hero.png'))).toBe(true);
+    expect(existsSync(join(dest, 'Docs', 'User manual.md'))).toBe(true);
+    expect(readFileSync(join(dest, 'Docs', 'My notes.md'), 'utf8')).toBe('mine');
+    expect(readFileSync(join(dest, 'Mine.md'), 'utf8')).toBe('mine');
+    expect(existsSync(join(dest, 'Welcome.md'))).toBe(true);
+  });
+
+  test('a note removed from the notes source is pruned while the docs stay', () => {
+    const notes = tmp();
+    const docs = makeDocs();
+    const dest = tmp();
+    write(join(notes, 'Old.md'), 'old');
+    syncFiles(dest, [...notesMappings(notes), ...docsMappings(docs)]);
+    rmSync(join(notes, 'Old.md'));
+    syncFiles(dest, [...notesMappings(notes), ...docsMappings(docs)]);
+    expect(existsSync(join(dest, 'Old.md'))).toBe(false);
+    expect(existsSync(join(dest, 'Docs', 'User manual.md'))).toBe(true);
+  });
+
+  test('docs and images keep the source permissions on every sync', () => {
+    const docs = makeDocs();
+    const dest = repoTmp();
+    chmodSync(join(docs, 'user-manual.md'), 0o644);
+    chmodSync(join(docs, 'images', 'manual', 'a.png'), 0o644);
+    syncFiles(dest, docsMappings(docs));
+    chmodSync(join(dest, 'Docs', 'User manual.md'), 0o200);
+    syncFiles(dest, docsMappings(docs));
+    expect(statSync(join(dest, 'Docs', 'User manual.md')).mode & 0o777).toBe(0o644);
+    expect(statSync(join(dest, 'Docs', 'images', 'manual', 'a.png')).mode & 0o777).toBe(0o644);
+  });
+
+  test('syncNotes still works as before without docs', () => {
+    const src = tmp();
+    const dest = tmp();
+    write(join(src, 'A.md'), 'a');
+    syncNotes(src, dest);
+    expect(readFileSync(join(dest, 'A.md'), 'utf8')).toBe('a');
+  });
 });

@@ -82,35 +82,84 @@ function prune(destDir, files) {
 }
 
 /**
- * Copies every file of `srcDir` into `destDir`, overwriting notes of the same name, and records the
- * copied paths in a manifest inside `destDir`. Notes that an earlier sync copied and `srcDir` no
- * longer has are deleted again (with the folders they leave empty). Files that are in no manifest
+ * @typedef {object} FileMapping
+ * @property {string} from path of the source file
+ * @property {string} to destination path, relative to the vault (forward slashes)
+ */
+
+/**
+ * @param {string} srcDir
+ * @returns {FileMapping[]} every syncable file of `srcDir`, at the same relative path in the vault
+ */
+export function notesMappings(srcDir) {
+  return listNotes(srcDir).map((note) => ({ from: join(srcDir, note), to: note }));
+}
+
+/** Folder in the vault that holds the copied docs. */
+const DOCS_FOLDER = 'Docs';
+/** Docs that are copied, with the file name they get in the vault (the names `[[wikilinks]]` use). */
+const DOC_NAMES = { 'user-manual.md': 'User manual.md', 'developer.md': 'Developer guide.md' };
+
+/**
+ * The user manual, the developer guide and `images/` of the repo's `docs/` folder, as `Docs/…` in the
+ * vault. The images keep their relative path to the docs, so the manual's `images/manual/x.png` resolves.
+ * Other docs (spec, plans) are not copied.
+ * @param {string} docsDir
+ * @returns {FileMapping[]}
+ */
+export function docsMappings(docsDir) {
+  /** @type {FileMapping[]} */
+  const mappings = Object.entries(DOC_NAMES)
+    .filter(([file]) => existsSync(join(docsDir, file)))
+    .map(([file, name]) => ({ from: join(docsDir, file), to: `${DOCS_FOLDER}/${name}` }));
+  const images = join(docsDir, 'images');
+  if (existsSync(images)) {
+    for (const image of listNotes(images)) {
+      mappings.push({ from: join(images, image), to: `${DOCS_FOLDER}/images/${image}` });
+    }
+  }
+  return mappings;
+}
+
+/**
+ * Copies every mapped file into `destDir`, overwriting files of the same name, and records the
+ * copied paths in one manifest inside `destDir`. Files that an earlier sync copied and `mappings`
+ * no longer has are deleted again (with the folders they leave empty). Files that are in no manifest
  * (the user's own notes) are never deleted, and without a manifest nothing is.
+ * `.obsidian/` and recordings (`*.cache.json`) are never written or pruned.
+ * @param {string} destDir
+ * @param {FileMapping[]} mappings
+ */
+export function syncFiles(destDir, mappings) {
+  const manifestFile = join(destDir, SYNC_MANIFEST);
+  const previous = readManifest(manifestFile);
+  // A later mapping for the same target wins.
+  const targets = new Map(mappings.map(({ from, to }) => [to, from]));
+  mkdirSync(destDir, { recursive: true });
+  // File by file, not `cpSync` with a filter: on the devcontainer's workspace mount that left
+  // overwritten notes write-only (0200), so Obsidian could not read them. Setting the mode
+  // explicitly also repairs copies an earlier sync broke.
+  for (const [to, from] of targets) {
+    const target = join(destDir, to);
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(from, target);
+    chmodSync(target, statSync(from).mode & 0o777);
+  }
+  prune(
+    destDir,
+    previous.filter((file) => !targets.has(file)),
+  );
+  writeFileSync(manifestFile, `${JSON.stringify([...targets.keys()], null, 2)}\n`);
+}
+
+/**
+ * Copies every file of `srcDir` into `destDir` (see `syncFiles`).
  * Skips `.obsidian/` and recordings (`*.cache.json`): those only flow dev vault → repo.
  * @param {string} srcDir
  * @param {string} destDir
  */
 export function syncNotes(srcDir, destDir) {
-  const manifestFile = join(destDir, SYNC_MANIFEST);
-  const previous = readManifest(manifestFile);
-  const notes = listNotes(srcDir);
-  mkdirSync(destDir, { recursive: true });
-  // File by file, not `cpSync` with a filter: on the devcontainer's workspace mount that left
-  // overwritten notes write-only (0200), so Obsidian could not read them. Setting the mode
-  // explicitly also repairs copies an earlier sync broke.
-  for (const note of notes) {
-    const source = join(srcDir, note);
-    const target = join(destDir, note);
-    mkdirSync(dirname(target), { recursive: true });
-    copyFileSync(source, target);
-    chmodSync(target, statSync(source).mode & 0o777);
-  }
-  const current = new Set(notes);
-  prune(
-    destDir,
-    previous.filter((file) => !current.has(file)),
-  );
-  writeFileSync(manifestFile, `${JSON.stringify(notes, null, 2)}\n`);
+  syncFiles(destDir, notesMappings(srcDir));
 }
 
 /**
