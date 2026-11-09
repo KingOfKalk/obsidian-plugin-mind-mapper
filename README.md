@@ -55,7 +55,8 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 - Mouse wheel / two-finger scroll: pan
 - `Ctrl/Cmd` + wheel, trackpad pinch: zoom at the pointer
 - Drag on empty canvas: pan
-- Floating controls (bottom center): zoom out, current zoom (click resets to 100%), zoom in, fit to view, collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, full screen
+- Double click the empty canvas: fit the whole map into view (also in full screen)
+- Floating controls (bottom center): zoom out, current zoom (click resets to 100%), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)

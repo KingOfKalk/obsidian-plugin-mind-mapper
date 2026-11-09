@@ -200,7 +200,9 @@ Project (root, H1)
   - Mouse wheel / two-finger scroll: pan
   - Ctrl/Cmd + wheel and trackpad pinch (arrives as wheel event with `ctrlKey`): zoom
   - Drag on empty canvas: pan
+  - Double click on empty canvas: fit to view, also in full screen; only when both presses were clicks without dragging, so a pan never fits
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
+  - Fit to view icon: Lucide `group` (two boxes in a frame: the whole map in view), visually distinct from full screen (`maximize-2`, diagonal arrows) and back to root (`locate`, crosshair)
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
 - Collapse / expand: toggle button on the node edge for single node
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
@@ -215,6 +217,7 @@ Project (root, H1)
   - Single click on node: select only
   - A collapse that hides the selected node (single branch, "Collapse all", start collapsed) moves the selection to its nearest visible ancestor, which keeps its place on screen
   - Double click on node: jump to the source line in the editor
+  - Double click on empty canvas: fit to view (see "Zoom and pan"); links, buttons, collapse toggles and the controls keep their own behavior
   - Expand icon on clipped nodes: overlay with full content
   - Links inside nodes: Obsidian behavior, no node click
   - No click timers needed, double click does not trigger a jump plus something else

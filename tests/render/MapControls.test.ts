@@ -33,7 +33,7 @@ test('renders seven buttons in order with aria labels', () => {
     'zoom-out',
     undefined,
     'zoom-in',
-    'maximize',
+    'group',
     'chevrons-down-up',
     'locate',
     'maximize-2',

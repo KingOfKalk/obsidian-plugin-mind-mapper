@@ -13,12 +13,14 @@ const TAP_TOLERANCE = 4;
 /**
  * Canvas-style input: wheel pans, Ctrl/Cmd + wheel and pinch zoom, drag on empty canvas pans.
  * `onTap`: a press and release on the empty canvas without dragging.
+ * `onDoubleTap`: a double click on the empty canvas whose two presses were both taps.
  */
 export function attachPanZoom(
   component: Component,
   canvasEl: HTMLElement,
   target: PanZoomTarget,
   onTap?: () => void,
+  onDoubleTap?: () => void,
 ): void {
   component.registerDomEvent(
     canvasEl,
@@ -47,12 +49,15 @@ export function attachPanZoom(
 
   let last: { x: number; y: number; pointerId: number } | null = null;
   let start: { x: number; y: number; moved: boolean } | null = null;
+  /** Taps in a row on the empty canvas; a drag or a press on a node or the controls resets it. */
+  let taps = 0;
 
   component.registerDomEvent(canvasEl, 'pointerdown', (e) => {
     if (e.button !== 0) return;
-    const startNode = e.target as Node | null;
-    // instanceOf, not instanceof: works for nodes of popout windows too.
-    if (startNode?.instanceOf(Element) && startNode.closest(NO_PAN_SELECTOR)) return;
+    if (isNoPan(e.target)) {
+      taps = 0;
+      return;
+    }
     last = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
     start = { x: e.clientX, y: e.clientY, moved: false };
     canvasEl.setPointerCapture(e.pointerId);
@@ -70,7 +75,10 @@ export function attachPanZoom(
   component.registerDomEvent(canvasEl, 'pointermove', (e) => {
     if (!last || e.pointerId !== last.pointerId) return;
     // The pointerup can get lost (e.g. released outside the window); no pressed button ends the drag.
-    if ((e.buttons & 1) === 0) return end(e);
+    if ((e.buttons & 1) === 0) {
+      taps = 0;
+      return end(e);
+    }
     if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) >= TAP_TOLERANCE) {
       start.moved = true;
     }
@@ -81,9 +89,28 @@ export function attachPanZoom(
   });
 
   component.registerDomEvent(canvasEl, 'pointerup', (e) => {
-    const tap = last?.pointerId === e.pointerId && start !== null && !start.moved;
+    if (last?.pointerId !== e.pointerId || start === null) return end(e);
+    const tap = !start.moved;
+    taps = tap ? taps + 1 : 0;
     end(e);
     if (tap) onTap?.();
   });
-  component.registerDomEvent(canvasEl, 'pointercancel', end);
+  component.registerDomEvent(canvasEl, 'pointercancel', (e) => {
+    taps = 0;
+    end(e);
+  });
+
+  // The browser's dblclick keeps the system double-click speed; the tap count keeps a double click
+  // whose presses panned the map from also fitting it.
+  component.registerDomEvent(canvasEl, 'dblclick', (e) => {
+    const double = taps >= 2 && !isNoPan(e.target);
+    taps = 0;
+    if (double) onDoubleTap?.();
+  });
+}
+
+function isNoPan(target: EventTarget | null): boolean {
+  const node = target as Node | null;
+  // instanceOf, not instanceof: works for nodes of popout windows too.
+  return node?.instanceOf(Element) === true && node.closest(NO_PAN_SELECTOR) !== null;
 }

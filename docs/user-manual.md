@@ -107,6 +107,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 |---|---|
 | Pan | mouse wheel, two-finger scroll, or drag on the empty canvas |
 | Zoom at the pointer | `Ctrl/Cmd` + wheel, or trackpad pinch (10 % to 400 %) |
+| Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button |
 
 The controls bar at the bottom center, left to right:
 
@@ -115,7 +116,7 @@ The controls bar at the bottom center, left to right:
 | Zoom out | zooms out one step |
 | Zoom level (e.g. `60%`) | shows the zoom; click resets it to 100 % |
 | Zoom in | zooms in one step |
-| Fit to view | shows the whole map (also done when the map opens) |
+| Fit to view (two boxes in a frame) | shows the whole map (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
 | Back to root | centers the root |
 | Full screen | see [Full screen](#full-screen) |

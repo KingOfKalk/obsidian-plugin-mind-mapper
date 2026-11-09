@@ -2,7 +2,7 @@ import { Component } from 'obsidian';
 import { attachPanZoom } from '../../src/render/panZoomInput';
 import { IDENTITY, type Transform } from '../../src/render/viewport';
 
-function setup(onTap?: () => void) {
+function setup(onTap?: () => void, onDoubleTap?: () => void) {
   const canvas = document.createElement('div');
   const nodeEl = canvas.appendChild(document.createElement('div'));
   nodeEl.className = 'mind-mapper-node';
@@ -18,7 +18,7 @@ function setup(onTap?: () => void) {
     }),
   };
   const component = new Component();
-  attachPanZoom(component, canvas, target, onTap);
+  attachPanZoom(component, canvas, target, onTap, onDoubleTap);
   return { canvas, nodeLabel, controls, target, component, get: () => transform };
 }
 
@@ -138,4 +138,58 @@ test('onTap does not fire for clicks on a node', () => {
   pointer(nodeLabel, 'pointerdown', 100, 100);
   pointer(canvas, 'pointerup', 100, 100, 0);
   expect(onTap).not.toHaveBeenCalled();
+});
+
+/** Two presses without movement plus the dblclick the browser sends after them. */
+function doubleClick(el: HTMLElement, canvas: HTMLElement): void {
+  for (let i = 0; i < 2; i++) {
+    pointer(el, 'pointerdown', 100, 100);
+    pointer(canvas, 'pointerup', 100, 100, 0);
+  }
+  el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+}
+
+test('onDoubleTap fires for a double click on the empty canvas', () => {
+  const onDoubleTap = vi.fn();
+  const { canvas } = setup(undefined, onDoubleTap);
+  doubleClick(canvas, canvas);
+  expect(onDoubleTap).toHaveBeenCalledTimes(1);
+});
+
+test('onDoubleTap does not fire for a double click on a node or the controls', () => {
+  const onDoubleTap = vi.fn();
+  const { canvas, nodeLabel, controls } = setup(undefined, onDoubleTap);
+  doubleClick(nodeLabel, canvas);
+  doubleClick(controls, canvas);
+  expect(onDoubleTap).not.toHaveBeenCalled();
+});
+
+test('onDoubleTap does not fire when one of the two presses dragged', () => {
+  const onDoubleTap = vi.fn();
+  const { canvas } = setup(undefined, onDoubleTap);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointerup', 100, 100, 0);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointermove', 140, 100);
+  pointer(canvas, 'pointerup', 140, 100, 0);
+  canvas.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  // a drag, then a quick tap: the browser may still count two clicks
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointermove', 140, 100);
+  pointer(canvas, 'pointerup', 140, 100, 0);
+  pointer(canvas, 'pointerdown', 140, 100);
+  pointer(canvas, 'pointerup', 140, 100, 0);
+  canvas.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  expect(onDoubleTap).not.toHaveBeenCalled();
+});
+
+test('onDoubleTap does not fire when the first press was on a node', () => {
+  const onDoubleTap = vi.fn();
+  const { canvas, nodeLabel } = setup(undefined, onDoubleTap);
+  pointer(nodeLabel, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointerup', 100, 100, 0);
+  pointer(canvas, 'pointerdown', 100, 100);
+  pointer(canvas, 'pointerup', 100, 100, 0);
+  canvas.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  expect(onDoubleTap).not.toHaveBeenCalled();
 });

@@ -681,7 +681,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       text: t('noContentYet'),
     });
     hintEl.hidden = true;
-    attachPanZoom(this, renderer.canvasEl, this, () => this.select(null));
+    attachPanZoom(
+      this,
+      renderer.canvasEl,
+      this,
+      () => this.select(null),
+      () => this.fitToView(),
+    );
     attachLinkHandling(renderer.canvasEl, {
       app: this.app,
       events: this,

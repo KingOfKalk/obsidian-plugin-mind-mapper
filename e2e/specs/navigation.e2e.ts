@@ -1,6 +1,8 @@
 import { browser, expect } from '@wdio/globals';
 import { leafSummary, openMindMap, openNote, settle } from '../helpers';
 
+const CANVAS = '.mind-mapper-canvas';
+
 function worldTransform(): Promise<string> {
   return browser.execute(
     () => document.querySelector<HTMLElement>('.mind-mapper-world')?.style.transform ?? '',
@@ -119,6 +121,150 @@ describe('back to root', function () {
     expect(offset?.dx).toBeLessThan(1);
     expect(offset?.dy).toBeLessThan(1);
     await expect(browser.$('.mind-mapper-node.is-root')).toHaveElementClass('is-selected');
+  });
+});
+
+/** Pans and zooms so that most of the map is out of view (wheel events, like a trackpad). */
+async function panAway(): Promise<void> {
+  await browser.execute((canvasSelector) => {
+    const canvas = document.querySelector(canvasSelector);
+    const wheel = (init: WheelEventInit) =>
+      canvas?.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init }));
+    wheel({ deltaY: -400, ctrlKey: true });
+    wheel({ deltaX: 900, deltaY: 600 });
+  }, CANVAS);
+}
+
+/**
+ * Layout nodes whose screen rect is not inside the canvas rect (1 px tolerance). From the layout
+ * and the transform, not the DOM: culling removes the DOM of nodes out of view.
+ */
+function nodesOutsideCanvas(): Promise<string[]> {
+  return browser.executeObsidian(({ app }) => {
+    type Rect = { x: number; y: number; width: number; height: number };
+    const view = app.workspace
+      .getLeavesOfType('mind-mapper-view')
+      .map(
+        (leaf) =>
+          leaf.view as unknown as {
+            contentEl: HTMLElement;
+            layout: { nodes: (Rect & { node: { id: string } })[] } | null;
+            getTransform(): { x: number; y: number; zoom: number };
+          },
+      )
+      .find((v) => (v.contentEl.querySelector('.mind-mapper-canvas')?.clientWidth ?? 0) > 0);
+    const canvas = view?.contentEl.querySelector('.mind-mapper-canvas')?.getBoundingClientRect();
+    if (!view?.layout || !canvas) return ['no map'];
+    const t = view.getTransform();
+    return view.layout.nodes
+      .filter((p) => {
+        const left = canvas.left + p.x * t.zoom + t.x;
+        const top = canvas.top + p.y * t.zoom + t.y;
+        return (
+          left < canvas.left - 1 ||
+          top < canvas.top - 1 ||
+          left + p.width * t.zoom > canvas.right + 1 ||
+          top + p.height * t.zoom > canvas.bottom + 1
+        );
+      })
+      .map((p) => p.node.id);
+  });
+}
+
+/** A viewport point on the empty canvas: not on a node, toggle or the controls. */
+async function emptyPoint(): Promise<{ x: number; y: number }> {
+  const point = await browser.execute((canvasSelector) => {
+    const canvas = document.querySelector(canvasSelector)?.getBoundingClientRect();
+    if (!canvas) return null;
+    for (let fy = 0.2; fy < 0.8; fy += 0.05) {
+      for (let fx = 0.1; fx < 0.9; fx += 0.05) {
+        const x = Math.round(canvas.left + canvas.width * fx);
+        const y = Math.round(canvas.top + canvas.height * fy);
+        const hit = document.elementFromPoint(x, y);
+        if (
+          hit?.closest(canvasSelector) &&
+          !hit.closest('.mind-mapper-node, .mind-mapper-collapse, .mind-mapper-controls')
+        ) {
+          return { x, y };
+        }
+      }
+    }
+    return null;
+  }, CANVAS);
+  if (!point) throw new Error('no empty point on the canvas');
+  return point;
+}
+
+/** A real mouse double click (pointer and click events from the browser). */
+async function doubleClickAt({ x, y }: { x: number; y: number }): Promise<void> {
+  await browser
+    .action('pointer')
+    .move({ x, y, origin: 'viewport' })
+    .down()
+    .up()
+    .pause(50)
+    .down()
+    .up()
+    .perform();
+}
+
+describe('double click on the empty canvas', function () {
+  it('fits the whole map into the canvas, also in full screen', async function () {
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    await panAway();
+    expect((await nodesOutsideCanvas()).length).toBeGreaterThan(0);
+    await doubleClickAt(await emptyPoint());
+    await browser.waitUntil(async () => (await nodesOutsideCanvas()).length === 0, {
+      timeout: 5000,
+      timeoutMsg: 'double click did not fit the map',
+    });
+
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await expect(browser.$('.mind-mapper-full-screen')).toExist();
+    await panAway();
+    expect((await nodesOutsideCanvas()).length).toBeGreaterThan(0);
+    await doubleClickAt(await emptyPoint());
+    await browser.waitUntil(async () => (await nodesOutsideCanvas()).length === 0, {
+      timeout: 5000,
+      timeoutMsg: 'double click did not fit the map in full screen',
+    });
+    await expect(browser.$('.mind-mapper-full-screen')).toExist();
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+  });
+
+  it('a real double click on a node still jumps to the source and does not fit', async function () {
+    await openNote('fixtures/worked-example.md');
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    // a small pan: the map is no longer fitted, the node stays in view
+    await browser.execute((canvasSelector) => {
+      document
+        .querySelector(canvasSelector)
+        ?.dispatchEvent(
+          new WheelEvent('wheel', { deltaX: 40, deltaY: 30, bubbles: true, cancelable: true }),
+        );
+    }, CANVAS);
+    const before = await worldTransform();
+    const center = await browser.execute(() => {
+      const r = document
+        .querySelector('.mind-mapper-node[data-node-id="Project/Tasks"] .mind-mapper-node-content')
+        ?.getBoundingClientRect();
+      return r
+        ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }
+        : null;
+    });
+    if (!center) throw new Error('node not found');
+    await doubleClickAt(center);
+    await browser.waitUntil(
+      () =>
+        browser.executeObsidian(({ app, obsidian }) => {
+          const view = app.workspace.getActiveViewOfType(obsidian.MarkdownView);
+          return view?.editor.getCursor().line === 3;
+        }),
+      { timeout: 10000, timeoutMsg: 'cursor is not on "## Tasks" (line 3)' },
+    );
+    expect(await worldTransform()).toBe(before);
   });
 });
 

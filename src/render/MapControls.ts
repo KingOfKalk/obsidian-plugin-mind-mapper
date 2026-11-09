@@ -29,7 +29,9 @@ export class MapControls {
     button(t('zoomOut'), () => actions.zoomOut(), 'zoom-out');
     this.resetButton = button(t('resetZoom'), () => actions.resetZoom());
     button(t('zoomIn'), () => actions.zoomIn(), 'zoom-in');
-    button(t('fitToView'), () => actions.fitToView(), 'maximize');
+    // `group` (nodes inside a frame): distinct from the corner brackets of `maximize`, which read
+    // as full screen next to `maximize-2`.
+    button(t('fitToView'), () => actions.fitToView(), 'group');
     // One button for both (spec "Collapse / expand"): it shows the state, see setCollapsed.
     this.collapseButton = button(t('collapseAll'), () =>
       this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),

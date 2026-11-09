@@ -1135,6 +1135,63 @@ describe('dividers', () => {
   });
 });
 
+describe('double click on the empty canvas', () => {
+  afterEach(() => document.body.empty());
+
+  /** Two presses without movement plus the dblclick the browser sends after them. */
+  function doubleClick(view: MindMapView, el: HTMLElement): void {
+    const canvas = view.contentEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+    for (let i = 0; i < 2; i++) {
+      for (const type of ['pointerdown', 'pointerup']) {
+        (type === 'pointerdown' ? el : canvas)?.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            button: 0,
+            buttons: type === 'pointerdown' ? 1 : 0,
+            clientX: 5,
+            clientY: 5,
+            pointerId: 1,
+          }),
+        );
+      }
+    }
+    el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  }
+
+  function canvasOf(view: MindMapView): HTMLElement {
+    const el = view.contentEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+    if (!el) throw new Error('no canvas');
+    return el;
+  }
+
+  test('fits the map like the "Fit to view" control', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const fitted = view.getTransform();
+    view.setTransform({ x: -700, y: 40, zoom: 2 });
+    doubleClick(view, canvasOf(view));
+    expect(view.getTransform()).toEqual(fitted);
+  });
+
+  test('also in full screen', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    document.body.appendChild(view.containerEl);
+    view.toggleFullScreen();
+    const fitted = view.getTransform();
+    view.setTransform({ x: -700, y: 40, zoom: 2 });
+    doubleClick(view, canvasOf(view));
+    expect(view.isFullScreen).toBe(true);
+    expect(view.getTransform()).toEqual(fitted);
+  });
+
+  test('a double click on a node does not fit', async () => {
+    const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const moved = { x: -700, y: 40, zoom: 2 };
+    view.setTransform(moved);
+    doubleClick(view, contentOf(view, 'Project/Tasks'));
+    expect(view.getTransform()).toEqual(moved);
+  });
+});
+
 describe('back to root and full screen', () => {
   afterEach(() => document.body.empty());
 
