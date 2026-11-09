@@ -65,33 +65,28 @@ Add screenshots whenever something is visible: they make reviews and bug reports
 - Pull requests with a visible change: before and after, side by side in a table. For colour or styling changes, also a loud-palette shot (see [docs/developer.md](docs/developer.md), Screenshots).
 - Make them with the headless screenshot run: `npm run screenshots:e2e` on the branch ("after") and in a worktree of `origin/main` ("before"); use the same spec step for both so they are comparable.
 
-Screenshots never go to `main`. They live on the branch `screenshots` (images only, never merged), one folder per issue or PR, and are linked by commit SHA so the links stay stable:
+Screenshots never go into this repository (no branch, no folder): they would bloat every clone. They live in one secret gist per issue or PR, owned by the maintainer, and are linked by their raw URL (which contains the file's revision, so the link stays stable). `gh` cannot upload images directly, but a gist is a git repository:
 
 ```sh
-# once per checkout: a worktree of the screenshots branch
-git fetch origin screenshots
-git worktree add .worktrees/screenshots screenshots
-
-# per issue or PR
-mkdir -p .worktrees/screenshots/pr-<n>
-cp before.png after.png .worktrees/screenshots/pr-<n>/
-cd .worktrees/screenshots
-git pull --ff-only
-git add pr-<n>
-git commit -m "chore: screenshots for #<n>"
-git push origin screenshots
-git rev-parse HEAD   # <sha> for the links
+# per issue or PR (label e.g. pr-12 or issue-13)
+mkdir -p /tmp/gist-pr-<n> && cd /tmp/gist-pr-<n>
+echo "Screenshots for KingOfKalk/obsidian-plugin-mind-mapper pr-<n>" > README.md
+gh gist create README.md --desc "mind-mapper screenshots: pr-<n>"   # prints the gist URL
+git clone https://gist.github.com/<gist-id>.git g
+cp before.png after.png g/
+cd g && git add . && git commit -m "screenshots for pr-<n>" && git push
+gh api gists/<gist-id> --jq '.files[] | "\(.filename) \(.raw_url)"'   # raw URLs for the links
 ```
 
-Link them in the PR description or a comment (`issue-<n>/` for issues):
+Link them in the PR description or a comment:
 
 ```markdown
 | Before | After |
 |---|---|
-| ![before](https://raw.githubusercontent.com/KingOfKalk/obsidian-plugin-mind-mapper/<sha>/pr-<n>/before.png) | ![after](https://raw.githubusercontent.com/KingOfKalk/obsidian-plugin-mind-mapper/<sha>/pr-<n>/after.png) |
+| ![before](<raw url of before.png>) | ![after](<raw url of after.png>) |
 ```
 
-Dragging an image into the GitHub web editor works too; `gh` cannot upload images.
+Dragging an image into the GitHub web editor works too (GitHub stores it outside the repository). Deleting a gist removes its images; old links then break.
 
 ## Releases
 
