@@ -73,14 +73,18 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 |---|---|---|
 | `mind-mapper-title` | any text | the single H1, else the file name |
 | `mind-mapper-layout` | one of the layouts above | the plugin setting |
+| `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | the plugin setting "Start collapsed" |
 
-An unknown layout or a title that is not text falls back to the default and shows a notice once per note and value (per session).
+`mind-mapper-collapsed: true` opens the map like after "Collapse all": root and first level visible, and branches added by later edits stay collapsed until "Expand all". Changing the value while the map is open collapses or expands all once; other edits keep what you expanded or collapsed.
+
+An unknown layout, a title that is not text or a `mind-mapper-collapsed` that is not `true`/`false` falls back to the default and shows a notice once per note and value (per session).
 
 ## Settings
 
 | Setting | Range | Default |
 |---|---|---|
 | Default layout | the layouts above | `circle-clockwise` |
+| Start collapsed | on / off | off |
 | Max node width | 160–800 px | 320 px |
 | Max node height | 120–800 px | 240 px |
 | Sibling gap | 0–200 px | 12 px |

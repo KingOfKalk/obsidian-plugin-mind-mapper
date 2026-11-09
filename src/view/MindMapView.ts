@@ -21,11 +21,11 @@ import type { MapLayout, MapLayoutName, PositionedNode, Rect, Size } from '../la
 import { worldViewport } from '../render/culling';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
 import { type CrossLink, crossLinks, visibleCrossLinks } from '../layout/crossLinks';
-import { invalidOptionMessage, readMapOptions } from './frontmatter';
+import { invalidOptionMessage, type MapOptions, readMapOptions } from './frontmatter';
 import { crossLinkInputs } from './linkTargets';
 import { toParserInput } from '../parser/adapter';
 import { buildTree } from '../parser/buildTree';
-import { allNodes } from '../parser/treeWalk';
+import { allNodes, walk } from '../parser/treeWalk';
 import type { MindMapTree } from '../parser/types';
 import { type CollapseInfo, DomMapRenderer } from '../render/DomMapRenderer';
 import { NodeContentModal } from '../render/NodeContentModal';
@@ -60,6 +60,12 @@ const RELAYOUT_DEBOUNCE_MS = 100;
 /** Spec "Live update": debounced about 300 ms. */
 export const LIVE_UPDATE_DEBOUNCE_MS = 300;
 const NO_CLIP = { x: false, y: false };
+
+/**
+ * The node to keep in place across a re-layout, then its ancestors (nearest first), all as
+ * positioned before: when a collapse hides the node, its nearest visible ancestor stays in place.
+ */
+type Anchor = PositionedNode[];
 
 interface MapDom {
   placeholderEl: HTMLElement;
@@ -97,6 +103,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** True while the transform is an (automatic or requested) fit the user has not changed since. */
   private fitted = false;
   private readonly collapse = new CollapseState();
+  /**
+   * Effective `mind-mapper-collapsed` (or setting) last applied to the shown note, null before the
+   * first tree of a note: only a change of it collapses or expands all (spec "Collapse all mode").
+   */
+  private startCollapsed: boolean | null = null;
   /** Collapse toggles of the current layout. */
   private collapseInfo: CollapseInfo = { hidden: new Map(), hasChildren: () => false };
   private selected: string | null = null;
@@ -146,9 +157,29 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     return limitsFor(settings.maxNodeWidth, settings.maxNodeHeight);
   }
 
+  /** Frontmatter options of the shown note, plugin settings as defaults. */
+  private mapOptions(): MapOptions {
+    const { defaultLayout, startCollapsed } = this.services.settings();
+    return readMapOptions(this.frontmatter, defaultLayout, startCollapsed);
+  }
+
   /** Frontmatter `mind-mapper-layout`, else the plugin setting. */
   private effectiveLayout(): MapLayoutName {
-    return readMapOptions(this.frontmatter, this.services.settings().defaultLayout).layout;
+    return this.mapOptions().layout;
+  }
+
+  /**
+   * Applies `mind-mapper-collapsed` (else the setting) to `tree` when it differs from the value
+   * applied last: a note's first tree starts collapsed, a flip runs "Collapse all" or "Expand all".
+   * Otherwise the user's collapse state stays.
+   */
+  private applyStartCollapsed(tree: MindMapTree): void {
+    const collapsed = this.mapOptions().collapsed;
+    if (collapsed === this.startCollapsed) return;
+    const first = this.startCollapsed === null;
+    this.startCollapsed = collapsed;
+    if (collapsed) this.collapse.collapseAll(tree);
+    else if (!first) this.collapse.expandAll();
   }
 
   private layoutWillChange(): boolean {
@@ -158,11 +189,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Tree of the note with frontmatter options; ignored values are reported (once, by the plugin). */
   private parse(file: TFile, cache: CachedMetadata, text: string): MindMapTree {
     this.frontmatter = cache.frontmatter;
-    const options = readMapOptions(cache.frontmatter, this.services.settings().defaultLayout);
+    const options = this.mapOptions();
     for (const { key, value } of options.invalid) {
       this.services.warnOnce(
         `${file.path}\0${key}\0${value}`,
-        invalidOptionMessage(key, value, file.path, options.layout),
+        invalidOptionMessage(key, value, file.path, options),
       );
     }
     const tree = buildTree(toParserInput(cache, text), file.basename, options.title);
@@ -259,7 +290,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   toggleCollapse(id: string): void {
     if (!this.layout) return;
-    const anchor = this.layout.nodes.find((p) => p.node.id === id) ?? null;
+    const anchor = this.layout.nodes.filter((p) => p.node.id === id);
     this.collapse.toggle(id);
     this.relayoutKeeping(anchor);
   }
@@ -271,6 +302,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // A new max node size changes the size cache keys and the content caps: measure again now
     // (the ResizeObserver only fires for content whose size changes).
     this.measure([...this.observed.keys()]);
+    this.applyStartCollapsed(this.tree);
     if (this.layoutWillChange()) {
       this.cancelRelayout();
       this.pendingFit = true;
@@ -337,6 +369,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (file !== this.pinnedFile) {
       this.pendingFit = true;
       this.collapse.reset();
+      this.startCollapsed = null;
     }
     this.pinnedFile = file;
     await super.setState(state, result);
@@ -420,6 +453,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Every new tree passes here, so the collapse state always follows the shown tree. */
   private showTree(tree: MindMapTree): void {
     this.collapse.update(this.tree, tree);
+    this.applyStartCollapsed(tree);
     this.tree = tree;
     this.showLayout(this.computeLayout(tree));
   }
@@ -507,14 +541,34 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
    * The node to keep in place across a re-layout: the selected node if it is on screen, else the
    * one nearest the view center (an off-screen selection would let the visible area jump).
    */
-  private anchorIn(layout: MapLayout): PositionedNode | null {
+  private anchorIn(layout: MapLayout): Anchor {
     const selected = layout.nodes.find((p) => p.node.id === this.selected);
-    if (selected && this.onScreen(selected)) return selected;
     const center = this.center();
-    return nearestNode(layout, {
-      x: (center.x - this.transform.x) / this.transform.zoom,
-      y: (center.y - this.transform.y) / this.transform.zoom,
+    const node =
+      selected && this.onScreen(selected)
+        ? selected
+        : nearestNode(layout, {
+            x: (center.x - this.transform.x) / this.transform.zoom,
+            y: (center.y - this.transform.y) / this.transform.zoom,
+          });
+    if (!node) return [];
+    const positioned = new Map(layout.nodes.map((p) => [p.node.id, p]));
+    const ancestors = this.ancestorIds(node.node.id).flatMap((id) => positioned.get(id) ?? []);
+    return [node, ...ancestors];
+  }
+
+  /** IDs of the ancestors of `id` in the shown tree, nearest first. */
+  private ancestorIds(id: string): string[] {
+    if (!this.tree) return [];
+    const parents = new Map<string, string>();
+    walk(this.tree.root, (node) => {
+      for (const child of node.children) parents.set(child.id, node.id);
     });
+    const ids: string[] = [];
+    for (let parent = parents.get(id); parent !== undefined; parent = parents.get(parent)) {
+      ids.push(parent);
+    }
+    return ids;
   }
 
   private onScreen(rect: Rect): boolean {
@@ -531,7 +585,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   /** Re-layout after a user action (collapse): no fit, the anchor keeps its screen position. */
-  private relayoutKeeping(anchor: PositionedNode | null): void {
+  private relayoutKeeping(anchor: Anchor): void {
     if (!this.tree) return;
     this.cancelRelayout();
     this.showLayout(this.computeLayout(this.tree));
@@ -540,9 +594,15 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.keepInPlace(anchor);
   }
 
-  private keepInPlace(anchor: PositionedNode | null): void {
-    const moved = anchor && this.layout?.nodes.find((p) => p.node.id === anchor.node.id);
-    if (anchor && moved) this.applyTransform(anchoredTransform(this.transform, anchor, moved));
+  /** The first anchor node still shown keeps its screen position. */
+  private keepInPlace(anchor: Anchor): void {
+    const positioned = new Map(this.layout?.nodes.map((p) => [p.node.id, p]));
+    for (const before of anchor) {
+      const after = positioned.get(before.node.id);
+      if (!after) continue;
+      this.applyTransform(anchoredTransform(this.transform, before, after));
+      return;
+    }
   }
 
   /** Measured size if known (size cache), else the instant estimate. */
@@ -640,6 +700,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     dom.placeholderEl.hidden = true;
     dom.renderer.canvasEl.hidden = false;
     dom.renderer.setLayout(layout, this.collapseInfo);
+    this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);
     if (this.tree) {
       const shown = new Set(layout.nodes.map((p) => p.node.id));
@@ -651,6 +712,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     }
     this.observeContent(dom.renderer.contentElements());
     if (this.pendingFit) this.tryFit();
+  }
+
+  /** A selected node hidden by a collapse passes the selection to its nearest visible ancestor. */
+  private selectShown(layout: MapLayout): void {
+    if (this.selected === null) return;
+    const shown = new Set(layout.nodes.map((p) => p.node.id));
+    if (shown.has(this.selected)) return;
+    this.select(this.ancestorIds(this.selected).find((id) => shown.has(id)) ?? null);
   }
 
   /** One ResizeObserver (from the view's own window, popout safe) for all node contents. */

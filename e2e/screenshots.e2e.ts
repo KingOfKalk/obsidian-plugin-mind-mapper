@@ -1,6 +1,6 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { browser } from '@wdio/globals';
-import { openMindMap, settle, waitForCache } from './helpers';
+import { openMindMap, settle, waitForCache, writeNote } from './helpers';
 import { generateNote } from './perf/generateNote';
 
 /**
@@ -125,5 +125,13 @@ describe('screenshots', function () {
     await browser.executeObsidianCommand('mind-mapper:fit-to-view');
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/collapsed.png`);
+  });
+
+  it('start collapsed', async function () {
+    const text = readFileSync('test-vault/fixtures/worked-example.md', 'utf8');
+    await writeNote('start-collapsed.md', `---\nmind-mapper-collapsed: true\n---\n${text}`);
+    await openMindMap('start-collapsed.md');
+    await settle();
+    await browser.saveScreenshot(`${dir}/start-collapsed.png`);
   });
 });

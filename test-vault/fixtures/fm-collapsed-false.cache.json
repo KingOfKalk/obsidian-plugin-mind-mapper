@@ -1,0 +1,179 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "---\nmind-mapper-collapsed: false\n---\n# Live\n\nAlpha paragraph.\n\n## Beta\n\nBeta text.\n\n## Delta\n\nDelta text.\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 0,
+            "offset": 37
+          },
+          "end": {
+            "line": 3,
+            "col": 6,
+            "offset": 43
+          }
+        },
+        "heading": "Live",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 63
+          },
+          "end": {
+            "line": 7,
+            "col": 7,
+            "offset": 70
+          }
+        },
+        "heading": "Beta",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 11,
+            "col": 0,
+            "offset": 84
+          },
+          "end": {
+            "line": 11,
+            "col": 8,
+            "offset": 92
+          }
+        },
+        "heading": "Delta",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "yaml",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 2,
+            "col": 3,
+            "offset": 36
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 0,
+            "offset": 37
+          },
+          "end": {
+            "line": 3,
+            "col": 6,
+            "offset": 43
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 0,
+            "offset": 45
+          },
+          "end": {
+            "line": 5,
+            "col": 16,
+            "offset": 61
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 63
+          },
+          "end": {
+            "line": 7,
+            "col": 7,
+            "offset": 70
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 9,
+            "col": 0,
+            "offset": 72
+          },
+          "end": {
+            "line": 9,
+            "col": 10,
+            "offset": 82
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 11,
+            "col": 0,
+            "offset": 84
+          },
+          "end": {
+            "line": 11,
+            "col": 8,
+            "offset": 92
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 13,
+            "col": 0,
+            "offset": 94
+          },
+          "end": {
+            "line": 13,
+            "col": 11,
+            "offset": 105
+          }
+        }
+      }
+    ],
+    "frontmatter": {
+      "mind-mapper-collapsed": false
+    },
+    "frontmatterPosition": {
+      "start": {
+        "line": 0,
+        "col": 0,
+        "offset": 0
+      },
+      "end": {
+        "line": 2,
+        "col": 3,
+        "offset": 36
+      }
+    },
+    "frontmatterLinks": []
+  }
+}

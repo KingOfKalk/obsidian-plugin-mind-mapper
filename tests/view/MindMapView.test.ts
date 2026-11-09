@@ -1272,3 +1272,206 @@ test('the first layout after a loading message is culled (the canvas is shown be
   expect(domNodes(view)).toBeLessThanOrEqual(400);
   vi.useRealTimers();
 });
+
+describe('start collapsed', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const COLLAPSED = ['Live', 'Live/#1', 'Live/Beta', 'Live/Delta'];
+  const EXPANDED = [...COLLAPSED, 'Live/Beta/#1', 'Live/Delta/#1'];
+
+  function collapseLabel(view: MindMapView): string | null | undefined {
+    return view.contentEl
+      .querySelector('.mind-mapper-controls button:nth-child(5)')
+      ?.getAttribute('aria-label');
+  }
+
+  function shown(view: MindMapView): (string | undefined)[] {
+    return nodeIds(view).sort();
+  }
+
+  async function edit(ws: FakeWorkspace, fixtureName: string): Promise<void> {
+    change(ws, 'Note.md', fixtureName);
+    await vi.advanceTimersByTimeAsync(300);
+  }
+
+  test('mind-mapper-collapsed: true opens with root and first level, the button shows Expand all', async () => {
+    const { view } = await openWith('fm-collapsed', { settings: () => LTR_SETTINGS });
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+    expect(collapseLabel(view)).toBe('Expand all');
+  });
+
+  test('the setting starts a note without the key collapsed', async () => {
+    const settings = { ...LTR_SETTINGS, startCollapsed: true };
+    const { view } = await openWith('live-before', { settings: () => settings });
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+  });
+
+  test('mind-mapper-collapsed: false overrides the setting', async () => {
+    const settings = { ...LTR_SETTINGS, startCollapsed: true };
+    const { view } = await openWith('fm-collapsed-false', { settings: () => settings });
+    expect(shown(view)).toEqual(EXPANDED.sort());
+    expect(collapseLabel(view)).toBe('Collapse all');
+  });
+
+  test('flipping the key while open expands all (true to false) and collapses all (false to true)', async () => {
+    const { view, ws } = await openWith('fm-collapsed', { settings: () => LTR_SETTINGS });
+    await edit(ws, 'fm-collapsed-false');
+    expect(shown(view)).toEqual(EXPANDED.sort());
+    view.toggleCollapse('Live/Beta');
+    await edit(ws, 'fm-collapsed');
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+    // removing the key falls back to the setting (false): a flip as well
+    await edit(ws, 'live-before');
+    expect(shown(view)).toEqual(EXPANDED.sort());
+  });
+
+  test('a live edit that keeps the value does not undo the user clicks', async () => {
+    const { view, ws } = await openWith('fm-collapsed', { settings: () => LTR_SETTINGS });
+    view.toggleCollapse('Live/Delta');
+    await edit(ws, 'fm-collapsed');
+    expect(nodeIds(view)).toContain('Live/Delta/#1');
+    expect(nodeIds(view)).not.toContain('Live/Beta/#1');
+    view.expandAll();
+    await edit(ws, 'fm-collapsed');
+    expect(shown(view)).toEqual(EXPANDED.sort());
+  });
+
+  test('a collapsed start is collapse-all mode: a new branch stays collapsed, one expanded by hand stays expanded', async () => {
+    const { view, ws } = await openWith('fm-collapsed', { settings: () => LTR_SETTINGS });
+    view.toggleCollapse('Live/Delta');
+    await edit(ws, 'fm-collapsed-renamed');
+    expect(nodeIds(view)).toContain('Live/Gamma');
+    expect(nodeIds(view)).not.toContain('Live/Gamma/#1');
+    expect(nodeIds(view)).toContain('Live/Delta/#1');
+  });
+
+  test('changing the setting flips notes without the key once; notes with the key keep theirs', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('live-before', { settings: () => settings });
+    const keyed = await openWith('fm-collapsed-false', { settings: () => settings });
+    settings.startCollapsed = true;
+    view.refresh();
+    keyed.view.refresh();
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+    expect(shown(keyed.view)).toEqual(EXPANDED.sort());
+    view.toggleCollapse('Live/Beta');
+    settings.levelGap = 80;
+    view.refresh();
+    expect(nodeIds(view)).toContain('Live/Beta/#1');
+    settings.startCollapsed = false;
+    view.refresh();
+    expect(shown(view)).toEqual(EXPANDED.sort());
+  });
+
+  test.each([
+    [false, EXPANDED],
+    [true, COLLAPSED],
+  ])(
+    'an invalid mind-mapper-collapsed falls back to the setting %j with a notice',
+    async (startCollapsed, expected) => {
+      const warnOnce = vi.fn();
+      const settings = { ...LTR_SETTINGS, startCollapsed };
+      const { view } = await openWith('fm-collapsed-invalid', {
+        warnOnce,
+        settings: () => settings,
+      });
+      expect(shown(view)).toEqual([...expected].sort());
+      expect(warnOnce).toHaveBeenCalledWith(
+        'Note.md\0mind-mapper-collapsed\0yes',
+        `Mind Mapper: mind-mapper-collapsed "yes" in Note.md is not true or false, using ${startCollapsed}`,
+      );
+    },
+  );
+
+  test('switching the view to another note applies the value of that note', async () => {
+    const { view, ws } = await openWith('fm-collapsed', { settings: () => LTR_SETTINGS });
+    ws.addNote('Other.md', 'live-before');
+    await view.setState(...state('Other.md'));
+    expect(shown(view)).toEqual(EXPANDED.sort());
+    await view.setState(...state('Note.md'));
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+  });
+
+  test('switching from an expanded collapsed-start note to another collapsed-start note opens it collapsed', async () => {
+    const { view, ws } = newView();
+    ws.addNote('A.md', 'fm-collapsed');
+    ws.addNote('B.md', 'fm-collapsed');
+    await setSize(view, 800, 600);
+    await view.setState(...state('A.md'));
+    view.expandAll();
+    expect(shown(view)).toEqual(EXPANDED.sort());
+    await view.setState(...state('B.md'));
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+  });
+
+  test('renaming a collapsed-start note keeps the branch expanded by hand', async () => {
+    const { view, ws } = newView();
+    ws.addNote('Note.md', 'fm-collapsed');
+    await setSize(view, 800, 600);
+    await view.setState(...state('Note.md'));
+    view.toggleCollapse('Live/Delta');
+    rename(ws, 'Note.md', 'Renamed.md', 'fm-collapsed');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(view.file).toBe('Renamed.md');
+    expect(nodeIds(view)).toContain('Live/Delta/#1');
+    expect(nodeIds(view)).not.toContain('Live/Beta/#1');
+  });
+
+  test('an invalid value with the setting on, edited to true, is no flip: the clicks stay', async () => {
+    const settings = { ...LTR_SETTINGS, startCollapsed: true };
+    const { view, ws } = await openWith('fm-collapsed-invalid', {
+      warnOnce: () => {},
+      settings: () => settings,
+    });
+    expect(shown(view)).toEqual(COLLAPSED.sort());
+    view.expandAll();
+    await edit(ws, 'fm-collapsed');
+    expect(shown(view)).toEqual(EXPANDED.sort());
+  });
+});
+
+describe('collapse that hides the selected node', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('collapse all moves the selection to the nearest visible ancestor and keeps it in place', async () => {
+    const { view } = await openWorked();
+    contentOf(view, 'Project/Tasks/#2').click();
+    centerOn(view, 'Project/Tasks/#2');
+    const before = screenOf(view, 'Project/Tasks');
+    view.collapseAll();
+    expect(view.selectedId).toBe('Project/Tasks');
+    expect(selectedIds(view)).toEqual(['Project/Tasks']);
+    const after = screenOf(view, 'Project/Tasks');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('collapsing a branch moves the selection from a hidden descendant to the branch', async () => {
+    const { view } = await openWorked();
+    contentOf(view, 'Project/Tasks/#1').click();
+    const before = screenOf(view, 'Project/Tasks');
+    toggleOf(view, 'Project/Tasks').click();
+    expect(view.selectedId).toBe('Project/Tasks');
+    expect(selectedIds(view)).toEqual(['Project/Tasks']);
+    const after = screenOf(view, 'Project/Tasks');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+
+  test('a start-collapsed flip by a live edit moves the selection and keeps it in place', async () => {
+    const { view, ws } = await openWith('fm-collapsed-false', { settings: () => LTR_SETTINGS });
+    contentOf(view, 'Live/Delta/#1').click();
+    centerOn(view, 'Live/Delta/#1');
+    const before = screenOf(view, 'Live/Delta');
+    change(ws, 'Note.md', 'fm-collapsed');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).not.toContain('Live/Delta/#1');
+    expect(view.selectedId).toBe('Live/Delta');
+    expect(selectedIds(view)).toEqual(['Live/Delta']);
+    const after = screenOf(view, 'Live/Delta');
+    expect(after.x).toBeCloseTo(before.x, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+  });
+});

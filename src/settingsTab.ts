@@ -30,6 +30,11 @@ export class MindMapSettingTab extends PluginSettingTab {
           options: Object.fromEntries(LAYOUT_NAMES.map((name) => [name, name])),
         },
       },
+      {
+        name: 'Start collapsed',
+        desc: 'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
+        control: { type: 'toggle', key: 'startCollapsed' },
+      },
       ...NUMBER_ROWS.map(({ key, name, desc }) => this.numberDefinition(key, name, desc)),
     ];
   }

@@ -2,6 +2,8 @@ import { LAYOUT_NAMES, type MapLayoutName } from './layout/types';
 
 export interface MindMapSettings {
   defaultLayout: MapLayoutName;
+  /** Maps start like after "Collapse all"; frontmatter `mind-mapper-collapsed` overrides it. */
+  startCollapsed: boolean;
   maxNodeWidth: number;
   maxNodeHeight: number;
   siblingGap: number;
@@ -10,6 +12,7 @@ export interface MindMapSettings {
 
 export const DEFAULT_SETTINGS: MindMapSettings = {
   defaultLayout: 'circle-clockwise',
+  startCollapsed: false,
   maxNodeWidth: 320,
   maxNodeHeight: 240,
   siblingGap: 12,
@@ -34,6 +37,10 @@ export function sanitizeSettings(raw: unknown): MindMapSettings {
     defaultLayout: LAYOUT_NAMES.includes(layout as MapLayoutName)
       ? (layout as MapLayoutName)
       : DEFAULT_SETTINGS.defaultLayout,
+    startCollapsed:
+      typeof data.startCollapsed === 'boolean'
+        ? data.startCollapsed
+        : DEFAULT_SETTINGS.startCollapsed,
     maxNodeWidth: numberSetting(data.maxNodeWidth, 'maxNodeWidth'),
     maxNodeHeight: numberSetting(data.maxNodeHeight, 'maxNodeHeight'),
     siblingGap: numberSetting(data.siblingGap, 'siblingGap'),

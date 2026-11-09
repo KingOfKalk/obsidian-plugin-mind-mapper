@@ -59,6 +59,7 @@ test('the tab shows one row per setting with its range', async () => {
   display(mock);
   expect(Setting.rows.map((s) => s.name)).toEqual([
     'Default layout',
+    'Start collapsed',
     'Max node width',
     'Max node height',
     'Sibling gap',
@@ -66,6 +67,7 @@ test('the tab shows one row per setting with its range', async () => {
   ]);
   expect(row('Default layout').dropdown?.options.size).toBe(6);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
+  expect(row('Start collapsed').toggle?.value).toBe(false);
   expect(row('Max node width').desc).toContain('160');
   expect(row('Max node width').desc).toContain('800');
   expect(row('Max node width').text?.value).toBe('320');
@@ -77,7 +79,17 @@ test('every setting is a definition, so Obsidian settings search finds it by nam
     tab(mock)
       .getSettingDefinitions()
       .map((d) => d.name),
-  ).toEqual(['Default layout', 'Max node width', 'Max node height', 'Sibling gap', 'Level gap']);
+  ).toEqual([
+    'Default layout',
+    'Start collapsed',
+    'Max node width',
+    'Max node height',
+    'Sibling gap',
+    'Level gap',
+  ]);
+  expect(definition(mock, 'Start collapsed').desc).toBe(
+    'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
+  );
   expect(definition(mock, 'Default layout').desc).toBe(
     'For notes without mind-mapper-layout in their frontmatter.',
   );
@@ -106,6 +118,28 @@ test('changing the default layout in the tab saves it and refreshes open maps', 
   await row('Default layout').dropdown?.changeHandler?.('right-to-left');
   expect(plugin.settings.defaultLayout).toBe('right-to-left');
   expect(mock.data).toMatchObject({ defaultLayout: 'right-to-left' });
+  expect(refresh).toHaveBeenCalledTimes(1);
+});
+
+test('start collapsed is a toggle control bound to startCollapsed', async () => {
+  const { mock } = await setup();
+  expect(definition(mock, 'Start collapsed').control).toEqual({
+    type: 'toggle',
+    key: 'startCollapsed',
+  });
+});
+
+test('switching start collapsed in the tab saves it and refreshes open maps', async () => {
+  const { ws, plugin, mock } = await setup({ startCollapsed: true });
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  const leaf = ws.addLeaf({ type: 'mind-mapper-view' });
+  leaf.view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
+  display(mock);
+  expect(row('Start collapsed').toggle?.value).toBe(true);
+  await row('Start collapsed').toggle?.changeHandler?.(false);
+  expect(plugin.settings.startCollapsed).toBe(false);
+  expect(mock.data).toMatchObject({ startCollapsed: false });
   expect(refresh).toHaveBeenCalledTimes(1);
 });
 

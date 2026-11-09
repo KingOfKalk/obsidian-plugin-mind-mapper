@@ -249,7 +249,7 @@ export class PluginSettingTab {
 /**
  * Renders a tab's definitions like Obsidian's settings modal (1.15.0): a row per definition with
  * its name and description, then `render(setting)` or the control bound through
- * `getControlValue` / `setControlValue`. Only dropdown controls are implemented.
+ * `getControlValue` / `setControlValue`. Only dropdown and toggle controls are implemented.
  */
 export function renderSettingDefinitions(tab: PluginSettingTab): void {
   for (const def of tab.getSettingDefinitions()) {
@@ -258,8 +258,14 @@ export function renderSettingDefinitions(tab: PluginSettingTab): void {
       def.render(setting, null);
     } else if (def.control) {
       const { type, key, options = {}, defaultValue } = def.control;
-      if (type !== 'dropdown') throw new Error(`mock does not render ${type} controls`);
       const value = tab.getControlValue(key) ?? defaultValue;
+      if (type === 'toggle') {
+        setting.addToggle((toggle) =>
+          toggle.setValue(value === true).onChange((next) => tab.setControlValue(key, next)),
+        );
+        continue;
+      }
+      if (type !== 'dropdown') throw new Error(`mock does not render ${type} controls`);
       setting.addDropdown((dropdown) => {
         for (const [option, display] of Object.entries(options))
           dropdown.addOption(option, display);
@@ -289,6 +295,19 @@ export class DropdownComponent {
   }
 }
 
+export class ToggleComponent {
+  value = false;
+  changeHandler: ((value: boolean) => unknown) | null = null;
+  setValue(value: boolean): this {
+    this.value = value;
+    return this;
+  }
+  onChange(handler: (value: boolean) => unknown): this {
+    this.changeHandler = handler;
+    return this;
+  }
+}
+
 export class TextComponent {
   inputEl: HTMLInputElement = document.createElement('input');
   value = '';
@@ -312,6 +331,7 @@ export class Setting {
   name = '';
   desc = '';
   dropdown: DropdownComponent | null = null;
+  toggle: ToggleComponent | null = null;
   text: TextComponent | null = null;
 
   constructor(public containerEl: HTMLElement) {
@@ -331,6 +351,11 @@ export class Setting {
   addDropdown(cb: (dropdown: DropdownComponent) => unknown): this {
     this.dropdown = new DropdownComponent();
     cb(this.dropdown);
+    return this;
+  }
+  addToggle(cb: (toggle: ToggleComponent) => unknown): this {
+    this.toggle = new ToggleComponent();
+    cb(this.toggle);
     return this;
   }
   addText(cb: (text: TextComponent) => unknown): this {

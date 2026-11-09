@@ -96,6 +96,10 @@ Project (root, H1)
   - In this mode every node that newly has children starts collapsed: its ID was not in the previous tree (moved nodes get new IDs, new nodes too) or it had no children before; so after an edit everything stays collapsed
   - Branches expanded by hand stay expanded
   - Toggling single nodes does not end the mode
+- Start collapsed (decided): frontmatter `mind-mapper-collapsed`, else the plugin setting "Start collapsed" (default off)
+  - When true, a note starts like after "Collapse all" whenever the view loads it (opening the map, restoring the workspace, switching the view to the note): root and first level visible, collapse-all mode on
+  - While the map is open, a change of the effective value (frontmatter edited, or the setting changed for a note without the key) is applied once: false to true runs "Collapse all", true to false runs "Expand all"
+  - Any other live edit or settings change keeps the user's collapse state (clicks win); a renamed, or deleted and recreated, note keeps it as well
 ## Frontmatter
  
 - Frontmatter is only the `yaml` section the cache reports at the start of the file (`---` on line 1); keys are read only from it
@@ -106,13 +110,16 @@ Project (root, H1)
 |---|---|---|---|
 | `mind-mapper-title` | text | any string | single H1, else file name |
 | `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
+| `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
  
 - Theme (decided): the map always follows the active Obsidian theme via CSS variables; no per-note override in MVP
 - Validation
   - `mind-mapper-layout` not in the list: fall back to the plugin setting
   - `mind-mapper-title` not a string (YAML number, list, ...): fall back to the default
+  - `mind-mapper-collapsed` not a YAML boolean (`yes`, `"true"`, `1`, a list, ...): fall back to the plugin setting
+  - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
-- Plugin settings tab: global default for layout, frontmatter overrides per note
+- Plugin settings tab: global defaults for layout and start collapsed, frontmatter overrides per note
 ## Layout (decided)
  
 - Input: tree, layout, measured or estimated node sizes; output: positioned nodes and edges; pure function
@@ -173,6 +180,7 @@ Project (root, H1)
   - README lists the commands with suggested bindings
 - Interaction model (decided)
   - Single click on node: select only
+  - A collapse that hides the selected node (single branch, "Collapse all", start collapsed) moves the selection to its nearest visible ancestor, which keeps its place on screen
   - Double click on node: jump to the source line in the editor
   - Expand icon on clipped nodes: overlay with full content
   - Links inside nodes: Obsidian behavior, no node click
@@ -288,7 +296,7 @@ Each milestone ends in something installable and usable in a real vault. Order i
 - M4 - Map look
   - `circle-clockwise` and `circle-counter-clockwise` layouts, remaining linear directions
   - Frontmatter `mind-mapper-title` and `mind-mapper-layout`, validation with once-per-value notice
-  - Settings tab: default layout, max node size, sibling and level gap
+  - Settings tab: default layout, start collapsed, max node size, sibling and level gap
   - `circle-clockwise` becomes the default
   - Contour-based packing only if maps look too sparse
   - Value: the promised balanced map; per-note configuration
