@@ -13,6 +13,7 @@
 - `npm run dev:build`: the same dev build and note sync once, then exits (no watch)
 - One-time setup on the host: open `dev-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
+- User manual images: `npm run manual:images` (headless, writes `docs/images/manual/`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
 - Parser fixtures: notes in `test-vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
@@ -54,7 +55,7 @@
   - Generated notes with 1,000 and 5,000 nodes (`e2e/perf/generateNote.ts`)
   - No timing assertions (frame times are flaky); it prints a diff against the committed `e2e/perf/baseline.json` and writes `e2e/perf/last-run.json` (git-ignored)
   - Update `baseline.json` by hand only when a change is meant to move the numbers
-- Screenshot runs (`npm run screenshots:e2e`, `npm run readme:images`): see below
+- Screenshot runs (`npm run screenshots:e2e`, `npm run readme:images`, `npm run manual:images`): see below
 
 ## Screenshots
 
@@ -67,6 +68,11 @@
   - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `test-vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes
   - Demo notes in `test-vault/demo/`: `Simple note.md` (a small everyday note) and `Feature tour.md` (nearly every feature of the map)
+- User manual images (`npm run manual:images`)
+  - Runs `e2e/manualImages.e2e.ts`; writes the committed images in `docs/images/manual/`, used by `docs/user-manual.md`
+  - One topic per image, cropped by the window size (Electron `setContentSize`), not by image editing; sidebars closed, window buttons and status bar hidden
+  - Uses `test-vault/demo/` notes plus small notes written by the spec into the temporary vault (`Trip to Lisbon.md`, `Reading notes.md`, `Team offsite.md`)
+  - Not part of `test:e2e` (`wdio.conf.mts` only runs `e2e/specs/`); re-run, look at every image and commit when the look changes
 
 ## Devcontainer and headless Obsidian
 
