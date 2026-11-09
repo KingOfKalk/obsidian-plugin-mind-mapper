@@ -6,6 +6,14 @@ Closes #
 
 <!-- What changed and why. -->
 
+## Screenshots
+
+<!-- Visible changes: before/after table, images on the `screenshots` branch (see CONTRIBUTING.md). Delete this section if nothing is visible. -->
+
+| Before | After |
+|---|---|
+|  |  |
+
 ## Test plan
 
 - [ ] `npm run check`

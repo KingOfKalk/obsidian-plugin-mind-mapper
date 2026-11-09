@@ -14,6 +14,7 @@
 - TDD: write the failing test first, see it fail for the right reason, then implement.
 - All gates before opening a PR: `npm run check`, `npm run test:e2e`, and for UI changes `npm run screenshots:e2e` plus a look at the PNGs.
 - Agents push their branch to `origin` and open a PR with `gh pr create`: Conventional Commit title, PR template filled in (`Closes #<issue>`, summary, test plan).
+- Visible changes get screenshots in the PR (before/after table) and bug issues get a screenshot of the problem, via the `screenshots` branch: [CONTRIBUTING.md](CONTRIBUTING.md) (Screenshots in issues and pull requests).
 - Never push to `main` directly. Never force-push. Never commit on `main`. Never merge a PR (the owner does).
 - After a merge, run `npm run dev:build` in the main checkout to update the sandbox vault.
 - No AI attribution in commits, branch names, issues or PRs.
