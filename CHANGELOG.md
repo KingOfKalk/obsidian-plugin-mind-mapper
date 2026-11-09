@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.0.0...1.1.0) (2026-11-09)
+
+
+### Features
+
+* switch layout and colour theme from the control bar ([#9](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/9)) ([f52fb45](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/f52fb458af208a23a27f4ca562cd6b80f31a4120))
+
+
+### Documentation
+
+* screenshots in issues and pull requests ([#10](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/10)) ([70f340a](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/70f340afeccf481d55fc0fa0981e2f4386590aa6))
+
 ## [1.0.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/0.1.0...1.0.0) (2026-11-09)
 
 
