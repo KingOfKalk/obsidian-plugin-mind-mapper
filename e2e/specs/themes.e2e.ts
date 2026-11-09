@@ -212,13 +212,14 @@ describe('colour themes', function () {
     await openMindMap(NOTE);
     await settle();
     const { node, resolved } = await styles(['var(--color-red)', 'var(--background-primary)']);
-    expect(node[DEEP_TEXT]?.background).toBe(TRANSPARENT);
+    // no visible box: the canvas background (covers link lines behind it), transparent border
+    expect(node[DEEP_TEXT]?.background).toBe(resolved['var(--background-primary)']);
     expect(node[DEEP_TEXT]?.border).toBe(TRANSPARENT);
     expect(node[DEEP_CODE]?.border).toBe(resolved['var(--color-red)']);
     expect(node[DEEP_CODE]?.borderWidth).toBe('1px');
     expect(node[DEEP_CODE]?.background).toBe(resolved['var(--background-primary)']);
     expect(node[ROOT]?.border).toBe(TRANSPARENT);
-    expect(node[ROOT]?.background).toBe(TRANSPARENT);
+    expect(node[ROOT]?.background).toBe(resolved['var(--background-primary)']);
     expect(Number(node[ROOT]?.fontWeight)).toBeGreaterThanOrEqual(700);
     expect(parseFloat(node[ROOT]?.fontSize ?? '0')).toBeGreaterThanOrEqual(
       1.4 * parseFloat(node[ALPHA]?.fontSize ?? '0'),
@@ -271,7 +272,7 @@ describe('colour themes', function () {
     );
     expect(tinted.button).toBe(tinted.node);
     expect(tinted.button).not.toBe(primary);
-    expect(plain.node).toBe(TRANSPARENT);
+    expect(plain.node).toBe(primary);
     expect(plain.button).toBe(primary);
   });
 
@@ -288,11 +289,12 @@ describe('colour themes', function () {
       tint('--text-faint'),
       'var(--text-faint)',
       'var(--background-modifier-border)',
+      'var(--background-primary)',
     ]);
     expect(node[ALPHA]?.background).toBe(resolved[fill('--text-faint')]);
     expect(node[BETA]?.background).toBe(resolved[fill('--text-faint')]);
     expect(node[ALPHA_TEXT]?.background).toBe(resolved[tint('--text-faint')]);
-    expect(node[DEEP_TEXT]?.background).toBe(TRANSPARENT);
+    expect(node[DEEP_TEXT]?.background).toBe(resolved['var(--background-primary)']);
     expect(node[DEEP_CODE]?.border).toBe(resolved['var(--background-modifier-border)']);
     expect(edge[ALPHA]?.stroke).toBe(resolved['var(--text-faint)']);
     expect(edge[BETA]?.stroke).toBe(resolved['var(--text-faint)']);

@@ -51,7 +51,7 @@
     - Nested heading links (`[[#A#B]]`): target is heading B under heading A
     - Heading text matching and duplicate headings: follow Obsidian's resolution (to verify with fixtures, see Open topics)
     - Target or source collapsed (decided): draw the line to the nearest visible ancestor
-    - Link highlight (decided, issue #21): an invisible ~12 px wide hit area along each line; hover shows a pointer and a slightly thicker line; a click (less than 4 px of movement) highlights the connection: both end nodes get the selection ring (accent colour), the line turns thicker and stays dashed (a link, not a tree edge); it is its own state, not a node selection; clicking the empty canvas, a node or another line ends it; a drag starting on a line pans; a collapsed end highlights the nearest visible ancestor; selecting a node never highlights links or linked nodes
+    - Link highlight (decided, issue #21): an invisible ~12 px wide hit area along each line; hover shows a pointer and a slightly thicker line; a click (less than 4 px of movement) highlights the connection: both end nodes get the selection ring (accent colour), the line turns thicker and stays dashed (a link, not a tree edge) and is drawn above all nodes (all other lines stay behind the nodes); it is its own state, not a node selection; clicking the empty canvas, a node or another line ends it; a drag starting on a line pans; a collapsed end highlights the nearest visible ancestor; selecting a node never highlights links or linked nodes
     - Double click on a line: jump to the source line of the link (like a node double click); no fit
   - All other links (internal, external): clickable, with hover preview, same behavior as in Obsidian; click does not propagate to the node
     - Wired by the plugin: click handler with `workspace.openLinkText` (modifier keys open in new tab / split), hover preview via `registerHoverLinkSource` and the `hover-link` event
@@ -135,10 +135,10 @@ Project (root, H1)
   - The root has no branch colour
   - Circle layouts: branch order is the order of the root's children in the note, regardless of side
 - Emphasis per level (every theme, also `none`)
-  - Root: large bold text (1.5 times the normal size), no border, no box; the selection ring still shows
+  - Root: large bold text (1.5 times the normal size), no border, no visible box (its background is the canvas background, so lines behind it do not show through the text); the selection ring still shows
   - Level 1: box filled with the branch colour mixed into the background (50 % in light mode, 35 % in dark mode), normal text colour, no border; text contrast at least 4.5:1 (WCAG AA) on every palette colour in light and dark mode
   - Level 2: light tint of the branch colour (18 %), no border
-  - Level 3 and deeper: plain text, no box; the coloured line leads into it
+  - Level 3 and deeper: plain text, no visible box (canvas background, like the root); the coloured line leads into it
   - Blocks (code, tables, math, quotes, callouts, Mermaid diagrams, image embeds) keep their box at every level: the normal background and a thin border in the branch colour
   - Lines: branch colour; lines into first-level nodes slightly thicker
   - Every theme and level has the same node size (borders stay, transparent), so a theme switch never changes the layout

@@ -30,7 +30,8 @@
   transform-origin: 0 0;
 }
 
-.mind-mapper-edges {
+.mind-mapper-edges,
+.mind-mapper-highlight-layer {
   position: absolute;
   top: 0;
   left: 0;
@@ -86,8 +87,15 @@
 }
 
 /* A clicked link: thicker, still dashed (a link, not a tree edge), the dashes scaled with the
-   width; its end nodes get the selection ring. */
-.mind-mapper-crosslink.is-highlighted {
+   width; its end nodes get the selection ring. Lines stay behind the nodes; a copy of the clicked
+   one is drawn in a layer above them, so its whole length shows. */
+.mind-mapper-crosslink-highlight {
+  fill: none;
+  stroke: var(--interactive-accent);
+}
+
+.mind-mapper-crosslink.is-highlighted,
+.mind-mapper-crosslink-highlight {
   stroke-width: 3;
   stroke-dasharray: 10 6;
   opacity: 1;
@@ -312,10 +320,11 @@
   stroke: var(--mind-mapper-color-7, var(--text-faint));
 }
 
-/* The root: large bold text, no box (the selection ring still shows). */
+/* The root: large bold text, no box (the selection ring still shows). The canvas background, not
+   transparent: link lines behind it do not show through the text. */
 .mind-mapper-node.is-root:not(.is-render-error) {
   border-color: transparent;
-  background: transparent;
+  background: var(--background-primary);
   /* nodeSize.ts ROOT_FONT_SCALE */
   font-size: calc(var(--font-text-size) * 1.5);
   font-weight: var(--font-bold);
@@ -342,9 +351,10 @@
   );
 }
 
-/* Level 3 and deeper: plain text, the coloured edge leads into it. */
+/* Level 3 and deeper: plain text, the coloured edge leads into it. The canvas background (like the
+   root): no box to see, but link lines behind it are covered. */
 .mind-mapper-node[data-level='3'] {
-  background: transparent;
+  background: var(--background-primary);
 }
 
 /* Blocks (code, tables, callouts, diagrams, images, …) keep a box at every level. */

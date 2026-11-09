@@ -83,6 +83,8 @@ export class DomMapRenderer implements MapRenderer {
   /** Visible path of each drawn cross-link by `linkKey`. */
   private readonly linkLines = new Map<string, SVGPathElement>();
   private highlighted: CrossLink | null = null;
+  /** Layer after all nodes with a copy of the highlighted line (painted above the nodes). */
+  private highlightEl: SVGSVGElement | null = null;
   /** Node rects of the last layout (cross-links are drawn from the layout, never from the DOM). */
   private rects = new Map<string, PositionedNode>();
   private layout: MapLayout | null = null;
@@ -199,6 +201,7 @@ export class DomMapRenderer implements MapRenderer {
     for (const list of pool.values()) for (const contentEl of list) this.hooks.release(contentEl);
     this.placeToggles(layout, this.collapse);
     this.drawSkeleton(layout, skeleton);
+    this.keepHighlightOnTop();
   }
 
   /** All node rects as one path: the map's shape at a zoom where text is unreadable. */
@@ -275,9 +278,35 @@ export class DomMapRenderer implements MapRenderer {
     for (const line of this.linkLines.values()) line.classList.remove('is-highlighted');
     const line = link && this.linkLines.get(linkKey(link));
     this.highlighted = line ? link : null;
+    this.drawHighlight(line?.getAttribute('d') ?? null);
     if (!line) return;
     line.classList.add('is-highlighted');
     for (const id of this.linkEndIds()) this.nodes.get(id)?.el.addClass('is-link-end');
+  }
+
+  /** The copy of the highlighted line above the nodes; removed when nothing is highlighted. */
+  private drawHighlight(d: string | null): void {
+    if (d === null) {
+      this.highlightEl?.remove();
+      this.highlightEl = null;
+      return;
+    }
+    if (!this.highlightEl) {
+      const doc = this.worldEl.doc;
+      this.highlightEl = doc.createElementNS(SVG_NS, 'svg');
+      this.highlightEl.classList.add('mind-mapper-highlight-layer');
+      const path = doc.createElementNS(SVG_NS, 'path');
+      path.classList.add('mind-mapper-crosslink-highlight');
+      this.highlightEl.appendChild(path);
+    }
+    this.highlightEl.firstElementChild?.setAttribute('d', d);
+    this.keepHighlightOnTop();
+  }
+
+  /** Nodes and toggles created later (culling, re-layout) are appended: move the layer after them. */
+  private keepHighlightOnTop(): void {
+    const el = this.highlightEl;
+    if (el && this.worldEl.lastChild !== el) this.worldEl.appendChild(el);
   }
 
   private linkEndIds(): string[] {
@@ -364,6 +393,7 @@ export class DomMapRenderer implements MapRenderer {
     this.linkHits.clear();
     this.linkLines.clear();
     this.highlighted = null;
+    this.highlightEl = null;
   }
 
   /** Edge paths are reused across layouts (a re-layout of a large map only updates `d`). */

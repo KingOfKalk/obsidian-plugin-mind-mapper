@@ -359,7 +359,8 @@ describe('screenshots', function () {
     await withLoudPalette(() => saveControlsShots(`${dir}/loud-controls`));
   });
 
-  // Issue #21: a clicked link line, its ends ringed (light, dark and loud palette).
+  // Issue #21: link lines behind the nodes (none through the root text), then a clicked link line
+  // above them with its ends ringed (light, dark and loud palette).
   for (const [mode, loud] of [
     ['light', false],
     ['dark', false],
@@ -370,20 +371,22 @@ describe('screenshots', function () {
       await openMindMap('fixtures/crosslinks.md');
       await settle();
       await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
-      await browser.execute(() => {
-        const hit = document.querySelector(
-          '.mind-mapper-crosslink-hit[data-from-id="Links/Gamma/#1"][data-to-id="Links/Beta/Inner"]',
-        );
-        const canvas = document.querySelector('.mind-mapper-canvas');
-        const init = { bubbles: true, button: 0, pointerId: 1, clientX: 1, clientY: 1 };
-        hit?.dispatchEvent(new PointerEvent('pointerdown', { ...init, buttons: 1 }));
-        canvas?.dispatchEvent(new PointerEvent('pointerup', { ...init, buttons: 0 }));
-      });
+      const name = (state: string) =>
+        `${dir}/${loud ? `loud-crosslinks-${state}` : `crosslinks-${state}-${mode}`}.png`;
       const shoot = async () => {
         await browser.pause(300);
-        await browser.saveScreenshot(
-          `${dir}/${loud ? 'loud-crosslinks-highlight' : `crosslinks-highlight-${mode}`}.png`,
-        );
+        await browser.saveScreenshot(name('plain'));
+        await browser.execute(() => {
+          const hit = document.querySelector(
+            '.mind-mapper-crosslink-hit[data-from-id="Links/Gamma/#1"][data-to-id="Links/Beta/Inner"]',
+          );
+          const canvas = document.querySelector('.mind-mapper-canvas');
+          const init = { bubbles: true, button: 0, pointerId: 1, clientX: 1, clientY: 1 };
+          hit?.dispatchEvent(new PointerEvent('pointerdown', { ...init, buttons: 1 }));
+          canvas?.dispatchEvent(new PointerEvent('pointerup', { ...init, buttons: 0 }));
+        });
+        await browser.pause(300);
+        await browser.saveScreenshot(name('highlight'));
       };
       if (loud) await withLoudPalette(shoot);
       else await shoot();

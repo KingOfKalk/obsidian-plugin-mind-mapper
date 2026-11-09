@@ -491,6 +491,53 @@ test('the link highlight survives new cross-links with the same ends and ends wi
   expect(renderer.highlightedLink).toBeNull();
 });
 
+/** The copy of the highlighted line drawn above the nodes, or null. */
+function highlightOverlay(parent: HTMLElement): SVGPathElement | null {
+  return parent.querySelector<SVGPathElement>(
+    'svg.mind-mapper-highlight-layer path.mind-mapper-crosslink-highlight',
+  );
+}
+
+test('the highlighted line is copied into a layer above all nodes only while highlighted', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  const overlay = highlightOverlay(parent);
+  expect(overlay?.getAttribute('d')).toBe(
+    parent.querySelector('path.mind-mapper-crosslink')?.getAttribute('d'),
+  );
+  // after every node in the world (painted above them); not a second cross-link
+  const world = parent.querySelector('.mind-mapper-world');
+  expect(world?.lastElementChild).toBe(overlay?.ownerSVGElement);
+  expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(1);
+  renderer.setHighlightedLink(null);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
+});
+
+test('the overlay follows a re-layout and goes when its link is no longer drawn', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+  const before = highlightOverlay(parent)?.getAttribute('d');
+  const moved: MapLayout = {
+    ...layout,
+    nodes: layout.nodes.map((p) => (p.node.id === 'R/B' ? { ...p, y: p.y + 100 } : p)),
+  };
+  renderer.setLayout(moved);
+  renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+  const after = highlightOverlay(parent)?.getAttribute('d');
+  expect(after).not.toBe(before);
+  expect(after).toBe(parent.querySelector('path.mind-mapper-crosslink')?.getAttribute('d'));
+  expect(parent.querySelector('.mind-mapper-world')?.lastElementChild).toBe(
+    highlightOverlay(parent)?.ownerSVGElement,
+  );
+  renderer.setCrossLinks([]);
+  expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
+});
+
 describe('culling', () => {
   /** 20 x 20 grid of 100 x 20 nodes, 200 px apart; root at (0,0). */
   function grid(): MapLayout {
@@ -569,6 +616,10 @@ describe('culling', () => {
     renderer.setTransform({ x: -3600, y: -3600, zoom: 1 });
     renderer.updateVisible();
     expect(linkEnds(parent)).toEqual(['n399']);
+    // nodes created by culling stay below the highlighted line
+    expect(parent.querySelector('.mind-mapper-world')?.lastElementChild).toBe(
+      highlightOverlay(parent)?.ownerSVGElement,
+    );
   });
 
   test('below 0.2 zoom the map is a skeleton path; all node content released', () => {
