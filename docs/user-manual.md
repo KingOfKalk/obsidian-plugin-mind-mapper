@@ -15,6 +15,7 @@ Mind Mapper shows a Markdown note as a mind map in Obsidian. Headings, paragraph
 - [Full screen](#full-screen)
 - [Layouts](#layouts)
 - [Colour themes](#colour-themes)
+- [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 - [Frontmatter keys](#frontmatter-keys)
 - [Settings](#settings)
 - [Commands](#commands)
@@ -120,6 +121,8 @@ The controls bar at the bottom center, left to right:
 | Fit to view (two boxes in a frame) | shows the whole map, enlarging a small one up to "Max zoom for fit" (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
 | Back to root | centers the root |
+| Layout (boxes joined by a line) | menu with the six layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
+| Colour theme (palette) | menu with the colour themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
 
 ![A collapsed Vegetables branch with its badge 4, and the highlighted collapse button in the controls bar](images/manual/collapsed.png)
@@ -170,6 +173,7 @@ The controls bar at the bottom center, left to right:
 
 - For all notes: setting "Default layout"
 - For one note: `mind-mapper-layout` in its frontmatter
+- For the open map only: the layout button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 
 `circle-clockwise`:
 
@@ -203,6 +207,7 @@ How a node looks depends on its level, in every theme:
 
 - For all notes: setting "Default theme"
 - For one note: `mind-mapper-theme` in its frontmatter
+- For the open map only: the colour theme button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 - The colours come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
 - Changing the theme applies to an open map right away
 - If you chose "None" in an earlier version, the setting stays "None"; pick "Rainbow" to get the colours
@@ -210,6 +215,19 @@ How a node looks depends on its level, in every theme:
 `rainbow`:
 
 ![The garden plans map in rainbow: the root as large bold text, each first-level node filled in its own colour, the nodes below lightly tinted in the colour of their branch](images/manual/theme-rainbow.png)
+
+## Layout and theme of the open map
+
+To show a map differently for a moment, e.g. while presenting, change its layout or colour theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
+
+- Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom and bottom → top; the shown layout is checked. A choice re-arranges the map and fits it to view
+- Colour theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent colour; the shown theme is checked. A choice recolours the map at once; nothing moves
+- Below a line in each menu: "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the settings
+- While you have chosen a layout or theme, its button is highlighted. Your choice wins over later edits of `mind-mapper-layout` / `mind-mapper-theme` and over the settings, so the map does not jump while you edit
+- The choice belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. A map opened anew starts with the note's layout and theme
+- Commands: "Change layout…" and "Change colour theme…" open the same menus (arrow keys and `Enter` work); "Next layout" and "Next colour theme" step to the next one, after the last back to the first
+
+![The garden plans map in ocean colours with the highlighted colour theme button, and the layout menu open above the controls bar with balanced clockwise checked](images/manual/layout-menu.png)
 
 ## Frontmatter keys
 
@@ -269,6 +287,10 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Expand all | a mind map is active | `Ctrl/Cmd + Shift + ]` |
 | Back to root | a mind map is active | `Shift + H` |
 | Toggle full screen | a mind map is active | `Ctrl/Cmd + Shift + F11` |
+| Change layout… | a mind map is active | |
+| Next layout | a mind map is active | `Shift + L` |
+| Change colour theme… | a mind map is active | |
+| Next colour theme | a mind map is active | `Shift + T` |
 
 - Collapse all and Expand all are two commands, so a hotkey always does the same; the controls bar has one button for both
 
@@ -277,7 +299,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdown shows translated labels)
+- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdown and the controls bar menus show translated labels)
 
 ## Large notes
 

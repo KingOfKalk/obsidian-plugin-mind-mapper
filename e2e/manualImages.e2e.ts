@@ -246,6 +246,25 @@ describe('user manual images', function () {
     await browser.keys('Escape');
   });
 
+  it('layout menu, theme chosen for this map', async function () {
+    await setWindowSize(820, 560);
+    await showMap(SIMPLE);
+    // The ocean theme for this map only: its button is highlighted.
+    await browser.$('.mind-mapper-controls button[aria-label="Colour theme"]').click();
+    await browser.$('.menu').waitForExist();
+    for (const item of await browser.$$('.menu .menu-item')) {
+      if ((await item.$('.menu-item-title').getText()) !== 'Ocean') continue;
+      await item.click();
+      break;
+    }
+    await browser.$('.menu').waitForExist({ reverse: true });
+    await fit();
+    await browser.$('.mind-mapper-controls button[aria-label="Layout"]').click();
+    await browser.$('.menu').waitForExist();
+    await shoot('layout-menu');
+    await browser.keys('Escape');
+  });
+
   it('settings', async function () {
     // Obsidian 1.15 opens the settings in their own window.
     const main = await browser.getWindowHandle();

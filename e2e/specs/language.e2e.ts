@@ -27,6 +27,8 @@ describe('language', function () {
       'An Ansicht anpassen',
       'Alle einklappen',
       'Zurück zum Hauptthema',
+      'Layout',
+      'Farbschema',
       'Vollbild umschalten',
     ]);
     expect(await browser.$('.mind-mapper-zoom-input').getAttribute('aria-label')).toBe('Zoomstufe');

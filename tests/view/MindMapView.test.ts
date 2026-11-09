@@ -12,6 +12,7 @@ import { loadFixture } from '../fixtures';
 import { FakeWorkspace, fakeFile, useGerman } from '../helpers';
 import {
   type Component as MockComponent,
+  Menu as MockMenu,
   Modal as MockModal,
   type Scope as MockScope,
 } from '../mocks/obsidian';
@@ -915,7 +916,7 @@ describe('rename, delete, empty note', () => {
     expect(headerTitle(view)).toBe('Renamed');
     expect(setViewState).toHaveBeenCalledWith({
       type: 'mind-mapper-view',
-      state: { file: 'Folder/Renamed.md' },
+      state: { file: 'Folder/Renamed.md', layout: null, theme: null },
     });
     expect(view.getTransform()).toEqual({ x: -60, y: 311, zoom: 0.8 });
     expect(nodeIds(view)).toContain('Project/Tasks');
@@ -1220,6 +1221,224 @@ describe('colour themes', () => {
       'Note.md\0mind-mapper-theme\0neon',
       'Mind Mapper: unknown mind-mapper-theme "neon" in Note.md, using ocean',
     );
+  });
+});
+
+describe('layout and colour theme of this view (overrides)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    MockMenu.lastShown = null;
+  });
+  afterEach(() => vi.useRealTimers());
+
+  function theme(view: MindMapView): string[] {
+    const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
+    return [...(canvas?.classList ?? [])].filter((c) => c.startsWith('mind-mapper-theme-'));
+  }
+
+  function control(view: MindMapView, label: string): HTMLElement {
+    const el = view.contentEl.querySelector<HTMLElement>(
+      `.mind-mapper-controls button[aria-label="${label}"]`,
+    );
+    if (!el) throw new Error(`no control ${label}`);
+    return el;
+  }
+
+  const active = (view: MindMapView, label: string) =>
+    control(view, label).classList.contains('is-active');
+
+  function checkedIn(menu: MockMenu | null): string[] {
+    return (menu?.items ?? []).filter((i) => i.checked).map((i) => i.title);
+  }
+
+  /** Children below the root: top-to-bottom. */
+  function grows(view: MindMapView, root: string, child: string): string {
+    const r = nodeBox(view, root);
+    const c = nodeBox(view, child);
+    if (c.y >= r.y + r.height) return 'down';
+    if (c.y + c.height <= r.y) return 'up';
+    return c.x > r.x ? 'right' : 'left';
+  }
+
+  test('without an override the note decides; the buttons are not highlighted and the menus check its values', async () => {
+    const { view } = await openWith('fm-layout', { settings: () => LTR_SETTINGS });
+    expect(grows(view, 'Root', 'Root/A')).toBe('down');
+    expect(view.getState()).toMatchObject({ file: 'Note.md', layout: null, theme: null });
+    expect(active(view, 'Layout')).toBe(false);
+    expect(active(view, 'Colour theme')).toBe(false);
+    control(view, 'Layout').click();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);
+    control(view, 'Colour theme').click();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Rainbow']);
+  });
+
+  test('choosing a layout re-lays out and fits; the note is not touched', async () => {
+    const { view, ws } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+    const text = ws.vault.texts.get('Note.md');
+    view.setTransform({ x: -500, y: 900, zoom: 0.3 });
+    view.chooseLayout('top-to-bottom');
+    await vi.advanceTimersByTimeAsync(20);
+    expect(grows(view, 'Project', 'Project/Tasks')).toBe('down');
+    expect(view.getTransform()).not.toEqual({ x: -500, y: 900, zoom: 0.3 });
+    const root = screenOf(view, 'Project');
+    expect(root.x).toBeGreaterThanOrEqual(0);
+    expect(root.x).toBeLessThan(800);
+    expect(root.y).toBeGreaterThanOrEqual(0);
+    expect(root.y).toBeLessThan(600);
+    expect(active(view, 'Layout')).toBe(true);
+    expect(active(view, 'Colour theme')).toBe(false);
+    control(view, 'Layout').click();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);
+    expect(ws.vault.texts.get('Note.md')).toBe(text);
+  });
+
+  test('the chosen layout wins over frontmatter edits and the setting; "Use the note\'s layout" goes back', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view, ws } = await openWith('live-before', { settings: () => settings });
+    view.chooseLayout('right-to-left');
+    await vi.advanceTimersByTimeAsync(20);
+    // The note gets mind-mapper-layout: top-to-bottom.
+    change(ws, 'Note.md', 'fm-layout');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(grows(view, 'Root', 'Root/A')).toBe('left');
+    settings.defaultLayout = 'bottom-to-top';
+    view.refresh();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(grows(view, 'Root', 'Root/A')).toBe('left');
+    expect(active(view, 'Layout')).toBe(true);
+
+    view.setTransform({ x: -500, y: 900, zoom: 0.3 });
+    view.chooseLayout(null);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(grows(view, 'Root', 'Root/A')).toBe('down');
+    expect(view.getTransform()).not.toEqual({ x: -500, y: 900, zoom: 0.3 });
+    expect(active(view, 'Layout')).toBe(false);
+    expect(view.getState()).toMatchObject({ layout: null });
+    // Without an override frontmatter edits apply again.
+    change(ws, 'Note.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(320);
+    expect(grows(view, 'Live', 'Live/Beta')).toBe('up');
+  });
+
+  test('choosing a colour theme applies it without a re-layout; it wins over frontmatter edits until reset', async () => {
+    const settings: MindMapSettings = { ...LTR_SETTINGS, defaultTheme: 'forest' };
+    const { view, ws } = await openWith('fm-theme', { settings: () => settings });
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+    const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
+    const transform = view.getTransform();
+    view.chooseTheme('ocean');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setLayout).not.toHaveBeenCalled();
+    setLayout.mockRestore();
+    expect(view.getTransform()).toEqual(transform);
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+    expect(active(view, 'Colour theme')).toBe(true);
+    expect(active(view, 'Layout')).toBe(false);
+    expect(view.getState()).toMatchObject({ theme: 'ocean', layout: null });
+
+    // Frontmatter edits and setting changes do not replace it.
+    change(ws, 'Note.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+    settings.defaultTheme = 'accent';
+    view.applyTheme();
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+
+    view.chooseTheme(null);
+    expect(theme(view)).toEqual(['mind-mapper-theme-accent']);
+    expect(active(view, 'Colour theme')).toBe(false);
+    change(ws, 'Note.md', 'fm-theme');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
+  });
+
+  test('the overrides are saved in the view state and restored from it; an older state has none', async () => {
+    const { view, ws } = await openWith('fm-theme', { settings: () => LTR_SETTINGS });
+    const requestSaveLayout = vi.spyOn(ws, 'requestSaveLayout');
+    view.chooseLayout('top-to-bottom');
+    expect(requestSaveLayout).toHaveBeenCalledTimes(1);
+    view.chooseTheme('accent');
+    expect(requestSaveLayout).toHaveBeenCalledTimes(2);
+    const saved = view.getState();
+    expect(saved).toMatchObject({ file: 'Note.md', layout: 'top-to-bottom', theme: 'accent' });
+
+    // Restart: a new view gets the saved state.
+    const leaf = { app: ws.app, setViewState: vi.fn(() => Promise.resolve()) };
+    const restored = new MindMapView(leaf as unknown as WorkspaceLeaf, {
+      settings: () => LTR_SETTINGS,
+    });
+    await setSize(restored, 800, 600);
+    await restored.setState(JSON.parse(JSON.stringify(saved)), { history: false });
+    await vi.advanceTimersByTimeAsync(20);
+    expect(grows(restored, 'Theme', 'Theme/Alpha')).toBe('down');
+    expect(theme(restored)).toEqual(['mind-mapper-theme-accent']);
+    expect(active(restored, 'Layout')).toBe(true);
+    expect(active(restored, 'Colour theme')).toBe(true);
+    expect(restored.getState()).toMatchObject(saved);
+
+    // A state from before this feature (only `file`): the note's layout and theme.
+    await restored.setState({ file: 'Note.md' }, { history: false });
+    await vi.advanceTimersByTimeAsync(20);
+    expect(grows(restored, 'Theme', 'Theme/Alpha')).toBe('right');
+    expect(theme(restored)).toEqual(['mind-mapper-theme-rainbow']);
+    expect(active(restored, 'Layout')).toBe(false);
+    expect(active(restored, 'Colour theme')).toBe(false);
+    expect(restored.getState()).toMatchObject({ layout: null, theme: null });
+  });
+
+  test('a rename keeps the overrides', async () => {
+    const { view, ws } = await openWorked();
+    view.chooseLayout('top-to-bottom');
+    view.chooseTheme('none');
+    const setViewState = vi.spyOn(view.leaf, 'setViewState');
+    rename(ws, 'Note.md', 'Renamed.md', 'worked-example');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(setViewState).toHaveBeenCalledWith({
+      type: 'mind-mapper-view',
+      state: { file: 'Renamed.md', layout: 'top-to-bottom', theme: 'none' },
+    });
+    expect(view.getState()).toMatchObject({
+      file: 'Renamed.md',
+      layout: 'top-to-bottom',
+      theme: 'none',
+    });
+    expect(theme(view)).toEqual(['mind-mapper-theme-none']);
+  });
+
+  test('next layout and next theme cycle from the shown value and wrap around', async () => {
+    const { view } = await openWith('fm-layout', { settings: () => LTR_SETTINGS });
+    view.nextLayout();
+    expect(view.getState()).toMatchObject({ layout: 'bottom-to-top' });
+    view.nextLayout();
+    expect(view.getState()).toMatchObject({ layout: 'circle-clockwise' });
+    view.nextLayout();
+    expect(view.getState()).toMatchObject({ layout: 'circle-counter-clockwise' });
+    // Default theme rainbow.
+    view.nextTheme();
+    expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
+    view.chooseTheme('accent');
+    view.nextTheme();
+    expect(theme(view)).toEqual(['mind-mapper-theme-none']);
+    expect(view.getState()).toMatchObject({ theme: 'none' });
+  });
+
+  test('the menus open at their buttons (commands "Change layout…" and "Change colour theme…")', async () => {
+    const { view } = await openWith('fm-layout', { settings: () => LTR_SETTINGS });
+    view.showLayoutMenu();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);
+    view.showThemeMenu();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Rainbow']);
+    void MockMenu.lastShown?.items.find((i) => i.title === 'Forest')?.clickHandler?.();
+    expect(theme(view)).toEqual(['mind-mapper-theme-forest']);
+  });
+
+  test('in German the buttons and menus are German', async () => {
+    useGerman();
+    const { view } = await openWith('fm-layout', { settings: () => LTR_SETTINGS });
+    control(view, 'Layout').click();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Oben → unten']);
+    control(view, 'Farbschema').click();
+    expect(checkedIn(MockMenu.lastShown)).toEqual(['Regenbogen']);
   });
 });
 

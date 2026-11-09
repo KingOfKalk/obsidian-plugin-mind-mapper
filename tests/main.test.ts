@@ -104,11 +104,24 @@ test('a rename moves map leaves that are not loaded yet (deferred) to the new pa
   ws.vault.trigger('rename', fakeFile('new.md'), 'old.md');
   expect(deferred.setViewState).toHaveBeenCalledWith({
     type: 'mind-mapper-view',
-    state: { file: 'new.md' },
+    state: { file: 'new.md', layout: null, theme: null },
   });
   // a loaded view follows the rename itself
   expect(loaded.setViewState).not.toHaveBeenCalled();
   expect(other.setViewState).not.toHaveBeenCalled();
+});
+
+test('a rename of a map leaf that is not loaded yet keeps its layout and theme overrides', async () => {
+  const ws = new FakeWorkspace();
+  await loadPlugin(ws);
+  const state = { file: 'old.md', layout: 'top-to-bottom', theme: 'ocean' };
+  const deferred = ws.addLeaf({ type: 'mind-mapper-view', state });
+  deferred.isDeferred = true;
+  ws.vault.trigger('rename', fakeFile('new.md'), 'old.md');
+  expect(deferred.setViewState).toHaveBeenCalledWith({
+    type: 'mind-mapper-view',
+    state: { ...state, file: 'new.md' },
+  });
 });
 
 test('warnOnce shows a notice once per id for the session', async () => {
