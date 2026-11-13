@@ -252,13 +252,13 @@ mind-mapper-layout: kanban
 - First-level nodes are the columns, side by side and all the same width (at most "Max node width"; wider content is clipped with a fade)
   - Each column header shows the number of its cards in a small bubble (information only, not a button)
 - Second-level nodes are the cards, stacked downwards in their column
-- Everything deeper is a subtask: plain text, indented below its card
-- Colors as usual: column headers filled in their branch color, cards lightly tinted, subtasks plain text
+- Everything deeper is a subtask: a box below its card, as wide as the card, a little closer to it than the next card, so each task reads as one group
+- Colors as usual: column headers filled in their branch color, cards lightly tinted; subtasks get a box that is lighter than their card, and subtasks of subtasks an even lighter one
 - No lines between nodes and no collapse buttons on nodes; Collapse all shows only the headline and the column headers (with their counts), Expand all shows everything again
 - `---` between two columns draws a vertical line between them; between two cards or two subtasks a horizontal line in the column
 - Link lines, selecting, double click to jump, drill down (the node you drill into becomes the headline, its children the columns), color themes and full screen work as in the other layouts
 
-![The product launch note as a kanban board: To do, Doing and Done columns with their card counts, cards below them, two indented subtasks under the first card and a dashed line between To do and Doing](images/manual/layout-kanban.png)
+![The product launch note as a kanban board: To do, Doing and Done columns with their card counts, cards below them, two subtasks in lighter boxes under the first card and a dashed line between To do and Doing](images/manual/layout-kanban.png)
 
 ## Color themes
 
@@ -269,7 +269,7 @@ How a node looks depends on its level, in every theme:
 - Root: large bold text, no box
 - First level: a box filled with the branch color
 - Second level: a light tint of the branch color
-- Third level and deeper: plain text; the colored line leads into it
+- Third level and deeper: plain text; the colored line leads into it (kanban: subtasks in lighter boxes, see [Kanban](#kanban))
 - Code, tables, callouts, math, diagrams and images: a thin border in the branch color at every level
 - Lines: the branch color, slightly thicker into the first level
 - Unchanged: the text color, dashed link lines, dividers, the collapse buttons and the selection ring

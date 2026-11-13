@@ -559,8 +559,8 @@ describe('screenshots', function () {
   });
 
   // Issue #91: kanban subtasks as boxes without indent, lighter per depth, a tighter gap within a
-  // task: a card with nested subtasks and a divider, fitted and at 100 %; light, dark, loud palette
-  // and theme none.
+  // task: a card with nested subtasks and a divider, fitted and at 100 % with a subtask selected;
+  // light, dark, loud palette and theme none.
   for (const [theme, mode, loud] of [
     ['rainbow', 'light', false],
     ['rainbow', 'dark', false],
@@ -576,6 +576,8 @@ describe('screenshots', function () {
       const name = loud ? `${dir}/loud-kanban-subtasks` : `${dir}/kanban-subtasks-${theme}-${mode}`;
       const shoot = async () => {
         await saveFullScreenShot(`${name}.png`);
+        // In full screen at 100 %, a subtask selected.
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
         await clickNodeEndingWith('/To do/Write the release notes/#1/#1');
         await browser.executeObsidianCommand('mind-mapper:reset-zoom');
         await waitForAnimation();
