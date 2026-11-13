@@ -69,10 +69,13 @@ Make the note active, then use one of:
 | Quote, callout | one node with everything inside it |
 | Image embed `![[image.png]]` | a node with a thumbnail |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
-| Tag `#solo` | as in reading view; a click opens the tag search |
-| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined, in your theme's tag colors; hover shows the full tag |
+| Tag `#solo` | like in reading view with smaller corners; a click opens the tag search |
+| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
+
+- Tags in a node take the color of its branch (in every color theme but "none"; the root and the full content overlay keep your theme's tag colors)
+- Tags at the end of a line move to the side opposite the text: to the right edge of a left-aligned node, to the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card
 
 - Large content is clipped at the max node size with a fade; the expand icon in the node's corner shows all of it in an overlay (`Esc` closes it)
 
