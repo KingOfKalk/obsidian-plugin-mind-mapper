@@ -38,9 +38,6 @@ export class PhaseRunner {
 
   /** Runs every remaining phase to its end at once (a new drill step, reduced motion). */
   finish(): void {
-    (((window as any).__mmAnim ??= []) as string[]).push(
-      `finish now=${Math.round(performance.now())} i=${this.index} active=${this.active}`,
-    );
     if (!this.active) return;
     this.stopFrames();
     for (; this.index < this.phases.length; this.index++) {
@@ -70,9 +67,6 @@ export class PhaseRunner {
 
   private tick(time: number): void {
     this.handle = null;
-    (((window as any).__mmAnim ??= []) as string[]).push(
-      `tick now=${Math.round(performance.now())} t=${Math.round(time)} i=${this.index} start=${this.start === null ? '-' : Math.round(this.start)} active=${this.active}`,
-    );
     const phase = this.phases[this.index];
     if (!phase) return this.end();
     if (this.start === null) {

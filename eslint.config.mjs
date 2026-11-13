@@ -13,11 +13,6 @@ export default defineConfig([
     'esbuild.config.mjs',
     'wdio.conf.mts',
     '.obsidian-cache',
-    // TEMP diagnostics (issue 62)
-    'e2e/helpers.ts',
-    'e2e/specs/alignment*.e2e.ts',
-    'src/view/MindMapView.ts',
-    'src/view/animation.ts',
   ]),
   ...obsidianmd.configs.recommended,
   {

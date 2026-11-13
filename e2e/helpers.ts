@@ -23,29 +23,7 @@ export async function waitForCache(path: string): Promise<void> {
  * covered by `openViaCommand` in the smoke spec.
  */
 export async function openMindMap(path: string): Promise<void> {
-  await browser.execute(() => {
-    const w = window as any;
-    (w.__mmAnim ??= []).push(`openMindMap ${Math.round(performance.now())}`);
-  });
   await waitForCache(path);
-  await browser.execute(() => {
-    const w = window as unknown as Record<string, any>;
-    if (w.__mmErrors) return;
-    w.__mmErrors = [];
-    window.addEventListener('error', (e) =>
-      w.__mmErrors.push('error: ' + e.message + ' ' + (e.error?.stack ?? '')),
-    );
-    window.addEventListener('unhandledrejection', (e) =>
-      w.__mmErrors.push('rejection: ' + String(e.reason?.stack ?? e.reason)),
-    );
-    const orig = console.error;
-    console.error = (...args: unknown[]) => {
-      w.__mmErrors.push(
-        'console.error: ' + args.map((a) => String((a as any)?.stack ?? a)).join(' '),
-      );
-      orig.apply(console, args);
-    };
-  });
   await browser.executeObsidian(async ({ app }, notePath) => {
     app.workspace.detachLeavesOfType('mind-mapper-view');
     const leaf = app.workspace.getLeaf('split', 'vertical');
@@ -97,68 +75,9 @@ export async function nodeBoxes(): Promise<NodeBox[]> {
  * `is-animating` meanwhile).
  */
 export async function waitForAnimation(): Promise<void> {
-  try {
-    await browser
-      .$('.mind-mapper-canvas.is-animating')
-      .waitForExist({ reverse: true, timeout: 5000, timeoutMsg: 'animation did not end' });
-  } catch (error) {
-    const diag = await browser.execute(
-      () =>
-        new Promise<string>((done) => {
-          const w = window as unknown as Record<string, any>;
-          const leaves = w.app.workspace.getLeavesOfType('mind-mapper-view');
-          const views = leaves.map((l: any) => {
-            const v = l.view;
-            const a = v.animation;
-            return {
-              animation: a
-                ? {
-                    index: a.index,
-                    start: a.start,
-                    handle: a.handle,
-                    active: a.active,
-                    phases: a.phases.length,
-                  }
-                : null,
-              cameraGlide: v.cameraGlide,
-              canvases: Array.from(document.querySelectorAll('.mind-mapper-canvas')).map((c) => ({
-                cls: c.className,
-                connected: c.isConnected,
-              })),
-              viewCanvasConnected: v.dom?.renderer.canvasEl.isConnected,
-              viewCanvasCls: v.dom?.renderer.canvasEl.className,
-              layoutFrame: v.layoutFrame,
-              relayoutTimer: v.relayoutTimer,
-              opacity: v.dom?.renderer.worldEl?.style.opacity,
-            };
-          });
-          const errs = (w.__mmErrors ?? []) as string[];
-          const anim = (w.__mmAnim ?? []) as string[];
-          const t0 = performance.now();
-          let fired = false;
-          requestAnimationFrame(() => {
-            fired = true;
-          });
-          setTimeout(
-            () =>
-              done(
-                JSON.stringify({
-                  anim,
-                  vis: document.visibilityState,
-                  focus: document.hasFocus(),
-                  views,
-                  errs,
-                  rafFiredWithin1s: fired,
-                  now: t0,
-                }),
-              ),
-            1000,
-          );
-        }),
-    );
-    console.log('ANIMDIAG ' + diag);
-    throw error;
-  }
+  await browser
+    .$('.mind-mapper-canvas.is-animating')
+    .waitForExist({ reverse: true, timeout: 5000, timeoutMsg: 'animation did not end' });
 }
 
 /**
