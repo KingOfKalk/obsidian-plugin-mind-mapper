@@ -101,7 +101,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   });
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
-  private readonly sizes = new SizeCache(() => this.limits());
+  private readonly sizes = new SizeCache(
+    () => this.limits(),
+    () => this.mapOptions().tags,
+  );
   /** Rendered node contents into `sizes`; a change re-lays out (debounced). */
   private readonly measurer = new NodeMeasurer(
     {
@@ -217,8 +220,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Frontmatter options of the shown note, plugin settings as defaults. */
   private mapOptions(): MapOptions {
-    const { defaultLayout, startCollapsed, defaultTheme } = this.services.settings();
-    return readMapOptions(this.frontmatter, defaultLayout, startCollapsed, defaultTheme);
+    const { defaultLayout, startCollapsed, defaultTheme, tagPosition } = this.services.settings();
+    return readMapOptions(
+      this.frontmatter,
+      defaultLayout,
+      startCollapsed,
+      defaultTheme,
+      tagPosition,
+    );
   }
 
   /** This view's chosen layout, else frontmatter `mind-mapper-layout`, else the plugin setting. */
@@ -438,9 +447,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.camera.finish();
     this.applyCssLimits();
     this.applyTheme();
+    this.dom?.renderer.setTagPosition(this.mapOptions().tags);
     if (!this.layout || !this.tree) return;
-    // A new max node size changes the size cache keys and the content caps: measure again now
-    // (the ResizeObserver only fires for content whose size changes).
+    // A new max node size or tag position changes the size cache keys and the node sizes: measure
+    // again now (the ResizeObserver only fires for content whose size changes).
     this.measurer.measureAll();
     this.applyStartCollapsed(this.tree);
     const tree = this.tree;
@@ -855,6 +865,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       siblingGap: settings.siblingGap,
       levelGap: settings.levelGap,
       nodeSize: (node) => this.sizes.get(node)?.size ?? estimateSize(node, limits),
+      tagRow: (node) => this.sizes.get(node)?.tags ?? null,
       layout: name,
       maxNodeWidth: limits.maxWidth,
       childCount: (node) => childCounts.get(node.id) ?? node.children.length,
@@ -967,6 +978,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.applyTheme();
     dom.renderer.setLayout(layout, this.collapseInfo);
     dom.renderer.setDrillCentre(this.drilling.centre);
+    // A new tag position (setting, frontmatter) changes node sizes: measure the placed nodes again.
+    if (dom.renderer.setTagPosition(this.mapOptions().tags)) this.measurer.measureAll();
     this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);
     dom.controls.setLayout(this.layoutName ?? this.effectiveLayout(), this.layoutOverride !== null);

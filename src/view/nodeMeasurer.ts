@@ -2,7 +2,7 @@ import { type Clip, measuredSize, type NodeLimits } from '../layout/nodeSize';
 import type { SizeCache } from '../layout/sizeCache';
 import type { MapLayout, Size } from '../layout/types';
 import type { MindMapNode } from '../parser/types';
-import { TRAILING_TAGS_CLASS } from '../render/nestedTags';
+import { LAST_LINE_CLASS, TRAILING_TAGS_CLASS } from '../render/nestedTags';
 
 const RELAYOUT_DEBOUNCE_MS = 100;
 
@@ -117,7 +117,7 @@ export class NodeMeasurer {
       if (!node || !el.instanceOf(HTMLElement)) continue;
       // Not laid out (yet): no real size to take.
       if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
-      const measured = measuredSize(el, this.host.limits());
+      const measured = { ...measuredSize(el, this.host.limits()), tags: tagRowSize(el) };
       if (this.sizes.set(node, measured)) changed = true;
       this.host.setClipped(node.id, measured.clip);
     }
@@ -131,4 +131,19 @@ export class NodeMeasurer {
       this.host.relayout();
     }, RELAYOUT_DEBOUNCE_MS);
   }
+}
+
+/**
+ * The tag row below the box (tag position `outside`, issue #103): the last line's trailing tags
+ * when styles.css positions them out of the content; null when they stay in the box. Its width is
+ * the extent of its pills: the row itself may be as wide as the max node width.
+ */
+function tagRowSize(content: HTMLElement): Size | null {
+  const row = content.querySelector<HTMLElement>(`.mind-mapper-trailing-tags.${LAST_LINE_CLASS}`);
+  if (!row || content.win.getComputedStyle(row).position !== 'absolute') return null;
+  const pills = Array.from(row.children).filter((child) => child.instanceOf(HTMLElement));
+  if (pills.length === 0) return { width: row.offsetWidth, height: row.offsetHeight };
+  const left = Math.min(...pills.map((pill) => pill.offsetLeft));
+  const right = Math.max(...pills.map((pill) => pill.offsetLeft + pill.offsetWidth));
+  return { width: right - left, height: row.offsetHeight };
 }

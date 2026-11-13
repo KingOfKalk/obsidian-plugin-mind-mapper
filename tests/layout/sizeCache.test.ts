@@ -58,3 +58,28 @@ test('nodes whose content hashes collide never get the size of the other (issue 
   expect(cache.get(a)).toBeUndefined();
   expect(cache.get(b)).toEqual(other);
 });
+
+// Issue #103: outside, the box is measured without its trailing tags, which form a row below it.
+test('cache entries depend on the tag position', () => {
+  let position: 'outside' | 'inside' = 'outside';
+  const cache = new SizeCache(
+    () => NODE_LIMITS,
+    () => position,
+  );
+  const withRow = { ...measured, tags: { width: 80, height: 22 } };
+  cache.set(node('x #a/b'), withRow);
+  position = 'inside';
+  expect(cache.get(node('x #a/b'))).toBeUndefined();
+  position = 'outside';
+  expect(cache.get(node('x #a/b'))).toEqual(withRow);
+});
+
+test('a changed tag row is a change; sub-pixel differences are not', () => {
+  const cache = new SizeCache(() => NODE_LIMITS);
+  const a = node('x #a/b');
+  expect(cache.set(a, { ...measured, tags: null })).toBe(true);
+  expect(cache.set(a, { ...measured, tags: { width: 80, height: 22 } })).toBe(true);
+  expect(cache.set(a, { ...measured, tags: { width: 80.3, height: 22.2 } })).toBe(false);
+  expect(cache.set(a, { ...measured, tags: { width: 80, height: 48 } })).toBe(true);
+  expect(cache.set(a, { ...measured, tags: null })).toBe(true);
+});

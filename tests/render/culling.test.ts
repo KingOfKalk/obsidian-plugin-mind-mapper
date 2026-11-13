@@ -1,6 +1,7 @@
 import type { PositionedNode, Rect } from '../../src/layout/types';
 import {
   detailLevel,
+  footprint,
   MAX_CONTENT_NODES,
   SKELETON_MIN_NODES,
   SKELETON_ZOOM,
@@ -78,4 +79,31 @@ test('more than 300 nodes in view are a skeleton at any zoom', () => {
   expect(detailLevel(0.25, 301)).toBe('skeleton');
   expect(detailLevel(1, 301)).toBe('skeleton');
   expect(detailLevel(0.25, 300)).toBe('content');
+});
+
+// Issue #103: a node is in view when its box or its tag row below it is.
+test('footprint: the box, grown by the tag row', () => {
+  const box = { x: 0, y: 0, width: 100, height: 20 };
+  expect(footprint(box as PositionedNode)).toEqual(box);
+  const tags = { x: -80, y: 24, width: 180, height: 22 };
+  expect(footprint({ ...box, tags } as PositionedNode)).toEqual({
+    x: -80,
+    y: 0,
+    width: 180,
+    height: 46,
+  });
+});
+
+test('SpatialIndex finds a node by its tag row', () => {
+  const node = {
+    node: { id: 'a' },
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 20,
+    tags: { x: -80, y: 24, width: 180, height: 22 },
+  } as unknown as PositionedNode;
+  const index = new SpatialIndex([node]);
+  expect(index.query({ x: -70, y: 30, width: 20, height: 10 })).toEqual(new Set(['a']));
+  expect(index.query({ x: -70, y: 0, width: 20, height: 10 })).toEqual(new Set());
 });
