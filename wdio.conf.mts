@@ -29,6 +29,33 @@ export const config: WebdriverIO.Config = {
     const b = (globalThis as any).browser;
     await b.execute(() => {
       const w = window as any;
+      const gone: string[] = (w.__gone = []);
+      try {
+        const app = w.electron.remote.app;
+        app.on('child-process-gone', (_e: unknown, d: any) =>
+          gone.push(
+            `${Math.round(performance.now())} ${d.type} ${d.reason} ${d.exitCode} ${d.name ?? ''}`,
+          ),
+        );
+        app.on('render-process-gone', (_e: unknown, _wc: unknown, d: any) =>
+          gone.push(`${Math.round(performance.now())} render ${d.reason} ${d.exitCode}`),
+        );
+        gone.push('argv ' + JSON.stringify(w.electron.remote.process.argv));
+        gone.push(
+          'switches ' +
+            ['disable-gpu', 'in-process-gpu', 'use-gl', 'ozone-platform']
+              .map(
+                (k) => `${k}=${app.commandLine.getSwitchValue(k)}/${app.commandLine.hasSwitch(k)}`,
+              )
+              .join(' '),
+        );
+        app.getGPUInfo('basic').then(
+          (info: any) => gone.push('gpuinfo ' + JSON.stringify(info).slice(0, 1500)),
+          (e: unknown) => gone.push('gpuinfo err ' + String(e)),
+        );
+      } catch (e) {
+        gone.push(String(e));
+      }
       const hb = (w.__hb = {
         installedAt: Math.round(performance.now()),
         gaps: [] as string[],
@@ -95,6 +122,7 @@ export const config: WebdriverIO.Config = {
         hb: w.__hb && { ...w.__hb, last: undefined, lastNow: undefined },
         procs,
         paints,
+        gone: w.__gone,
       });
     });
     console.log('HEARTBEAT', test.title, info);
