@@ -1,32 +1,26 @@
 import { execFileSync } from 'node:child_process';
-import { createRequire } from 'node:module';
 
 /**
- * The release bundle (options of esbuild.config.mjs, production) has no dev-only code: the dev
- * commands and the element ID overlay are stripped (issue #33), the element IDs stay. Runs the
- * esbuild CLI: its JS API refuses jsdom's TextEncoder.
+ * Bundles with the release options of esbuild.config.mjs (shared module `scripts/build-options.mjs`)
+ * in a child Node process: esbuild's JS API refuses jsdom's TextEncoder. Prints the bundle.
+ */
+const BUNDLE_SCRIPT = `
+import esbuild from 'esbuild';
+import { buildOptions } from './scripts/build-options.mjs';
+const options = buildOptions({ production: true, env: {} });
+const result = await esbuild.build({ ...options, write: false, logLevel: 'error' });
+process.stdout.write(result.outputFiles[0].text);
+`;
+
+/**
+ * The release bundle has no dev-only code: the dev commands and the element ID overlay are
+ * stripped (issue #33), the element IDs stay.
  */
 test('the production bundle contains no dev-only commands but keeps the element IDs', () => {
-  const esbuild = createRequire(import.meta.url).resolve('esbuild/bin/esbuild');
-  const bundle = execFileSync(
-    esbuild,
-    [
-      'src/main.ts',
-      '--bundle',
-      '--format=cjs',
-      '--target=es2022',
-      '--platform=browser',
-      '--external:obsidian',
-      '--external:electron',
-      '--external:@codemirror/*',
-      '--external:@lezer/*',
-      '--minify',
-      '--tree-shaking=true',
-      '--define:__DEV__=false',
-      '--log-level=error',
-    ],
-    { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
-  );
+  const bundle = execFileSync(process.execPath, ['--input-type=module', '-e', BUNDLE_SCRIPT], {
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
   // Booleans: a failure must not print the whole bundle.
   const has = (text: string) => bundle.includes(text);
   expect({ attribute: has('data-mm-id'), id: has('controls.fit') }).toEqual({
