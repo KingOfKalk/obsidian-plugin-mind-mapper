@@ -47,7 +47,9 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 
 ## Pull requests
 
-- Push the branch to `origin` and open a pull request against `main` (`gh pr create` or the web UI). Fill in the pull request template: `Closes #<issue>`, summary, test plan.
+- Push the branch to `origin` and open a draft pull request against `main` (`gh pr create --draft` or the web UI). Fill in the pull request template: `Closes #<issue>`, summary, test plan.
+  - Keep it a draft while work is in progress; mark it "Ready for review" (`gh pr ready`) only when it is done: gates pass, CI is green and nothing more will be pushed. The owner merges only pull requests that are not drafts.
+  - Changes after "Ready for review" go back to draft first (`gh pr ready --undo`). Never push to the branch of a merged pull request; start a new branch from `origin/main`.
 - The PR title is a Conventional Commit (`<type>[optional scope][!]: <description>`). It becomes the squash commit message, and release-please builds the changelog from it.
 - Before opening the PR, all gates pass locally:
   - `npm run check` (format, lint, typecheck, unit tests, build)
