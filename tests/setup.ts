@@ -28,6 +28,9 @@ Object.assign(HTMLElement.prototype, {
   createDiv(this: HTMLElement, options?: ElOptions) {
     return createEl.call(this, 'div', options);
   },
+  createSpan(this: HTMLElement, options?: ElOptions) {
+    return createEl.call(this, 'span', options);
+  },
   empty(this: HTMLElement) {
     this.replaceChildren();
   },

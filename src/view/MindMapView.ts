@@ -1103,11 +1103,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   ): { layout: MapLayout; collapseInfo: CollapseInfo; name: MapLayoutName } {
     const shown = (centre !== null && drilledTree(tree, centre)) || tree;
     const visible = visibleTree(shown, this.collapse);
-    const parents = new Set(
-      allNodes(tree)
-        .filter((node) => node.children.length > 0)
-        .map((node) => node.id),
-    );
+    // Children per node in the note (also of collapsed nodes): toggles and kanban card counts.
+    const childCounts = new Map(allNodes(tree).map((node) => [node.id, node.children.length]));
+    const parents = new Set([...childCounts].filter(([, n]) => n > 0).map(([id]) => id));
     const settings = this.services.settings();
     const limits = this.limits();
     const name = this.effectiveLayout();
@@ -1116,6 +1114,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       levelGap: settings.levelGap,
       nodeSize: (node) => this.sizes.get(node)?.size ?? estimateSize(node, limits),
       layout: name,
+      maxNodeWidth: limits.maxWidth,
+      childCount: (node) => childCounts.get(node.id) ?? node.children.length,
     });
     return {
       layout,

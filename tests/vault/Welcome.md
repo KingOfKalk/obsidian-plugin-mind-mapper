@@ -32,7 +32,7 @@ Headings, lists and blocks become nodes; edit the note and the map follows.
 
 - Four keys per note, all optional
   - `mind-mapper-title`: text for the root
-  - `mind-mapper-layout`: `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom` or `bottom-to-top`
+  - `mind-mapper-layout`: `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` or `kanban`
   - `mind-mapper-collapsed`: `true` or `false`
   - `mind-mapper-theme`: `none`, `rainbow`, `ocean`, `forest` or `accent`
 

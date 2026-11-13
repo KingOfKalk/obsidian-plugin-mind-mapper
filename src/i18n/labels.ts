@@ -10,6 +10,7 @@ export const LAYOUT_LABELS: Readonly<Record<MapLayoutName, MessageKey>> = {
   'right-to-left': 'layoutRightToLeft',
   'top-to-bottom': 'layoutTopToBottom',
   'bottom-to-top': 'layoutBottomToTop',
+  kanban: 'layoutKanban',
 };
 
 /** Dropdown and menu labels of the colour themes. */

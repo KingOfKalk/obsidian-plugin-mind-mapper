@@ -43,6 +43,25 @@ snacks
 \`\`\`
 `;
 
+const KANBAN_NOTE = 'Trip board.md';
+const KANBAN_TEXT = `---
+mind-mapper-layout: kanban
+---
+
+# Trip board
+
+## To book
+
+- Flight
+- Hotel
+
+---
+
+## Booked
+
+- Train to the airport
+`;
+
 type Plugins = {
   plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
 };
@@ -53,9 +72,9 @@ async function updateSettings(settings: Record<string, unknown>): Promise<void> 
   }, settings);
 }
 
-/** The map of NOTE alone in the main area, both sidebars closed. */
-async function showMap(): Promise<void> {
-  await openMindMap(NOTE);
+/** The map of `note` alone in the main area, both sidebars closed. */
+async function showMap(note = NOTE): Promise<void> {
+  await openMindMap(note);
   await browser.executeObsidian(({ app }) => {
     const others: WorkspaceLeaf[] = [];
     app.workspace.iterateRootLeaves((leaf) => {
@@ -87,6 +106,7 @@ async function shootLabelled(name: string): Promise<void> {
 describe('UI element reference images', function () {
   before(async function () {
     await writeNote(NOTE, TEXT);
+    await writeNote(KANBAN_NOTE, KANBAN_TEXT);
     await updateSettings({
       defaultLayout: 'left-to-right',
       startCollapsed: false,
@@ -144,5 +164,15 @@ describe('UI element reference images', function () {
     await browser.action('pointer').move({ x: 600, y: 120 }).perform();
     await shootLabelled('ui-elements-full-screen');
     await browser.keys('Escape');
+  });
+
+  it('kanban layout: card counts', async function () {
+    await setWindowSize(1000, 600);
+    await showMap(KANBAN_NOTE);
+    // 100 %: room for the slanted labels of the control bar below the board
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await waitForAnimation();
+    await browser.action('pointer').move({ x: 500, y: 80 }).perform();
+    await shootLabelled('ui-elements-kanban');
   });
 });

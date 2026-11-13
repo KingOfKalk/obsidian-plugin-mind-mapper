@@ -80,7 +80,9 @@ export function fitBounds(layout: MapLayout, hidden: ReadonlyMap<string, number>
   let { x: left, y: top } = layout.bounds;
   let right = left + layout.bounds.width;
   let bottom = top + layout.bounds.height;
-  for (const p of layout.nodes) {
+  // Kanban: no toggles (its count bubbles sit inside the column headers).
+  const nodes = layout.toggles === false ? [] : layout.nodes;
+  for (const p of nodes) {
     // Like the renderer: the root never has a toggle.
     if (p.node.kind === 'root') continue;
     const count = hidden.get(p.node.id);

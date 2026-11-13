@@ -8,6 +8,7 @@ const LAYOUTS = [
   'right-to-left',
   'top-to-bottom',
   'bottom-to-top',
+  'kanban',
 ];
 
 const NOTES = [

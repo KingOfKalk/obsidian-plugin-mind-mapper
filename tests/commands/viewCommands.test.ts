@@ -122,7 +122,7 @@ test('"Next layout" and "Next colour theme" cycle through all values of the acti
   await view.setState({ file: 'Note.md' }, { history: false });
   ws.activeView = view;
   const layouts: unknown[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     find(commands, 'next-layout').checkCallback?.(false);
     layouts.push(view.getState().layout);
   }
@@ -133,6 +133,7 @@ test('"Next layout" and "Next colour theme" cycle through all values of the acti
     'right-to-left',
     'top-to-bottom',
     'bottom-to-top',
+    'kanban',
     'circle-clockwise',
     'circle-counter-clockwise',
   ]);

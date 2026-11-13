@@ -12,14 +12,15 @@ export interface Size {
 
 export interface Rect extends Point, Size {}
 
-/** Spec "Frontmatter" / "Layout": the six layouts. */
+/** Spec "Frontmatter" / "Layout": the six tree layouts and the kanban board (issue #32). */
 export type MapLayoutName =
   | 'circle-clockwise'
   | 'circle-counter-clockwise'
   | 'left-to-right'
   | 'right-to-left'
   | 'top-to-bottom'
-  | 'bottom-to-top';
+  | 'bottom-to-top'
+  | 'kanban';
 
 export const LAYOUT_NAMES: readonly MapLayoutName[] = [
   'circle-clockwise',
@@ -28,7 +29,11 @@ export const LAYOUT_NAMES: readonly MapLayoutName[] = [
   'right-to-left',
   'top-to-bottom',
   'bottom-to-top',
+  'kanban',
 ];
+
+/** Extra space between two siblings with a divider between them (spec "Dividers"). */
+export const DIVIDER_GAP = 16;
 
 /** Edge of a node its children grow from. */
 export type Side = 'right' | 'left' | 'bottom' | 'top';
@@ -42,6 +47,13 @@ export interface LayoutOptions {
   nodeSize: (node: MindMapNode) => Size;
   /** Default `left-to-right`. */
   layout?: MapLayoutName;
+  /** Kanban: the column width is capped at it (the max node width setting); default no cap. */
+  maxNodeWidth?: number;
+  /**
+   * Kanban: the card count of a column header (its children in the note, also when it is
+   * collapsed); default the children in the laid-out tree.
+   */
+  childCount?: (node: MindMapNode) => number;
 }
 
 /** `x`/`y` is the top-left corner. */
@@ -61,6 +73,8 @@ export interface PositionedNode extends Rect {
    * itself on the first level); -1 for the root (colour themes).
    */
   branch: number;
+  /** Kanban column header: the number of its cards (direct children), shown in a bubble. */
+  count?: number;
 }
 
 export interface LayoutEdge {
@@ -84,4 +98,6 @@ export interface MapLayout {
   edges: LayoutEdge[];
   dividers: LayoutDivider[];
   bounds: Rect;
+  /** False: nodes get no collapse toggles (kanban); every other layout has them. */
+  toggles?: boolean;
 }

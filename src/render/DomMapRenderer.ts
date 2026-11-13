@@ -59,6 +59,8 @@ interface NodeDom {
   el: HTMLElement;
   contentEl: HTMLElement;
   node: MindMapNode;
+  /** Kanban column header: the card count bubble (issue #32). */
+  countEl?: HTMLElement;
 }
 
 const PLAIN_TEXT: NodeContentHooks = {
@@ -508,7 +510,9 @@ export class DomMapRenderer implements MapRenderer {
 
   private placeToggles(layout: MapLayout, collapse: CollapseInfo): void {
     const shown = new Set<string>();
-    for (const { node, x, y, width, height, childSide } of layout.nodes) {
+    // Kanban (issue #32): no toggles; collapsing only through the control bar.
+    const nodes = layout.toggles === false ? [] : layout.nodes;
+    for (const { node, x, y, width, height, childSide } of nodes) {
       // The root is never collapsed (a circle root grows on both sides); culled nodes have none.
       if (node.kind === 'root' || !this.nodes.has(node.id)) continue;
       const count = collapse.hidden.get(node.id);
@@ -557,7 +561,7 @@ export class DomMapRenderer implements MapRenderer {
   }
 
   private placeNode(
-    { node, x, y, width, height, depth, branch, align }: PositionedNode,
+    { node, x, y, width, height, depth, branch, align, count }: PositionedNode,
     pool: Map<string, HTMLElement[]>,
   ): void {
     let dom = this.nodes.get(node.id);
@@ -594,6 +598,30 @@ export class DomMapRenderer implements MapRenderer {
     el.style.top = `${y}px`;
     el.style.width = `${width}px`;
     el.style.height = `${height}px`;
+    this.placeCount(dom, count);
+  }
+
+  /**
+   * Kanban column header (issue #32): its card count in a bubble at the right end of the node
+   * (the layout leaves room for it); info only, a click selects the header like the rest of it.
+   */
+  private placeCount(dom: NodeDom, count: number | undefined): void {
+    if (count === undefined) {
+      dom.countEl?.remove();
+      delete dom.countEl;
+      return;
+    }
+    if (!dom.countEl) {
+      dom.countEl = dom.el.createSpan({ cls: 'mind-mapper-card-count' });
+      setElementId(dom.countEl, 'node.card-count');
+    }
+    const text = String(count);
+    if (dom.countEl.textContent !== text) dom.countEl.setText(text);
+    setAttr(
+      dom.countEl,
+      'aria-label',
+      t(count === 1 ? 'cardCountOne' : 'cardCountOther', { count }),
+    );
   }
 
   private createNode(node: MindMapNode, reused?: HTMLElement): NodeDom {

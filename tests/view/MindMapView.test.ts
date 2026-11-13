@@ -1091,6 +1091,111 @@ async function openWith(
   return { view, ws };
 }
 
+describe('kanban (issue #32)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const P = 'Product launch';
+  const COLUMNS = [`${P}/To do`, `${P}/Doing`, `${P}/Done`] as const;
+
+  function shownIds(view: MindMapView): string[] {
+    return [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-node')].map(
+      (el) => el.dataset.nodeId ?? '',
+    );
+  }
+
+  function counts(view: MindMapView): Record<string, string | null> {
+    return Object.fromEntries(
+      [...view.contentEl.querySelectorAll<HTMLElement>('[data-mm-id="node.card-count"]')].map(
+        (el): [string, string | null] => [
+          el.closest<HTMLElement>('.mind-mapper-node')?.dataset.nodeId ?? '',
+          el.textContent,
+        ],
+      ),
+    );
+  }
+
+  const count = (view: MindMapView, selector: string) =>
+    view.contentEl.querySelectorAll(selector).length;
+
+  test('frontmatter kanban: headline above equal columns, card counts, no lines, no toggles', async () => {
+    const { view } = await openWith('kanban', {});
+    const root = nodeBox(view, P);
+    const columns = COLUMNS.map((id) => nodeBox(view, id));
+    for (const column of columns) {
+      expect(column.y).toBeGreaterThan(root.y + root.height);
+      expect(column.y).toBe(columns[0]?.y);
+      expect(column.width).toBe(columns[0]?.width);
+    }
+    const left = columns[0]?.x ?? 0;
+    const last = columns[2] ?? root;
+    expect(root.x + root.width / 2).toBeCloseTo((left + last.x + last.width) / 2);
+    // Cards below their header, subtasks indented below their card.
+    const card = nodeBox(view, `${P}/To do/#1`);
+    const subtask = nodeBox(view, `${P}/To do/#1/#1`);
+    expect(card.x).toBe(columns[0]?.x);
+    expect(card.y).toBeGreaterThan((columns[0]?.y ?? 0) + (columns[0]?.height ?? 0));
+    expect(subtask.x).toBeGreaterThan(card.x);
+    expect(subtask.y).toBeGreaterThan(card.y + card.height);
+    expect(counts(view)).toEqual({ [COLUMNS[0]]: '3', [COLUMNS[1]]: '3', [COLUMNS[2]]: '2' });
+    expect(count(view, '.mind-mapper-edge')).toBe(0);
+    expect(count(view, '[data-mm-id="node.toggle"]')).toBe(0);
+    // Between two columns, between two subtasks, between two cards.
+    expect(count(view, '.mind-mapper-divider')).toBe(3);
+    // The link line stays.
+    expect(count(view, '.mind-mapper-crosslink')).toBe(1);
+  });
+
+  test('Collapse all leaves the headline and the column headers with their counts', async () => {
+    const { view } = await openWith('kanban', {});
+    view.collapseAll();
+    expect(shownIds(view)).toEqual([P, ...COLUMNS]);
+    expect(counts(view)).toEqual({ [COLUMNS[0]]: '3', [COLUMNS[1]]: '3', [COLUMNS[2]]: '2' });
+    expect(count(view, '[data-mm-id="node.toggle"]')).toBe(0);
+    expect(count(view, '.mind-mapper-divider')).toBe(1);
+    view.expandAll();
+    expect(shownIds(view)).toHaveLength(16);
+  });
+
+  test('a collapse state from another layout stays in effect', async () => {
+    const { view } = await openWith('kanban', {});
+    view.chooseLayout('left-to-right');
+    await vi.advanceTimersByTimeAsync(20);
+    view.toggleCollapse(COLUMNS[0]);
+    view.chooseLayout('kanban');
+    await vi.advanceTimersByTimeAsync(20);
+    expect(shownIds(view).filter((id) => id.startsWith(`${COLUMNS[0]}/`))).toEqual([]);
+    expect(shownIds(view)).toContain(`${P}/Doing/Website redesign`);
+    expect(counts(view)[COLUMNS[0]]).toBe('3');
+  });
+
+  test('the column width is capped at the max node width', async () => {
+    const settings = { ...DEFAULT_SETTINGS, maxNodeWidth: 160 };
+    const { view } = await openWith('kanban', { settings: () => settings });
+    for (const id of COLUMNS) expect(nodeBox(view, id).width).toBe(160);
+  });
+
+  test('drilled in, the centre is the headline and its children the columns', async () => {
+    const { view } = await openWith('kanban', {});
+    view.select(COLUMNS[1]);
+    view.drillDown();
+    await vi.advanceTimersByTimeAsync(1000);
+    const centre = nodeBox(view, COLUMNS[1]);
+    const columns = ['Website redesign', 'Beta feedback', 'Customer interviews'].map((name) =>
+      nodeBox(view, `${COLUMNS[1]}/${name}`),
+    );
+    for (const column of columns) {
+      expect(column.y).toBe(columns[0]?.y);
+      expect(column.y).toBeGreaterThan(centre.y + centre.height);
+    }
+    expect(counts(view)).toEqual({
+      [`${COLUMNS[1]}/Website redesign`]: '2',
+      [`${COLUMNS[1]}/Beta feedback`]: '0',
+      [`${COLUMNS[1]}/Customer interviews`]: '0',
+    });
+  });
+});
+
 describe('layouts, frontmatter and settings', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -1519,6 +1624,8 @@ describe('layout and colour theme of this view (overrides)', () => {
     view.nextLayout();
     expect(view.getState()).toMatchObject({ layout: 'bottom-to-top' });
     view.nextLayout();
+    expect(view.getState()).toMatchObject({ layout: 'kanban' });
+    view.nextLayout();
     expect(view.getState()).toMatchObject({ layout: 'circle-clockwise' });
     view.nextLayout();
     expect(view.getState()).toMatchObject({ layout: 'circle-counter-clockwise' });
@@ -1610,10 +1717,10 @@ describe('layout and colour theme of this view (overrides)', () => {
     const requestSaveLayout = vi.spyOn(ws, 'requestSaveLayout');
     const setLayout = vi.spyOn(DomMapRenderer.prototype, 'setLayout');
     view.setTransform({ x: -500, y: 900, zoom: 0.3 });
-    for (let i = 0; i < 5; i++) view.nextLayout();
+    for (let i = 0; i < 6; i++) view.nextLayout();
     // The choice is stored at once, the re-layout waits for the frame.
     expect(view.getState()).toMatchObject({ layout: 'circle-counter-clockwise' });
-    expect(requestSaveLayout).toHaveBeenCalledTimes(5);
+    expect(requestSaveLayout).toHaveBeenCalledTimes(6);
     expect(active(view, 'Layout')).toBe(true);
     expect(setLayout).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(20);

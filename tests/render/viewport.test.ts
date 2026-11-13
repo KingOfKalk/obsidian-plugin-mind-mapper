@@ -238,6 +238,20 @@ test('fitBounds includes the toggles of expanded parents, a badge grows with its
   expect(fitBounds(expandedA, new Map())).toEqual(expandedA.bounds);
 });
 
+test('fitBounds of a layout without toggles (kanban) is its bounds, also with collapsed nodes', () => {
+  const layout = {
+    ...mapLayout(
+      [
+        positioned('R', { x: 0, y: 0, width: 60, height: 20 }),
+        positioned('A', { x: 0, y: 40, width: 100, height: 20 }, 'bottom'),
+      ],
+      [['R', 'A']],
+    ),
+    toggles: false,
+  };
+  expect(fitBounds(layout, new Map([['A', 1234]]))).toEqual(layout.bounds);
+});
+
 test('fitBounds: a leaf at the edge has no toggle, the root never has one', () => {
   const layout = mapLayout(
     [
