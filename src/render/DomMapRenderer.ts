@@ -381,7 +381,7 @@ export class DomMapRenderer {
   }
 
   /**
-   * Spec "Tags" (issue #103): one class on the canvas; styles.css moves the trailing tags of a
+   * Spec "Tag position" (issue #103): one class on the canvas; styles.css moves the trailing tags of a
    * node's last line out of the box (outside) or keeps them in it. Returns whether it changed (node
    * sizes change with it: measure again).
    */

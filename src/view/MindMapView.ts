@@ -20,6 +20,7 @@ import { visibleTree } from '../layout/visibleTree';
 import { layoutTree } from '../layout/tidyTree';
 import { LAYOUT_NAMES, type MapLayout, type MapLayoutName } from '../layout/types';
 import { DEFAULT_SETTINGS, type MindMapSettings } from '../settings';
+import type { TagPosition } from '../tagPositions';
 import { type CrossLink, crossLinks, visibleCrossLinks } from '../layout/crossLinks';
 import { invalidOptionMessage, type MapOptions, readMapOptions } from './frontmatter';
 import { crossLinkInputs } from './linkTargets';
@@ -101,9 +102,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   });
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
+  /**
+   * Effective tag position (frontmatter `mind-mapper-tags`, else the setting), updated with the
+   * frontmatter and the settings: the size cache reads it per node.
+   */
+  private tagPosition: TagPosition = DEFAULT_SETTINGS.tagPosition;
   private readonly sizes = new SizeCache(
     () => this.limits(),
-    () => this.mapOptions().tags,
+    () => this.tagPosition,
   );
   /** Rendered node contents into `sizes`; a change re-lays out (debounced). */
   private readonly measurer = new NodeMeasurer(
@@ -262,6 +268,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private parse(file: TFile, cache: CachedMetadata, text: string): MindMapTree {
     this.frontmatter = cache.frontmatter;
     const options = this.mapOptions();
+    this.tagPosition = options.tags;
     for (const { key, value } of options.invalid) {
       this.services.warnOnce(
         `${file.path}\0${key}\0${value}`,
@@ -447,7 +454,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.camera.finish();
     this.applyCssLimits();
     this.applyTheme();
-    this.dom?.renderer.setTagPosition(this.mapOptions().tags);
+    this.tagPosition = this.mapOptions().tags;
+    this.dom?.renderer.setTagPosition(this.tagPosition);
     if (!this.layout || !this.tree) return;
     // A new max node size or tag position changes the size cache keys and the node sizes: measure
     // again now (the ResizeObserver only fires for content whose size changes).
@@ -979,7 +987,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     dom.renderer.setLayout(layout, this.collapseInfo);
     dom.renderer.setDrillCentre(this.drilling.centre);
     // A new tag position (setting, frontmatter) changes node sizes: measure the placed nodes again.
-    if (dom.renderer.setTagPosition(this.mapOptions().tags)) this.measurer.measureAll();
+    if (dom.renderer.setTagPosition(this.tagPosition)) this.measurer.measureAll();
     this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);
     dom.controls.setLayout(this.layoutName ?? this.effectiveLayout(), this.layoutOverride !== null);

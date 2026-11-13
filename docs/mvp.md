@@ -42,6 +42,15 @@
   - Colors: in color themes that color branches (all but `none`), a tag in a node takes the node's branch color: the scope filled with it and background-colored text, the value a light tint of it (12 %) with branch-colored text and border; a plain tag looks like the value (outlined, drawn as an inset shadow, so a theme switch does not change sizes). Readability (decided on PR #94): on every level the branch color is mixed towards the text color (`--text-normal`: darker in light mode, lighter in dark mode), a quarter for the scope and outlines, 40 % for the text of values and plain tags, so light branch colors (yellow, green, cyan) stay readable and the scope stands out from a filled level 1 node. Theme `none`, the root and the content overlay keep Obsidian's tag colors (`--tag-*`)
   - Trailing tags: tags at the end of a paragraph, heading or list item (after its last text, one or several) sit on the side opposite the node's text alignment (see "Text alignment"): left-aligned text -> at the right edge, right-aligned -> at the left edge; centered text (e.g. the root in circle layouts) and blocks keep them inline; tags in the middle of a sentence, inside formatting, before a line break or without text before them stay inline. They share the last line when there is room, else they wrap to their own line, still on that side. In kanban: at the right edge of the card; on column headers before the count bubble. The node is measured without this stretch (a node never grows because of it)
   - Only in the map (node content and the content overlay), not in the editor or reading view; always on, no setting
+- Tag position (decided, issue #103): where the trailing tags of a node's last line go. Setting "Tag position" (Map group: Outside / Inside, default Outside) and frontmatter `mind-mapper-tags: outside | inside` per note; no control bar element
+  - `inside`: the trailing tags as above (1.7.0, issue #92)
+  - `outside` (default): the trailing tags at the end of the node's last line (same detection; with nothing after them in the node) leave the box for a tag row (`node.tags`) 4 px below it, flush with the edge opposite the text: right side (left-aligned text) at the right edge, left side at the left edge. No connection to the box other than its position; lines, collapse toggle and dividers sit at the sides as before
+    - The box is sized without them (no extra wrapping: the text keeps its line, issue #99)
+    - Several tags: one row in the order of the note (duplicates as written), 4 px between them; a row wider than the max node width (not the box width) wraps into more rows, every row at the same edge. A row wider than its box reaches past the box's text-side edge
+    - Stay inside (in the box, as with `inside`): tags in the middle of a sentence; trailing tags of earlier lines (a multi-paragraph node); the root and the drilled-in center (the laid-out root); centered text (top → bottom, bottom → top) and blocks, which have no edge opposite their text or a line there; a clipped node (its fade would hide the row; it shows none and gets no room for one, the content overlay shows the full content)
+    - Layout: nodes are spaced by their footprint (box, gap, rows): siblings stack below the rows; a single child stays level with its parent's box; a child column moves away from its parent by the widest row reaching past its box towards the parent, and the lines curve in the level gap and run straight at the box's middle into the box, so no line, divider or other node crosses a row. Edges attach to the box. Culling and fit to view include the rows
+    - Kanban: the row below the card, subtask or column header (the count bubble stays in the header), at the right edge; rows count towards the column width (capped at the max node width) and the stack
+    - Tag look, branch colors, click (tag search), tooltip and `aria-label`: as inside; a click between the tags of a row selects the node
   - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node (opens the tag search with the full tag); the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
   - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
@@ -133,6 +142,7 @@ Project (root, H1)
 | `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top`, `kanban` | plugin setting (initially `circle-clockwise`) |
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
 | `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `rainbow`) |
+| `mind-mapper-tags` | text (enum) | `outside`, `inside` | plugin setting "Tag position" (initially `outside`) |
  
 - Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a color theme (see Color themes)
 - Validation
@@ -140,13 +150,15 @@ Project (root, H1)
   - `mind-mapper-title` not a string (YAML number, list, ...): fall back to the default
   - `mind-mapper-collapsed` not a YAML boolean (`yes`, `"true"`, `1`, a list, ...): fall back to the plugin setting
   - `mind-mapper-theme` not in the list (case-sensitive, like `mind-mapper-layout`): fall back to the plugin setting
+  - `mind-mapper-tags` not in the list (case-sensitive): fall back to the plugin setting
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
-- Plugin settings tab: global defaults for layout, start collapsed and color theme, frontmatter overrides per note
-  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
+- Plugin settings tab: global defaults for layout, start collapsed, color theme and tag position, frontmatter overrides per note
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, tag position, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
+  - "Tag position" is a dropdown: the values are `outside` and `inside`, the labels ("Outside", "Inside") are translated
   - Settings changed outside this window (Obsidian Sync, another window or vault copy writing `data.json`; `onExternalSettingsChange`) are reloaded, sanitized and applied to open maps like a change in the tab, without saving again
 ## Color themes (decided)
  
