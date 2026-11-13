@@ -9,6 +9,12 @@ export const SKELETON_ZOOM = 0.2;
 export const SKELETON_MIN_NODES = 60;
 /** More nodes than this in view are a skeleton at any zoom: the DOM stays bounded. */
 export const MAX_CONTENT_NODES = 300;
+/**
+ * Rendered nodes (view plus margin) are capped at this many times the threshold in effect (300, or
+ * 60 below SKELETON_ZOOM): a dense margin around a view under the threshold keeps the DOM bounded.
+ * The nodes in view always render; the margin fills nearest to the view first.
+ */
+export const MARGIN_CAP_FACTOR = 2;
 
 /** The canvas in world coordinates, grown by `margin` of its size on each side. */
 export function worldViewport(t: Transform, size: Size, margin = CULL_MARGIN): Rect {
@@ -31,6 +37,18 @@ export function overlaps(a: Rect, b: Rect): boolean {
 export function detailLevel(zoom: number, nodesInView: number): 'content' | 'skeleton' {
   if (nodesInView > MAX_CONTENT_NODES) return 'skeleton';
   return zoom < SKELETON_ZOOM && nodesInView > SKELETON_MIN_NODES ? 'skeleton' : 'content';
+}
+
+/** Most nodes with DOM at `zoom`: MARGIN_CAP_FACTOR times the threshold in effect. */
+export function contentCap(zoom: number): number {
+  return MARGIN_CAP_FACTOR * (zoom < SKELETON_ZOOM ? SKELETON_MIN_NODES : MAX_CONTENT_NODES);
+}
+
+/** Squared distance between two rects; 0 when they overlap or touch. */
+export function gapSquared(a: Rect, b: Rect): number {
+  const dx = Math.max(0, b.x - (a.x + a.width), a.x - (b.x + b.width));
+  const dy = Math.max(0, b.y - (a.y + a.height), a.y - (b.y + b.height));
+  return dx * dx + dy * dy;
 }
 
 /** Uniform grid over node rects; built once per layout, queried per frame. */
