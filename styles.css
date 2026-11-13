@@ -470,6 +470,22 @@ button.mind-mapper-collapse[data-mm-state='collapsed'] {
   pointer-events: none;
 }
 
+/* Over the last good map while the note's newest version cannot be shown (spec "Live update"). */
+.mind-mapper-update-error {
+  position: absolute;
+  top: var(--size-4-4);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 2 * var(--size-4-4));
+  padding: var(--size-4-1) var(--size-4-3);
+  border: 1px solid var(--background-modifier-error);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+  pointer-events: none;
+}
+
 /* Full screen: a workspace overlay below popovers, modals, notices and menus (spec "Full screen"). */
 .mind-mapper-full-screen {
   position: fixed;

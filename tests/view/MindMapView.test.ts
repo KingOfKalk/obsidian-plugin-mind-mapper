@@ -937,6 +937,78 @@ describe('collapse and selection', () => {
   });
 });
 
+/** A cache the parser cannot read (a section without position): parsing throws. */
+function breakNote(ws: FakeWorkspace, path: string): void {
+  const { text, cache } = loadFixture('live-after');
+  const broken = { ...cache, sections: [{ type: 'paragraph' }] } as unknown as CachedMetadata;
+  ws.metadataCache.caches.set(path, broken);
+  ws.metadataCache.trigger(path, text, broken);
+}
+
+function updateErrorText(view: MindMapView): string | null {
+  const el = view.contentEl.querySelector<HTMLElement>('[data-mm-id="map.update-error"]');
+  return el && !el.hidden ? el.textContent : null;
+}
+
+describe('a failing update', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('a live update that cannot be parsed keeps the last map with a notice; the next good one clears it', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = await openLive();
+    const before = nodeIds(view);
+    expect(updateErrorText(view)).toBeNull();
+    breakNote(ws, 'Live.md');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toEqual(before);
+    expect(updateErrorText(view)).toBe('Could not update the map. Showing the last version.');
+    expect(error).toHaveBeenCalledWith(
+      'Mind Mapper: could not update the map',
+      'Live.md',
+      expect.any(TypeError),
+    );
+    // The last map keeps working (it re-lays out from the last good tree).
+    view.collapseAll();
+    view.expandAll();
+    expect(nodeIds(view).sort()).toEqual([...before].sort());
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/#2');
+    expect(updateErrorText(view)).toBeNull();
+  });
+
+  test('another note that cannot be parsed in the same tab shows the message, not the old map', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = await openLive();
+    const { text, cache } = loadFixture('live-before');
+    ws.vault.texts.set('Other.md', text);
+    ws.metadataCache.caches.set('Other.md', {
+      ...cache,
+      sections: [{ type: 'paragraph' }],
+    } as unknown as CachedMetadata);
+    await view.setState(...state('Other.md'));
+    expect(placeholderText(view)).toBe('Could not show the note');
+    expect(updateErrorText(view)).toBeNull();
+  });
+
+  test('a note that cannot be parsed on opening shows a placeholder message', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = newView();
+    ws.addNote('Live.md', 'live-before');
+    const { text, cache } = loadFixture('live-before');
+    ws.vault.texts.set('Live.md', text);
+    ws.metadataCache.caches.set('Live.md', {
+      ...cache,
+      sections: [{ type: 'paragraph' }],
+    } as unknown as CachedMetadata);
+    await setSize(view, 800, 600);
+    await view.setState(...state('Live.md'));
+    expect(placeholderText(view)).toBe('Could not show the note');
+    expect(nodeIds(view)).toEqual([]);
+  });
+});
+
 function hintText(view: MindMapView): string | null {
   const el = view.contentEl.querySelector<HTMLElement>('.mind-mapper-hint');
   return el && !el.hidden ? el.textContent : null;

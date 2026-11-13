@@ -11,6 +11,7 @@ export type ElementId =
   | 'map.canvas'
   | 'map.placeholder'
   | 'map.empty-hint'
+  | 'map.update-error'
   | 'node.root'
   | 'node.text'
   | 'node.block'

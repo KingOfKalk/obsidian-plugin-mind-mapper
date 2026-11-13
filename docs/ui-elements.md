@@ -52,6 +52,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `map.canvas` | Map canvas | The whole content area of a map tab | Holds the map; pan by dragging, zoom with the wheel, double click fits |
 | `map.placeholder` | Placeholder | Centre of a map tab instead of the canvas | Shows a [placeholder message](#placeholder-messages) when there is no map to show |
 | `map.empty-hint` | Empty-note hint | Below the root node of a note without content | "This note has no content yet" |
+| `map.update-error` | Update error notice | Top centre of the canvas, over the last good map | "Could not update the map. Showing the last version.": the note's newest version could not be parsed or laid out; gone with the next version that works |
 
 ## Nodes
 
@@ -134,6 +135,7 @@ Texts of `map.placeholder` (catalog only; source: `showMessage` in `src/view/Min
 | `message.note-not-found` | "Note not found: …" | `map.placeholder` | The map's note does not exist (anymore) |
 | `message.loading` | "Loading…" | `map.placeholder` | Obsidian has not indexed the note yet |
 | `message.could-not-read-note` | "Could not read note" | `map.placeholder` | Reading the note failed |
+| `message.could-not-show-note` | "Could not show the note" | `map.placeholder` | The note could not be parsed or laid out when the map opened (no earlier map to keep) |
 | `message.note-deleted` | "Note was deleted" | `map.placeholder` | The note was deleted while its map is open |
 
 ## Notices

@@ -85,6 +85,8 @@ interface MapDom {
   placeholderEl: HTMLElement;
   /** "This note has no content yet" over the root-only map. */
   hintEl: HTMLElement;
+  /** Over the last good map while the note's newest version cannot be shown. */
+  updateErrorEl: HTMLElement;
   renderer: DomMapRenderer;
   controls: MapControls;
 }
@@ -143,6 +145,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private leafChangeRef: EventRef | null = null;
   /** Same-note links of the current tree (all nodes, before collapse). */
   private links: CrossLink[] = [];
+  /** Note of the shown map (null: none); a failing update keeps that map only for the same note. */
+  private mapPath: string | null = null;
   /** Layout of the current map; a different effective layout fits once. */
   private layoutName: MapLayoutName | null = null;
   /**
@@ -948,16 +952,50 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       return this.showMessage(t('couldNotReadNote'));
     }
     if (generation !== this.generation) return;
-    const tree = this.parse(file, cache, text);
-    const previous = this.layout;
-    const lost = this.dropLostDrill(tree);
-    if (this.layoutWillChange() || lost) this.pendingFit = true;
-    // Same note again (rename, recreate): keep the viewport like a live update.
-    if (!previous || this.pendingFit) return this.showTree(tree);
-    const anchor = this.anchorIn(previous);
-    this.showTree(tree);
-    this.fitted = false;
-    this.keepInPlace(anchor);
+    this.safely(path, () => {
+      const tree = this.parse(file, cache, text);
+      const previous = this.layout;
+      const lost = this.dropLostDrill(tree);
+      if (this.layoutWillChange() || lost) this.pendingFit = true;
+      // Same note again (rename, recreate): keep the viewport like a live update.
+      if (!previous || this.pendingFit) return this.showTree(tree);
+      const anchor = this.anchorIn(previous);
+      this.showTree(tree);
+      this.fitted = false;
+      this.keepInPlace(anchor);
+    });
+  }
+
+  /**
+   * Spec "Live update": a note version that cannot be parsed or laid out keeps the last good map
+   * with a notice (`map.update-error`) until a version works again; with no map of this note yet
+   * (opening, another note in this tab), a message.
+   */
+  private safely(path: string, update: () => void): void {
+    const last = {
+      tree: this.tree,
+      layout: this.layout,
+      links: this.links,
+      frontmatter: this.frontmatter,
+    };
+    const lastPath = this.mapPath;
+    try {
+      if (this.dom) this.dom.updateErrorEl.hidden = true;
+      update();
+      this.mapPath = path;
+    } catch (error) {
+      console.error('Mind Mapper: could not update the map', path, error);
+      if (!last.tree || !last.layout || lastPath !== path) {
+        return this.showMessage(t('couldNotShowNote'));
+      }
+      this.tree = last.tree;
+      this.links = last.links;
+      this.frontmatter = last.frontmatter;
+      this.layout = last.layout;
+      const dom = this.ensureDom();
+      dom.hintEl.hidden = true;
+      dom.updateErrorEl.hidden = false;
+    }
   }
 
   /** Every new tree passes here, so the collapse state always follows the shown tree. */
@@ -1001,6 +1039,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         if (oldPath !== this.pinnedFile) return;
         // Set first: setState then sees the same file and keeps the viewport (no fit).
         this.pinnedFile = file.path;
+        if (this.mapPath === oldPath) this.mapPath = file.path;
         // Updates the tab title and the saved workspace (setState also refreshes the view header title).
         this.leaf
           .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { ...this.viewState() } })
@@ -1033,6 +1072,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.generation++; // a load still reading the file is outdated now
     this.cancelUpdate();
     this.cancelRelayout();
+    this.safely(file.path, () => this.showChange(file, data, cache));
+  }
+
+  private showChange(file: TFile, data: string, cache: CachedMetadata): void {
     const tree = this.parse(file, cache, data);
     const previous = this.layout;
     if (!previous || !this.tree) {
@@ -1211,6 +1254,12 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     });
     setElementId(hintEl, 'map.empty-hint');
     hintEl.hidden = true;
+    const updateErrorEl = renderer.canvasEl.createDiv({
+      cls: 'mind-mapper-update-error',
+      text: t('couldNotUpdateMap'),
+    });
+    setElementId(updateErrorEl, 'map.update-error');
+    updateErrorEl.hidden = true;
     attachPanZoom(
       this,
       renderer.canvasEl,
@@ -1239,7 +1288,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.registerEvent(
       this.app.workspace.on('css-change', () => this.measure([...this.observed.keys()])),
     );
-    this.dom = { placeholderEl, hintEl, renderer, controls };
+    this.dom = { placeholderEl, hintEl, updateErrorEl, renderer, controls };
     this.applyTransform(this.transform);
     return this.dom;
   }
@@ -1251,6 +1300,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.cancelLayoutFrame();
     this.tree = null;
     this.layout = null;
+    this.mapPath = null;
     dom.renderer.clear();
     dom.renderer.canvasEl.hidden = true;
     dom.placeholderEl.setText(text);
@@ -1275,7 +1325,8 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       const shown = new Set(layout.nodes.map((p) => p.node.id));
       dom.renderer.setCrossLinks(visibleCrossLinks(this.tree, this.links, shown));
     }
-    dom.hintEl.hidden = (this.tree?.root.children.length ?? 0) > 0;
+    // Same place as the update error notice, which wins.
+    dom.hintEl.hidden = !dom.updateErrorEl.hidden || (this.tree?.root.children.length ?? 0) > 0;
     for (const { node } of layout.nodes) {
       dom.renderer.setClipped(node.id, this.sizes.get(node)?.clip ?? NO_CLIP);
     }

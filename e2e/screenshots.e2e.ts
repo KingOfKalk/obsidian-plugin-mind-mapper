@@ -126,6 +126,23 @@ describe('screenshots', function () {
     await browser.keys('Escape');
   });
 
+  it('update error notice', async function () {
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    await browser.executeObsidian(async ({ app }) => {
+      const file = app.vault.getFileByPath('fixtures/worked-example.md');
+      const cache = file && app.metadataCache.getFileCache(file);
+      if (!file || !cache) return;
+      // A cache the parser cannot read: the map keeps its last version with a notice.
+      app.metadataCache.trigger('changed', file, await app.vault.cachedRead(file), {
+        ...cache,
+        sections: [{ type: 'paragraph' }],
+      });
+    });
+    await browser.$(byId('map.update-error')).waitForDisplayed({ timeout: 5000 });
+    await browser.saveScreenshot(`${dir}/update-error.png`);
+  });
+
   it('full screen', async function () {
     await openMindMap('fixtures/lists.md');
     await settle();

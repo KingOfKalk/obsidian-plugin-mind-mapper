@@ -288,6 +288,7 @@ Project (root, H1)
   - Debounced (about 300 ms)
   - Generation token: a newer change cancels any in-flight parse, render and measure
   - Pan, zoom, selection and collapse state are kept; fit to view only on open
+  - A version that cannot be parsed or laid out (an exception) keeps the last good map with a short notice over it ("Could not update the map. Showing the last version."), logged to the console; the next version that works removes it. Without an earlier map the view shows "Could not show the note"
 - Render ownership
   - The view is a `Component`; each rendered node gets a child `Component` passed to `MarkdownRenderer.render`
   - Child components are unloaded when a node is culled, replaced by an update, or the view closes

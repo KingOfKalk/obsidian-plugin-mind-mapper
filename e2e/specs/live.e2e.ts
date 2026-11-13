@@ -1,5 +1,6 @@
 import { browser, expect } from '@wdio/globals';
 import {
+  byId,
   leafSummary,
   mouseOnNode,
   openMindMap,
@@ -209,5 +210,31 @@ describe('rename and delete', function () {
       await app.vault.delete(file);
     });
     await expect(browser.$('.mind-mapper-placeholder')).toHaveText('Note was deleted');
+  });
+  it('an update that cannot be parsed keeps the last map with a notice until the next good one', async function () {
+    const path = 'live-error.md';
+    await writeNote(path, '# Live\n\nAlpha paragraph.\n');
+    await openMindMap(path);
+    await settle();
+    // A cache the parser cannot read (a section without position), as if Obsidian sent one.
+    await browser.executeObsidian(async ({ app }, notePath) => {
+      const file = app.vault.getFileByPath(notePath);
+      const cache = file && app.metadataCache.getFileCache(file);
+      if (!file || !cache) throw new Error(`no cache for ${notePath}`);
+      const text = await app.vault.cachedRead(file);
+      app.metadataCache.trigger('changed', file, text, {
+        ...cache,
+        sections: [{ type: 'paragraph' }],
+      });
+    }, path);
+    await browser.$(byId('map.update-error')).waitForDisplayed({ timeout: 5000 });
+    expect(await browser.$(byId('map.update-error')).getText()).toBe(
+      'Could not update the map. Showing the last version.',
+    );
+    await expect(node('Live/#1')).toExist();
+
+    await writeNote(path, '# Live\n\nAlpha paragraph.\n\nSecond paragraph.\n');
+    await node('Live/#2').waitForExist({ timeout: 5000 });
+    await expect(browser.$(byId('map.update-error'))).not.toBeDisplayed();
   });
 });
