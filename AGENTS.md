@@ -51,7 +51,7 @@
 - `src/parser`: metadata cache + note text to node tree
 - `src/layout`: pure layout (tidy tree, node size, edges, cross links, visible tree)
 - `src/render`: DOM renderer, controls, culling, pan/zoom input, link handling
-- `src/view`: `MindMapView`, collapse state, frontmatter, full screen, link targets
+- `src/view`: `MindMapView` (lifecycle, wiring) and its parts: camera and animation, node measuring, drill-down, note events (live update), collapse state, frontmatter, full screen, link targets, view state
 - `src/commands`: command implementations
 - `src/main.ts`: plugin entry (commands, ribbon, file menu)
 - `src/settings.ts`, `src/settingsTab.ts`: settings and settings tab
