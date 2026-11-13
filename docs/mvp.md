@@ -26,6 +26,7 @@
 - Lists: one node per list item, nested lists nest the nodes
   - Item node content: the item text plus continuation content indented under it (paragraphs, code), excluding nested list items
   - Ordered lists keep their number, bullet markers are dropped
+  - Nesting indentation (2, 3 or 4 spaces, tabs) does not change an item node's content (issue #96)
   - Task lists: checkbox rendered disabled, read-only
 - Containers (decided): everything inside a container belongs to that container's node (a list inside a blockquote, code inside a callout); no nested nodes
 - Block types: one section = one node, rendered by Obsidian (`MarkdownRenderer.render`)
