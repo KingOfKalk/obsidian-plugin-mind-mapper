@@ -76,7 +76,7 @@ jobs:
   # unit: Vitest with coverage, no threshold. e2e: real, headless Obsidian (wdio-obsidian-service
   # under Xvfb); `npm run test:e2e` builds the plugin itself.
   test:
-    name: Test (${{ matrix.suite }})
+    name: Test
     needs: lint
     runs-on: ubuntu-26.04
     timeout-minutes: ${{ matrix.suite == 'e2e' && 30 || 10 }}
