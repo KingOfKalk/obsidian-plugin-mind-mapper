@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { nodeBoxes, openMindMap, overlaps, settle } from '../helpers';
+import { nodeBoxes, openMindMap, overlaps, settle, writeNote } from '../helpers';
 
 function node(id: string) {
   return browser.$(`.mind-mapper-node[data-node-id="${id}"]`);
@@ -159,6 +159,40 @@ describe('node content in real Obsidian', function () {
     expect(box).toEqual({ width: 160, height: 120 });
     await expect(node('Embeds/#2').$('a.internal-link')).toExist();
     await expect(node('Embeds/#2').$('.markdown-embed')).not.toExist();
+  });
+
+  it('only image-only nodes get the thumbnail box; images inside text keep their own size', async function () {
+    await writeNote(
+      'inline-images.md',
+      [
+        '# Images',
+        '',
+        '![[pixel.png]]',
+        '',
+        'Icon ![[pixel.png|16]] inside a paragraph.',
+        '',
+        '| Icon | Name |',
+        '| - | - |',
+        // the pipe of the size is escaped inside a table
+        '| ![[pixel.png\\|16]] | pixel |',
+        '',
+      ].join('\n'),
+    );
+    await openMindMap('inline-images.md');
+    await settle();
+    const sizes = await browser.execute(() =>
+      ['Images/#1', 'Images/#2', 'Images/#3'].map((id) => {
+        const img = document.querySelector<HTMLElement>(
+          `.mind-mapper-node[data-node-id="${id}"] img`,
+        );
+        return { id, width: img?.offsetWidth ?? -1, height: img?.offsetHeight ?? -1 };
+      }),
+    );
+    expect(sizes).toEqual([
+      { id: 'Images/#1', width: 160, height: 120 },
+      { id: 'Images/#2', width: 16, height: 16 },
+      { id: 'Images/#3', width: 16, height: 16 },
+    ]);
   });
 
   it('no node failed to render and no nodes overlap', async function () {

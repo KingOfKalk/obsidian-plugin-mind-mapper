@@ -167,13 +167,19 @@
   list-style: none;
 }
 
-/* Image embeds: fixed thumbnail box so the size is known before the image loads. */
-.mind-mapper-node-content .internal-embed.image-embed,
-.mind-mapper-node-content img {
+/* Image embed nodes (a node that is a single image): fixed thumbnail box, so the size is known
+   before the image loads (the layout estimate). Images inside text, tables or callouts keep their
+   own size (an icon stays an icon), at most the node width. */
+.mind-mapper-node.is-image .mind-mapper-node-content .internal-embed.image-embed,
+.mind-mapper-node.is-image .mind-mapper-node-content img {
   display: block;
   width: 160px;
   height: 120px;
   object-fit: contain;
+}
+
+.mind-mapper-node-content img {
+  max-width: 100%;
 }
 
 /* Text nodes (headings, paragraphs, list items) sit flush towards their parent (`is-align-*`, from

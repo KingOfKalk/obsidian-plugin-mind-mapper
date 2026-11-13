@@ -47,6 +47,7 @@
   - Content larger than max size (long text, wide tables, wide code, large Mermaid): clipped with a fade, an expand icon on the node opens a pop-up overlay with the full content
 - Embeds (decided)
   - Image embed `![[img.png]]`: node with thumbnail in a fixed-size box, so the size is known before the image loads
+    - Only a node that is a single image (`![[img.png]]` or `![alt](img.png)`) gets the box; images inside text, tables or callouts (e.g. an inline icon `![[icon.png|16]]`) keep their own size, at most the node width
   - All other embeds (`![[Note]]`, `![[Note#Heading]]`, PDF, audio, video): rewritten to plain links before rendering, no transclusion
 - Links
   - Internal heading links (`[[#Heading]]`, `[[Note#Heading]]` if it resolves to the same note) and block links (`[[#^id]]`): draw a cross-connection line between nodes

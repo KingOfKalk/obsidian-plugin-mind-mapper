@@ -604,9 +604,12 @@ export class DomMapRenderer {
     const { el } = dom;
     const root = node.kind === 'root';
     // Colour themes: blocks keep a border at every level instead of becoming plain text.
-    const block = node.kind === 'block' || isImageOnly(node.markdown);
+    const image = isImageOnly(node.markdown);
+    const block = node.kind === 'block' || image;
     el.toggleClass('is-root', root);
     el.toggleClass('is-block', block);
+    // A single image embed: the fixed thumbnail box of the size estimate (styles.css).
+    el.toggleClass('is-image', image);
     setElementId(el, root ? 'node.root' : block ? 'node.block' : 'node.text');
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);

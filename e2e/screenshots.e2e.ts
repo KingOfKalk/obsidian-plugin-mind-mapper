@@ -126,6 +126,31 @@ describe('screenshots', function () {
     await browser.keys('Escape');
   });
 
+  it('images: thumbnail node, inline icon, icon in a table', async function () {
+    await writeNote(
+      'inline-images.md',
+      [
+        '# Images',
+        '',
+        '![[pixel.png]]',
+        '',
+        'Icon ![[launch-banner.svg|16]] inside a paragraph.',
+        '',
+        '| Icon | Name |',
+        '| - | - |',
+        '| ![[launch-banner.svg\\|16]] | banner |',
+        '',
+      ].join('\n'),
+    );
+    await openMindMap('inline-images.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await waitForAnimation();
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/inline-images.png`);
+  });
+
   it('update error notice', async function () {
     await openMindMap('fixtures/worked-example.md');
     await settle();
