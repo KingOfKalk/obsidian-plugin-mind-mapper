@@ -1,4 +1,4 @@
-import { COUNT_BUBBLE, countBubbleWidth, KANBAN_INDENT } from '../../src/layout/kanban';
+import { COUNT_BUBBLE, countBubbleWidth } from '../../src/layout/kanban';
 import { DIVIDER_GAP, layoutTree } from '../../src/layout/tidyTree';
 import type { LayoutOptions, MapLayout, PositionedNode, Size } from '../../src/layout/types';
 import { visibleTree } from '../../src/layout/visibleTree';
@@ -70,23 +70,24 @@ test('the count bubble is as wide as the collapsed-node bubble', () => {
   expect(countBubbleWidth(42)).toBe(COUNT_BUBBLE.chrome + 2 * COUNT_BUBBLE.digit);
 });
 
-test('root centered above the board, equal columns side by side, cards stacked, subtasks indented', () => {
+test('root centered above the board, equal columns side by side, cards stacked, subtasks as wide as their card', () => {
   const layout = layoutTree({ root: board() }, options());
-  // Column width: the widest of headers (+ count bubble), cards and subtasks (+ indent): b1.
+  // Column width: the widest of headers (+ count bubble), cards and subtasks: b1.
   const W = 140;
   const gap = 2 * 10;
   const left = -(3 * W + 2 * gap) / 2;
   const headerTop = 30 + 50;
   // Cards start below the tallest header (B, 40).
   const cardTop = headerTop + 40 + 10;
+  // Issue #91: subtasks at the card's left edge and width, half the sibling gap within a task.
   expect(rects(layout)).toEqual({
     r: { x: -50, y: 0, width: 100 },
     A: { x: left, y: headerTop, width: W },
     a1: { x: left, y: cardTop, width: W },
-    a1x: { x: left + KANBAN_INDENT, y: cardTop + 30, width: W - KANBAN_INDENT },
-    a1xx: { x: left + 2 * KANBAN_INDENT, y: cardTop + 60, width: W - 2 * KANBAN_INDENT },
-    a1y: { x: left + KANBAN_INDENT, y: cardTop + 90, width: W - KANBAN_INDENT },
-    a2: { x: left, y: cardTop + 120, width: W },
+    a1x: { x: left, y: cardTop + 25, width: W },
+    a1xx: { x: left, y: cardTop + 50, width: W },
+    a1y: { x: left, y: cardTop + 75, width: W },
+    a2: { x: left, y: cardTop + 105, width: W },
     B: { x: left + W + gap, y: headerTop, width: W },
     b1: { x: left + W + gap, y: cardTop, width: W },
     C: { x: left + 2 * (W + gap), y: headerTop, width: W },
@@ -94,6 +95,41 @@ test('root centered above the board, equal columns side by side, cards stacked, 
   // Heights stay the nodes' own.
   expect(rect(layout, 'B').height).toBe(40);
   expect(rect(layout, 'a1').height).toBe(20);
+});
+
+test('issue #91: the gap within a task (card to subtask, subtask to subtask) is smaller than between cards', () => {
+  const layout = layoutTree({ root: board() }, options({ siblingGap: 12 }));
+  const top = (id: string) => rect(layout, id).y;
+  const bottom = (id: string) => rect(layout, id).y + rect(layout, id).height;
+  const within = [
+    top('a1x') - bottom('a1'),
+    top('a1xx') - bottom('a1x'),
+    top('a1y') - bottom('a1xx'),
+  ];
+  expect(within).toEqual([6, 6, 6]);
+  // Between two cards (the last subtask of a card and the next card): the sibling gap.
+  expect(top('a2') - bottom('a1y')).toBe(12);
+  for (const gap of within) expect(gap).toBeLessThan(12);
+});
+
+test('issue #91: subtasks carry their depth below their card; columns and cards none', () => {
+  const layout = layoutTree({ root: board() }, options());
+  const subtasks = Object.fromEntries(layout.nodes.map((p) => [p.node.id, p.subtask]));
+  expect(subtasks).toEqual({
+    r: undefined,
+    A: undefined,
+    a1: undefined,
+    a1x: 1,
+    a1xx: 2,
+    a1y: 1,
+    a2: undefined,
+    B: undefined,
+    b1: undefined,
+    C: undefined,
+  });
+  // Other layouts: none.
+  const tree = layoutTree({ root: board() }, { ...options(), layout: 'left-to-right' });
+  expect(tree.nodes.every((p) => p.subtask === undefined)).toBe(true);
 });
 
 test('no connection lines and no collapse toggles', () => {
@@ -166,7 +202,7 @@ test('header width leaves room for the count bubble', () => {
   expect(rect(layout, 'a1').width).toBe(rect(layout, 'A').width);
 });
 
-test('the column width is capped at the max node width; deep subtasks indent less to fit', () => {
+test('the column width is capped at the max node width; subtasks add no indent to it', () => {
   const layout = layoutTree(
     { root: n('r', [n('A', [n('a1', [n('a1x', [n('a1xx')])])])]) },
     options({
@@ -176,11 +212,16 @@ test('the column width is capped at the max node width; deep subtasks indent les
   );
   const A = rect(layout, 'A');
   expect(A.width).toBe(120);
-  expect(rect(layout, 'a1').width).toBe(120);
-  // a1x (100): indented by 20, still fits.
-  expect(rect(layout, 'a1x')).toMatchObject({ x: A.x + 20, width: 100 });
-  // a1xx (110): only 10 left for the indent; never narrower than the node.
-  expect(rect(layout, 'a1xx')).toMatchObject({ x: A.x + 10, width: 110 });
+  for (const id of ['a1', 'a1x', 'a1xx']) {
+    expect(rect(layout, id)).toMatchObject({ x: A.x, width: 120 });
+  }
+  // Without a cap: as wide as the widest node, a deep subtask too (no indent added).
+  const uncapped = layoutTree(
+    { root: n('r', [n('A', [n('a1', [n('a1x', [n('a1xx')])])])]) },
+    options({ nodeSize: (node) => ({ width: node.id === 'a1xx' ? 150 : 100, height: 20 }) }),
+  );
+  expect(rect(uncapped, 'A').width).toBe(150);
+  expect(rect(uncapped, 'a1xx')).toMatchObject({ x: rect(uncapped, 'A').x, width: 150 });
 });
 
 test('a node wider than the max node width (an image thumbnail) widens the column to it', () => {
@@ -248,7 +289,7 @@ describe('dividers', () => {
     ]);
   });
 
-  test('between two subtasks: a horizontal line from the subtask indent to the column edge', () => {
+  test('between two subtasks: the gap within a task plus the divider gap, a line across the column', () => {
     const layout = layoutTree(
       { root: n('r', [n('A', [n('a1', [n('a1x'), n('a1y', [], true)])])]) },
       same(),
@@ -256,10 +297,10 @@ describe('dividers', () => {
     const A = rect(layout, 'A');
     const a1x = rect(layout, 'a1x');
     const a1y = rect(layout, 'a1y');
-    expect(a1y.y - (a1x.y + a1x.height)).toBe(10 + DIVIDER_GAP);
-    const y = a1x.y + a1x.height + (10 + DIVIDER_GAP) / 2;
+    expect(a1y.y - (a1x.y + a1x.height)).toBe(5 + DIVIDER_GAP);
+    const y = a1x.y + a1x.height + (5 + DIVIDER_GAP) / 2;
     expect(layout.dividers).toEqual([
-      { parentId: 'a1', from: { x: a1y.x, y }, to: { x: A.x + W, y } },
+      { parentId: 'a1', from: { x: A.x, y }, to: { x: A.x + W, y } },
     ]);
   });
 

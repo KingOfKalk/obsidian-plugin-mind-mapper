@@ -60,7 +60,7 @@ describe('kanban layout', function () {
     await updateSettings({ defaultLayout: 'circle-clockwise', defaultTheme: 'rainbow' });
   });
 
-  it('headline above equal columns, cards and indented subtasks; counts; no lines, no toggles, no overlaps', async function () {
+  it('headline above equal columns, cards and subtasks as wide as their card; counts; no lines, no toggles, no overlaps', async function () {
     await openMindMap(NOTE);
     await settle();
     const boxes = await nodeBoxes();
@@ -82,8 +82,13 @@ describe('kanban layout', function () {
     const card = box(`${P}/To do/#1`);
     const subtask = box(`${P}/To do/#1/#1`);
     expect(card.x).toBe(first.x);
-    expect(subtask.x).toBeGreaterThan(card.x);
+    // Issue #91: no indent, the card's width, a smaller gap than between two cards.
+    expect(subtask.x).toBe(card.x);
+    expect(subtask.width).toBe(card.width);
     expect(subtask.y).toBeGreaterThan(card.y + card.height);
+    const review = box(`${P}/To do/#1/#2`);
+    const next = box(`${P}/To do/#2`);
+    expect(subtask.y - (card.y + card.height)).toBeLessThan(next.y - (review.y + review.height));
     for (let a = 0; a < boxes.length; a++) {
       for (let b = a + 1; b < boxes.length; b++) {
         const [x, y] = [boxes[a], boxes[b]];
@@ -101,7 +106,7 @@ describe('kanban layout', function () {
     expect(await count(byId('link.line'))).toBe(1);
   });
 
-  it('level emphasis: headers filled, cards tinted, subtasks and headline on the canvas', async function () {
+  it('level emphasis: headers filled, cards tinted, subtasks lighter boxes, headline on the canvas', async function () {
     await openMindMap(NOTE);
     await settle();
     const canvas = await browser.execute(
@@ -110,8 +115,9 @@ describe('kanban layout', function () {
     const header = await background(COLUMNS[0] ?? '');
     const card = await background(`${P}/To do/#1`);
     expect(header).not.toBe(card);
-    expect(header).not.toBe(await background(`${P}/To do/#1/#1`));
-    expect(await background(`${P}/To do/#1/#1`)).toBe(await background(P));
+    // Issue #91: a box of its own, neither the card's tint nor the canvas.
+    const subtask = await background(`${P}/To do/#1/#1`);
+    expect(new Set([header, card, subtask, await background(P)]).size).toBe(4);
     expect([canvas, 'rgba(0, 0, 0, 0)']).toContain(await background(P));
   });
 
