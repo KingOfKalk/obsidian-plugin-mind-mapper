@@ -13,10 +13,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Stages: lint -> (unit, e2e) -> build. Job summaries and annotations come from
+# Stages: Lint -> Test (unit, e2e) -> Build. Job summaries and annotations come from
 # scripts/ci-summary.mjs. `npm run check` stays the local all-in-one gate.
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
@@ -71,11 +72,18 @@ jobs:
           echo "::error::Prettier: ${PRETTIER_OUTCOME}, ESLint: ${ESLINT_OUTCOME}, TypeScript: ${TSC_OUTCOME}. See the job summary."
           exit 1
 
-  # Unit tests with coverage (Vitest + jsdom). No coverage threshold.
-  unit:
+  # One matrix job, so the workflow graph shows a single "Test" stage with both suites.
+  # unit: Vitest with coverage, no threshold. e2e: real, headless Obsidian (wdio-obsidian-service
+  # under Xvfb); `npm run test:e2e` builds the plugin itself.
+  test:
+    name: Test (${{ matrix.suite }})
     needs: lint
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: ${{ matrix.suite == 'e2e' && 30 || 10 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, e2e]
     steps:
       - uses: actions/checkout@v7
 
@@ -83,29 +91,21 @@ jobs:
         id: setup
 
       - name: Unit tests with coverage
+        if: matrix.suite == 'unit'
         run: npm run test:coverage
 
       # Also runs when tests fail, as long as dependencies are installed.
       - name: Coverage summary
-        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        if: ${{ matrix.suite == 'unit' && !cancelled() && steps.setup.outcome == 'success' }}
         run: node scripts/ci-summary.mjs coverage coverage/coverage-summary.json
 
-  # End-to-end tests in real, headless Obsidian (wdio-obsidian-service under Xvfb). Runs in
-  # parallel with `unit`; `npm run test:e2e` builds the plugin itself.
-  e2e:
-    needs: lint
-    runs-on: ubuntu-26.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ./.github/actions/setup
-
       - name: Install Xvfb and Electron libraries
+        if: matrix.suite == 'e2e'
         run: bash scripts/install-e2e-deps.sh
 
       # Key the Obsidian download cache by the app and installer versions wdio.conf.mts resolves.
       - name: Obsidian version
+        if: matrix.suite == 'e2e'
         id: obsidian
         run: |
           node --input-type=module -e '
@@ -116,18 +116,21 @@ jobs:
           ' >> "$GITHUB_OUTPUT"
 
       - name: Cache Obsidian
+        if: matrix.suite == 'e2e'
         uses: actions/cache@v6
         with:
           path: .obsidian-cache
           key: obsidian-${{ runner.os }}-${{ runner.arch }}-${{ steps.obsidian.outputs.version }}
 
       - name: E2E tests
+        if: matrix.suite == 'e2e'
         run: npm run test:e2e
 
   # Production build, plugin artifact and bundle size. Pushes to main upload `bundle-size.json` as
   # the baseline; pull requests compare against the latest one.
   build:
-    needs: [unit, e2e]
+    name: Build
+    needs: test
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     # actions: read lets `gh run download` fetch the bundle size baseline.
