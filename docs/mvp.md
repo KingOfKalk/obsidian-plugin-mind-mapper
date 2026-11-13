@@ -186,7 +186,7 @@ Project (root, H1)
 | `none` | grays: level 1 and 2 from the faint text color, lines faint, block borders the normal border color |
  
 - Colors come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--text-faint`, `--background-primary`), so light and dark mode and community themes keep working
-- Choice: the map view's own choice (controls bar, see "Layout and color theme switcher"), else frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
+- Choice: the map view's own choice (control bar, see "Layout and color theme switcher"), else frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
 - Live: a changed key or setting re-applies the theme while the map is open, without a re-layout
 ## Layout (decided)
  
@@ -225,7 +225,7 @@ Project (root, H1)
   - Gaps within a column: the sibling gap from the header to the first card and between two cards (from the last subtask of a card to the next card); within a task (card to its first subtask, subtask to subtask) a third of the sibling gap, rounded, so each task reads as one group; text flush left; heights are the nodes' own; overlap-free (disjoint columns, one stack per column)
   - Look: the level emphasis of the color themes (root large and bold without a box, headers filled, cards tinted); subtasks (issue #91) get a box of their own in the branch color, lighter than the card and lighter per depth below it: 12 % for the card's children, 8 % one level deeper, 5 % for everything deeper (cards 18 %), same in light and dark mode; theme `none`: the same in grays; blocks keep their bordered box; depth shows through brightness, not indentation; no connection lines, no lane backgrounds
   - Card count: each column header shows the number of its direct children in the note (also while collapsed) in a bubble at its right end, styled like the count of a collapsed toggle (accent fill); the layout leaves room for it; information only, a click selects the header; 0 for an empty column
-  - No collapse toggles on nodes: collapse only via the controls bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
+  - No collapse toggles on nodes: collapse only via the control bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
   - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap (the gap there plus the divider gap), across the whole column
   - Unchanged: link lines, drill-down (the center becomes the headline, its children the columns), color themes, smooth camera, full screen
   - Later (not MVP): lane backgrounds, clickable counts, per-column collapse
@@ -251,7 +251,7 @@ Project (root, H1)
   - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centered on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
   - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
 - Layout and color theme switcher (decided, issues #6 and #7): change the layout or color theme of one map view without changing the note
-  - Two buttons in the controls bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and color theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
+  - Two buttons in the control bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and color theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
   - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes (None, Rainbow, Ocean, Forest, Accent color), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
   - Choosing a layout re-lays out and fits to view (like a frontmatter layout change); choosing the same layout that is shown only marks it as chosen. Choosing a theme applies it live without a re-layout
   - The choice (override) is per map view: stored in the view state (`layout`, `theme` next to `file`), so it survives an Obsidian restart and follows a rename (also of a deferred tab); the note and its frontmatter are never written. A view state without the keys (older versions) or with an unknown value has no override. A map opened anew (command, file menu, ribbon) starts without overrides
