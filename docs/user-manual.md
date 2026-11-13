@@ -69,7 +69,7 @@ Make the note active, then use one of:
 | Quote, callout | one node with everything inside it |
 | Image embed `![[image.png]]` | a node with a thumbnail |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
-| Tag `#solo` | as in reading view |
+| Tag `#solo` | as in reading view; a click opens the tag search |
 | Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined, in your theme's tag colours; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
@@ -100,6 +100,8 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 ### Links
 
 - Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click opens in a new tab, `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
+- Click a tag in a node or in the full content overlay: the search opens with that tag (`tag:#solo`; for a nested tag the full tag, `tag:#project/alpha/backend`, whichever part you click), like in reading view
+  - Needs Obsidian's core plugin "Search" (on by default); when it is off, a tag click does nothing
 - Links to a heading or block in the same note are also drawn as dashed lines between the two nodes:
   - `[[#Heading]]`, `[[#Heading#Subheading]]`, `[[#^block-id]]`, `[[This note#Heading]]`
   - If one end is inside a collapsed branch, the line ends at the nearest visible node above it
@@ -144,7 +146,7 @@ The controls bar at the bottom center, left to right:
 - Double click a node: jumps to its line in the note
   - In the tab where the note is open (the most recently used one), else in a new split next to the map
   - From full screen, full screen closes first
-- Clicking a link inside a node opens the link, it does not select the node
+- Clicking a link or tag inside a node opens the link or the tag search, it does not select the node
 
 ## Collapse and expand
 

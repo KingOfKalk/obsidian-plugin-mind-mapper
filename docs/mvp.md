@@ -37,7 +37,7 @@
   - Split at the last `/`: scope = `#` and everything before it, value = the last segment (`#obsidian/test` -> `#obsidian` + `test`, `#project/alpha/backend` -> `#project/alpha` + `backend`); tags without `/` keep Obsidian's look
   - Look: scope filled, value outlined and lighter, in Obsidian's tag colours (`--tag-*`), not the branch colour; the value sits on the canvas background, so it reads on filled nodes (level 1, kanban column headers)
   - Only in the map (node content and the content overlay), not in the editor or reading view; always on, no setting
-  - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node; the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
+  - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node (opens the tag search with the full tag); the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
   - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
   - Ignored: before a parent's first child, after the last child (no next node)
@@ -64,6 +64,10 @@
     - Double click on a line: jump to the source line of the link (like a node double click); no fit
   - All other links (internal, external): clickable, with hover preview, same behavior as in Obsidian; click does not propagate to the node
     - Wired by the plugin: click handler with `workspace.openLinkText` (modifier keys open in new tab / split), hover preview via `registerHoverLinkSource` and the `hover-link` event
+  - Tags (decided, issue #77): a click on a tag in a node or in the content overlay (plain tag or either part of a nested-tag pill) opens the global search with `tag:#<full tag>` (`tag:#project/alpha/backend`), like reading view
+    - Like reading view: Ctrl/Cmd, Shift or Alt click do the same as a plain click; middle click does nothing; no hover preview
+    - A link like any other in a node: no node click (the selection stays as it was); in the overlay it closes the overlay; from full screen, full screen closes
+    - No public API for it: uses the search core plugin through Obsidian's private `app.internalPlugins` (`getEnabledPluginById('global-search')?.openGlobalSearch`), guarded; with the search core plugin disabled or the API missing nothing happens, no error
 ## Worked example
  
 Note:
@@ -275,7 +279,7 @@ Project (root, H1)
   - Double click on node: jump to the source line in the editor
   - Double click on empty canvas: fit to view (see "Zoom and pan"); links, buttons, collapse toggles, link lines and the controls keep their own behavior
   - Expand icon on clipped nodes: overlay with full content
-  - Links inside nodes: Obsidian behavior, no node click; internal links: click opens, Ctrl/Cmd click and middle click open a new tab (like reading view)
+  - Links inside nodes: Obsidian behavior, no node click; internal links: click opens, Ctrl/Cmd click and middle click open a new tab (like reading view); tags: click opens the tag search (see "Links")
   - No click timers needed, double click does not trigger a jump plus something else
 - Jump to source target (decided)
   - Note already open in a leaf: reveal the most recently active one and set the cursor
