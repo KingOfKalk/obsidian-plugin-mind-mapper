@@ -28,6 +28,7 @@
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
   - Manual: in Obsidian run "Record parser fixtures (dev)", then `npm run fixtures:pull`
 - `npm run check`: format check, lint, typecheck, unit tests, production build
+  - Lint: `eslint-plugin-obsidianmd` with `recommendedWithLocalesEn`, so the English strings in `src/i18n/en.ts` and UI text written directly in `src/` must be in sentence case (errors); the brands the rule keeps capitalized ("Mind Mapper", "Markdown", "Obsidian") are listed in `eslint.config.mjs` and replace the rule's built-in list, so add a new brand there
 - `npm test` / `npm run test:watch`: unit tests (Vitest, `obsidian` is mocked in `tests/mocks/obsidian.ts`)
 - `npm run test:e2e`: end-to-end tests in real, headless Obsidian (`e2e/specs/`)
   - Uses [wdio-obsidian-service](https://github.com/jesse-r-s-hines/wdio-obsidian-service), which downloads Obsidian into `.obsidian-cache/` and opens a temp copy of `tests/vault/`
