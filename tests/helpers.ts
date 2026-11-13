@@ -143,6 +143,8 @@ export class FakeWorkspace {
   leaves: FakeLeaf[] = [];
   activeFile: TFile | null = null;
   activeView: unknown = null;
+  /** The main window's root split (popouts relay their keys to this window). */
+  readonly rootSplit = { win: window, doc: document };
 
   /** Adds a note whose text and cache come from a recorded fixture. */
   addNote(path: string, fixtureName: string): void {

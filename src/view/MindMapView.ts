@@ -186,6 +186,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // command hotkey. Obsidian matches the key case-insensitively.
     this.scope ??= new Scope(this.app.scope);
     this.scope.register([], 'D', (evt) => this.drillKey(evt));
+    this.scope.register(null, null, (evt) => this.keepTabOnRelayedEscape(evt));
   }
 
   private get recency(): LeafRecency {
@@ -471,10 +472,43 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   override async onOpen(): Promise<void> {
     this.pendingFit = true;
-    // Bubble phase on the document: after the target, menus and scopes, before Obsidian's own
-    // listener on the window.
-    this.registerDomEvent(this.containerEl.doc, 'keydown', (evt) => this.keepTabOnEscape(evt));
+    this.listenForEscape();
+    // A tab dragged into another window: measuring follows it there.
+    this.register(this.containerEl.onWindowMigrated(() => this.observeAgain()));
     await this.loadNote();
+  }
+
+  /**
+   * Obsidian's workspace listens for Esc on the main window only. Map in the main window: bubble
+   * phase on the document, after the target, menus and scopes, before the workspace's listener on
+   * the window.
+   */
+  private listenForEscape(): void {
+    this.registerDomEvent(this.app.workspace.rootSplit.doc, 'keydown', (evt) =>
+      this.keepTabOnEscape(evt),
+    );
+  }
+
+  /**
+   * Map in a popout: the popout relays its keys to the main window before anything in the popout
+   * sees them, and the workspace checks the relayed copy, which only the keymap (scopes) can mark
+   * handled. Every key passes this catch-all of the view scope; it returns nothing, so the key goes
+   * on to the other handlers (full screen Esc, D).
+   */
+  private keepTabOnRelayedEscape(evt: KeyboardEvent): void {
+    if (this.containerEl.win !== this.app.workspace.rootSplit.win) this.keepTabOnEscape(evt);
+  }
+
+  /**
+   * The view moved to another window: the ResizeObserver belongs to the old one (which may close
+   * and take the observer with it), so a new one from the new window observes the contents.
+   */
+  private observeAgain(): void {
+    this.observer?.disconnect();
+    this.observer = null;
+    const observed = [...this.observed];
+    this.observed.clear();
+    if (observed.length > 0) this.observeContent(new Map(observed.map(([el, id]) => [id, el])));
   }
 
   /**
@@ -1246,7 +1280,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   /** One ResizeObserver (from the view's own window, popout safe) for all node contents. */
-  private observeContent(contents: ReadonlyMap<string, HTMLElement>): void {
+  private observeContent(contents: ReadonlyMap<string, Element>): void {
     const win = this.contentEl.win as Window & typeof globalThis;
     this.observer ??= new win.ResizeObserver((entries) =>
       this.measure(entries.map((e) => e.target)),
