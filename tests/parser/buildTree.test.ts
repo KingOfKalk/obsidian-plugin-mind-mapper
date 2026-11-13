@@ -390,3 +390,84 @@ describe('dividers (spec "Dividers")', () => {
     expect(flagged(buildTree(input, 'note').root)).toEqual(['R/#2']);
   });
 });
+
+describe('large lists parse in linear time (issue #49)', () => {
+  /**
+   * `sections` list sections of `perSection` items, each after a paragraph line; every item is a
+   * top-level `- item n` line (the case that scanned all items per item).
+   */
+  function lists(sections: number, perSection: number): ParserInput {
+    const lines: string[] = [];
+    const sectionInputs: SectionInput[] = [];
+    const listItems: NonNullable<ParserInput['listItems']> = [];
+    let offset = 0;
+    const add = (line: string): { line: number; start: number; end: number } => {
+      const at = { line: lines.length, start: offset, end: offset + line.length };
+      lines.push(line);
+      offset += line.length + 1;
+      return at;
+    };
+    for (let s = 0; s < sections; s++) {
+      const para = add(`para ${s}`);
+      sectionInputs.push({
+        type: 'paragraph',
+        startLine: para.line,
+        endLine: para.line,
+        startOffset: para.start,
+        endOffset: para.end,
+      });
+      const first = lines.length;
+      let start = offset;
+      let end = offset;
+      for (let i = 0; i < perSection; i++) {
+        const at = add(`- item ${s}.${i}`);
+        if (i === 0) start = at.start;
+        end = at.end;
+        listItems.push({
+          startLine: at.line,
+          endLine: at.line,
+          startOffset: at.start,
+          endOffset: at.end,
+          parentLine: -first,
+          task: null,
+        });
+      }
+      sectionInputs.push({
+        type: 'list',
+        startLine: first,
+        endLine: lines.length - 1,
+        startOffset: start,
+        endOffset: end,
+      });
+    }
+    return {
+      headings: [],
+      firstContentLine: 0,
+      text: lines.join('\n'),
+      sections: sectionInputs,
+      listItems,
+    };
+  }
+
+  function timed(input: ParserInput): { ms: number; tree: ReturnType<typeof buildTree> } {
+    buildTree(lists(10, 10), 'warm-up');
+    const start = performance.now();
+    const tree = buildTree(input, 'big');
+    return { ms: performance.now() - start, tree };
+  }
+
+  test('one list of 20,000 top-level items', () => {
+    const { ms, tree } = timed(lists(1, 20_000));
+    expect(tree.root.children).toHaveLength(20_001);
+    expect(tree.root.children[20_000]?.markdown).toBe('item 0.19999');
+    // Linear takes a few ms; the quadratic version took seconds.
+    expect(ms).toBeLessThan(200);
+  });
+
+  test('5,000 lists of 4 items', () => {
+    const { ms, tree } = timed(lists(5_000, 4));
+    expect(tree.root.children).toHaveLength(25_000);
+    expect(tree.root.children[24_999]?.markdown).toBe('item 4999.3');
+    expect(ms).toBeLessThan(200);
+  });
+});
