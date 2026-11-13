@@ -247,8 +247,8 @@ const NOTE_TEXT = [
   '## Last',
   '',
 ].join('\n');
-/** A heading's ID part: `#` and `/` escaped. */
-const esc = (label: string) => label.replace(/[#/]/g, '\\$&');
+/** A heading's ID part, escaped like src/parser/nodeId.ts: `\\`, `/`, `[` and `#`. */
+const esc = (label: string) => label.replace(/[\\/[#]/g, (char) => `\\${char}`);
 const ROOT = esc('Tag rows #root/tag');
 const REFACTOR = `${ROOT}/${esc('Refactor run #team/dev #q3 #q3')}`;
 const PLAN = `${ROOT}/${esc('Plan #alpha/one #beta/two #gamma/three #delta/four #epsilon/five')}`;
