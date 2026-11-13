@@ -2,7 +2,7 @@
 export const en = {
   // Plugin: command, ribbon, file menu, notices
   openAsMindMap: 'Open as mind map',
-  openNoteFirst: 'Open a markdown note first',
+  openNoteFirst: 'Open a Markdown note first',
   couldNotOpenMap: 'Mind Mapper: could not open the mind map',
   couldNotOpenNote: 'Could not open the note',
 

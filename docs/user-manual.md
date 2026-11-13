@@ -39,7 +39,7 @@ Make the note active, then use one of:
 - It stays pinned to that note: switching to another note does not change the map; a rename is followed
 - The map's tab and header show the note's name
 - Opening the same note again shows the map that is already open
-- The ribbon icon without an active Markdown note shows "Open a markdown note first"
+- The ribbon icon without an active Markdown note shows "Open a Markdown note first"
 - An open map is restored after an Obsidian restart
 
 ![A note on the left and its map on the right, laid out top to bottom](images/manual/note-and-map.png)
@@ -411,7 +411,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [colour themes](#colour-themes), in lower case |
 | Notice `Mind Mapper: mind-mapper-collapsed … is not true or false …` | use `true` or `false` without quotes, or the checkbox in Properties |
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
-| Notice `Open a markdown note first` | the ribbon icon needs an active Markdown note |
+| Notice `Open a Markdown note first` | the ribbon icon needs an active Markdown note |
 | Notice `Mind Mapper: could not open the mind map` | try again; if it repeats, reload Obsidian |
 | The map shows "Note was deleted" | the note was deleted; close the map |
 | A hotkey does nothing | view commands only act on the active map: click into the map first |

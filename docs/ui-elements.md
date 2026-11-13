@@ -145,7 +145,7 @@ Obsidian notices (catalog only; the ID is the kebab-case message key in `src/i18
 
 | ID | Name | Where | What for |
 |---|---|---|---|
-| `notice.open-note-first` | "Open a markdown note first" | Notice | Ribbon icon without an active Markdown note |
+| `notice.open-note-first` | "Open a Markdown note first" | Notice | Ribbon icon without an active Markdown note |
 | `notice.could-not-open-map` | "Could not open the mind map" | Notice | Opening a map failed |
 | `notice.could-not-open-note` | "Could not open the note" | Notice | Jumping to the source (double click) failed |
 | `notice.invalid-layout` | Unknown layout notice | Notice, once per note and value | `mind-mapper-layout` has an unknown value; the setting is used |
