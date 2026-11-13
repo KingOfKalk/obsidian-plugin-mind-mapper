@@ -26,7 +26,7 @@ export function countBubbleWidth(count: number): number {
  * downwards, all deeper nodes subtasks below their card (pre-order), as wide as the column, no
  * indent (issue #91). Column gap: twice the sibling gap; root to headers: the level gap; header to
  * card and card to card: the sibling gap; within a task (card to subtask, subtask to subtask):
- * half of it. A divider (`---`) adds DIVIDER_GAP: a vertical line between two columns, a
+ * a third of it, rounded. A divider (`---`) adds DIVIDER_GAP: a vertical line between two columns, a
  * horizontal one between two cards or subtasks. Overlap-free: columns are disjoint, each column a
  * single stack.
  */
@@ -37,7 +37,7 @@ export function kanban(
   const { siblingGap, levelGap, nodeSize } = options;
   const columns = root.children;
   const countOf = (node: MindMapNode): number => options.childCount?.(node) ?? node.children.length;
-  const taskGap = siblingGap / 2;
+  const taskGap = Math.round(siblingGap / 3);
 
   const sizes = new Map<MindMapNode, { width: number; height: number }>();
   const size = (node: MindMapNode) => {

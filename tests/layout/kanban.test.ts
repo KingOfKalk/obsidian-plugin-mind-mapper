@@ -79,15 +79,16 @@ test('root centered above the board, equal columns side by side, cards stacked, 
   const headerTop = 30 + 50;
   // Cards start below the tallest header (B, 40).
   const cardTop = headerTop + 40 + 10;
-  // Issue #91: subtasks at the card's left edge and width, half the sibling gap within a task.
+  // Issue #91: subtasks at the card's left edge and width; within a task a third of the sibling
+  // gap, rounded (3).
   expect(rects(layout)).toEqual({
     r: { x: -50, y: 0, width: 100 },
     A: { x: left, y: headerTop, width: W },
     a1: { x: left, y: cardTop, width: W },
-    a1x: { x: left, y: cardTop + 25, width: W },
-    a1xx: { x: left, y: cardTop + 50, width: W },
-    a1y: { x: left, y: cardTop + 75, width: W },
-    a2: { x: left, y: cardTop + 105, width: W },
+    a1x: { x: left, y: cardTop + 23, width: W },
+    a1xx: { x: left, y: cardTop + 46, width: W },
+    a1y: { x: left, y: cardTop + 69, width: W },
+    a2: { x: left, y: cardTop + 99, width: W },
     B: { x: left + W + gap, y: headerTop, width: W },
     b1: { x: left + W + gap, y: cardTop, width: W },
     C: { x: left + 2 * (W + gap), y: headerTop, width: W },
@@ -106,7 +107,7 @@ test('issue #91: the gap within a task (card to subtask, subtask to subtask) is 
     top('a1xx') - bottom('a1x'),
     top('a1y') - bottom('a1xx'),
   ];
-  expect(within).toEqual([6, 6, 6]);
+  expect(within).toEqual([4, 4, 4]);
   // Between two cards (the last subtask of a card and the next card): the sibling gap.
   expect(top('a2') - bottom('a1y')).toBe(12);
   for (const gap of within) expect(gap).toBeLessThan(12);
@@ -297,8 +298,8 @@ describe('dividers', () => {
     const A = rect(layout, 'A');
     const a1x = rect(layout, 'a1x');
     const a1y = rect(layout, 'a1y');
-    expect(a1y.y - (a1x.y + a1x.height)).toBe(5 + DIVIDER_GAP);
-    const y = a1x.y + a1x.height + (5 + DIVIDER_GAP) / 2;
+    expect(a1y.y - (a1x.y + a1x.height)).toBe(3 + DIVIDER_GAP);
+    const y = a1x.y + a1x.height + (3 + DIVIDER_GAP) / 2;
     expect(layout.dividers).toEqual([
       { parentId: 'a1', from: { x: A.x, y }, to: { x: A.x + W, y } },
     ]);
