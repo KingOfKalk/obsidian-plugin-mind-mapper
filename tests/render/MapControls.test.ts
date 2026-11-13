@@ -277,6 +277,7 @@ test('in German the labels, the menu, the collapse state and the zoom percentage
     'Rechts → links',
     'Oben → unten',
     'Unten → oben',
+    'Kanban',
     null,
     'Layout der Notiz verwenden',
   ]);
@@ -300,9 +301,10 @@ const LAYOUT_TITLES = [
   'Right → left',
   'Top → bottom',
   'Bottom → top',
+  'Kanban',
 ];
 
-test('the layout button opens a menu of the six layouts, the current one checked, then "Use the note\'s layout"', () => {
+test('the layout button opens a menu of the seven layouts, the current one checked, then "Use the note\'s layout"', () => {
   const { parent, actions, controls, buttons } = setup();
   controls.setLayout('top-to-bottom', false);
   buttons[7]?.click();

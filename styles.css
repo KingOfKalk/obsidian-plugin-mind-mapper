@@ -435,6 +435,28 @@ button.mind-mapper-collapse[data-mm-state='collapsed'] {
   border-color: var(--interactive-accent);
 }
 
+/* Kanban column header (issue #32): its card count, styled like the count of a collapsed toggle;
+   info only. Inside the header at its right end, where the layout leaves room for it
+   (src/layout/kanban.ts COUNT_BUBBLE: 18 px min width, 4 px padding, 1 px border). */
+.mind-mapper-card-count {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--interactive-accent);
+  border-radius: 9px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-normal);
+  line-height: 16px;
+  text-align: center;
+}
+
 .mind-mapper-full-content {
   user-select: text;
 }

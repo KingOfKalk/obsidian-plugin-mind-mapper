@@ -41,12 +41,15 @@ export const de: Messages = {
   layoutRightToLeft: 'Rechts → links',
   layoutTopToBottom: 'Oben → unten',
   layoutBottomToTop: 'Unten → oben',
+  layoutKanban: 'Kanban',
 
   // Nodes
   collapseNode: 'Einklappen',
   expandNode: 'Ausklappen',
   showFullContent: 'Gesamten Inhalt anzeigen',
   drillCentre: 'Mitte der Detailansicht',
+  cardCountOne: '{count} Karte',
+  cardCountOther: '{count} Karten',
 
   // View
   viewTitle: 'Mindmap',

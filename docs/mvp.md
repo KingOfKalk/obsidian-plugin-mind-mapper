@@ -34,7 +34,7 @@
   - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
   - Ignored: before a parent's first child, after the last child (no next node)
   - Several in a row count as one; skipped sections in between (comments, HTML, ...) keep it pending
-  - Look: extra gap between the two siblings plus a dashed line in the theme's divider color (`--hr-color`); the line divides whole branches: it runs from the child column to the far edge of the deepest visible descendant of either neighbor (a collapsed branch counts only with its visible part); perpendicular to the stacking direction (horizontal line in left/right layouts, vertical line in top/bottom layouts), mirrored with its nodes (right-to-left, bottom-to-top, left side of the circle layouts)
+  - Look: extra gap between the two siblings plus a dashed line in the theme's divider color (`--hr-color`); the line divides whole branches: it runs from the child column to the far edge of the deepest visible descendant of either neighbor (a collapsed branch counts only with its visible part); perpendicular to the stacking direction (horizontal line in left/right layouts, vertical line in top/bottom layouts), mirrored with its nodes (right-to-left, bottom-to-top, left side of the circle layouts); kanban: see "Kanban"
   - Circle layouts: drawn on the side it falls on; a divider exactly at the split between right and left side is not drawn
   - A collapsed parent hides its dividers
   - Inside a container (list item, blockquote, callout) a divider is part of that node's content and renders as a line inside the node
@@ -111,7 +111,7 @@ Project (root, H1)
 | Key | Type | Values | Default |
 |---|---|---|---|
 | `mind-mapper-title` | text | any string | single H1, else file name |
-| `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | plugin setting (initially `circle-clockwise`) |
+| `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top`, `kanban` | plugin setting (initially `circle-clockwise`) |
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
 | `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `rainbow`) |
  
@@ -185,6 +185,18 @@ Project (root, H1)
   - Right side: left-aligned; left side: right-aligned; `top-to-bottom`, `bottom-to-top`: centred
   - Root: centred in circle and vertical layouts, right-aligned in `left-to-right`, left-aligned in `right-to-left`
   - Blocks (code, tables, math, quotes, callouts, diagrams, images) keep their own alignment; alignment never changes node sizes or positions
+- Kanban (decided, issue #32): `kanban`, a board instead of a tree, minimal
+  - Root: the headline, centred above the board (centred text); the level gap between it and the column headers
+  - Level 1: columns side by side, left to right in source order, top-aligned; every column as wide as the widest header (plus its count bubble), card or subtask (plus its indent) of the whole board, at most the max node width (never narrower than a node itself, e.g. an image thumbnail); wider content is clipped with the fade as everywhere; gap between columns: twice the sibling gap
+  - Level 2: cards stacked downwards in their column, from below the tallest header, as wide as the column
+  - Level 3 and deeper: subtasks, still separate nodes (selection, double click, links), stacked below their card in note order, indented 20 px per level below the card (less when the node would not fit the column; never narrower than the node), reaching to the column's right edge
+  - Gaps within a column: the sibling gap; text flush left; heights are the nodes' own; overlap-free (disjoint columns, one stack per column)
+  - Look: the level emphasis of the colour themes (root large and bold without a box, headers filled, cards tinted, subtasks plain text); no connection lines, no lane backgrounds
+  - Card count: each column header shows the number of its direct children in the note (also while collapsed) in a bubble at its right end, styled like the count of a collapsed toggle (accent fill); the layout leaves room for it; information only, a click selects the header; 0 for an empty column
+  - No collapse toggles on nodes: collapse only via the controls bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
+  - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap, from the node's (indented) left edge to the column's right edge
+  - Unchanged: link lines, drill-down (the centre becomes the headline, its children the columns), colour themes, smooth camera, full screen
+  - Later (not MVP): lane backgrounds, clickable counts, per-column collapse
 ## MVP features
  
 - Open
@@ -208,7 +220,7 @@ Project (root, H1)
   - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
 - Layout and colour theme switcher (decided, issues #6 and #7): change the layout or colour theme of one map view without changing the note
   - Two buttons in the controls bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and colour theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
-  - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the six layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top) or the five themes (None, Rainbow, Ocean, Forest, Accent colour), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
+  - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes (None, Rainbow, Ocean, Forest, Accent colour), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
   - Choosing a layout re-lays out and fits to view (like a frontmatter layout change); choosing the same layout that is shown only marks it as chosen. Choosing a theme applies it live without a re-layout
   - The choice (override) is per map view: stored in the view state (`layout`, `theme` next to `file`), so it survives an Obsidian restart and follows a rename (also of a deferred tab); the note and its frontmatter are never written. A view state without the keys (older versions) or with an unknown value has no override. A map opened anew (command, file menu, ribbon) starts without overrides
   - Precedence: override, else frontmatter, else plugin setting. An active override wins over later frontmatter edits and setting changes; while active, its button is highlighted (`is-active`, like the collapse button)
@@ -232,12 +244,12 @@ Project (root, H1)
   - Double click on empty canvas: fit to view, also in full screen; only when both presses were clicks without dragging, so a pan never fits
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
   - Zoom steps (decided): zoom in / out (controls and commands) snap to 10, 25, 50, 75, 100, 125, 150, 200, 300, 400 %: zoom in goes to the next step above the current zoom, zoom out to the next step below (from 129 %: in 150 %, out 125 %); at either end they stay; centred on the canvas; wheel and pinch zoom stay smooth
-  - Fit margin (decided): per side 8 % of the shorter canvas side, at least 48 px (screen pixels); the fitted area includes the collapse toggles and hidden-count badges outside the node boxes
+  - Fit margin (decided): per side 8 % of the shorter canvas side, at least 48 px (screen pixels); the fitted area includes the collapse toggles and hidden-count badges outside the node boxes (none in kanban)
   - Fit zoom cap (decided): fit shows the whole map at the largest zoom that fits, at most the plugin setting "Max zoom for fit" (100 % to 400 %, steps of 25 %, default 150 %), so a small map (e.g. after Collapse all) is enlarged and a large one still shrinks; applies to every fit (open, control and command, double click, full screen, layout change); changing the setting does not re-fit open maps, the next fit uses it
   - Smooth camera (decided, issue #24): Fit to view (control, command, zoom-preset menu, double click), zoom in / out, reset to 100 %, the zoom presets, a typed zoom and Back to root (when it moves the view) glide to the transform they used to set at once (about 250 ms, ease in-out, transform only); the zoom field follows on the way. A layout change (switcher, commands, a frontmatter or setting change) cross-fades like drilling out: the map fades out, the new layout fades in with the node at the view centre (or the selected one on screen) kept in place, then the view glides to the new fit. Same rules as drill-down: instant with `prefers-reduced-motion: reduce`, a new action (or pan and zoom input) finishes a running animation at once, `is-animating` on the canvas while it runs. A re-layout from measuring during a glide moves its target with the map (a fit glide lands on the new fit). Stay instant: wheel and trackpad pan / zoom, drag, opening a note (first fit), entering and leaving full screen, collapse and live edits (anchored as before)
   - Fit to view icon: Lucide `group` (two boxes in a frame: the whole map in view), visually distinct from full screen (`maximize-2`, diagonal arrows) and back to root (`locate`, crosshair)
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
-- Collapse / expand: toggle button on the node edge for single node
+- Collapse / expand: toggle button on the node edge for single node (not in kanban)
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)

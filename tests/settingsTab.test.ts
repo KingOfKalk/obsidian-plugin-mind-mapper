@@ -92,7 +92,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
     ['About', 'Version'],
     ['About', 'Source code'],
   ]);
-  expect(row('Default layout').dropdown?.options.size).toBe(6);
+  expect(row('Default layout').dropdown?.options.size).toBe(7);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
   expect(row('Start collapsed').toggle?.value).toBe(false);
   expect(row('Default theme').dropdown?.value).toBe('rainbow');

@@ -297,6 +297,70 @@ test('clicking a toggle calls toggle(id) and not select', () => {
   expect(bubbled).not.toHaveBeenCalled();
 });
 
+describe('kanban (issue #32)', () => {
+  const kanban = (count: number | undefined): MapLayout => ({
+    ...layout,
+    nodes: layout.nodes.map((p) =>
+      p.node.id === 'R/A' && count !== undefined ? { ...p, count } : p,
+    ),
+    edges: [],
+    toggles: false,
+  });
+  const bubbles = (parent: HTMLElement) =>
+    [...parent.querySelectorAll<HTMLElement>('.mind-mapper-card-count')].map((el) => ({
+      node: el.closest<HTMLElement>('.mind-mapper-node')?.dataset.nodeId,
+      text: el.textContent,
+      label: el.getAttribute('aria-label'),
+      id: el.getAttribute('data-mm-id'),
+      tag: el.tagName,
+    }));
+
+  test('a layout without toggles shows none, also for collapsed nodes; old ones are removed', () => {
+    const { parent, renderer } = hooked();
+    renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+    expect(parent.querySelectorAll('.mind-mapper-collapse')).toHaveLength(1);
+    renderer.setLayout(kanban(3), { hidden: new Map([['R/B', 4]]), hasChildren: withChildren });
+    expect(parent.querySelectorAll('.mind-mapper-collapse')).toHaveLength(0);
+  });
+
+  test('a column header shows its card count in a bubble inside the node, info only', () => {
+    const { parent, renderer, hooks } = hooked();
+    renderer.setLayout(kanban(3), { hidden: new Map(), hasChildren: withChildren });
+    expect(bubbles(parent)).toEqual([
+      { node: 'R/A', text: '3', label: '3 cards', id: 'node.card-count', tag: 'SPAN' },
+    ]);
+    // Not a control: a click on it selects the header.
+    parent.querySelector<HTMLElement>('.mind-mapper-card-count')?.click();
+    expect(hooks.select).toHaveBeenCalledWith('R/A');
+    expect(hooks.toggle).not.toHaveBeenCalled();
+    // The count follows the layout; a layout without counts removes the bubble.
+    renderer.setLayout(kanban(12), { hidden: new Map(), hasChildren: withChildren });
+    expect(bubbles(parent).map((b) => b.text)).toEqual(['12']);
+    renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+    expect(bubbles(parent)).toEqual([]);
+  });
+
+  test('one card and German', () => {
+    const { parent, renderer } = hooked();
+    renderer.setLayout(kanban(1));
+    expect(bubbles(parent)[0]?.label).toBe('1 card');
+    useGerman();
+    renderer.setLayout(kanban(0));
+    expect(bubbles(parent)[0]?.label).toBe('0 Karten');
+    renderer.setLayout(kanban(1));
+    expect(bubbles(parent)[0]?.label).toBe('1 Karte');
+  });
+
+  test('a header rendered later (culling) gets its bubble', () => {
+    const { parent, renderer } = hooked();
+    renderer.setLayout(kanban(2));
+    const el = parent.querySelector('.mind-mapper-node[data-node-id="R/A"]');
+    expect(el?.querySelector('.mind-mapper-card-count')?.textContent).toBe('2');
+    // The content stays the node's first child (content reuse inserts it first).
+    expect(el?.firstElementChild?.classList.contains('mind-mapper-node-content')).toBe(true);
+  });
+});
+
 test('click on a node calls select; dblclick calls open with the current node', () => {
   const { parent, renderer, hooks } = hooked();
   renderer.setLayout(layout);

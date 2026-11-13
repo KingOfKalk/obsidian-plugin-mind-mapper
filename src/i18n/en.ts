@@ -38,12 +38,15 @@ export const en = {
   layoutRightToLeft: 'Right → left',
   layoutTopToBottom: 'Top → bottom',
   layoutBottomToTop: 'Bottom → top',
+  layoutKanban: 'Kanban',
 
   // Nodes
   collapseNode: 'Collapse',
   expandNode: 'Expand',
   showFullContent: 'Show full content',
   drillCentre: 'Drilled-in centre',
+  cardCountOne: '{count} card',
+  cardCountOther: '{count} cards',
 
   // View
   viewTitle: 'Mind map',

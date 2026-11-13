@@ -64,6 +64,33 @@ mind-mapper-layout: top-to-bottom
 - Vegan options
 `;
 
+const KANBAN_NOTE = 'Product launch.md';
+const KANBAN_TEXT = `---
+mind-mapper-layout: kanban
+---
+
+# Product launch
+
+## To do
+
+- Write the press release
+  - Draft
+  - Review with legal
+- Book the venue
+
+---
+
+## Doing
+
+- Website redesign
+- Beta feedback
+
+## Done
+
+- Name and logo
+- Launch date set
+`;
+
 type Plugins = {
   plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
 };
@@ -137,6 +164,7 @@ describe('user manual images', function () {
     await writeNote(LINKS_NOTE, LINKS_TEXT);
     await writeNote(LONG_NOTE, LONG_TEXT);
     await writeNote(TREE_NOTE, TREE_TEXT);
+    await writeNote(KANBAN_NOTE, KANBAN_TEXT);
     // no window buttons and no status bar in the pictures
     await browser.execute(() => {
       const style = document.head.createEl('style', { attr: { id: 'manual-images' } });
@@ -183,6 +211,15 @@ describe('user manual images', function () {
     await fit();
     await movePointerAway(400, 100);
     await shoot('layout-top-to-bottom');
+  });
+
+  it('kanban layout', async function () {
+    // set by mind-mapper-layout in the note's frontmatter
+    await setWindowSize(820, 580);
+    await showMap(KANBAN_NOTE);
+    await fit();
+    await movePointerAway(400, 60);
+    await shoot('layout-kanban');
   });
 
   it('collapsed branch and highlighted collapse button', async function () {

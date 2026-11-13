@@ -1,20 +1,21 @@
 import type { MindMapNode, MindMapTree } from '../parser/types';
-import type {
-  LayoutDivider,
-  LayoutEdge,
-  LayoutOptions,
-  MapLayout,
-  Point,
-  PositionedNode,
-  Rect,
-  Side,
-  Size,
-  TextAlign,
+import { kanban } from './kanban';
+import {
+  DIVIDER_GAP,
+  type LayoutDivider,
+  type LayoutEdge,
+  type LayoutOptions,
+  type MapLayout,
+  type Point,
+  type PositionedNode,
+  type Rect,
+  type Side,
+  type Size,
+  type TextAlign,
 } from './types';
 
 export const DEFAULT_LAYOUT = { siblingGap: 12, levelGap: 60, nodeWidth: 200, nodeHeight: 36 };
-/** Extra space between two siblings with a divider between them (spec "Dividers"). */
-export const DIVIDER_GAP = 16;
+export { DIVIDER_GAP };
 
 /**
  * Spec "Layout": bounding-box tidy tree. Every layout is computed as a canonical left-to-right
@@ -22,7 +23,7 @@ export const DIVIDER_GAP = 16;
  * construction) and then mapped: mirrored for right-to-left, axes swapped for the vertical ones.
  * Circle layouts put the first half of the first-level branches (rounded up) on the right side
  * (top to bottom) and the rest on the left side (bottom to top), each side a linear tree centered
- * on the root; counter-clockwise mirrors it.
+ * on the root; counter-clockwise mirrors it. Kanban is a board, not a tree (src/layout/kanban.ts).
  */
 export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout {
   const layout = options.layout ?? 'left-to-right';
@@ -53,6 +54,9 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
       );
       return finish({ ...raw, nodes }, 'x');
     }
+    case 'kanban':
+      // No connection lines and no collapse toggles (issue #32).
+      return { ...finish({ ...kanban(tree.root, options), edges: [] }, 'y'), toggles: false };
   }
 }
 

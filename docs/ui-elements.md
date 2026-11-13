@@ -20,6 +20,8 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ![Full screen with a collapsed branch, a drilled-in centre, a highlighted link and the control bar, every element labelled](images/ui-elements-full-screen.png)
 
+![A small board in the kanban layout: the headline, two columns with their card counts, cards and a divider, every element labelled](images/ui-elements-kanban.png)
+
 ## Contents
 
 - [Plugin entry points](#plugin-entry-points)
@@ -55,18 +57,19 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 | ID | Name | Where | What for | States |
 |---|---|---|---|---|
-| `node.root` | Root node | Centre (balanced layouts) or start of the map | The note itself: its title or `mind-mapper-title` | - |
+| `node.root` | Root node | Centre (balanced layouts), start of the map, or headline above the board (kanban) | The note itself: its title or `mind-mapper-title` | - |
 | `node.text` | Text node | Map | A heading, a paragraph or a list item, rendered like reading view; `data-level` (1, 2, 3) carries its emphasis | - |
 | `node.block` | Block node | Map | A code block, table, callout, quote, math block or image embed; keeps its border at every level | - |
 | `node.expand` | Expand button | Bottom right corner of a clipped node, on hover | Opens the [content overlay](#content-overlay) with the full content | - |
-| `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it | `expanded`, `collapsed` |
+| `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it. None in the kanban layout | `expanded`, `collapsed` |
 | `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into | - |
+| `node.card-count` | Card count | Right end of a column header in the kanban layout | Number of cards (direct children) in the column, also when it is collapsed; info only, not clickable | - |
 
 ## Lines
 
 | ID | Name | Where | What for |
 |---|---|---|---|
-| `edge` | Edge | Between a node and each of its children | The tree structure |
+| `edge` | Edge | Between a node and each of its children (none in the kanban layout) | The tree structure |
 | `divider` | Divider | Between two children, where the note has a `---` | A thematic break of the note |
 | `skeleton` | Skeleton | Whole map at a very small zoom | Outlines of all nodes when text is unreadable (large maps) |
 | `link.line` | Link line | Dashed, between two nodes | A link to a heading or block in the same note |
@@ -101,7 +104,7 @@ Rendered by Obsidian: catalog only.
 | `menu.zoom-presets.percent` | Zoom preset | Zoom presets menu: 50 % to 200 % | Zooms to that percentage; the current one is checked |
 | `menu.zoom-presets.fit` | Fit to view item | Zoom presets menu, last item | Fits the map |
 | `menu.layout` | Layout menu | Above `controls.layout`; command "Change layout…" | Picks the layout of this map |
-| `menu.layout.choice` | Layout item | Layout menu: the six layouts | Shows this map in that layout; the shown one is checked |
+| `menu.layout.choice` | Layout item | Layout menu: the seven layouts | Shows this map in that layout; the shown one is checked |
 | `menu.layout.use-note` | "Use the note's layout" item | Layout menu, last item | Drops this map's layout choice |
 | `menu.theme` | Colour theme menu | Above `controls.theme`; command "Change colour theme…" | Picks the colour theme of this map |
 | `menu.theme.choice` | Colour theme item | Colour theme menu: the five themes | Shows this map in that theme; the shown one is checked |

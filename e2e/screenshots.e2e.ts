@@ -87,6 +87,7 @@ describe('screenshots', function () {
     'right-to-left',
     'top-to-bottom',
     'bottom-to-top',
+    'kanban',
   ]) {
     for (const note of ['worked-example', 'lists']) {
       it(`layout ${layout} ${note}`, async function () {
@@ -444,6 +445,58 @@ describe('screenshots', function () {
       else await shoot();
     });
   }
+
+  // Issue #32: the kanban layout (fixtures/kanban.md has `mind-mapper-layout: kanban`): light, dark,
+  // loud palette, Collapse all (overview with counts), dividers at 100 %, drilled in, full screen.
+  for (const [mode, loud] of [
+    ['light', false],
+    ['dark', false],
+    ['light', true],
+  ] as const) {
+    it(`kanban ${loud ? 'loud' : mode}`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('fixtures/kanban.md');
+      await settle();
+      const name = loud ? `${dir}/loud-kanban` : `${dir}/kanban-${mode}`;
+      const shoot = async () => {
+        await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await waitForAnimation();
+        await pointerAway();
+        await browser.saveScreenshot(`${name}.png`);
+        await saveFullScreenShot(`${name}-full-screen.png`);
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
+
+  it('kanban collapsed, dividers, drilled in', async function () {
+    await useTheme('rainbow', 'light');
+    await openMindMap('fixtures/kanban.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:collapse-all');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+    await waitForAnimation();
+    await pointerAway();
+    await browser.saveScreenshot(`${dir}/kanban-collapsed.png`);
+    await browser.executeObsidianCommand('mind-mapper:expand-all');
+    await settle();
+    await clickNodeEndingWith('/Doing/Website redesign/#2');
+    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+    await waitForAnimation();
+    await pointerAway();
+    await browser.saveScreenshot(`${dir}/kanban-dividers-100.png`);
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await clickNodeEndingWith('/Doing');
+    await browser.$(byId('controls.drill')).click();
+    await drillEnd();
+    await pointerAway();
+    await browser.saveScreenshot(`${dir}/kanban-drilled.png`);
+    await browser.executeObsidianCommand('mind-mapper:show-whole-map');
+    await drillEnd();
+    await browser.keys('Escape');
+  });
 
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
