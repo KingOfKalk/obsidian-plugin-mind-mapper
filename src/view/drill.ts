@@ -20,13 +20,29 @@ export function drilledTree(tree: MindMapTree, id: string): MindMapTree | null {
   return node ? { root: { ...node, kind: 'root' } } : null;
 }
 
-/** Every step of the path is a node below the step before it (the first below the root). */
-export function isValidDrillPath(tree: MindMapTree, path: readonly string[]): boolean {
+/**
+ * Every step of the path is a node below the step before it (the first below the root). With
+ * `markdown` (each step's own markdown when drilled into), each step must also still have it:
+ * ordinal IDs of non-heading nodes shift when a sibling is inserted above, and the ID then names
+ * another node. A step without known markdown (a restored path) takes the node it finds.
+ */
+export function isValidDrillPath(
+  tree: MindMapTree,
+  path: readonly string[],
+  markdown: readonly (string | undefined)[] = [],
+): boolean {
   let parent = tree.root;
-  for (const id of path) {
+  for (const [i, id] of path.entries()) {
     const node = parent.children.map((child) => findNode(child, id)).find((n) => n !== null);
     if (!node) return false;
+    const known = markdown[i];
+    if (known !== undefined && node.markdown !== known) return false;
     parent = node;
   }
   return true;
+}
+
+/** Each step's own markdown in `tree` (undefined for a step not found). */
+export function drillMarkdown(tree: MindMapTree, path: readonly string[]): (string | undefined)[] {
+  return path.map((id) => findNode(tree.root, id)?.markdown);
 }

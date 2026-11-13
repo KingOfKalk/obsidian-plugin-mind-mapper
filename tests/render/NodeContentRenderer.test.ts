@@ -92,6 +92,51 @@ test('a hanging render falls back after the timeout', async () => {
   expect(nodeEl.classList.contains('is-render-error')).toBe(true);
 });
 
+test('output of a timed-out render that finishes late is replaced by the fallback again', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.useFakeTimers();
+  // Like a slow post processor in real Obsidian: it writes into the container, then the render ends.
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation(
+    (_app, _markdown, el) =>
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          el.createEl('span', { text: 'late' });
+          resolve();
+        }, RENDER_TIMEOUT_MS + 1000);
+      }),
+  );
+  const { renderer, contentEl, nodeEl } = setup();
+  const done = renderer.render(node('slow'), contentEl);
+  await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT_MS);
+  await done;
+  expect(contentEl.textContent).toBe('slow');
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(contentEl.textContent).toBe('slow');
+  expect(contentEl.querySelector('span')).toBeNull();
+  expect(nodeEl.classList.contains('is-render-error')).toBe(true);
+});
+
+test('a timed-out render finishing after release writes nothing', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.useFakeTimers();
+  let resolve = (): void => {};
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation(
+    () =>
+      new Promise<void>((r) => {
+        resolve = r;
+      }),
+  );
+  const { renderer, contentEl } = setup();
+  const done = renderer.render(node('slow'), contentEl);
+  await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT_MS);
+  await done;
+  renderer.release(contentEl);
+  contentEl.setText('reused');
+  resolve();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(contentEl.textContent).toBe('reused');
+});
+
 test('a render finishing after release writes nothing', async () => {
   let resolve = (): void => {};
   vi.spyOn(MarkdownRenderer, 'render').mockImplementation(

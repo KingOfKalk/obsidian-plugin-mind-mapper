@@ -47,6 +47,7 @@
   - Content larger than max size (long text, wide tables, wide code, large Mermaid): clipped with a fade, an expand icon on the node opens a pop-up overlay with the full content
 - Embeds (decided)
   - Image embed `![[img.png]]`: node with thumbnail in a fixed-size box, so the size is known before the image loads
+    - Only a node that is a single image (`![[img.png]]` or `![alt](img.png)`) gets the box; images inside text, tables or callouts (e.g. an inline icon `![[icon.png|16]]`) keep their own size, at most the node width
   - All other embeds (`![[Note]]`, `![[Note#Heading]]`, PDF, audio, video): rewritten to plain links before rendering, no transclusion
 - Links
   - Internal heading links (`[[#Heading]]`, `[[Note#Heading]]` if it resolves to the same note) and block links (`[[#^id]]`): draw a cross-connection line between nodes
@@ -132,6 +133,7 @@ Project (root, H1)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
+  - Settings changed outside this window (Obsidian Sync, another window or vault copy writing `data.json`; `onExternalSettingsChange`) are reloaded, sanitized and applied to open maps like a change in the tab, without saving again
 ## Colour themes (decided)
  
 - Colour per branch: each first-level node starts a branch with its own colour from the palette, in source order (branch 1 colour 1, branch 2 colour 2, …); colours repeat when there are more branches than colours
@@ -236,7 +238,7 @@ Project (root, H1)
   - Drilling out: the button and `D` go back one level when no node to drill into is selected (the centre, nothing, a leaf), the command "Drill out one level" always; "Show the whole map" goes straight back. After drilling out the node drilled out of (whole map: the outermost one) is selected and the shown map is fitted: the same transform as "Fit to view" (margin, bounds with toggles and badges, "Max zoom for fit"), and it counts as fitted afterwards
   - Indicators: the centre carries `is-drill-centre` and a small Lucide `focus` icon centred above it (below it when its children grow upwards); the button is highlighted (`is-active`) while drilled in, labelled "Drill out one level" when it drills out, and disabled when there is nothing to drill into or out of
   - Link lines to nodes outside the drilled part (also to its ancestors) are hidden
-  - Robustness: when a live edit removes or renames a drilled node (the path no longer fits the tree), the map quietly shows the whole note, fitted, and saves the empty path
+  - Robustness: when a live edit removes or renames a drilled node or its ID names another node now (a list item or paragraph after a sibling was inserted above it: ordinal IDs shift, so each drilled node's own content must still match; a restored path takes the node it finds) (the path no longer fits the tree), the map quietly shows the whole note, fitted, and saves the empty path
   - Persistence: the path is stored in the view state (`drill`, next to `layout` and `theme`), restored after a restart (fitted), kept on a rename; a view state without `drill` (older versions) or with a malformed one shows the whole map
   - Unchanged: collapse state, layout, theme, full screen and jump to source; "Back to root" centres the current centre; "Collapse all" keeps collapsing all nodes of the note (the centre and its children stay visible)
   - Animation: drilling in, the view glides (about 250 ms, ease in-out, transform only) until the node sits where and as large as it will be in the fitted drilled view; then the map fades out and the drilled map fades in (about 150 ms each, opacity only). Drilling out reverses it: fade out, swap with the node kept in place, fade in, then glide to the fitted map (with reduced motion: straight to it). With `prefers-reduced-motion: reduce` (the view's window) it switches instantly. A new drill step, pan, zoom, fit, collapse, layout choice or live edit during an animation first finishes it at once (no pile-up). The canvas has `is-animating` while it runs; the drill state (path, selection, commands) changes at once
@@ -268,7 +270,7 @@ Project (root, H1)
   - Double click on node: jump to the source line in the editor
   - Double click on empty canvas: fit to view (see "Zoom and pan"); links, buttons, collapse toggles, link lines and the controls keep their own behavior
   - Expand icon on clipped nodes: overlay with full content
-  - Links inside nodes: Obsidian behavior, no node click
+  - Links inside nodes: Obsidian behavior, no node click; internal links: click opens, Ctrl/Cmd click and middle click open a new tab (like reading view)
   - No click timers needed, double click does not trigger a jump plus something else
 - Jump to source target (decided)
   - Note already open in a leaf: reveal the most recently active one and set the cursor
@@ -288,6 +290,7 @@ Project (root, H1)
   - Debounced (about 300 ms)
   - Generation token: a newer change cancels any in-flight parse, render and measure
   - Pan, zoom, selection and collapse state are kept; fit to view only on open
+  - A version that cannot be parsed or laid out (an exception) keeps the last good map with a short notice over it ("Could not update the map. Showing the last version."), logged to the console; the next version that works removes it. Without an earlier map the view shows "Could not show the note"
 - Render ownership
   - The view is a `Component`; each rendered node gets a child `Component` passed to `MarkdownRenderer.render`
   - Child components are unloaded when a node is culled, replaced by an update, or the view closes
@@ -295,7 +298,7 @@ Project (root, H1)
   - Listeners on elements the plugin creates itself (control bar, nodes, collapse and expand buttons, full screen overlay) may use `addEventListener`: they are removed together with the element
   - Plugin `onunload` does not detach leaves (Obsidian guideline)
 - Re-measure all nodes on theme or font change (`workspace` `css-change` event)
-- Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size
+- Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size; a timed-out render that still finishes later cannot add its output next to the raw source
 - Popout windows: use the view's own `document` and `window`, never the global ones; a tab moved to another window observes its node contents with a `ResizeObserver` of the new window (`onWindowMigrated`); a popout relays its keys to the main window, so there Esc is marked handled by the view scope
 ## Known limits
 
@@ -348,6 +351,7 @@ Project (root, H1)
 - Performance (decided)
   - Target: 1,000 nodes pan/zoom smooth at 60 fps, 5,000 nodes still usable
   - Render only nodes in the viewport plus a margin (filled nearest to the viewport first, at most twice the outline threshold in effect: 600 nodes, 120 below 20 % zoom); edges and cross-connection lines are kept even when one endpoint is off screen
+  - A hidden map (background tab, collapsed sidebar) has no viewport: it keeps the nodes it shows; a map loaded while hidden renders no nodes until it is shown
   - Render cache by markdown and measured size cache by size variant plus markdown, reused on live update
   - Verified with a benchmark harness on generated notes (frame times logged, compared against a baseline) plus a manual gate; no fps assertions in CI, they are flaky
 - Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` 1.15.0, the newest public Obsidian release (betas do not count); it unlocks the declarative settings API, so the settings appear in Obsidian's settings search

@@ -101,8 +101,6 @@ export class DomMapRenderer {
   private readonly clips = new Map<string, Clip>();
   private transform: Transform = IDENTITY;
   private readonly culling: boolean;
-  /** The canvas had a real size once (a renderer never sized renders everything). */
-  private sized = false;
   private frame: number | null = null;
   private skeletonD: string | null = null;
   private theme: MapThemeName = 'none';
@@ -154,14 +152,14 @@ export class DomMapRenderer {
     if (!this.culling || !this.index) return { ids: all(), skeleton: false };
     const size = { width: this.canvasEl.clientWidth, height: this.canvasEl.clientHeight };
     if (size.width === 0 || size.height === 0) {
-      // Hidden tab: no viewport. Keep what is shown; a renderer never sized renders everything.
-      if (!this.sized) return { ids: all(), skeleton: false };
+      // Hidden (a background tab, a collapsed sidebar): no viewport. Keep what is shown; a renderer
+      // never sized shows nothing yet (all nodes of a large map at once would block), its first size
+      // (`onResize`) renders the view.
       return {
         ids: new Set([...this.nodes.keys()].filter((id) => this.rects.has(id))),
         skeleton: false,
       };
     }
-    this.sized = true;
     // The thresholds count only the nodes in the visible viewport. The margin is rendered too (no
     // pop-in while panning), nearest to the view first, up to the content cap.
     const view = worldViewport(this.transform, size, 0);
@@ -606,9 +604,12 @@ export class DomMapRenderer {
     const { el } = dom;
     const root = node.kind === 'root';
     // Colour themes: blocks keep a border at every level instead of becoming plain text.
-    const block = node.kind === 'block' || isImageOnly(node.markdown);
+    const image = isImageOnly(node.markdown);
+    const block = node.kind === 'block' || image;
     el.toggleClass('is-root', root);
     el.toggleClass('is-block', block);
+    // A single image embed: the fixed thumbnail box of the size estimate (styles.css).
+    el.toggleClass('is-image', image);
     setElementId(el, root ? 'node.root' : block ? 'node.block' : 'node.text');
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);

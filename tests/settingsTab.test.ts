@@ -1,5 +1,6 @@
 import type { WorkspaceLeaf } from 'obsidian';
 import MindMapperPlugin from '../src/main';
+import { DEFAULT_SETTINGS } from '../src/settings';
 import { MindMapSettingTab } from '../src/settingsTab';
 import { MindMapView } from '../src/view/MindMapView';
 import { FakeWorkspace, fakeApp, fakeManifest, useGerman } from './helpers';
@@ -252,6 +253,28 @@ test('choosing a default theme in the tab saves it and re-applies only the theme
   // Any other change still refreshes.
   await plugin.updateSettings({ defaultTheme: 'ocean', levelGap: 80 });
   expect(refresh).toHaveBeenCalledTimes(1);
+});
+
+test('settings changed outside this window (Sync, another window) reach open maps without saving', async () => {
+  const { ws, plugin, mock } = await setup();
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  const leaf = ws.addLeaf({ type: 'mind-mapper-view' });
+  leaf.view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
+  const applyTheme = vi.spyOn(view, 'applyTheme').mockImplementation(() => {});
+  const save = vi.spyOn(mock, 'saveData');
+  mock.data = { ...plugin.settings, defaultTheme: 'forest' };
+  await plugin.onExternalSettingsChange();
+  expect(plugin.settings.defaultTheme).toBe('forest');
+  expect(applyTheme).toHaveBeenCalledTimes(1);
+  expect(refresh).not.toHaveBeenCalled();
+  mock.data = { ...plugin.settings, levelGap: 80, siblingGap: 'nonsense' };
+  await plugin.onExternalSettingsChange();
+  expect(plugin.settings.levelGap).toBe(80);
+  // validated like on load
+  expect(plugin.settings.siblingGap).toBe(DEFAULT_SETTINGS.siblingGap);
+  expect(refresh).toHaveBeenCalledTimes(1);
+  expect(save).not.toHaveBeenCalled();
 });
 
 test('start collapsed is a toggle control bound to startCollapsed', async () => {

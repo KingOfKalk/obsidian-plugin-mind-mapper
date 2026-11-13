@@ -223,8 +223,9 @@ export class Modal {
 }
 
 export class Keymap {
-  /** Like Obsidian: Ctrl/Cmd click means "new tab". */
+  /** Like Obsidian: Ctrl/Cmd click and middle click mean "new tab". */
   static isModEvent(evt?: MouseEvent | KeyboardEvent | null): string | boolean {
+    if (evt instanceof MouseEvent && evt.button === 1) return 'tab';
     return evt?.ctrlKey || evt?.metaKey ? 'tab' : false;
   }
 }

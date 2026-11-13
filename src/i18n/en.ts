@@ -56,6 +56,8 @@ export const en = {
   couldNotReadNote: 'Could not read note',
   noteDeleted: 'Note was deleted',
   noContentYet: 'This note has no content yet',
+  couldNotShowNote: 'Could not show the note',
+  couldNotUpdateMap: 'Could not update the map. Showing the last version.',
 
   // Frontmatter notices
   invalidLayout: 'Mind Mapper: unknown mind-mapper-layout "{value}" in {path}, using {layout}',

@@ -126,7 +126,7 @@ test('getViewType and getIcon', () => {
 test('renders every node of the worked example with one edge per child', async () => {
   const { view, ws } = newView();
   ws.addNote('Worked example.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Worked example.md'));
   expect(placeholderText(view)).toBeNull();
   const ids = nodeIds(view);
@@ -146,6 +146,7 @@ test('null cache shows Loading and renders on the first changed event for the fi
   const { view, ws } = newView();
   const fixture = loadFixture('worked-example');
   ws.vault.texts.set('Note.md', fixture.text);
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(placeholderText(view)).toBe('Loading…');
 
@@ -167,6 +168,7 @@ test('stale load is discarded', async () => {
   const { view, ws } = newView();
   ws.addNote('First.md', 'worked-example');
   ws.addNote('Second.md', 'skipped-levels');
+  await setSize(view, 800, 600);
   const release = ws.vault.hold('First.md');
   const first = view.setState(...state('First.md'));
   await view.setState(...state('Second.md'));
@@ -395,7 +397,7 @@ test('node content is rendered by Obsidian with the pinned file as source path',
   const spy = vi.spyOn(MarkdownRenderer, 'render');
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(spy).toHaveBeenCalledWith(
     ws.app,
@@ -410,7 +412,7 @@ test('node content is rendered by Obsidian with the pinned file as source path',
 test('expand opens the full content modal for that node', async () => {
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   const button = view.contentEl.querySelector<HTMLElement>(
     '[data-node-id="Project/#1"] .mind-mapper-node-expand',
@@ -430,7 +432,7 @@ test('closing the view releases all node components', async () => {
   });
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(components.length).toBeGreaterThan(0);
   await view.onClose();
@@ -932,6 +934,78 @@ describe('collapse and selection', () => {
       );
     }
     expect(view.selectedId).toBeNull();
+  });
+});
+
+/** A cache the parser cannot read (a section without position): parsing throws. */
+function breakNote(ws: FakeWorkspace, path: string): void {
+  const { text, cache } = loadFixture('live-after');
+  const broken = { ...cache, sections: [{ type: 'paragraph' }] } as unknown as CachedMetadata;
+  ws.metadataCache.caches.set(path, broken);
+  ws.metadataCache.trigger(path, text, broken);
+}
+
+function updateErrorText(view: MindMapView): string | null {
+  const el = view.contentEl.querySelector<HTMLElement>('[data-mm-id="map.update-error"]');
+  return el && !el.hidden ? el.textContent : null;
+}
+
+describe('a failing update', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  test('a live update that cannot be parsed keeps the last map with a notice; the next good one clears it', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = await openLive();
+    const before = nodeIds(view);
+    expect(updateErrorText(view)).toBeNull();
+    breakNote(ws, 'Live.md');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toEqual(before);
+    expect(updateErrorText(view)).toBe('Could not update the map. Showing the last version.');
+    expect(error).toHaveBeenCalledWith(
+      'Mind Mapper: could not update the map',
+      'Live.md',
+      expect.any(TypeError),
+    );
+    // The last map keeps working (it re-lays out from the last good tree).
+    view.collapseAll();
+    view.expandAll();
+    expect(nodeIds(view).sort()).toEqual([...before].sort());
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(nodeIds(view)).toContain('Live/#2');
+    expect(updateErrorText(view)).toBeNull();
+  });
+
+  test('another note that cannot be parsed in the same tab shows the message, not the old map', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = await openLive();
+    const { text, cache } = loadFixture('live-before');
+    ws.vault.texts.set('Other.md', text);
+    ws.metadataCache.caches.set('Other.md', {
+      ...cache,
+      sections: [{ type: 'paragraph' }],
+    } as unknown as CachedMetadata);
+    await view.setState(...state('Other.md'));
+    expect(placeholderText(view)).toBe('Could not show the note');
+    expect(updateErrorText(view)).toBeNull();
+  });
+
+  test('a note that cannot be parsed on opening shows a placeholder message', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { view, ws } = newView();
+    ws.addNote('Live.md', 'live-before');
+    const { text, cache } = loadFixture('live-before');
+    ws.vault.texts.set('Live.md', text);
+    ws.metadataCache.caches.set('Live.md', {
+      ...cache,
+      sections: [{ type: 'paragraph' }],
+    } as unknown as CachedMetadata);
+    await setSize(view, 800, 600);
+    await view.setState(...state('Live.md'));
+    expect(placeholderText(view)).toBe('Could not show the note');
+    expect(nodeIds(view)).toEqual([]);
   });
 });
 
@@ -1697,11 +1771,13 @@ describe('layout and colour theme of this view (overrides)', () => {
     await setSize(restored, 0, 0);
     await restored.setState({ file: 'Note.md', layout: 'top-to-bottom' }, { history: false });
     await vi.advanceTimersByTimeAsync(300);
-    expect(grows(restored, 'Project', 'Project/Tasks')).toBe('down');
+    // Loaded while hidden: no node DOM until the tab has a size.
+    expect(nodeIds(restored)).toEqual([]);
     expect(restored.getTransform()).toEqual(IDENTITY);
     setElSize(restored.contentEl.querySelector('.mind-mapper-canvas'), 800, 600);
     restored.onResize();
     await vi.advanceTimersByTimeAsync(300);
+    expect(grows(restored, 'Project', 'Project/Tasks')).toBe('down');
     expect(restored.getTransform()).not.toEqual(IDENTITY);
     // Fits once: a later resize keeps the viewport.
     restored.setTransform({ x: 5, y: 6, zoom: 1 });

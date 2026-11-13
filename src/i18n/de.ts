@@ -59,6 +59,9 @@ export const de: Messages = {
   couldNotReadNote: 'Die Notiz konnte nicht gelesen werden',
   noteDeleted: 'Die Notiz wurde gelöscht',
   noContentYet: 'Diese Notiz hat noch keinen Inhalt',
+  couldNotShowNote: 'Die Notiz konnte nicht angezeigt werden',
+  couldNotUpdateMap:
+    'Die Karte konnte nicht aktualisiert werden. Die letzte Version wird angezeigt.',
 
   // Frontmatter notices
   invalidLayout:

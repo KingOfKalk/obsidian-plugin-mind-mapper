@@ -131,6 +131,17 @@ export default class MindMapperPlugin extends Plugin {
     const previous = this.settings;
     this.settings = sanitizeSettings({ ...previous, ...patch });
     await this.saveData(this.settings);
+    this.applySettings(previous);
+  }
+
+  /** `data.json` changed on disk (Sync, another window): reload and apply like a change here. */
+  override async onExternalSettingsChange(): Promise<void> {
+    const previous = this.settings;
+    this.settings = sanitizeSettings(await this.loadData());
+    this.applySettings(previous);
+  }
+
+  private applySettings(previous: MindMapSettings): void {
     const changed = (Object.keys(this.settings) as (keyof MindMapSettings)[]).filter(
       (key) => this.settings[key] !== previous[key],
     );

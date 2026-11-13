@@ -75,7 +75,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
-- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
+- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click or middle click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written
@@ -92,7 +92,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 - Link lines to nodes outside the drilled part are hidden
 - "Back to root" goes to the current centre; collapse, layout, theme, full screen and double click to jump work as usual
 - The view glides towards the node, then the map cross-fades into the drilled view (drilling out runs it in reverse); with the system setting "reduce motion" it switches instantly. Pressing `D` again during the animation finishes it at once
-- The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted or its heading renamed, the map quietly shows the whole note again. The note file is never written
+- The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted, its heading or list item text is changed, or a list item or paragraph is inserted above a drilled list item, the map quietly shows the whole note again. The note file is never written
 
 ## Layout and theme of the open map
 

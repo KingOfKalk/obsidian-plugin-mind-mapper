@@ -419,6 +419,30 @@ describe('edits to the note', () => {
     expect(drillButton(view).classList.contains('is-active')).toBe(false);
     expect(view.getTransform()).toEqual(fitted(view));
   });
+
+  test('a sibling inserted above a drilled list item (its ordinal ID now names another node): back to the whole map, fitted', async () => {
+    const { view, ws } = await open('drill-shift-before');
+    drillInto(view, 'Shift/#1');
+    expect(nodeIds(view)).toEqual(['Shift/#1', 'Shift/#1/#1']);
+    change(ws, 'drill-shift-after');
+    await vi.advanceTimersByTimeAsync(LIVE_UPDATE_DEBOUNCE_MS + 10);
+    // Never silently another branch: `Shift/#1` is the new item "New" now.
+    expect(view.isDrilled).toBe(false);
+    expect(view.getState()).toMatchObject({ drill: [] });
+    expect(nodeIds(view)).toContain('Shift/#3');
+    expect(view.getTransform()).toEqual(fitted(view));
+  });
+
+  test('an edit elsewhere keeps a drilled list item; a restored path takes the node it finds', async () => {
+    const { view, ws } = await open('drill-shift-after', new FakeWorkspace(), {
+      drill: ['Shift/#2'],
+    });
+    expect(nodeIds(view)).toEqual(['Shift/#2', 'Shift/#2/#1']);
+    change(ws, 'drill-shift-after');
+    await vi.advanceTimersByTimeAsync(LIVE_UPDATE_DEBOUNCE_MS + 10);
+    expect(view.isDrilled).toBe(true);
+    expect(nodeIds(view)).toEqual(['Shift/#2', 'Shift/#2/#1']);
+  });
 });
 
 describe('key D (view scope)', () => {

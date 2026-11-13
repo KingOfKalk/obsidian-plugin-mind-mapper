@@ -97,6 +97,24 @@ test('Ctrl/Cmd click passes the Keymap mod result (new tab)', () => {
   expect(workspace.setActiveLeaf).not.toHaveBeenCalled();
 });
 
+test('middle click on an internal link opens it in a new tab, like reading view', () => {
+  const { workspace, internal, nodeClicks } = setup([markdownLeaf()]);
+  const event = new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 });
+  internal.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(true);
+  expect(nodeClicks).not.toHaveBeenCalled();
+  expect(workspace.openLinkText).toHaveBeenCalledWith('lists', 'fixtures/embeds.md', 'tab');
+  expect(workspace.setActiveLeaf).not.toHaveBeenCalled();
+});
+
+test('other auxiliary buttons (right click) on a link are left to Obsidian', () => {
+  const { workspace, internal } = setup([markdownLeaf()]);
+  const event = new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 });
+  internal.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(false);
+  expect(workspace.openLinkText).not.toHaveBeenCalled();
+});
+
 test('external links and tags are left to Obsidian (default action, other listeners run)', () => {
   const { workspace, external, nodeClicks } = setup();
   const event = click(external);

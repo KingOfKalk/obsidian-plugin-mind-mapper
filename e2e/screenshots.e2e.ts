@@ -126,6 +126,49 @@ describe('screenshots', function () {
     await browser.keys('Escape');
   });
 
+  it('images: thumbnail node, inline icon, icon in a table', async function () {
+    await writeNote(
+      'inline-images.md',
+      [
+        '# Images',
+        '',
+        '![[pixel.png]]',
+        '',
+        'Icon ![[launch-banner.svg|16]] inside a paragraph.',
+        '',
+        '| Icon | Name |',
+        '| - | - |',
+        '| ![[launch-banner.svg\\|16]] | banner |',
+        '',
+      ].join('\n'),
+    );
+    await openMindMap('inline-images.md');
+    await settle();
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+    await waitForAnimation();
+    await browser.pause(300);
+    await browser.saveScreenshot(`${dir}/inline-images.png`);
+    await browser.keys('Escape');
+  });
+
+  it('update error notice', async function () {
+    await openMindMap('fixtures/worked-example.md');
+    await settle();
+    await browser.executeObsidian(async ({ app }) => {
+      const file = app.vault.getFileByPath('fixtures/worked-example.md');
+      const cache = file && app.metadataCache.getFileCache(file);
+      if (!file || !cache) return;
+      // A cache the parser cannot read: the map keeps its last version with a notice.
+      app.metadataCache.trigger('changed', file, await app.vault.cachedRead(file), {
+        ...cache,
+        sections: [{ type: 'paragraph' }],
+      });
+    });
+    await browser.$(byId('map.update-error')).waitForDisplayed({ timeout: 5000 });
+    await browser.saveScreenshot(`${dir}/update-error.png`);
+  });
+
   it('full screen', async function () {
     await openMindMap('fixtures/lists.md');
     await settle();

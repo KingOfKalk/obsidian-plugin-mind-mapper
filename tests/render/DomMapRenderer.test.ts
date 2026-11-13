@@ -770,11 +770,11 @@ describe('culling', () => {
     expect(toggles.map((el) => el.getAttribute('aria-label'))).toEqual(['Expand', 'Collapse']);
   });
 
-  test('a never sized (0 x 0) canvas renders all nodes on the first layout and keeps the DOM afterwards', () => {
+  test('a never sized (0 x 0) canvas renders no nodes (a map loaded while hidden), its first size renders the view; then a hidden canvas keeps the DOM', () => {
     const { renderer } = culled();
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });
     renderer.setLayout(grid());
-    expect(renderer.renderedCount()).toBe(400);
+    expect(renderer.renderedCount()).toBe(0);
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 400 });
     renderer.updateVisible();
     expect(renderer.renderedCount()).toBe(9);
@@ -1140,7 +1140,7 @@ test("nodes created later by culling get their level and the current theme's bra
   expect(b8()?.getAttribute('data-branch')).toBe('1');
 });
 
-test('block nodes (code, tables, callouts, …) and image embeds are marked is-block, also after an edit', () => {
+test('block nodes (code, tables, callouts, …) and image embeds are marked is-block, image embeds also is-image (thumbnail box), also after an edit', () => {
   const { parent, renderer } = setup();
   const nodes = (markdowns: [string, MindMapNode['kind'], string][]): MapLayout => ({
     ...star(0),
@@ -1169,7 +1169,10 @@ test('block nodes (code, tables, callouts, …) and image embeds are marked is-b
   );
   const isBlock = (id: string) =>
     parent.querySelector(`[data-node-id="${id}"]`)?.classList.contains('is-block');
+  const isImage = (id: string) =>
+    parent.querySelector(`[data-node-id="${id}"]`)?.classList.contains('is-image');
   expect(['code', 'image', 'text', 'item'].map(isBlock)).toEqual([true, true, false, false]);
+  expect(['code', 'image', 'text', 'item'].map(isImage)).toEqual([false, true, false, false]);
   expect(isBlock('d0')).toBe(false);
   // the image paragraph becomes text, the item becomes an image
   renderer.setLayout(
@@ -1181,6 +1184,7 @@ test('block nodes (code, tables, callouts, …) and image embeds are marked is-b
     ]),
   );
   expect(['code', 'image', 'text', 'item'].map(isBlock)).toEqual([true, false, false, true]);
+  expect(['code', 'image', 'text', 'item'].map(isImage)).toEqual([false, false, false, true]);
 });
 
 /** The `is-align-*` classes of the node with this ID. */

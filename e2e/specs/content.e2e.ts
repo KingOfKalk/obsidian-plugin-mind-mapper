@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { nodeBoxes, openMindMap, overlaps, settle } from '../helpers';
+import { nodeBoxes, openMindMap, overlaps, settle, writeNote } from '../helpers';
 
 function node(id: string) {
   return browser.$(`.mind-mapper-node[data-node-id="${id}"]`);
@@ -161,6 +161,40 @@ describe('node content in real Obsidian', function () {
     await expect(node('Embeds/#2').$('.markdown-embed')).not.toExist();
   });
 
+  it('only image-only nodes get the thumbnail box; images inside text keep their own size', async function () {
+    await writeNote(
+      'inline-images.md',
+      [
+        '# Images',
+        '',
+        '![[pixel.png]]',
+        '',
+        'Icon ![[pixel.png|16]] inside a paragraph.',
+        '',
+        '| Icon | Name |',
+        '| - | - |',
+        // the pipe of the size is escaped inside a table
+        '| ![[pixel.png\\|16]] | pixel |',
+        '',
+      ].join('\n'),
+    );
+    await openMindMap('inline-images.md');
+    await settle();
+    const sizes = await browser.execute(() =>
+      ['Images/#1', 'Images/#2', 'Images/#3'].map((id) => {
+        const img = document.querySelector<HTMLElement>(
+          `.mind-mapper-node[data-node-id="${id}"] img`,
+        );
+        return { id, width: img?.offsetWidth ?? -1, height: img?.offsetHeight ?? -1 };
+      }),
+    );
+    expect(sizes).toEqual([
+      { id: 'Images/#1', width: 160, height: 120 },
+      { id: 'Images/#2', width: 16, height: 16 },
+      { id: 'Images/#3', width: 16, height: 16 },
+    ]);
+  });
+
   it('no node failed to render and no nodes overlap', async function () {
     for (const note of [
       'fixtures/worked-example.md',
@@ -222,5 +256,30 @@ describe('tab switching', function () {
     });
     await settle();
     expect(await snapshot()).toEqual(before);
+  });
+  // Last in this file: the post processor stays registered until the plugin unloads.
+  it('a render that times out shows the raw markdown, also after the slow render ends', async function () {
+    await browser.executeObsidian(async ({ app }) => {
+      const plugin = (
+        app as unknown as {
+          plugins: { plugins: Record<string, import('obsidian').Plugin> };
+        }
+      ).plugins.plugins['mind-mapper'];
+      // A slow post processor (other plugins): writes into the node after the 5 s timeout.
+      plugin?.registerMarkdownPostProcessor(async (el) => {
+        if (!el.textContent?.includes('SLOW-RENDER')) return;
+        await new Promise((r) => setTimeout(r, 6500));
+        el.createEl('span', { cls: 'late-output', text: 'late' });
+      });
+      await app.vault.adapter.write('render-timeout.md', '# Timeout\n\nSLOW-RENDER text\n');
+    });
+    await openMindMap('render-timeout.md');
+    const content = '.mind-mapper-node[data-node-id="Timeout/#1"] .mind-mapper-node-content';
+    await browser
+      .$('.mind-mapper-node.is-render-error[data-node-id="Timeout/#1"]')
+      .waitForExist({ timeout: 10000 });
+    await browser.pause(3000);
+    expect(await browser.$(content).getText()).toBe('SLOW-RENDER text');
+    await expect(browser.$(`${content} .late-output`)).not.toExist();
   });
 });
