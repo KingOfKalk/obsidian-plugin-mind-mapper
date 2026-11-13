@@ -297,12 +297,12 @@ describe('smooth camera', function () {
         new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }),
       );
       const view = app.workspace.getLeavesOfType('mind-mapper-view')[0]?.view as unknown as {
-        transform: { x: number; y: number; zoom: number };
+        camera: { transform: { x: number; y: number; zoom: number } };
       };
       return {
         gliding,
         animating: canvas?.classList.contains('is-animating') ?? true,
-        transform: view.transform,
+        transform: view.camera.transform,
       };
     });
     expect(after).toEqual({
