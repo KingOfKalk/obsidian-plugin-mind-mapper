@@ -1,5 +1,6 @@
 import { browser, expect } from '@wdio/globals';
 import {
+  byId,
   leafSummary,
   mouseOnNode,
   openMindMap,
@@ -514,7 +515,7 @@ describe('open entry points', function () {
       app.workspace.detachLeavesOfType('mind-mapper-view'),
     );
     await openNote('fixtures/blocks.md');
-    await browser.$('.side-dock-ribbon-action[aria-label="Open as mind map"]').click();
+    await browser.$(byId('ribbon.open-mind-map')).click();
     await browser.waitUntil(
       async () =>
         (await leafSummary()).some(

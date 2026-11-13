@@ -1,4 +1,5 @@
 import { Menu, setIcon } from 'obsidian';
+import { type ElementId, setElementId } from '../elementIds';
 import { t } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 import { LAYOUT_LABELS, THEME_LABELS } from '../i18n/labels';
@@ -49,39 +50,68 @@ export class MapControls {
     private readonly actions: MapActions,
   ) {
     const el = parentEl.createDiv({ cls: 'mind-mapper-controls' });
-    const button = (label: string, action: () => void, icon?: string): HTMLButtonElement => {
+    setElementId(el, 'controls.bar');
+    const button = (
+      id: ElementId,
+      label: string,
+      action: () => void,
+      icon?: string,
+    ): HTMLButtonElement => {
       const b = el.createEl('button', { cls: 'clickable-icon', attr: { 'aria-label': label } });
+      setElementId(b, id);
       if (icon) setIcon(b, icon);
       b.addEventListener('click', action);
       return b;
     };
-    button(t('zoomOut'), () => actions.zoomOut(), 'zoom-out');
+    button('controls.zoom-out', t('zoomOut'), () => actions.zoomOut(), 'zoom-out');
     // One child of the bar, so the buttons after it keep their positions.
     const field = el.createDiv({ cls: 'mind-mapper-zoom-field' });
+    setElementId(field, 'controls.zoom-field');
     this.zoomInput = this.createZoomInput(field);
     const menuButton = field.createEl('button', {
       cls: 'clickable-icon mind-mapper-zoom-menu',
       attr: { 'aria-label': t('zoomPresets') },
     });
+    setElementId(menuButton, 'controls.zoom-presets');
     // Up: the bar sits at the bottom, the menu opens above it.
     setIcon(menuButton, 'chevron-up');
     menuButton.addEventListener('click', () => this.showZoomMenu(menuButton));
-    button(t('zoomIn'), () => actions.zoomIn(), 'zoom-in');
+    button('controls.zoom-in', t('zoomIn'), () => actions.zoomIn(), 'zoom-in');
     // `group` (nodes inside a frame): distinct from the corner brackets of `maximize`, which read
     // as full screen next to `maximize-2`.
-    button(t('fitToView'), () => actions.fitToView(), 'group');
+    button('controls.fit', t('fitToView'), () => actions.fitToView(), 'group');
     // One button for both (spec "Collapse / expand"): it shows the state, see setCollapsed.
-    this.collapseButton = button(t('collapseAll'), () =>
+    this.collapseButton = button('controls.collapse-all', t('collapseAll'), () =>
       this.anyCollapsed ? actions.expandAll() : actions.collapseAll(),
     );
-    button(t('backToRoot'), () => actions.backToRoot(), 'locate');
-    this.drillButton = button(t('drillDown'), () => actions.drill(), 'arrow-down-to-dot');
+    button('controls.back-to-root', t('backToRoot'), () => actions.backToRoot(), 'locate');
+    this.drillButton = button(
+      'controls.drill',
+      t('drillDown'),
+      () => actions.drill(),
+      'arrow-down-to-dot',
+    );
     this.drillButton.addClass('mind-mapper-drill');
     // `workflow` (boxes joined by a line): the arrangement of the nodes; distinct from `group` (fit)
     // and the view icon `network`.
-    this.layoutButton = button(t('layoutMenu'), () => this.showLayoutMenu(), 'workflow');
-    this.themeButton = button(t('themeMenu'), () => this.showThemeMenu(), 'palette');
-    button(t('toggleFullScreen'), () => actions.toggleFullScreen(), 'maximize-2');
+    this.layoutButton = button(
+      'controls.layout',
+      t('layoutMenu'),
+      () => this.showLayoutMenu(),
+      'workflow',
+    );
+    this.themeButton = button(
+      'controls.theme',
+      t('themeMenu'),
+      () => this.showThemeMenu(),
+      'palette',
+    );
+    button(
+      'controls.full-screen',
+      t('toggleFullScreen'),
+      () => actions.toggleFullScreen(),
+      'maximize-2',
+    );
     this.setZoom(1);
     this.setCollapsed(false);
     this.setDrill(null, false);
@@ -192,6 +222,7 @@ export class MapControls {
         'aria-label': t('zoomLevel'),
       },
     });
+    setElementId(input, 'controls.zoom-input');
     // A click focuses and selects; its mouseup would place the caret instead, so it is dropped once.
     let selectedByFocus = false;
     input.addEventListener('focus', () => {

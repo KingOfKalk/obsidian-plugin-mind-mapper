@@ -1,5 +1,10 @@
 import { browser } from '@wdio/globals';
 
+/** Selector of a plugin element by its stable ID (docs/ui-elements.md). */
+export function byId(id: string): string {
+  return `[data-mm-id="${id}"]`;
+}
+
 /** Waits until Obsidian has a metadata cache entry for `path` (the vault is indexed in the background). */
 export async function waitForCache(path: string): Promise<void> {
   await browser.waitUntil(
@@ -163,4 +168,27 @@ export async function setObsidianLanguage(code: string | null): Promise<void> {
     else window.localStorage.setItem('language', language);
   }, code);
   await browser.reloadObsidian();
+}
+
+/** Resizes the current window's content through Electron (WebDriver window commands do not work in Obsidian). */
+export async function setWindowSize(width: number, height: number): Promise<void> {
+  await browser.execute(
+    (w, h) => {
+      const electron = (
+        window as unknown as {
+          electron: {
+            remote: { getCurrentWindow(): { setContentSize(w: number, h: number): void } };
+          };
+        }
+      ).electron;
+      electron.remote.getCurrentWindow().setContentSize(w, h);
+    },
+    width,
+    height,
+  );
+  await browser.waitUntil(
+    () =>
+      browser.execute((w, h) => window.innerWidth === w && window.innerHeight === h, width, height),
+    { timeout: 5000, timeoutMsg: `window is not ${width} x ${height}` },
+  );
 }

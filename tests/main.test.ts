@@ -159,6 +159,18 @@ test('ribbon icon opens the active markdown note', async () => {
   expect(ws.leaves[0]?.viewState).toMatchObject({ state: { file: 'Note.md' } });
 });
 
+test('the ribbon icon carries its data-mm-id (issue #33)', async () => {
+  const plugin = await loadPlugin();
+  expect(plugin.ribbonIcons[0]?.el.getAttribute('data-mm-id')).toBe('ribbon.open-mind-map');
+});
+
+test('dev builds register the element ID overlay command (issue #33)', async () => {
+  const plugin = await loadPlugin();
+  const command = plugin.commands.find((c) => c.id === 'show-element-ids');
+  expect(command?.name).toBe('Show element IDs (dev)');
+  expect(command?.hotkeys).toBeUndefined();
+});
+
 test('ribbon icon without a markdown note shows a notice', async () => {
   const ws = new FakeWorkspace();
   const plugin = await loadPlugin(ws);

@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle, waitForAnimation } from '../helpers';
+import { byId, openMindMap, settle, waitForAnimation } from '../helpers';
 
 interface Box {
   left: number;
@@ -57,8 +57,8 @@ async function expectZoom(label: string, zoom: number): Promise<void> {
   expect(await worldZoom()).toBeCloseTo(zoom, 6);
 }
 
-async function control(label: string): Promise<void> {
-  await browser.$(`.mind-mapper-controls button[aria-label="${label}"]`).click();
+async function control(id: string): Promise<void> {
+  await browser.$(byId(id)).click();
 }
 
 describe('zoom controls', function () {
@@ -70,7 +70,7 @@ describe('zoom controls', function () {
       await settle();
       await browser.executeObsidianCommand('mind-mapper:collapse-all');
       await settle();
-      await control('Fit to view');
+      await control('controls.fit');
       await settle();
       const { width, height, boxes } = await rectsInCanvas();
       expect(boxes.some((b) => b.what.includes('is-collapsed'))).toBe(true);
@@ -95,12 +95,12 @@ describe('zoom controls', function () {
     // The click selected the shown value: typing replaces it.
     await browser.keys(['1', '2', '9', 'Enter']);
     await expectZoom('129%', 1.29);
-    await control('Zoom in');
+    await control('controls.zoom-in');
     await expectZoom('150%', 1.5);
     await input.click();
     await browser.keys(['1', '2', '9', 'Enter']);
     await expectZoom('129%', 1.29);
-    await control('Zoom out');
+    await control('controls.zoom-out');
     await expectZoom('125%', 1.25);
   });
 
@@ -129,7 +129,7 @@ describe('zoom controls', function () {
     await settle();
     await browser.executeObsidianCommand('mind-mapper:reset-zoom');
     await expectZoom('100%', 1);
-    await control('Zoom presets');
+    await control('controls.zoom-presets');
     const menu = browser.$('.menu');
     await menu.waitForExist({ timeout: 5000 });
     const items = await browser.execute(() =>

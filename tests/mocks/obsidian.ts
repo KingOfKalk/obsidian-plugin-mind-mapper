@@ -106,12 +106,17 @@ export class Plugin extends Component {
     this.settingTabs.push(tab);
   }
 
-  readonly ribbonIcons: { icon: string; title: string; callback: (evt: MouseEvent) => unknown }[] =
-    [];
+  readonly ribbonIcons: {
+    icon: string;
+    title: string;
+    callback: (evt: MouseEvent) => unknown;
+    el: HTMLElement;
+  }[] = [];
 
   addRibbonIcon(icon: string, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement {
-    this.ribbonIcons.push({ icon, title, callback });
-    return document.createElement('div');
+    const el = document.createElement('div');
+    this.ribbonIcons.push({ icon, title, callback, el });
+    return el;
   }
 
   registerHoverLinkSource(id: string, info: { display: string; defaultMod: boolean }): void {

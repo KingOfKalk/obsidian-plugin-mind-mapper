@@ -12,6 +12,7 @@ import {
   type WorkspaceLeaf,
 } from 'obsidian';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from '../constants';
+import { setElementId } from '../elementIds';
 import { anchoredTransform, nearestNode } from '../layout/anchor';
 import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layout/nodeSize';
 import { SizeCache } from '../layout/sizeCache';
@@ -1157,10 +1158,12 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     );
     const controls = new MapControls(renderer.canvasEl, this);
     const placeholderEl = this.contentEl.createDiv({ cls: 'mind-mapper-placeholder' });
+    setElementId(placeholderEl, 'map.placeholder');
     const hintEl = renderer.canvasEl.createDiv({
       cls: 'mind-mapper-hint',
       text: t('noContentYet'),
     });
+    setElementId(hintEl, 'map.empty-hint');
     hintEl.hidden = true;
     attachPanZoom(
       this,

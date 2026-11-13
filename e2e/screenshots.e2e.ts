@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { docsMappings } from '../scripts/sandbox-vault.mjs';
 import { browser } from '@wdio/globals';
 import {
+  byId,
   openMindMap,
   openNote,
   setObsidianLanguage,
@@ -424,12 +425,12 @@ describe('screenshots', function () {
         await waitForAnimation();
         await pointerAway();
         await browser.saveScreenshot(`${prefix}-1-selected.png`);
-        await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+        await browser.$(byId('controls.drill')).click();
         await drillEnd();
         await pointerAway();
         await browser.saveScreenshot(`${prefix}-2-drilled.png`);
         await clickNodeEndingWith('/Timeline/Launch day');
-        await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+        await browser.$(byId('controls.drill')).click();
         await drillEnd();
         await pointerAway();
         await browser.saveScreenshot(`${prefix}-3-stacked.png`);
@@ -576,11 +577,11 @@ async function saveControlsShots(prefix: string): Promise<void> {
   const controls = browser.$('.mind-mapper-controls');
   await browser.$('.mind-mapper-world').moveTo();
   await controls.saveScreenshot(`${prefix}.png`);
-  await browser.$('.mind-mapper-zoom-input').click();
+  await browser.$(byId('controls.zoom-input')).click();
   await browser.keys(['8', '7', ',', '5']);
   await controls.saveScreenshot(`${prefix}-editing.png`);
   await browser.keys('Escape');
-  await browser.$('.mind-mapper-zoom-menu').click();
+  await browser.$(byId('controls.zoom-presets')).click();
   await browser.$('.menu').waitForExist({ timeout: 5000 });
   await browser.pause(200);
   await browser.saveScreenshot(`${prefix}-menu.png`);

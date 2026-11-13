@@ -1,14 +1,10 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, openNote, settle } from '../helpers';
+import { byId, openMindMap, openNote, settle } from '../helpers';
 
 const FULL_SCREEN = '.mind-mapper-full-screen';
 
 /** The menus of the control bar, by their button. */
-const MENUS = [
-  '.mind-mapper-zoom-menu',
-  '.mind-mapper-controls button[aria-label="Layout"]',
-  '.mind-mapper-controls button[aria-label="Colour theme"]',
-];
+const MENUS = [byId('controls.zoom-presets'), byId('controls.layout'), byId('controls.theme')];
 
 function activeViewType(): Promise<string | null> {
   return browser.executeObsidian(

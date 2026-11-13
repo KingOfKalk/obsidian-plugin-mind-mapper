@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle, writeNote } from '../helpers';
+import { byId, openMindMap, settle, writeNote } from '../helpers';
 
 const NOTE = 'alignment.md';
 const ROOT = 'Central topic that is long enough to wrap onto two lines';
@@ -103,7 +103,7 @@ async function setLayoutFrontmatter(layout: string): Promise<void> {
 
 /** Opens the control bar's layout menu and clicks `item`. */
 async function chooseLayout(item: string): Promise<void> {
-  await browser.$('.mind-mapper-controls button[aria-label="Layout"]').click();
+  await browser.$(byId('controls.layout')).click();
   await browser.$('.menu').waitForExist({ timeout: 5000 });
   for (const el of await browser.$$('.menu .menu-item')) {
     if ((await el.$('.menu-item-title').getText()) !== item) continue;

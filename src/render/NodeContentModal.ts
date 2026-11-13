@@ -6,6 +6,7 @@ import {
   Modal,
   type WorkspaceLeaf,
 } from 'obsidian';
+import { setElementId } from '../elementIds';
 import type { MindMapNode } from '../parser/types';
 import type { LeafRecency } from '../view/leafRecency';
 import { attachLinkHandling } from './linkHandling';
@@ -34,6 +35,7 @@ export class NodeContentModal extends Modal {
 
   override onOpen(): void {
     this.owner.load();
+    setElementId(this.modalEl, 'modal.node-content');
     this.contentEl.addClass('mind-mapper-full-content', 'markdown-rendered');
     attachLinkHandling(this.contentEl, {
       ...this.link,

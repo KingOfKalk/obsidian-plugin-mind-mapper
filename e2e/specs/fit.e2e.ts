@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
+import { byId, openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
 
 type MindMapper = { updateSettings(patch: object): Promise<void> };
 type ObsidianApp = { plugins: { plugins: Record<string, MindMapper> } };
@@ -13,11 +13,11 @@ async function setFitMaxZoom(percent: number): Promise<void> {
 }
 
 function zoomLabel(): Promise<string> {
-  return browser.$('.mind-mapper-zoom-input').getValue();
+  return browser.$(byId('controls.zoom-input')).getValue();
 }
 
 async function clickFit(): Promise<void> {
-  await browser.$('.mind-mapper-controls button[aria-label="Fit to view"]').click();
+  await browser.$(byId('controls.fit')).click();
   await waitForAnimation();
 }
 

@@ -8,6 +8,8 @@ const production = process.argv[2] === 'production';
 /** `once`: one dev build into the sandbox vault, then exit (no watch). */
 const once = process.argv[2] === 'once';
 const dev = production ? null : resolveDevTargets(process.env, gitCommonDir);
+/** Dev-only code (commands, element ID overlay); `MIND_MAPPER_DEV=1` keeps it in a production build (`npm run ui:images`). */
+const devCode = !production || process.env.MIND_MAPPER_DEV === '1';
 const devPluginDir = dev?.pluginDir ?? '';
 
 if (dev?.vaultDir) {
@@ -41,7 +43,7 @@ const context = await esbuild.context({
   sourcemap: production ? false : 'inline',
   minify: production,
   treeShaking: true,
-  define: { __DEV__: JSON.stringify(!production) },
+  define: { __DEV__: JSON.stringify(devCode) },
   outfile: production ? 'main.js' : `${devPluginDir}/main.js`,
   plugins: production ? [] : [devAssets],
 });

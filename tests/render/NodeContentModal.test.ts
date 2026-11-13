@@ -68,3 +68,11 @@ test('renders the full markdown with its own component, unloaded on close', asyn
   expect((component as MockComponent | null)?.loaded).toBe(false);
   expect(modal.contentEl.childElementCount).toBe(0);
 });
+
+test('the overlay carries its data-mm-id (issue #33)', () => {
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation(() => Promise.resolve());
+  const modal = new NodeContentModal({} as App, node, linkContext());
+  modal.open();
+  expect(modal.modalEl.getAttribute('data-mm-id')).toBe('modal.node-content');
+  modal.close();
+});

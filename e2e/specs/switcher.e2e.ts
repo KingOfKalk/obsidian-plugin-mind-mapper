@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { nodeBoxes, openMindMap, settle, waitForCache, writeNote } from '../helpers';
+import { byId, nodeBoxes, openMindMap, settle, waitForCache, writeNote } from '../helpers';
 
 const NOTE = 'switcher.md';
 const TEXT = [
@@ -89,10 +89,12 @@ function alphaBackground(): Promise<string> {
   });
 }
 
-const button = (label: string) => browser.$(`.mind-mapper-controls button[aria-label="${label}"]`);
+type MenuButton = 'controls.layout' | 'controls.theme';
 
-async function isActive(label: string): Promise<boolean> {
-  return ((await button(label).getAttribute('class')) ?? '').split(' ').includes('is-active');
+const button = (id: MenuButton) => browser.$(byId(id));
+
+async function isActive(id: MenuButton): Promise<boolean> {
+  return ((await button(id).getAttribute('class')) ?? '').split(' ').includes('is-active');
 }
 
 /** Titles of the open menu's items, the checked ones marked with "*". */
@@ -117,9 +119,9 @@ async function clickMenuItem(title: string): Promise<void> {
   throw new Error(`no menu item ${title}`);
 }
 
-/** Opens the menu of the control `label` and clicks `item`. */
-async function choose(label: string, item: string): Promise<void> {
-  await button(label).click();
+/** Opens the menu of the control `id` and clicks `item`. */
+async function choose(id: MenuButton, item: string): Promise<void> {
+  await button(id).click();
   await browser.$('.menu').waitForExist({ timeout: 5000 });
   await clickMenuItem(item);
 }
@@ -155,8 +157,8 @@ describe('layout and colour theme switcher', function () {
 
   it('the layout menu lists the six layouts, the current one checked; each choice changes the node positions, never the note', async function () {
     const before = await noteFile();
-    expect(await isActive('Layout')).toBe(false);
-    await button('Layout').click();
+    expect(await isActive('controls.layout')).toBe(false);
+    await button('controls.layout').click();
     await browser.$('.menu').waitForExist({ timeout: 5000 });
     expect(await menuItems()).toEqual([
       'Balanced clockwise',
@@ -181,14 +183,14 @@ describe('layout and colour theme switcher', function () {
       ['Left → right', 'right', 'right'],
     ];
     for (const [item, alpha, gamma] of expected) {
-      await choose('Layout', item);
+      await choose('controls.layout', item);
       await settle();
       expect({ item, alpha: await side(ALPHA), gamma: await side(GAMMA) }).toEqual({
         item,
         alpha,
         gamma,
       });
-      expect(await isActive('Layout')).toBe(true);
+      expect(await isActive('controls.layout')).toBe(true);
     }
     expect(await noteFile()).toEqual(before);
   });
@@ -198,7 +200,7 @@ describe('layout and colour theme switcher', function () {
     expect(await themeClass()).toEqual(['mind-mapper-theme-ocean']);
     const ocean = await alphaBackground();
     const boxes = await nodeBoxes();
-    await button('Colour theme').click();
+    await button('controls.theme').click();
     await browser.$('.menu').waitForExist({ timeout: 5000 });
     expect(await menuItems()).toEqual([
       'None',
@@ -209,18 +211,18 @@ describe('layout and colour theme switcher', function () {
       "Use the note's theme",
     ]);
     await browser.keys('Escape');
-    await choose('Colour theme', 'Rainbow');
+    await choose('controls.theme', 'Rainbow');
     expect(await themeClass()).toEqual(['mind-mapper-theme-rainbow']);
     expect(await alphaBackground()).not.toBe(ocean);
     expect(await nodeBoxes()).toEqual(boxes);
-    expect(await isActive('Colour theme')).toBe(true);
-    expect(await isActive('Layout')).toBe(false);
+    expect(await isActive('controls.theme')).toBe(true);
+    expect(await isActive('controls.layout')).toBe(false);
     expect(await noteFile()).toEqual(before);
   });
 
   it('the overrides survive an Obsidian restart; "Use the note\'s …" goes back to the frontmatter', async function () {
-    await choose('Layout', 'Top → bottom');
-    await choose('Colour theme', 'Accent colour');
+    await choose('controls.layout', 'Top → bottom');
+    await choose('controls.theme', 'Accent colour');
     await settle();
     // Obsidian saves the workspace debounced.
     await browser.waitUntil(
@@ -242,21 +244,21 @@ describe('layout and colour theme switcher', function () {
     await settle();
     expect(await side(ALPHA)).toBe('below');
     expect(await themeClass()).toEqual(['mind-mapper-theme-accent']);
-    expect(await isActive('Layout')).toBe(true);
-    expect(await isActive('Colour theme')).toBe(true);
+    expect(await isActive('controls.layout')).toBe(true);
+    expect(await isActive('controls.theme')).toBe(true);
 
-    await choose('Layout', "Use the note's layout");
+    await choose('controls.layout', "Use the note's layout");
     await settle();
     expect(await side(ALPHA)).toBe('right');
-    expect(await isActive('Layout')).toBe(false);
-    await choose('Colour theme', "Use the note's theme");
+    expect(await isActive('controls.layout')).toBe(false);
+    await choose('controls.theme', "Use the note's theme");
     expect(await themeClass()).toEqual(['mind-mapper-theme-ocean']);
-    expect(await isActive('Colour theme')).toBe(false);
+    expect(await isActive('controls.theme')).toBe(false);
   });
 
   it('frontmatter edits do not replace an active override; without one they apply', async function () {
-    await choose('Layout', 'Top → bottom');
-    await choose('Colour theme', 'Forest');
+    await choose('controls.layout', 'Top → bottom');
+    await choose('controls.theme', 'Forest');
     await setFrontmatter('mind-mapper-layout', 'right-to-left');
     await setFrontmatter('mind-mapper-theme', 'none');
     // Live update is debounced.
@@ -265,8 +267,8 @@ describe('layout and colour theme switcher', function () {
     expect(await side(ALPHA)).toBe('below');
     expect(await themeClass()).toEqual(['mind-mapper-theme-forest']);
 
-    await choose('Layout', "Use the note's layout");
-    await choose('Colour theme', "Use the note's theme");
+    await choose('controls.layout', "Use the note's layout");
+    await choose('controls.theme', "Use the note's theme");
     await settle();
     expect(await side(ALPHA)).toBe('left');
     expect(await themeClass()).toEqual(['mind-mapper-theme-none']);
@@ -278,8 +280,8 @@ describe('layout and colour theme switcher', function () {
     expect(await side(ALPHA)).toBe('left');
     await browser.executeObsidianCommand('mind-mapper:next-theme');
     expect(await themeClass()).toEqual(['mind-mapper-theme-forest']);
-    expect(await isActive('Layout')).toBe(true);
-    expect(await isActive('Colour theme')).toBe(true);
+    expect(await isActive('controls.layout')).toBe(true);
+    expect(await isActive('controls.theme')).toBe(true);
 
     await browser.executeObsidianCommand('mind-mapper:change-layout');
     await browser.$('.menu').waitForExist({ timeout: 5000 });
@@ -313,10 +315,10 @@ describe('layout and colour theme switcher', function () {
   it('the buttons work in full screen', async function () {
     await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
     await browser.$('.mind-mapper-full-screen').waitForExist({ timeout: 5000 });
-    await choose('Layout', 'Bottom → top');
+    await choose('controls.layout', 'Bottom → top');
     await settle();
     expect(await side(ALPHA)).toBe('above');
-    await choose('Colour theme', 'None');
+    await choose('controls.theme', 'None');
     expect(await themeClass()).toEqual(['mind-mapper-theme-none']);
     await browser.keys('Escape');
     await browser.$('.mind-mapper-full-screen').waitForExist({ reverse: true, timeout: 5000 });
