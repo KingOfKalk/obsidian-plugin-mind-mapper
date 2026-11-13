@@ -39,3 +39,54 @@ export function splitNestedTags(el: HTMLElement): void {
     setElementId(a, 'node.tag');
   }
 }
+
+/** On a content element with trailing tags: it may stretch to its node (styles.css, issue #92). */
+export const TRAILING_TAGS_CLASS = 'has-trailing-tags';
+
+const TEXT_BLOCKS = 'p, h1, h2, h3, h4, h5, h6, li';
+
+/**
+ * Trailing tags (issue #92): the tags at the end of a paragraph, heading or list item, after its
+ * last text, go into one `span.mind-mapper-trailing-tags`, which styles.css moves to the side
+ * opposite the node's text alignment. Tags in the middle of a sentence, inside formatting, before
+ * a line break or without text before them stay inline. Idempotent.
+ */
+export function markTrailingTags(el: HTMLElement): void {
+  for (const block of Array.from(el.querySelectorAll<HTMLElement>(TEXT_BLOCKS))) {
+    if (block.querySelector(':scope > .mind-mapper-trailing-tags')) continue;
+    const tags: ChildNode[] = [];
+    let node = block.lastChild;
+    while (node && (isBlank(node) || isTag(node))) {
+      tags.unshift(node);
+      node = node.previousSibling;
+    }
+    // Trailing whitespace stays outside the wrapper; the first wrapped node is a tag.
+    while (tags.length > 0 && !isTag(tags[0])) tags.shift();
+    const first = tags[0];
+    if (!first || !hasTextBefore(first)) continue;
+    // Up to the last tag: whitespace after it stays outside the wrapper too.
+    let end = tags.length;
+    while (!isTag(tags[end - 1])) end--;
+    const wrapper = block.doc.createElement('span');
+    wrapper.className = 'mind-mapper-trailing-tags';
+    first.before(wrapper);
+    wrapper.append(...tags.slice(0, end));
+  }
+  el.toggleClass(TRAILING_TAGS_CLASS, el.querySelector('.mind-mapper-trailing-tags') !== null);
+}
+
+function isTag(node: ChildNode | undefined): boolean {
+  return node?.instanceOf(HTMLElement) === true && node.matches('a.tag');
+}
+
+function isBlank(node: ChildNode): boolean {
+  return node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() === '';
+}
+
+/** Some text (not only tags) before `node` in its block. */
+function hasTextBefore(node: ChildNode): boolean {
+  for (let n = node.previousSibling; n; n = n.previousSibling) {
+    if (!isTag(n) && (n.textContent ?? '').trim() !== '') return true;
+  }
+  return false;
+}

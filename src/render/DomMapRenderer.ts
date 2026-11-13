@@ -3,6 +3,7 @@ import { setElementId, setElementState } from '../elementIds';
 import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
+import { COUNT_BUBBLE, countBubbleWidth } from '../layout/kanban';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
@@ -17,6 +18,9 @@ import {
 } from './culling';
 import { branchAttr, levelAttr, subtaskAttr, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
+
+/** The room of a kanban header's card count bubble (styles.css). */
+const COUNT_SPACE = '--mind-mapper-count-space';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 /** New nodes rendered per culling pass (one pass per frame): keeps panning into new areas smooth. */
@@ -647,7 +651,13 @@ export class DomMapRenderer {
     if (count === undefined) {
       dom.countEl?.remove();
       delete dom.countEl;
+      dom.el.style.removeProperty(COUNT_SPACE);
       return;
+    }
+    // Content stretched to the node (trailing tags, issue #92) stops before the bubble.
+    const space = `${COUNT_BUBBLE.gap + countBubbleWidth(count)}px`;
+    if (dom.el.style.getPropertyValue(COUNT_SPACE) !== space) {
+      dom.el.style.setProperty(COUNT_SPACE, space);
     }
     if (!dom.countEl) {
       dom.countEl = dom.el.createSpan({ cls: 'mind-mapper-card-count' });

@@ -167,9 +167,44 @@
   list-style: none;
 }
 
+/* Tags in the map (node content and the content overlay, issue #92): small corners like the rest
+   of the map. Editor and reading view keep Obsidian's look. */
+.mind-mapper-node-content,
+.mind-mapper-full-content {
+  --tag-radius: var(--radius-s);
+}
+
+/* Branch colors (issue #92): in themes that color branches, tags in a node (not the root) take
+   its branch color instead of Obsidian's tag colors: Obsidian's tag variables are redefined on
+   the tag, so the pills below and plain tags follow. The branch color is mixed towards the text
+   color (darker in light mode, lighter in dark mode): the scope and outlines a quarter, the text
+   of values and plain tags more, so light branch colors (yellow, green, cyan) stay readable on
+   the tint and the scope stands out from a filled level 1 node. Theme "none" and the root keep
+   Obsidian's colors. */
+.mind-mapper-canvas:not(.mind-mapper-theme-none) .mind-mapper-node[data-branch] a.tag {
+  --tag-color: color-mix(in srgb, var(--mind-mapper-branch) 75%, var(--text-normal));
+  --tag-color-hover: var(--tag-color);
+  --tag-background: color-mix(in srgb, var(--mind-mapper-branch) 12%, var(--background-primary));
+  --tag-background-hover: color-mix(
+    in srgb,
+    var(--mind-mapper-branch) 24%,
+    var(--background-primary)
+  );
+  --mind-mapper-tag-text: color-mix(in srgb, var(--mind-mapper-branch) 60%, var(--text-normal));
+}
+
+/* Plain tags in branch colors look like the value part of a pill: outlined. An inset shadow, not a
+   border: the same size in every theme (a theme switch does not measure again). */
+.mind-mapper-canvas:not(.mind-mapper-theme-none)
+  .mind-mapper-node[data-branch]
+  a.tag:not(.mind-mapper-tag) {
+  box-shadow: inset 0 0 0 1px var(--tag-color);
+  color: var(--mind-mapper-tag-text);
+}
+
 /* Nested tags (issue #57, src/render/nestedTags.ts): a two-part pill like a GitLab scoped label,
-   the scope filled, the value outlined, in Obsidian's tag colors (--tag-*), not the branch color.
-   The value sits on the canvas background below the tag tint, so it reads on filled nodes too. */
+   the scope filled, the value outlined, in the tag colors above. The value sits on the canvas
+   background below the tag tint, so it reads on filled nodes too. */
 a.tag.mind-mapper-tag,
 a.tag.mind-mapper-tag:hover {
   display: inline-flex;
@@ -194,7 +229,7 @@ a.tag.mind-mapper-tag:hover {
 .mind-mapper-tag-value {
   padding-inline-start: calc(var(--tag-padding-x) * 0.6);
   background: var(--tag-background);
-  color: var(--tag-color);
+  color: var(--mind-mapper-tag-text, var(--tag-color));
 }
 
 a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
@@ -204,6 +239,45 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
 /* The `/` stays in the text (copying gives the full tag) but takes no room. */
 .mind-mapper-tag-separator {
   font-size: 0;
+}
+
+/* Trailing tags (issue #92, markTrailingTags): the tags at the end of a paragraph, heading or
+   list item sit on the side opposite the text alignment: floated, so they share the last line
+   when there is room and wrap to their own line, still on that side, when there is not. Centered
+   text and blocks keep them inline. The content stretches to its node (a kanban card is wider
+   than its text), but not under a column header's count bubble; the view measures it without
+   the stretch (`is-measuring`, src/view/nodeMeasurer.ts). */
+.mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
+  .mind-mapper-node-content.has-trailing-tags:not(.is-measuring) {
+  min-width: calc(100% - var(--mind-mapper-count-space, 0px));
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
+  :is(p, h1, h2, h3, h4, h5, h6, li):has(> .mind-mapper-trailing-tags) {
+  display: flow-root;
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-left .mind-mapper-trailing-tags {
+  float: right;
+  margin-inline-start: var(--size-4-2);
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-right .mind-mapper-trailing-tags {
+  float: left;
+  margin-inline-end: var(--size-4-2);
+}
+
+/* A task's checkbox hangs into the item's start margin. Right-aligned, the tags take the item's
+   start edge instead (the node's edge) and leave the checkbox room after them. */
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-right
+  .task-list-item:has(> .mind-mapper-trailing-tags) {
+  margin-inline-start: 0;
+}
+
+.mind-mapper-node:not(.is-block, .is-render-error).is-align-right
+  .task-list-item
+  > .mind-mapper-trailing-tags {
+  margin-inline-end: calc(var(--size-4-2) + var(--checkbox-size) * 1.5);
 }
 
 /* Image embed nodes (a node that is a single image): fixed thumbnail box, so the size is known

@@ -1,6 +1,8 @@
 import { type Clip, measuredSize, type NodeLimits } from '../layout/nodeSize';
 import type { SizeCache } from '../layout/sizeCache';
 import type { MapLayout, Size } from '../layout/types';
+import type { MindMapNode } from '../parser/types';
+import { TRAILING_TAGS_CLASS } from '../render/nestedTags';
 
 const RELAYOUT_DEBOUNCE_MS = 100;
 
@@ -94,6 +96,19 @@ export class NodeMeasurer {
     const { width, height } = this.host.canvasSize();
     if (width === 0 || height === 0) return;
     const nodes = new Map(layout.nodes.map((p) => [p.node.id, p.node]));
+    // Content with trailing tags stretches to its node (styles.css, issue #92); measured is its
+    // natural size, or a node would never get narrower again. Restored before the next frame,
+    // so the ResizeObserver sees no change.
+    const stretched = elements.filter((el) => el.classList.contains(TRAILING_TAGS_CLASS));
+    for (const el of stretched) el.classList.add('is-measuring');
+    try {
+      this.measureEach(elements, nodes);
+    } finally {
+      for (const el of stretched) el.classList.remove('is-measuring');
+    }
+  }
+
+  private measureEach(elements: Element[], nodes: ReadonlyMap<string, MindMapNode>): void {
     let changed = false;
     for (const el of elements) {
       const id = this.observed.get(el);
