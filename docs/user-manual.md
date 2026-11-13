@@ -97,7 +97,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 
 ### Links
 
-- Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click opens in a new tab, hover shows the page preview
+- Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click opens in a new tab, `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
 - Links to a heading or block in the same note are also drawn as dashed lines between the two nodes:
   - `[[#Heading]]`, `[[#Heading#Subheading]]`, `[[#^block-id]]`, `[[This note#Heading]]`
   - If one end is inside a collapsed branch, the line ends at the nearest visible node above it
@@ -331,7 +331,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 
 | Group | Setting | Control | Range | Default | Does |
 |---|---|---|---|---|---|
-| Map | Default layout | dropdown | the seven [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
+| Map | Default layout | dropdown | the seven [layouts](#layouts), labelled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
@@ -376,7 +376,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdown and the controls bar menus show translated labels)
+- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdowns and the control bar menus show translated labels)
 
 ## Large notes
 
@@ -393,6 +393,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - Dashed link lines only connect headings and blocks within the same note; they are not routed around nodes
 - The map updates when Obsidian saves the note (about 2 s after you stop typing), not on every keystroke
 - Collapsed branches are not remembered across restarts
+- Renaming the root H1 resets collapse state, selection and drill-down (node IDs start with the root text)
 - A second `--- … ---` block in the middle of a note is not frontmatter: its last line becomes a heading
 - No export, no search, no editing in the map
 
