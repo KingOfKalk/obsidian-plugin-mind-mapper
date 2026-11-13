@@ -13,5 +13,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['tests/setup.ts'],
     include: ['tests/**/*.test.ts'],
+    // `npm run test:coverage`; CI writes the json-summary totals to the job summary. No threshold.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      reporter: ['text-summary', 'json-summary'],
+    },
   },
 });

@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "fixtures:pull": "node scripts/sandbox-vault.mjs pull-fixtures",
     "test:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
     "@wdio/cli": "^10.2.0",
     "@wdio/globals": "^10.2.0",
     "@wdio/local-runner": "^10.2.0",

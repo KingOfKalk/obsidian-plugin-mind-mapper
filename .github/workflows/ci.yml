@@ -13,50 +13,99 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Stages: Lint -> Test (unit, e2e) -> Build. Job summaries and annotations come from
+# scripts/ci-summary.mjs. `npm run check` stays the local all-in-one gate.
 jobs:
-  # The same gate as locally: format check, lint, typecheck, unit tests, production build.
-  check:
+  lint:
+    name: Lint
     runs-on: ubuntu-26.04
-    timeout-minutes: 15
-    env:
-      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup
 
-      - name: Check (format, lint, typecheck, unit tests, build)
-        run: npm run check
+      # The three checks continue on error so all of them are reported; the last step fails the
+      # job if any of them failed.
+      - name: Prettier
+        id: prettier
+        continue-on-error: true
+        run: |
+          status=0
+          npm run --silent format:check > "$RUNNER_TEMP/prettier.txt" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/prettier.txt"
+          exit "$status"
 
-      - name: Artifact name
-        id: artifact
-        run: echo "name=mind-mapper-${HEAD_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: ESLint
+        id: eslint
+        continue-on-error: true
+        run: npm run --silent lint -- --format json --output-file "$RUNNER_TEMP/eslint.json"
 
-      - name: Upload plugin artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ steps.artifact.outputs.name }}
-          path: |
-            main.js
-            manifest.json
-            styles.css
-          if-no-files-found: error
-          retention-days: 14
+      # Covers src, tests, scripts and e2e (`tsc --noEmit && tsc --noEmit -p e2e`).
+      - name: TypeScript
+        id: tsc
+        continue-on-error: true
+        run: |
+          status=0
+          npm run --silent typecheck > "$RUNNER_TEMP/tsc.txt" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/tsc.txt"
+          exit "$status"
 
-  # End-to-end tests in real, headless Obsidian (wdio-obsidian-service under Xvfb).
-  e2e:
+      - name: Summary
+        env:
+          PRETTIER_OUTCOME: ${{ steps.prettier.outcome }}
+          ESLINT_OUTCOME: ${{ steps.eslint.outcome }}
+          TSC_OUTCOME: ${{ steps.tsc.outcome }}
+        run: >-
+          node scripts/ci-summary.mjs lint
+          --prettier "$RUNNER_TEMP/prettier.txt" --prettier-outcome "$PRETTIER_OUTCOME"
+          --eslint "$RUNNER_TEMP/eslint.json" --eslint-outcome "$ESLINT_OUTCOME"
+          --tsc "$RUNNER_TEMP/tsc.txt" --tsc-outcome "$TSC_OUTCOME"
+
+      - name: Fail if any check failed
+        if: steps.prettier.outcome != 'success' || steps.eslint.outcome != 'success' || steps.tsc.outcome != 'success'
+        env:
+          PRETTIER_OUTCOME: ${{ steps.prettier.outcome }}
+          ESLINT_OUTCOME: ${{ steps.eslint.outcome }}
+          TSC_OUTCOME: ${{ steps.tsc.outcome }}
+        run: |
+          echo "::error::Prettier: ${PRETTIER_OUTCOME}, ESLint: ${ESLINT_OUTCOME}, TypeScript: ${TSC_OUTCOME}. See the job summary."
+          exit 1
+
+  # One matrix job, so the workflow graph shows a single "Test" stage with both suites.
+  # unit: Vitest with coverage, no threshold. e2e: real, headless Obsidian (wdio-obsidian-service
+  # under Xvfb); `npm run test:e2e` builds the plugin itself.
+  test:
+    name: Test
+    needs: lint
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.suite == 'e2e' && 30 || 10 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, e2e]
     steps:
       - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup
+        id: setup
+
+      - name: Unit tests with coverage
+        if: matrix.suite == 'unit'
+        run: npm run test:coverage
+
+      # Also runs when tests fail, as long as dependencies are installed.
+      - name: Coverage summary
+        if: ${{ matrix.suite == 'unit' && !cancelled() && steps.setup.outcome == 'success' }}
+        run: node scripts/ci-summary.mjs coverage coverage/coverage-summary.json
 
       - name: Install Xvfb and Electron libraries
+        if: matrix.suite == 'e2e'
         run: bash scripts/install-e2e-deps.sh
 
       # Key the Obsidian download cache by the app and installer versions wdio.conf.mts resolves.
       - name: Obsidian version
+        if: matrix.suite == 'e2e'
         id: obsidian
         run: |
           node --input-type=module -e '
@@ -67,10 +116,97 @@ jobs:
           ' >> "$GITHUB_OUTPUT"
 
       - name: Cache Obsidian
+        if: matrix.suite == 'e2e'
         uses: actions/cache@v6
         with:
           path: .obsidian-cache
           key: obsidian-${{ runner.os }}-${{ runner.arch }}-${{ steps.obsidian.outputs.version }}
 
       - name: E2E tests
+        if: matrix.suite == 'e2e'
         run: npm run test:e2e
+
+  # Production build, plugin artifact and bundle size. Pushes to main upload `bundle-size.json` as
+  # the baseline; pull requests compare against the latest one.
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    # actions: read lets `gh run download` fetch the bundle size baseline.
+    permissions:
+      contents: read
+      actions: read
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PLUGIN_ARTIFACT_RETENTION_DAYS: 14
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify main.js exists
+        run: test -f main.js
+
+      - name: Measure bundle size
+        id: size
+        run: |
+          node scripts/ci-summary.mjs size main.js --sha "$HEAD_SHA" --out "$RUNNER_TEMP/bundle-size.json"
+          echo "artifact-name=mind-mapper-${HEAD_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload bundle size baseline
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-size
+          path: ${{ runner.temp }}/bundle-size.json
+          if-no-files-found: error
+          retention-days: 90
+
+      # A missing baseline (first run, expired artifact) is not an error: the summary then says
+      # "No baseline yet".
+      - name: Download bundle size baseline
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          run_id=$(gh run list --repo "$REPO" --workflow ci.yml --branch main --event push \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -z "$run_id" ]; then
+            echo "No successful CI run on main found; no baseline."
+            exit 0
+          fi
+          gh run download "$run_id" --repo "$REPO" --name bundle-size --dir "$RUNNER_TEMP/baseline" \
+            || echo "Run $run_id has no bundle-size artifact; no baseline."
+
+      - name: Upload plugin artifact
+        id: plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.size.outputs.artifact-name }}
+          path: |
+            main.js
+            manifest.json
+            styles.css
+          if-no-files-found: error
+          retention-days: ${{ env.PLUGIN_ARTIFACT_RETENTION_DAYS }}
+
+      - name: Summary
+        if: ${{ !cancelled() && steps.size.outcome == 'success' }}
+        env:
+          ARTIFACT_NAME: ${{ steps.plugin.outcome == 'success' && steps.size.outputs.artifact-name || '' }}
+          ARTIFACT_URL: ${{ steps.plugin.outputs.artifact-url }}
+        run: >-
+          node scripts/ci-summary.mjs build
+          --size "$RUNNER_TEMP/bundle-size.json"
+          --baseline "$RUNNER_TEMP/baseline/bundle-size.json"
+          --manifest manifest.json
+          --event "$GITHUB_EVENT_NAME"
+          --artifact-name "$ARTIFACT_NAME"
+          --artifact-url "$ARTIFACT_URL"
+          --retention-days "$PLUGIN_ARTIFACT_RETENTION_DAYS"
