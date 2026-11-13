@@ -570,7 +570,6 @@ describe('screenshots', function () {
           [':has(a.tag[href="#status/closed"])', 'heading'],
           // Issue #92: a node on each side of the map (text aligned left / right).
           [':has(a.tag[href="#status/open"])', 'heading-open'],
-          [':has(a.tag[href="#bug"])', 'item'],
         ] as const) {
           await browser.$(`.mind-mapper-node${selector}`).saveScreenshot(`${name}-${suffix}.png`);
         }
