@@ -13,12 +13,26 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v3
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # esbuild and typescript produce the shipped main.js: their updates need a manual merge.
+      # Exact name match (not a substring), so typescript-eslint still auto-merges.
+      - name: Check for build toolchain updates
+        id: toolchain
+        env:
+          DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        run: |
+          names=$(jq -r '[.[].dependencyName | select(. == "esbuild" or . == "typescript")] | join(", ")' <<<"$DEPENDENCIES")
+          echo "names=${names}" >> "$GITHUB_OUTPUT"
+          if [ -n "$names" ]; then
+            echo "::notice::Build toolchain update (${names}): not auto-merged, needs a manual review and merge."
+          fi
+
       - name: Approve dev-dep or github-actions minor/patch updates
         if: |
+          steps.toolchain.outputs.names == '' &&
           (steps.metadata.outputs.dependency-type == 'direct:development' ||
            steps.metadata.outputs.package-ecosystem == 'github_actions') &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
@@ -30,6 +44,7 @@ jobs:
 
       - name: Enable auto-merge for dev-dep or github-actions minor/patch updates
         if: |
+          steps.toolchain.outputs.names == '' &&
           (steps.metadata.outputs.dependency-type == 'direct:development' ||
            steps.metadata.outputs.package-ecosystem == 'github_actions') &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||

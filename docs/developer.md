@@ -44,6 +44,12 @@
   - Every push to `main` updates the release PR ("chore(main): release x.y.z"): version from the Conventional Commits since the last release (`fix` = patch, `feat` = minor, `!`/`BREAKING CHANGE` = major), `CHANGELOG.md`, `package.json`, `package-lock.json`, `manifest.json`
   - A second job adds `"<version>": "<minAppVersion>"` to `versions.json` on the release PR branch (commit `chore: add <version> to versions.json`)
   - Merging the release PR creates the tag and the GitHub release `x.y.z` (no `v` prefix: Obsidian needs the tag to equal the manifest version), builds, and uploads `main.js`, `manifest.json`, `styles.css`, `versions.json` and `mind-mapper-x.y.z.zip` (folder `mind-mapper/` with the three plugin files)
+  - Jobs and token permissions (workflow default `contents: read`; BRAT users install what this builds)
+    - `release-please` (`contents: write`, `pull-requests: write`): only the release-please action; outputs `release_created`, `tag_name`, `version`, `prs_created`, `pr`
+    - `build` (needs `release-please`, only when `release_created`; `contents: read`, checkout without persisted credentials): `npm ci`, `npm run build`, the zip; uploads the five files as artifact `release-assets` (7 days)
+    - `publish` (needs `build`; `contents: write`): no checkout, no npm; downloads `release-assets` and runs `gh release upload --clobber` (a re-run replaces what a failed attempt uploaded)
+    - `versions-json` (needs `release-please`, only when `prs_created`; `contents: write`): no npm
+  - One release run at a time (concurrency group `release-<ref>`, queued runs are not cancelled)
   - Force a version: a commit on `main` with the footer `Release-As: x.y.z`
   - Commit messages on `main` (squash-merge titles) are the changelog: keep them Conventional Commits
 - CI (`.github/workflows/`)
@@ -56,7 +62,9 @@
     - Required checks on `main`: "Lint", "Test (unit)", "Test (e2e)", "Build"
     - Locally `npm run check` still runs format check, lint, typecheck, unit tests and build in one go; `npm run test:coverage` writes `coverage/` (git-ignored)
   - `codeql.yml`: CodeQL (security-and-quality) on push, pull request and weekly
-  - `.github/dependabot.yml`: weekly npm and GitHub Actions updates, grouped; `dependabot-auto-merge.yml` approves and auto-merges minor and patch updates of dev dependencies and actions
+  - Actions are pinned by full commit SHA with the version as a comment (`uses: actions/checkout@<sha> # v7.0.1`); new `uses:` lines follow the same form. Resolve the SHA from the official repository: `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`. Local actions (`./.github/actions/setup`) stay path references
+  - `.github/dependabot.yml`: weekly npm and GitHub Actions updates, grouped, with a 7-day cooldown (a new version is proposed only after it is a week old; security updates are not delayed). The GitHub Actions ecosystem covers `.github/workflows` and `.github/actions/*` and updates SHA and version comment together
+  - `dependabot-auto-merge.yml` approves and auto-merges minor and patch updates of dev dependencies and actions, except updates that touch `esbuild` or `typescript` (they produce the shipped `main.js`, group `build-toolchain`): those need a manual review and merge
   - `notify-failure.yml`: opens (or comments on) an issue labelled `workflow-failure` when CI or Release fails on `main`
   - Node.js version: `engines.node` in `package.json` (shared setup in `.github/actions/setup/action.yml`)
 - Community submission: the manifest follows the directory rules (checked in `tests/manifest.test.ts`); the id `mind-mapper` and the name "Mind Mapper" were not taken on 2026-11-08
