@@ -15,7 +15,7 @@ import {
   SpatialIndex,
   worldViewport,
 } from './culling';
-import { branchAttr, levelAttr, themeClass } from './themes';
+import { branchAttr, levelAttr, subtaskAttr, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -595,7 +595,7 @@ export class DomMapRenderer {
   }
 
   private placeNode(
-    { node, x, y, width, height, depth, branch, align, count }: PositionedNode,
+    { node, x, y, width, height, depth, branch, align, count, subtask }: PositionedNode,
     pool: Map<string, HTMLElement[]>,
   ): void {
     let dom = this.nodes.get(node.id);
@@ -630,6 +630,7 @@ export class DomMapRenderer {
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);
     setAttr(el, 'data-level', levelAttr(depth));
+    setAttr(el, 'data-subtask', subtaskAttr(subtask));
     this.setBranch(el, branch);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;

@@ -112,7 +112,7 @@ The layout button (boxes joined by a line) and the color theme button (palette) 
 | `circle-clockwise` (default) | Balanced: the first half of the first-level branches on the right (top to bottom), the rest on the left (bottom to top) |
 | `circle-counter-clockwise` | The same, mirrored |
 | `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top` | All branches grow in that direction |
-| `kanban` | A board: the root as headline, first-level nodes as columns side by side with their card count, their children as cards, everything deeper as indented subtasks; no lines, no collapse buttons on nodes (Collapse all leaves the column headers) |
+| `kanban` | A board: the root as headline, first-level nodes as columns side by side with their card count, their children as cards, everything deeper as subtasks in lighter boxes below their card; no lines, no collapse buttons on nodes (Collapse all leaves the column headers) |
 
 ## Frontmatter
 
@@ -125,7 +125,7 @@ The layout button (boxes joined by a line) and the color theme button (palette) 
 
 `mind-mapper-collapsed: true` opens the map like after "Collapse all": root and first level visible, and branches added by later edits stay collapsed until "Expand all". Changing the value while the map is open collapses or expands all once; other edits keep what you expanded or collapsed.
 
-`mind-mapper-theme` gives each first-level branch its own color, in note order, repeating after the last one; everything below takes the color of its branch. First-level nodes are filled with it, second-level nodes lightly tinted, deeper nodes are plain text on a colored line; code, tables, callouts and other blocks keep a thin border in the branch color. The root is large bold text. `rainbow`: red, orange, yellow, green, cyan, blue, purple. `ocean`: blue, cyan, green, purple. `forest`: green, yellow, orange, olive. `accent`: Obsidian's accent color for every branch. `none`: the same look in grays. The colors come from the Obsidian theme, so they suit light and dark mode.
+`mind-mapper-theme` gives each first-level branch its own color, in note order, repeating after the last one; everything below takes the color of its branch. First-level nodes are filled with it, second-level nodes lightly tinted, deeper nodes are plain text on a colored line (kanban subtasks: lighter boxes); code, tables, callouts and other blocks keep a thin border in the branch color. The root is large bold text. `rainbow`: red, orange, yellow, green, cyan, blue, purple. `ocean`: blue, cyan, green, purple. `forest`: green, yellow, orange, olive. `accent`: Obsidian's accent color for every branch. `none`: the same look in grays. The colors come from the Obsidian theme, so they suit light and dark mode.
 
 An unknown layout or theme, a title that is not text or a `mind-mapper-collapsed` that is not `true`/`false` falls back to the default and shows a notice once per note and value (per session).
 

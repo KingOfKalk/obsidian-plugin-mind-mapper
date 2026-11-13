@@ -32,6 +32,22 @@ const branchesNote = [
   '',
 ].join('\n\n');
 
+/** Issue #91: a kanban card with nested subtasks (four levels below the card) and a divider. */
+const kanbanSubtasksNote = `---\nmind-mapper-layout: kanban\n---\n${[
+  '# Release',
+  '## To do',
+  '### Write the release notes',
+  '- Draft\n  - Outline\n    - Headings\n      - Wording\n  - First pass\n- Review with legal',
+  '---',
+  'Publish on the blog',
+  '### Book the venue',
+  '## Doing',
+  '- Website redesign\n  - Landing page\n  - Pricing page\n- Beta feedback',
+  '## Done',
+  '- Name and logo\n- Launch date set',
+  '',
+].join('\n\n')}`;
+
 /**
  * Visual check: saves screenshots of a few maps to SCREENSHOT_DIR (default: e2e/screenshots/).
  * Not part of `test:e2e`; run with `npm run screenshots:e2e`.
@@ -541,6 +557,38 @@ describe('screenshots', function () {
     await drillEnd();
     await browser.keys('Escape');
   });
+
+  // Issue #91: kanban subtasks as boxes without indent, lighter per depth, a tighter gap within a
+  // task: a card with nested subtasks and a divider, fitted and at 100 % with a subtask selected;
+  // light, dark, loud palette and theme none.
+  for (const [theme, mode, loud] of [
+    ['rainbow', 'light', false],
+    ['rainbow', 'dark', false],
+    ['rainbow', 'light', true],
+    ['none', 'light', false],
+    ['none', 'dark', false],
+  ] as const) {
+    it(`kanban subtasks ${loud ? 'loud' : `${theme} ${mode}`}`, async function () {
+      await useTheme(theme, mode);
+      await writeNote('kanban-subtasks.md', kanbanSubtasksNote);
+      await openMindMap('kanban-subtasks.md');
+      await settle();
+      const name = loud ? `${dir}/loud-kanban-subtasks` : `${dir}/kanban-subtasks-${theme}-${mode}`;
+      const shoot = async () => {
+        await saveFullScreenShot(`${name}.png`);
+        // In full screen at 100 %, a subtask selected.
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await clickNodeEndingWith('/To do/Write the release notes/#1/#1');
+        await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+        await waitForAnimation();
+        await pointerAway();
+        await browser.saveScreenshot(`${name}-100.png`);
+        await browser.keys('Escape');
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
 
   // Issue #57: nested tags as two-part pills (plain, two and three levels; in filled level 1
   // headings and kanban column headers): light, dark and loud palette, the map and its nodes up close.

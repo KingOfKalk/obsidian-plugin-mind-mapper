@@ -1204,13 +1204,21 @@ describe('kanban (issue #32)', () => {
     const left = columns[0]?.x ?? 0;
     const last = columns[2] ?? root;
     expect(root.x + root.width / 2).toBeCloseTo((left + last.x + last.width) / 2);
-    // Cards below their header, subtasks indented below their card.
+    // Cards below their header, subtasks below their card as boxes of its width (issue #91).
     const card = nodeBox(view, `${P}/To do/#1`);
     const subtask = nodeBox(view, `${P}/To do/#1/#1`);
     expect(card.x).toBe(columns[0]?.x);
     expect(card.y).toBeGreaterThan((columns[0]?.y ?? 0) + (columns[0]?.height ?? 0));
-    expect(subtask.x).toBeGreaterThan(card.x);
+    expect(subtask.x).toBe(card.x);
+    expect(subtask.width).toBe(card.width);
     expect(subtask.y).toBeGreaterThan(card.y + card.height);
+    const subtaskOf = (id: string) =>
+      view.contentEl.querySelector(`[data-node-id="${id}"]`)?.getAttribute('data-subtask');
+    expect([`${P}/To do`, `${P}/To do/#1`, `${P}/To do/#1/#1`].map(subtaskOf)).toEqual([
+      null,
+      null,
+      '1',
+    ]);
     expect(counts(view)).toEqual({ [COLUMNS[0]]: '3', [COLUMNS[1]]: '3', [COLUMNS[2]]: '2' });
     expect(count(view, '.mind-mapper-edge')).toBe(0);
     expect(count(view, '[data-mm-id="node.toggle"]')).toBe(0);
