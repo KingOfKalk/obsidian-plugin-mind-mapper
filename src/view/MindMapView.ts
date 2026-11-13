@@ -31,15 +31,16 @@ import { type CollapseInfo, DomMapRenderer } from '../render/DomMapRenderer';
 import { NodeContentModal } from '../render/NodeContentModal';
 import { NodeContentRenderer } from '../render/NodeContentRenderer';
 import { attachLinkHandling } from '../render/linkHandling';
-import { type DrillAction, type MapActions, MapControls } from '../render/MapControls';
+import { type MapActions, MapControls } from '../render/MapControls';
 import { attachPanZoom, type PanZoomTarget } from '../render/panZoomInput';
 import { type MapThemeName, THEME_NAMES } from '../themeNames';
 import type { Transform } from '../render/viewport';
 import { jumpToSource } from '../commands/jumpToSource';
 import { t } from '../i18n';
 import { CollapseState } from './collapseState';
-import { drillMarkdown, drilledTree, findNode, isValidDrillPath } from './drill';
-import { type Anchor, Camera, centredAt, screenCentreOf } from './camera';
+import { drilledTree } from './drill';
+import { DrillDown } from './drillDown';
+import { type Anchor, Camera, centredAt } from './camera';
 import { FullScreen } from './fullScreen';
 import { NodeMeasurer } from './nodeMeasurer';
 import { LeafRecency } from '../leafRecency';
@@ -136,18 +137,6 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private themeOverride: MapThemeName | null = null;
   /** Pending animation frame of a layout choice: a burst of choices lays out once. */
   private layoutFrame: number | null = null;
-  /**
-   * Drill-down (issue #23): IDs of the drilled-in nodes, outermost first; empty: the whole map.
-   * Saved in the view state. Changes at once; the shown map follows when its animation swaps it.
-   */
-  private drillPath: string[] = [];
-  /**
-   * Own markdown of each drilled node, by step: an ordinal ID that names another node after an
-   * edit (a sibling inserted above) drops the path. Empty for a restored path until the first tree.
-   */
-  private drillContent: (string | undefined)[] = [];
-  /** Centre of the shown map (null: the whole map); trails `drillPath` while animating. */
-  private shownCentre: string | null = null;
   /** Transform, fit, zoom and their animations (drill-down, fit, zoom, layout switch). */
   private readonly camera = new Camera({
     win: () => this.contentEl.win,
@@ -160,6 +149,26 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     shown: () => this.layout && { layout: this.layout, collapse: this.collapseInfo },
     fitMaxZoom: () => this.services.settings().fitMaxZoom / 100,
   });
+  /** Drill-down (issue #23): the centre of the map and the transitions in and out. */
+  private readonly drilling = new DrillDown(
+    {
+      tree: () => this.tree,
+      layout: () => this.layout,
+      selected: () => this.selected,
+      select: (id) => this.select(id),
+      layoutFor: (tree, centre) => this.layoutFor(tree, centre),
+      showCentre: () => {
+        if (!this.tree) return;
+        this.measurer.cancelRelayout();
+        this.showLayout(this.computeLayout(this.tree));
+      },
+      pathChanged: () => {
+        this.app.workspace.requestSaveLayout();
+        this.updateDrillControls();
+      },
+    },
+    this.camera,
+  );
 
   constructor(leaf: WorkspaceLeaf, services: Partial<ViewServices> = {}) {
     super(leaf);
@@ -178,7 +187,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // Spec "Drill-down": D while the map has focus (the view scope, active with its leaf); not a
     // command hotkey. Obsidian matches the key case-insensitively.
     this.scope ??= new Scope(this.app.scope);
-    this.scope.register([], 'D', (evt) => this.drillKey(evt));
+    this.scope.register([], 'D', (evt) => this.drilling.key(evt));
     this.scope.register(null, null, (evt) => this.keepTabOnRelayedEscape(evt));
   }
 
@@ -321,7 +330,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Selects the root (drilled in: the centre) and glides it to the centre at the current zoom. */
   backToRoot(): void {
     this.camera.finish();
-    const rootId = this.shownCentre ?? this.tree?.root.id;
+    const rootId = this.drilling.centre ?? this.tree?.root.id;
     if (rootId === undefined || !this.layout?.nodes.some((p) => p.node.id === rootId)) return;
     this.select(rootId);
     this.camera.glideTo(() => {
@@ -531,7 +540,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       file: this.pinnedFile,
       layout: this.layoutOverride,
       theme: this.themeOverride,
-      drill: [...this.drillPath],
+      drill: [...this.drilling.path],
     };
   }
 
@@ -542,9 +551,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.layoutOverride = layout;
     this.themeOverride = theme;
     this.camera.finish();
-    this.drillPath = drill;
-    this.drillContent = [];
-    this.shownCentre = drill.at(-1) ?? null;
+    this.drilling.restore(drill);
     if (file !== this.pinnedFile) {
       this.camera.pendingFit = true;
       this.collapse.reset();
@@ -619,140 +626,36 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** A map is shown around a drilled-in node (issue #23). */
   get isDrilled(): boolean {
-    return this.drillPath.length > 0;
+    return this.drilling.isDrilled;
   }
 
   /** The selected node has children and is not the centre: it can become the centre. */
   canDrillDown(): boolean {
-    if (!this.tree || !this.layout || this.selected === null) return false;
-    const centreId = this.drillPath.at(-1);
-    const centre = centreId === undefined ? this.tree.root : findNode(this.tree.root, centreId);
-    if (!centre || centre.id === this.selected) return false;
-    return (findNode(centre, this.selected)?.children.length ?? 0) > 0;
-  }
-
-  private drillAction(): DrillAction {
-    if (!this.layout) return null;
-    if (this.canDrillDown()) return 'in';
-    return this.isDrilled ? 'out' : null;
+    return this.drilling.canDrillDown();
   }
 
   /** Control bar button and key D: into the selected node, else out one level. */
   drill(): void {
-    const action = this.drillAction();
-    if (action === 'in') this.drillDown();
-    else if (action === 'out') this.drillOut();
+    this.drilling.drill();
   }
 
   /** The selected node becomes the centre: only it and its subtree, fitted. */
   drillDown(): void {
-    this.camera.finish();
-    const id = this.selected;
-    if (id === null || !this.canDrillDown()) return;
-    this.setDrillPath([...this.drillPath, id]);
-    this.camera.run([
-      this.camera.glide(() => this.drilledInTarget(id)),
-      this.camera.fade('out'),
-      this.camera.fade('in', () => this.showCentre(id, null)),
-    ]);
+    this.drilling.down();
   }
 
   /** One level up; the node drilled out of stays selected, the map is fitted. */
   drillOut(): void {
-    this.camera.finish();
-    const left = this.drillPath.at(-1);
-    if (left === undefined) return;
-    this.drillOutTo(this.drillPath.slice(0, -1), left);
+    this.drilling.out();
   }
 
   /** Straight back to the whole map; the outermost drilled node is selected, the map fitted. */
   showWholeMap(): void {
-    this.camera.finish();
-    const first = this.drillPath[0];
-    if (first === undefined) return;
-    this.drillOutTo([], first);
-  }
-
-  /**
-   * Drilling in reversed: cross-fade with `left` kept in place, then glide to the same transform
-   * "Fit to view" sets (and the map counts as fitted, like after it).
-   */
-  private drillOutTo(path: string[], left: string): void {
-    this.setDrillPath(path);
-    const centre = path.at(-1) ?? null;
-    this.select(left);
-    this.camera.run([
-      this.camera.fade('out'),
-      this.camera.fade('in', () => this.showCentre(centre, left)),
-      this.camera.fitGlide(),
-    ]);
-  }
-
-  private setDrillPath(path: string[]): void {
-    this.drillPath = path;
-    this.drillContent = this.tree ? drillMarkdown(this.tree, path) : [];
-    this.app.workspace.requestSaveLayout();
-    this.updateDrillControls();
+    this.drilling.whole();
   }
 
   private updateDrillControls(): void {
-    this.dom?.controls.setDrill(this.drillAction(), this.isDrilled);
-  }
-
-  /** Key D in the view scope; typing into a text field (the zoom input) is left alone. */
-  private drillKey(evt: KeyboardEvent): boolean {
-    if (isTextField(evt.target) || this.drillAction() === null) return true;
-    this.drill();
-    return false;
-  }
-
-  /**
-   * Shows the map around `centre` (null: the whole map). `keep`: that node (or its nearest shown
-   * ancestor) keeps the screen position of the old centre; otherwise the new map is fitted.
-   */
-  private showCentre(centre: string | null, keep: string | null): void {
-    if (!this.tree || !this.layout) return;
-    const old = this.layout.nodes.find((p) => p.node.id === this.shownCentre) ?? null;
-    const at = old && screenCentreOf(old, this.camera.transform);
-    this.shownCentre = centre;
-    this.measurer.cancelRelayout();
-    if (keep === null) this.camera.pendingFit = true;
-    this.showLayout(this.computeLayout(this.tree));
-    if (keep === null || !at) return;
-    const kept = this.layout?.nodes.find((p) => p.node.id === this.selected);
-    if (!kept) return;
-    this.camera.fitted = false;
-    this.camera.apply(centredAt(kept, at, this.camera.transform.zoom));
-  }
-
-  /**
-   * Glide target before drilling into `id`: the node where and as large as it will be in the
-   * fitted drilled view, so the cross-fade does not move it.
-   */
-  private drilledInTarget(id: string): Transform | null {
-    if (!this.tree || !this.layout) return null;
-    const from = this.layout.nodes.find((p) => p.node.id === id);
-    const drilled = this.layoutFor(this.tree, id);
-    const to = drilled.layout.nodes.find((p) => p.node.id === id);
-    const fit = this.camera.fitTransform(drilled.layout, drilled.collapseInfo);
-    if (!from || !to || !fit) return null;
-    return centredAt(from, screenCentreOf(to, fit), fit.zoom);
-  }
-
-  /**
-   * Drops a drill path that no longer fits `tree` (a drilled node was removed or renamed, or its ID
-   * names another node now): the whole map again, saved. True when it dropped one.
-   */
-  private dropLostDrill(tree: MindMapTree): boolean {
-    if (!this.isDrilled) return false;
-    if (isValidDrillPath(tree, this.drillPath, this.drillContent)) {
-      this.drillContent = drillMarkdown(tree, this.drillPath);
-      return false;
-    }
-    this.camera.cancel();
-    this.shownCentre = null;
-    this.setDrillPath([]);
-    return true;
+    this.dom?.controls.setDrill(this.drilling.action(), this.drilling.isDrilled);
   }
 
   private async loadNote(): Promise<void> {
@@ -783,7 +686,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.safely(path, () => {
       const tree = this.parse(file, cache, text);
       const previous = this.layout;
-      const lost = this.dropLostDrill(tree);
+      const lost = this.drilling.dropLost(tree);
       if (this.layoutWillChange() || lost) this.camera.pendingFit = true;
       // Same note again (rename, recreate): keep the viewport like a live update.
       if (!previous || this.camera.pendingFit) return this.showTree(tree);
@@ -907,12 +810,12 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const tree = this.parse(file, cache, data);
     const previous = this.layout;
     if (!previous || !this.tree) {
-      this.dropLostDrill(tree);
+      this.drilling.dropLost(tree);
       return this.showTree(tree);
     }
     const switching = this.layoutWillChange();
     // Spec "Drill-down": quietly back to the whole map, fitted.
-    const lost = this.dropLostDrill(tree);
+    const lost = this.drilling.dropLost(tree);
     if (lost) this.camera.pendingFit = true;
     const ids = new Set(allNodes(tree).map((node) => node.id));
     if (this.selected !== null && !ids.has(this.selected)) this.select(null);
@@ -974,7 +877,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /** Layout of the shown map (whole or drilled in); sets the collapse toggles and layout name. */
   private computeLayout(tree: MindMapTree): MapLayout {
-    const { layout, collapseInfo, name } = this.layoutFor(tree, this.shownCentre);
+    const { layout, collapseInfo, name } = this.layoutFor(tree, this.drilling.centre);
     this.collapseInfo = collapseInfo;
     this.layoutName = name;
     return layout;
@@ -1111,7 +1014,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     // Frontmatter edits arrive as a new layout; the theme itself is CSS only.
     this.applyTheme();
     dom.renderer.setLayout(layout, this.collapseInfo);
-    dom.renderer.setDrillCentre(this.shownCentre);
+    dom.renderer.setDrillCentre(this.drilling.centre);
     this.selectShown(layout);
     dom.controls.setCollapsed(this.collapse.size > 0);
     dom.controls.setLayout(this.layoutName ?? this.effectiveLayout(), this.layoutOverride !== null);
@@ -1157,13 +1060,6 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     }
     this.camera.keepInPlace(anchor, this.layout);
   }
-}
-
-/** Key events typed into a text field (the zoom input, an editor) are not map keys. */
-function isTextField(target: EventTarget | null): boolean {
-  const el = target as Node | null;
-  if (!el?.instanceOf?.(HTMLElement)) return false;
-  return el.isContentEditable || el.matches('input, textarea, select');
 }
 
 /** The value after `current` in `values`, the first after the last. */
