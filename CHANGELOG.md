@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.6.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.5.1...1.6.0) (2026-11-13)
+
+
+### Features
+
+* clicking a tag in a map node opens the tag search ([#79](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/79)) ([e8a2c59](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/e8a2c59d5c0fb20a9a64beddf47e1a71aabb2c95))
+* nested tags as two-part pills ([#74](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/74)) ([b0f2410](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/b0f241010ff063b2181f91cb2eb66f2f1ae72f37))
+
+
+### Performance Improvements
+
+* **render:** write edge paths only when they change ([#78](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/78)) ([d61d45d](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/d61d45d12f78bfe97e92ec5a30cff1611f8097af))
+
+
+### Documentation
+
+* community directory submission kit ([#85](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/85)) ([478c289](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/478c28943332cb7145e08b4da71aeb0d2aac3e6c))
+* explain the long pan frame at 1,000 nodes in the perf benchmark ([#75](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/75)) ([dcba379](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/dcba379cb4e4309bc168e3d8bfc2a23b9afa1887))
+* listing screenshots for the community directory ([#87](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/87)) ([7f95979](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/7f95979e82b0fc8d1d974ec4a4da05869de1c607))
+
+
+### Code Refactoring
+
+* split MindMapView into smaller modules ([#72](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/72)) ([627cc31](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/627cc3139f51c3384f6d8394c0ff25cdfbe68079))
+
 ## [1.5.1](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.5.0...1.5.1) (2026-11-13)
 
 
