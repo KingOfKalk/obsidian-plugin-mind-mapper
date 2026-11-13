@@ -40,20 +40,7 @@ describe('live update', function () {
     const before = await viewport();
     expect(before.selected).toEqual(['Live/Beta']);
 
-    // Spike: time from the edit to the `changed` event and to the new node in the DOM.
     await browser.executeObsidian(({ app }, notePath) => {
-      const spike = { t0: 0, changed: 0, dom: 0 };
-      (window as unknown as { spike: typeof spike }).spike = spike;
-      const ref = app.metadataCache.on('changed', (file) => {
-        if (file.path !== notePath || spike.changed) return;
-        spike.changed = performance.now();
-        app.metadataCache.offref(ref);
-      });
-      const timer = window.setInterval(() => {
-        if (!document.querySelector('.mind-mapper-node[data-node-id="Live/Beta/#2"]')) return;
-        spike.dom = performance.now();
-        window.clearInterval(timer);
-      }, 5);
       const leaf = app.workspace
         .getLeavesOfType('markdown')
         .find((l) => (l.view as unknown as { file?: { path: string } }).file?.path === notePath);
@@ -66,19 +53,17 @@ describe('live update', function () {
         }
       ).editor;
       if (!editor) throw new Error('no editor');
-      spike.t0 = performance.now();
       editor.replaceRange('\nGamma paragraph.\n', { line: editor.lineCount(), ch: 0 });
     }, path);
 
-    await node('Live/Beta/#2').waitForExist({ timeout: 10000, timeoutMsg: 'map did not update' });
-    const spike = await browser.execute(
-      () => (window as unknown as { spike: { t0: number; changed: number; dom: number } }).spike,
+    // State, not time: the new node shows the typed text (latency: `npm run perf:e2e`).
+    await browser.waitUntil(
+      async () =>
+        (await node('Live/Beta/#2').isExisting()) &&
+        (await node('Live/Beta/#2').getText()) === 'Gamma paragraph.',
+      { timeout: 10000, timeoutMsg: 'map did not show the typed paragraph' },
     );
-    console.log(
-      `[spike] changed event ${Math.round(spike.changed - spike.t0)} ms after the edit, new node ${Math.round(spike.dom - spike.t0)} ms after the edit`,
-    );
-    // From the changed event: 300 ms debounce plus parse, layout and render.
-    expect(spike.dom - spike.changed).toBeLessThan(1000);
+    await settle();
     const after = await viewport();
     expect(after).toEqual(before);
   });
