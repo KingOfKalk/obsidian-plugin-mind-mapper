@@ -6,7 +6,14 @@ import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
-import { detailLevel, overlaps, SpatialIndex, worldViewport } from './culling';
+import {
+  contentCap,
+  detailLevel,
+  gapSquared,
+  overlaps,
+  SpatialIndex,
+  worldViewport,
+} from './culling';
 import { branchAttr, levelAttr, type MapThemeName, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
@@ -161,18 +168,26 @@ export class DomMapRenderer implements MapRenderer {
       };
     }
     this.sized = true;
-    // The margin decides what to render (no pop-in while panning); the thresholds count only the
-    // nodes in the visible viewport.
-    const ids = this.index.query(worldViewport(this.transform, size));
+    // The thresholds count only the nodes in the visible viewport. The margin is rendered too (no
+    // pop-in while panning), nearest to the view first, up to the content cap.
     const view = worldViewport(this.transform, size, 0);
-    let inView = 0;
-    for (const id of ids) {
+    const ids = new Set<string>();
+    const margin: PositionedNode[] = [];
+    for (const id of this.index.query(worldViewport(this.transform, size))) {
       const rect = this.rects.get(id);
-      if (rect && overlaps(rect, view)) inView++;
+      if (!rect) continue;
+      if (overlaps(rect, view)) ids.add(id);
+      else margin.push(rect);
     }
-    if (detailLevel(this.transform.zoom, inView) === 'skeleton') {
+    if (detailLevel(this.transform.zoom, ids.size) === 'skeleton') {
       return { ids: new Set(), skeleton: true };
     }
+    const room = contentCap(this.transform.zoom) - ids.size;
+    if (margin.length > room) {
+      const gaps = new Map(margin.map((p) => [p, gapSquared(p, view)]));
+      margin.sort((a, b) => (gaps.get(a) ?? 0) - (gaps.get(b) ?? 0));
+    }
+    for (const p of margin.slice(0, room)) ids.add(p.node.id);
     // Rendering content is the expensive part: at most RENDER_BUDGET new nodes per pass, nearest to
     // the view centre first; the skeleton shows the rest until a later frame renders them.
     const missing = [...ids].filter((id) => !this.nodes.has(id));

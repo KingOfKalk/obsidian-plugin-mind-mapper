@@ -826,6 +826,87 @@ describe('culling', () => {
     raf.mockRestore();
   });
 
+  /**
+   * `inView` 10 x 10 nodes inside the 400 x 400 view (zoom 1) or 4000 x 4000 world view (zoom 0.1),
+   * then 4 x 4 nodes 10 px apart (zoom 1) filling the whole margin ring around it.
+   */
+  function denseMargin(inView: number, zoom: number): MapLayout {
+    const root = grid().nodes[0]!;
+    const scale = 1 / zoom;
+    const view = 400 * scale;
+    const at = (id: string, x: number, y: number, size: number): PositionedNode => ({
+      ...root,
+      node: { ...node(id), markdown: id },
+      x,
+      y,
+      width: size,
+      height: size,
+      depth: 1,
+      branch: 0,
+    });
+    const nodes = [root];
+    for (let i = 0; i < inView; i++) {
+      nodes.push(
+        at(
+          `v${i}`,
+          (20 + (i % 18) * 20) * scale,
+          (40 + Math.floor(i / 18) * 20) * scale,
+          10 * scale,
+        ),
+      );
+    }
+    const step = 10 * scale;
+    for (let x = -view / 2 + step / 2; x < view * 1.5 - step; x += step) {
+      for (let y = -view / 2 + step / 2; y < view * 1.5 - step; y += step) {
+        if (x > -step && x < view && y > -step && y < view) continue;
+        nodes.push(at(`m${x},${y}`, x, y, 4 * scale));
+      }
+    }
+    return { ...grid(), nodes, edges: [] };
+  }
+
+  /** Squared gap between a node and the visible world viewport (0 inside). */
+  function gap(p: PositionedNode, view: number): number {
+    const dx = Math.max(0, -(p.x + p.width), p.x - view);
+    const dy = Math.max(0, -(p.y + p.height), p.y - view);
+    return dx * dx + dy * dy;
+  }
+
+  function expectMarginCap(zoom: number, inView: number, cap: number): void {
+    const { parent, renderer } = culled();
+    const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
+    renderer.setTransform({ x: 0, y: 0, zoom });
+    const layout = denseMargin(inView, zoom);
+    expect(layout.nodes.length).toBeGreaterThan(cap * 2);
+    renderer.setLayout(layout);
+    for (let pass = 0; pass < 30; pass++) {
+      renderer.updateVisible();
+      expect(renderer.renderedCount()).toBeLessThanOrEqual(cap);
+    }
+    expect(renderer.renderedCount()).toBe(cap);
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+    const shown = new Set(ids(parent));
+    // every in-view node is rendered
+    for (let i = 0; i < inView; i++) expect(shown.has(`v${i}`)).toBe(true);
+    expect(shown.has('n0')).toBe(true);
+    // the margin is filled nearest to the view first
+    const view = 400 / zoom;
+    const margin = layout.nodes.filter((p) => p.node.id.startsWith('m'));
+    const rendered = margin.filter((p) => shown.has(p.node.id)).map((p) => gap(p, view));
+    const skipped = margin.filter((p) => !shown.has(p.node.id)).map((p) => gap(p, view));
+    expect(rendered.length).toBe(cap - inView - 1);
+    expect(Math.max(...rendered)).toBeLessThanOrEqual(Math.min(...skipped));
+    raf.mockRestore();
+  }
+
+  test('a dense margin is capped at twice the 300 content cap, in view first, then nearest (issue #47)', () => {
+    expectMarginCap(1, 250, 600);
+  });
+
+  test('below 0.2 zoom a dense margin is capped at twice the 60 node minimum (issue #47)', () => {
+    expectMarginCap(0.1, 40, 120);
+  });
+
   test('setTransform schedules one culling pass per animation frame', () => {
     const { renderer } = culled();
     const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);

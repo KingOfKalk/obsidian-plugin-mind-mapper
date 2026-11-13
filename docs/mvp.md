@@ -347,7 +347,7 @@ Project (root, H1)
   - Keep renderer behind an interface, three.js renderer as future option for very large maps
 - Performance (decided)
   - Target: 1,000 nodes pan/zoom smooth at 60 fps, 5,000 nodes still usable
-  - Render only nodes in the viewport plus a margin; edges and cross-connection lines are kept even when one endpoint is off screen
+  - Render only nodes in the viewport plus a margin (filled nearest to the viewport first, at most twice the outline threshold in effect: 600 nodes, 120 below 20 % zoom); edges and cross-connection lines are kept even when one endpoint is off screen
   - Render cache and measured size cache by content hash, reused on live update
   - Verified with a benchmark harness on generated notes (frame times logged, compared against a baseline) plus a manual gate; no fps assertions in CI, they are flaky
 - Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` 1.15.0, the newest public Obsidian release (betas do not count); it unlocks the declarative settings API, so the settings appear in Obsidian's settings search
