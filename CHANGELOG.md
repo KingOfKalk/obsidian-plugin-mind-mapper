@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.6.0...1.7.0) (2026-11-13)
+
+
+### Features
+
+* kanban subtasks as boxes without indent ([#93](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/93)) ([a97908b](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/a97908b0909eb975fe59c7a37aaeea6d06c4250e))
+
+
+### Bug Fixes
+
+* tag pills with small corners, branch colors and opposite alignment ([#94](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/94)) ([5de544b](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/5de544b8a9b84469e6433aa71620cb16ae045270))
+
 ## [1.6.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.5.1...1.6.0) (2026-11-13)
 
 

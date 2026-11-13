@@ -1,7 +1,7 @@
 {
   "id": "mind-mapper",
   "name": "Mind Mapper",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "minAppVersion": "1.15.0",
   "description": "Show any note as a live, read-only mind map that follows you while you write: headings, lists and blocks become nodes, rendered like reading view.",
   "author": "KingOfKalk",
