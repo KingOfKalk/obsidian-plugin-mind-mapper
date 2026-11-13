@@ -1,0 +1,118 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Shift\n\n- Alpha\n  - Alpha child\n- Beta\n  - Beta child\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 7,
+            "offset": 7
+          }
+        },
+        "heading": "Shift",
+        "level": 1
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 7,
+            "offset": 7
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 9
+          },
+          "end": {
+            "line": 5,
+            "col": 14,
+            "offset": 54
+          }
+        }
+      }
+    ],
+    "listItems": [
+      {
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 9
+          },
+          "end": {
+            "line": 2,
+            "col": 7,
+            "offset": 16
+          }
+        },
+        "parent": -2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 2,
+            "offset": 19
+          },
+          "end": {
+            "line": 3,
+            "col": 15,
+            "offset": 32
+          }
+        },
+        "parent": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 33
+          },
+          "end": {
+            "line": 4,
+            "col": 6,
+            "offset": 39
+          }
+        },
+        "parent": -2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 2,
+            "offset": 42
+          },
+          "end": {
+            "line": 5,
+            "col": 14,
+            "offset": 54
+          }
+        },
+        "parent": 4
+      }
+    ]
+  }
+}

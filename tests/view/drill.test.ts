@@ -1,7 +1,7 @@
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
 import type { MindMapTree } from '../../src/parser/types';
-import { drilledTree, findNode, isValidDrillPath } from '../../src/view/drill';
+import { drillMarkdown, drilledTree, findNode, isValidDrillPath } from '../../src/view/drill';
 import { loadFixture } from '../fixtures';
 
 function fixtureTree(name: string): MindMapTree {
@@ -51,4 +51,15 @@ test.each([
   [['Links/Beta', 'Links/Beta'], false],
 ])('isValidDrillPath(%j) -> %s', (path, expected) => {
   expect(isValidDrillPath(fixtureTree('crosslinks'), path)).toBe(expected);
+});
+
+test('isValidDrillPath with markdown: a step whose ID names another node now does not fit', () => {
+  const before = fixtureTree('drill-shift-before');
+  const after = fixtureTree('drill-shift-after');
+  const known = drillMarkdown(before, ['Shift/#1']);
+  expect(known).toEqual(['Alpha']);
+  expect(isValidDrillPath(after, ['Shift/#1'], known)).toBe(false);
+  expect(isValidDrillPath(after, ['Shift/#2'], known)).toBe(true);
+  // unknown markdown (a restored path): any node with the ID
+  expect(isValidDrillPath(after, ['Shift/#1'], [])).toBe(true);
 });

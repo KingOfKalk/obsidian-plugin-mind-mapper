@@ -55,7 +55,7 @@ import {
 import { jumpToSource } from '../commands/jumpToSource';
 import { t } from '../i18n';
 import { CollapseState } from './collapseState';
-import { drilledTree, findNode, isValidDrillPath } from './drill';
+import { drillMarkdown, drilledTree, findNode, isValidDrillPath } from './drill';
 import { easeInOut, FADE_MS, GLIDE_MS, lerpTransform, type Phase, PhaseRunner } from './animation';
 import { FullScreen } from './fullScreen';
 import { LeafRecency } from '../leafRecency';
@@ -158,6 +158,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
    * Saved in the view state. Changes at once; the shown map follows when its animation swaps it.
    */
   private drillPath: string[] = [];
+  /**
+   * Own markdown of each drilled node, by step: an ordinal ID that names another node after an
+   * edit (a sibling inserted above) drops the path. Empty for a restored path until the first tree.
+   */
+  private drillContent: (string | undefined)[] = [];
   /** Centre of the shown map (null: the whole map); trails `drillPath` while animating. */
   private shownCentre: string | null = null;
   /** Drill-down, fit, zoom or layout switch animation (issues #23, #24); at most one runs. */
@@ -572,6 +577,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.themeOverride = theme;
     this.finishAnimation();
     this.drillPath = drill;
+    this.drillContent = [];
     this.shownCentre = drill.at(-1) ?? null;
     if (file !== this.pinnedFile) {
       this.pendingFit = true;
@@ -748,6 +754,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   private setDrillPath(path: string[]): void {
     this.drillPath = path;
+    this.drillContent = this.tree ? drillMarkdown(this.tree, path) : [];
     this.app.workspace.requestSaveLayout();
     this.updateDrillControls();
   }
@@ -901,11 +908,15 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   /**
-   * Drops a drill path that no longer fits `tree` (the drilled node was removed or renamed): the
-   * whole map again, saved. True when it dropped one.
+   * Drops a drill path that no longer fits `tree` (a drilled node was removed or renamed, or its ID
+   * names another node now): the whole map again, saved. True when it dropped one.
    */
   private dropLostDrill(tree: MindMapTree): boolean {
-    if (!this.isDrilled || isValidDrillPath(tree, this.drillPath)) return false;
+    if (!this.isDrilled) return false;
+    if (isValidDrillPath(tree, this.drillPath, this.drillContent)) {
+      this.drillContent = drillMarkdown(tree, this.drillPath);
+      return false;
+    }
     this.cancelAnimation();
     this.shownCentre = null;
     this.setDrillPath([]);

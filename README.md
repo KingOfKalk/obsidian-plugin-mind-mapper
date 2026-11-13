@@ -92,7 +92,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 - Link lines to nodes outside the drilled part are hidden
 - "Back to root" goes to the current centre; collapse, layout, theme, full screen and double click to jump work as usual
 - The view glides towards the node, then the map cross-fades into the drilled view (drilling out runs it in reverse); with the system setting "reduce motion" it switches instantly. Pressing `D` again during the animation finishes it at once
-- The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted or its heading renamed, the map quietly shows the whole note again. The note file is never written
+- The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted, its heading or list item text is changed, or a list item or paragraph is inserted above a drilled list item, the map quietly shows the whole note again. The note file is never written
 
 ## Layout and theme of the open map
 
