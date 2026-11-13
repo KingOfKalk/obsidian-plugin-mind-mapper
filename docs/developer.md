@@ -18,6 +18,7 @@
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
 - User manual images: `npm run manual:images` (headless, writes `docs/images/manual/`)
 - UI element reference images: `npm run ui:images` (headless, writes `docs/images/ui-elements*.png`)
+- Directory listing images: `npm run listing:images` (headless, writes `docs/images/listing/`)
 - Element IDs: every element of the plugin's DOM has a stable ID (`data-mm-id`), catalogued in [ui-elements.md](ui-elements.md)
   - A new element gets a member of `ElementId` in `src/elementIds.ts`, `setElementId(el, '<id>')` where it is created and a row in the catalog; `tests/elementIds.test.ts` fails otherwise
   - The ID names what an element is and never changes with its state (`node.toggle` stays `node.toggle` collapsed); the state is `data-mm-state`, written only by `setElementState` with the allowed values in `ELEMENT_STATES` (convention: `active` for a highlighted button, attribute absent otherwise); `tests/elementIds.test.ts` checks them against the catalog's States column
@@ -139,6 +140,10 @@
   - One topic per image, cropped by the window size (Electron `setContentSize`), not by image editing; sidebars closed, window buttons and status bar hidden
   - Uses `tests/vault/demo/` notes plus small notes written by the spec into the temporary vault (`Trip to Lisbon.md`, `Reading notes.md`, `Team offsite.md`)
   - Not part of `test:e2e` (`wdio.conf.mts` only runs `e2e/specs/`); re-run, look at every image and commit when the look changes
+- Directory listing images (`npm run listing:images`)
+  - Runs `e2e/listingImages.e2e.ts`; writes five committed PNGs in `docs/images/listing/`, each exactly 1200 x 800 px (the community directory listing takes up to 5 desktop images of that size, JPEG, PNG or WebP, 5 MB each): note and map side by side (light), the feature tour (dark), kanban, nested tags (dark), full screen with a highlighted link
+  - No annotations; window buttons, status bar, vault name and inline title hidden; Obsidian's base color scheme is switched per image (`changeTheme`); the spec writes two small notes (`Team offsite.md`, `Product launch.md`) into the temporary vault and uses `tests/vault/demo/` for the rest
+  - Not part of `test:e2e`; re-run, look at every image and commit them when visible labels or the look change (check the size with `identify`); upload them in the portal's **Edit listing** (see [going-public.md](going-public.md))
 - UI element reference images (`npm run ui:images`)
   - Runs `e2e/uiElementsImages.e2e.ts` with "Show element IDs (dev)" turned on; writes the committed images `docs/images/ui-elements.png` (map, control bar) and `docs/images/ui-elements-full-screen.png` (full screen, drilled in, highlighted link), used by [ui-elements.md](ui-elements.md)
   - Needs the dev code in the plugin under test: the script builds `main.js` with `MIND_MAPPER_DEV=1` (a production build that keeps `__DEV__` code); the next `npm run build` replaces it
