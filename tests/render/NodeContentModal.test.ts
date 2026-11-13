@@ -90,3 +90,27 @@ test('nested tags in the overlay look like in the node (issue #57)', async () =>
   expect(modal.contentEl.querySelector('.mind-mapper-tag-scope')?.textContent).toBe('#obsidian');
   modal.close();
 });
+
+test('a tag in the overlay opens the tag search and closes the overlay (issue #77)', async () => {
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+    el.createEl('a', { cls: 'tag', text: '#obsidian/test', attr: { href: '#obsidian/test' } });
+    return Promise.resolve();
+  });
+  const openGlobalSearch = vi.fn();
+  const ctx = linkContext();
+  const app = {
+    workspace: ctx.workspace,
+    internalPlugins: { getEnabledPluginById: () => ({ openGlobalSearch }) },
+  } as unknown as App;
+  const modal = new NodeContentModal(app, node, ctx);
+  const close = vi.spyOn(modal, 'close');
+  modal.open();
+  const value = await vi.waitFor(() => {
+    const el = modal.contentEl.querySelector<HTMLElement>('.mind-mapper-tag-value');
+    if (!el) throw new Error('not rendered yet');
+    return el;
+  });
+  value.click();
+  expect(openGlobalSearch).toHaveBeenCalledWith('tag:#obsidian/test');
+  expect(close).toHaveBeenCalled();
+});

@@ -65,7 +65,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it. None in the kanban layout | `expanded`, `collapsed` |
 | `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into | - |
 | `node.card-count` | Card count | Right end of a column header in the kanban layout | Number of cards (direct children) in the column, also when it is collapsed; info only, not clickable | - |
-| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), in Obsidian's tag colours; hover shows the full tag. Still Obsidian's tag link. Tags without `/` keep Obsidian's look and have no ID | - |
+| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), in Obsidian's tag colours; hover shows the full tag. Still Obsidian's tag link: a click on either part opens the tag search with the full tag (issue #77). Tags without `/` keep Obsidian's look and have no ID | - |
 
 ## Lines
 

@@ -37,6 +37,39 @@ function searchQuery(): Promise<string | null> {
   });
 }
 
+function selectedNode(): Promise<string | undefined> {
+  return browser.execute(
+    () => document.querySelector<HTMLElement>('.mind-mapper-node.is-selected')?.dataset.nodeId,
+  );
+}
+
+/** Obsidian's private core plugin registry (only what the tests use). */
+interface CorePlugin {
+  enabled: boolean;
+  enable(user: boolean): Promise<void>;
+  disable(user: boolean): void;
+}
+
+async function setSearchEnabled(enabled: boolean): Promise<void> {
+  await browser.executeObsidian(async ({ app }, on) => {
+    const { internalPlugins } = app as unknown as {
+      internalPlugins: { getPluginById(id: string): CorePlugin | null };
+    };
+    const search = internalPlugins.getPluginById('global-search');
+    if (!search || search.enabled === on) return;
+    if (on) await search.enable(true);
+    else search.disable(true);
+  }, enabled);
+}
+
+function setSearchQuery(query: string): Promise<void> {
+  return browser.executeObsidian(({ app }, q) => {
+    const leaf = app.workspace.getLeavesOfType('search')[0];
+    const view = leaf?.view as unknown as { setQuery?: (q: string) => void } | undefined;
+    view?.setQuery?.(q);
+  }, query);
+}
+
 describe('nested tags in node content', function () {
   before(async function () {
     await openMindMap(NOTE);
@@ -63,26 +96,62 @@ describe('nested tags in node content', function () {
     ]);
   });
 
-  // A click on a tag in a map node does not open the tag search (Obsidian only wires that in its
-  // own views; on main too). The split must not change what a click does: same as a plain tag.
-  it('a click on a nested tag does what a click on a plain tag does', async function () {
-    const after = async (selector: string) => {
-      await openMindMap(NOTE);
-      await settle();
-      await browser.$(selector).click();
-      await browser.pause(500);
-      return {
-        query: await searchQuery(),
-        selected: await browser.execute(
-          () =>
-            document.querySelector<HTMLElement>('.mind-mapper-node.is-selected')?.dataset.nodeId,
-        ),
-        leaves: await leafSummary(),
-      };
+  // Issue #77: a click on a tag opens the tag search like in reading view (Obsidian's private
+  // global-search plugin, guarded). Like any link in a node it is no node click: the selection
+  // stays as it was (here: the root), and no note opens.
+  async function clickTag(selector: string) {
+    await openMindMap(NOTE);
+    await settle();
+    await browser.$('.mind-mapper-node.is-root .mind-mapper-node-content').click();
+    const selected = await selectedNode();
+    const leaves = await leafSummary();
+    await browser.$(selector).click();
+    await browser.pause(500);
+    return {
+      query: await searchQuery(),
+      selectionUnchanged: typeof selected === 'string' && (await selectedNode()) === selected,
+      leavesUnchanged: JSON.stringify(await leafSummary()) === JSON.stringify(leaves),
     };
-    const plain = await after(`${PARAGRAPH} a.tag[href="#solo"]`);
-    const nested = await after(`${PARAGRAPH} a.tag[href="#obsidian/test"] .mind-mapper-tag-value`);
-    expect(nested).toEqual(plain);
+  }
+
+  it('a click on a plain tag opens the search with the tag query', async function () {
+    expect(await clickTag(`${PARAGRAPH} a.tag[href="#solo"]`)).toEqual({
+      query: 'tag:#solo',
+      selectionUnchanged: true,
+      leavesUnchanged: true,
+    });
+  });
+
+  it('a click on either part of a nested-tag pill searches the full tag', async function () {
+    const pill = `${PARAGRAPH} a.tag[href="#project/alpha/backend"]`;
+    const expected = {
+      query: 'tag:#project/alpha/backend',
+      selectionUnchanged: true,
+      leavesUnchanged: true,
+    };
+    expect(await clickTag(`${pill} .mind-mapper-tag-value`)).toEqual(expected);
+    await setSearchQuery('');
+    expect(await clickTag(`${pill} .mind-mapper-tag-scope`)).toEqual(expected);
+  });
+
+  it('with the search core plugin disabled a tag click does nothing, without an error', async function () {
+    await setSearchEnabled(false);
+    try {
+      await browser.execute(() => {
+        const w = window as unknown as { mmErrors: string[] };
+        w.mmErrors = [];
+        window.addEventListener('error', (e) => w.mmErrors.push(String(e.message)));
+      });
+      const result = await clickTag(
+        `${PARAGRAPH} a.tag[href="#obsidian/test"] .mind-mapper-tag-value`,
+      );
+      expect(result).toEqual({ query: null, selectionUnchanged: true, leavesUnchanged: true });
+      expect(
+        await browser.execute(() => (window as unknown as { mmErrors: string[] }).mmErrors),
+      ).toEqual([]);
+    } finally {
+      await setSearchEnabled(true);
+    }
   });
 
   it('hover shows the full tag as tooltip', async function () {
