@@ -1,5 +1,6 @@
 import { browser, expect } from '@wdio/globals';
 import {
+  byId,
   mouseOnNode,
   openMindMap,
   openNote,
@@ -48,7 +49,7 @@ const TASKS_SUBTREE = [
 const PHASE_2_SUBTREE = [PHASE_2, 'Project/Tasks/Phase 2/#1', 'Project/Tasks/Phase 2/#2'].sort();
 const ALL = 9;
 
-const drillButton = () => browser.$('.mind-mapper-controls button.mind-mapper-drill');
+const drillButton = () => browser.$(byId('controls.drill'));
 
 function shownIds(): Promise<string[]> {
   return browser.execute(() =>
@@ -144,9 +145,7 @@ describe('drill-down', function () {
     expect(await hasClass(centre, 'is-root')).toBe(true);
     expect(await hasClass(centre, 'is-drill-centre')).toBe(true);
     expect(await browser.$('.mind-mapper-drill-marker svg').isExisting()).toBe(true);
-    expect(await hasClass('.mind-mapper-controls button.mind-mapper-drill', 'is-active')).toBe(
-      true,
-    );
+    expect(await hasClass(byId('controls.drill'), 'is-active')).toBe(true);
     // The link leads out of the drilled part: hidden.
     expect(await browser.$$('.mind-mapper-crosslink')).toHaveLength(0);
 
@@ -224,9 +223,8 @@ describe('drill-down', function () {
           ? ({ matches: true, media: query } as MediaQueryList)
           : original(query);
       try {
-        const button = document.querySelector<HTMLButtonElement>(
-          '.mind-mapper-controls button.mind-mapper-drill',
-        );
+        // Runs in the page: no helpers there.
+        const button = document.querySelector<HTMLButtonElement>('[data-mm-id="controls.drill"]');
         button?.click();
         return {
           drilling: document.querySelector('.mind-mapper-canvas.is-animating') !== null,

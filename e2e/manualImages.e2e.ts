@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { browser } from '@wdio/globals';
 import type { WorkspaceLeaf } from 'obsidian';
-import { settle, waitForCache, writeNote } from './helpers';
+import { byId, setWindowSize, settle, waitForCache, writeNote } from './helpers';
 
 /**
  * User manual images (committed in docs/images/manual/): each one shows one thing, cropped by the
@@ -68,29 +68,6 @@ type Plugins = {
   plugins: { plugins: Record<string, { updateSettings(p: unknown): Promise<void> }> };
 };
 
-/** Resizes the current window's content through Electron (WebDriver window commands do not work in Obsidian). */
-async function setWindowSize(width: number, height: number): Promise<void> {
-  await browser.execute(
-    (w, h) => {
-      const electron = (
-        window as unknown as {
-          electron: {
-            remote: { getCurrentWindow(): { setContentSize(w: number, h: number): void } };
-          };
-        }
-      ).electron;
-      electron.remote.getCurrentWindow().setContentSize(w, h);
-    },
-    width,
-    height,
-  );
-  await browser.waitUntil(
-    () =>
-      browser.execute((w, h) => window.innerWidth === w && window.innerHeight === h, width, height),
-    { timeout: 5000, timeoutMsg: `window is not ${width} x ${height}` },
-  );
-}
-
 async function updateSettings(settings: Record<string, unknown>): Promise<void> {
   await browser.executeObsidian(async ({ app }, patch) => {
     await (app as unknown as Plugins).plugins.plugins['mind-mapper']?.updateSettings(patch);
@@ -137,7 +114,7 @@ async function showMap(notePath: string, withNote = false): Promise<void> {
 
 /** Fit to view through the map's own button (works whatever leaf is active), then settle. */
 async function fit(): Promise<void> {
-  await browser.$('.mind-mapper-controls button[aria-label="Fit to view"]').click();
+  await browser.$(byId('controls.fit')).click();
   await browser
     .$('.mind-mapper-canvas.is-animating')
     .waitForExist({ reverse: true, timeout: 5000 });
@@ -239,7 +216,7 @@ describe('user manual images', function () {
   it('full screen', async function () {
     await setWindowSize(900, 560);
     await showMap(TOUR);
-    await browser.$('.mind-mapper-controls button[aria-label="Toggle full screen"]').click();
+    await browser.$(byId('controls.full-screen')).click();
     await browser.$('.mind-mapper-full-screen').waitForExist();
     await settle();
     // keep the controls visible: they fade after 2 s without mouse movement
@@ -258,7 +235,7 @@ describe('user manual images', function () {
       ).find((el) => el.dataset.nodeId?.endsWith('/Timeline'));
       node?.querySelector<HTMLElement>('.mind-mapper-node-content')?.click();
     });
-    await browser.$('.mind-mapper-controls button.mind-mapper-drill').click();
+    await browser.$(byId('controls.drill')).click();
     await browser
       .$('.mind-mapper-canvas.is-animating')
       .waitForExist({ reverse: true, timeout: 5000 });
@@ -275,7 +252,7 @@ describe('user manual images', function () {
     await setWindowSize(820, 560);
     await showMap(SIMPLE);
     // The ocean theme for this map only: its button is highlighted.
-    await browser.$('.mind-mapper-controls button[aria-label="Colour theme"]').click();
+    await browser.$(byId('controls.theme')).click();
     await browser.$('.menu').waitForExist();
     for (const item of await browser.$$('.menu .menu-item')) {
       if ((await item.$('.menu-item-title').getText()) !== 'Ocean') continue;
@@ -284,7 +261,7 @@ describe('user manual images', function () {
     }
     await browser.$('.menu').waitForExist({ reverse: true });
     await fit();
-    await browser.$('.mind-mapper-controls button[aria-label="Layout"]').click();
+    await browser.$(byId('controls.layout')).click();
     await browser.$('.menu').waitForExist();
     await shoot('layout-menu');
     await browser.keys('Escape');

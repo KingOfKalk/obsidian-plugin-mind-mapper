@@ -23,7 +23,8 @@
     "perf:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/perf/perf.e2e.ts",
     "screenshots:e2e": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/screenshots.e2e.ts",
     "readme:images": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/readmeImages.e2e.ts",
-    "manual:images": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/manualImages.e2e.ts"
+    "manual:images": "npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/manualImages.e2e.ts",
+    "ui:images": "MIND_MAPPER_DEV=1 npm run build && xvfb-run -a wdio run ./wdio.conf.mts --spec ./e2e/uiElementsImages.e2e.ts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

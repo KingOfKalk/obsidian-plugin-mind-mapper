@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { browser } from '@wdio/globals';
-import { settle, waitForCache } from './helpers';
+import { byId, settle, waitForCache } from './helpers';
 
 /**
  * README image (committed in docs/images/): the Obsidian window at 800 x 600 px with the file
@@ -86,7 +86,7 @@ describe('README image', function () {
       .waitForExist();
     await settle();
     // the file explorer is the active leaf, so the command would not reach the map: use its button
-    await browser.$('.mind-mapper-controls button[aria-label="Fit to view"]').click();
+    await browser.$(byId('controls.fit')).click();
     // no hover highlight on the button
     await browser
       .action('pointer')

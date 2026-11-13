@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
+import { byId, openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
 
 /**
  * Smooth camera (issue #24) in real Obsidian: fit, zoom controls, Back to root and layout switches
@@ -123,8 +123,8 @@ async function focusMap(): Promise<void> {
   });
 }
 
-async function control(label: string): Promise<void> {
-  await browser.$(`.mind-mapper-controls button[aria-label="${label}"]`).click();
+async function control(id: string): Promise<void> {
+  await browser.$(byId(id)).click();
 }
 
 async function clickMenuItem(title: string): Promise<void> {
@@ -163,7 +163,7 @@ async function emptyPoint(): Promise<{ x: number; y: number }> {
 }
 
 const ACTIONS: [string, () => Promise<void>][] = [
-  ['Fit to view (button)', () => control('Fit to view')],
+  ['Fit to view (button)', () => control('controls.fit')],
   ['Fit to view (command)', () => browser.executeObsidianCommand('mind-mapper:fit-to-view')],
   [
     'Fit to view (double click on the empty canvas)',
@@ -180,13 +180,13 @@ const ACTIONS: [string, () => Promise<void>][] = [
         .perform();
     },
   ],
-  ['Zoom in (button)', () => control('Zoom in')],
+  ['Zoom in (button)', () => control('controls.zoom-in')],
   ['Zoom out (command)', () => browser.executeObsidianCommand('mind-mapper:zoom-out')],
   ['Reset zoom (command)', () => browser.executeObsidianCommand('mind-mapper:reset-zoom')],
   [
     'a zoom preset',
     async () => {
-      await control('Zoom presets');
+      await control('controls.zoom-presets');
       await clickMenuItem('75%');
     },
   ],
@@ -244,7 +244,7 @@ describe('smooth camera', function () {
   it('a layout switch cross-fades and glides to the new fit; with reduced motion at once', async function () {
     await setStart();
     await record();
-    await control('Layout');
+    await control('controls.layout');
     await clickMenuItem('Top → bottom');
     await settle();
     const seen = await recorded();
