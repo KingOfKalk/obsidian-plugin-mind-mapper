@@ -69,6 +69,8 @@ Make the note active, then use one of:
 | Quote, callout | one node with everything inside it |
 | Image embed `![[image.png]]` | a node with a thumbnail |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
+| Tag `#solo` | as in reading view |
+| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined, in your theme's tag colours; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
