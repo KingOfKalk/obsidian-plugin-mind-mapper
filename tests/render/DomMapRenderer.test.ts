@@ -654,6 +654,27 @@ describe('culling', () => {
     expect(el?.classList.contains('is-selected')).toBe(true);
   });
 
+  test('a toggle rendered again after culling keeps its data-mm-state (collapsed and expanded)', () => {
+    const { parent, renderer } = culled();
+    renderer.setLayout(grid(), {
+      hidden: new Map([['n1', 3]]),
+      hasChildren: (id) => id === 'n1' || id === 'n2',
+    });
+    const state = (id: string) =>
+      parent
+        .querySelector(`.mind-mapper-collapse[data-node-id="${id}"]`)
+        ?.getAttribute('data-mm-state');
+    expect(state('n1')).toBe('collapsed');
+    expect(state('n2')).toBe('expanded');
+    renderer.setTransform({ x: -2000, y: -2000, zoom: 1 });
+    renderer.updateVisible();
+    expect(state('n1')).toBeUndefined();
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.updateVisible();
+    expect(state('n1')).toBe('collapsed');
+    expect(state('n2')).toBe('expanded');
+  });
+
   test('a never sized (0 x 0) canvas renders all nodes on the first layout and keeps the DOM afterwards', () => {
     const { renderer } = culled();
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });
@@ -1114,12 +1135,18 @@ describe('element IDs (issue #33)', () => {
     );
   });
 
-  test('a collapsed toggle is the hidden-count badge, expanded again the toggle', () => {
+  test('a toggle is always node.toggle; data-mm-state follows collapsed / expanded', () => {
     const { parent, renderer } = hooked();
+    const toggle = () => parent.querySelector('.mind-mapper-collapse');
+    renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+    expect(mmId(toggle())).toBe('node.toggle');
+    expect(toggle()?.getAttribute('data-mm-state')).toBe('expanded');
     const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 2), edges: [] };
     renderer.setLayout(collapsed, { hidden: new Map([['R/A', 5]]), hasChildren: withChildren });
-    expect(mmId(parent.querySelector('.mind-mapper-collapse'))).toBe('node.hidden-count');
+    expect(mmId(toggle())).toBe('node.toggle');
+    expect(toggle()?.getAttribute('data-mm-state')).toBe('collapsed');
     renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
-    expect(mmId(parent.querySelector('.mind-mapper-collapse'))).toBe('node.toggle');
+    expect(mmId(toggle())).toBe('node.toggle');
+    expect(toggle()?.getAttribute('data-mm-state')).toBe('expanded');
   });
 });

@@ -7,7 +7,7 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 - Read [AGENTS.md](AGENTS.md) (rules) and [docs/mvp.md](docs/mvp.md) (binding spec).
 - Set up and run things as described in [docs/developer.md](docs/developer.md).
 - Open an issue first (bug report or feature request template), or claim an existing one. Wait for a go before starting larger changes: the scope is small on purpose (a read-only live map of a note).
-- Name parts of the plugin by their ID from [docs/ui-elements.md](docs/ui-elements.md) in issues, pull requests and reviews (`controls.fit`, `node.hidden-count`).
+- Name parts of the plugin by their ID from [docs/ui-elements.md](docs/ui-elements.md) in issues, pull requests and reviews (`controls.fit`, `node.toggle`); the ID names what an element is and never changes with its state, the state is `data-mm-state` (`[data-mm-id="node.toggle"][data-mm-state="collapsed"]`).
 - Never push to `main` directly.
 
 ## Branching
@@ -57,7 +57,7 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 - The owner reviews and merges. Pull requests are squash-merged; the branch is deleted afterwards.
 - After a merge, run `npm run dev:build` in the main checkout so `sandbox-vault/` has the new build.
 - Keep scope tight: unrelated work goes on a separate issue and branch.
-- New elements: a pull request that adds a visible element gives it an ID (`src/elementIds.ts`, set as `data-mm-id`) and a row in [docs/ui-elements.md](docs/ui-elements.md); new commands, settings rows, notices and frontmatter keys get a row too (`npm run check` fails otherwise). Re-run `npm run ui:images` when the reference images change. See [docs/developer.md](docs/developer.md) (Element IDs).
+- New elements: a pull request that adds a visible element gives it an ID (`src/elementIds.ts`, set as `data-mm-id`; its states, if any, go into `ELEMENT_STATES` and `data-mm-state`, never into the ID) and a row in [docs/ui-elements.md](docs/ui-elements.md); new commands, settings rows, notices and frontmatter keys get a row too (`npm run check` fails otherwise). Re-run `npm run ui:images` when the reference images change. See [docs/developer.md](docs/developer.md) (Element IDs).
 
 ## Screenshots in issues and pull requests
 

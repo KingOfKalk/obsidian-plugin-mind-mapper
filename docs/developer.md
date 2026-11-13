@@ -20,8 +20,9 @@
 - UI element reference images: `npm run ui:images` (headless, writes `docs/images/ui-elements*.png`)
 - Element IDs: every element of the plugin's DOM has a stable ID (`data-mm-id`), catalogued in [ui-elements.md](ui-elements.md)
   - A new element gets a member of `ElementId` in `src/elementIds.ts`, `setElementId(el, '<id>')` where it is created and a row in the catalog; `tests/elementIds.test.ts` fails otherwise
+  - The ID names what an element is and never changes with its state (`node.toggle` stays `node.toggle` collapsed); the state is `data-mm-state`, written only by `setElementState` with the allowed values in `ELEMENT_STATES` (convention: `active` for a highlighted button, attribute absent otherwise); `tests/elementIds.test.ts` checks them against the catalog's States column
   - Tests select elements by ID where practical: `byId('controls.fit')` in `e2e/helpers.ts`, `[data-mm-id="controls.fit"]` elsewhere
-  - Dev builds: the command "Show element IDs (dev)" labels every element with its ID (toggle; `src/dev/elementIdOverlay.ts`)
+  - Dev builds: the command "Show element IDs (dev)" labels every element with its ID and, if it has one, its state (`node.toggle [collapsed]`; toggle; `src/dev/elementIdOverlay.ts`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
 - Parser fixtures: notes in `tests/vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them

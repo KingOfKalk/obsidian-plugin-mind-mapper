@@ -104,7 +104,9 @@ describe('UI element reference images', function () {
     await setWindowSize(1200, 800);
     await showMap();
     await browser.$(`${byId('node.toggle')}[data-node-id="Trip planning/Packing"]`).click();
-    await browser.$(byId('node.hidden-count')).waitForExist({ timeout: 5000 });
+    await browser
+      .$(`${byId('node.toggle')}[data-mm-state="collapsed"]`)
+      .waitForExist({ timeout: 5000 });
     await settle();
     await fit();
     // 100 %: room for the slanted labels of the control bar below the map

@@ -787,6 +787,37 @@ describe('collapse and selection', () => {
     expect(nodeIds(view)).toHaveLength(7);
   });
 
+  test('toggle data-mm-state follows toggle, collapse all, expand all and a live edit', async () => {
+    const { view, ws } = await openLive();
+    const states = (): Record<string, [string | null, string | null]> =>
+      Object.fromEntries(
+        [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-collapse')].map((el) => [
+          el.dataset.nodeId ?? '',
+          [el.getAttribute('data-mm-id'), el.getAttribute('data-mm-state')],
+        ]),
+      );
+    const all = (state: string) =>
+      Object.values(states()).every(([id, s]) => id === 'node.toggle' && s === state);
+    expect(Object.keys(states()).length).toBeGreaterThan(0);
+    expect(all('expanded')).toBe(true);
+    view.toggleCollapse('Live/Beta');
+    expect(states()['Live/Beta']).toEqual(['node.toggle', 'collapsed']);
+    view.expandAll();
+    expect(all('expanded')).toBe(true);
+    view.collapseAll();
+    expect(Object.values(states()).some(([, s]) => s === 'collapsed')).toBe(true);
+    expect(Object.values(states()).every(([id]) => id === 'node.toggle')).toBe(true);
+    view.expandAll();
+    view.toggleCollapse('Live/Beta');
+    view.toggleCollapse('Live/Delta');
+    change(ws, 'Live.md', 'live-after');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(states()['Live/Beta']).toEqual(['node.toggle', 'collapsed']);
+    expect(states()['Live/Delta']).toEqual(['node.toggle', 'collapsed']);
+    view.toggleCollapse('Live/Beta');
+    expect(states()['Live/Beta']).toEqual(['node.toggle', 'expanded']);
+  });
+
   test('collapse state survives a live update; a renamed collapsed heading loses it, its unchanged sibling keeps it', async () => {
     const { view, ws } = await openLive();
     view.toggleCollapse('Live/Beta');

@@ -219,6 +219,7 @@ test('the collapse button shows the state: expand all while anything is collapse
   expect(toggle?.getAttribute('aria-label')).toBe('Expand all');
   expect(toggle?.dataset.icon).toBe('chevrons-up-down');
   expect(toggle?.classList.contains('is-active')).toBe(true);
+  expect(toggle?.getAttribute('data-mm-state')).toBe('active');
   toggle?.click();
   expect(actions.expandAll).toHaveBeenCalledTimes(1);
   expect(actions.collapseAll).not.toHaveBeenCalled();
@@ -226,6 +227,7 @@ test('the collapse button shows the state: expand all while anything is collapse
   expect(toggle?.getAttribute('aria-label')).toBe('Collapse all');
   expect(toggle?.dataset.icon).toBe('chevrons-down-up');
   expect(toggle?.classList.contains('is-active')).toBe(false);
+  expect(toggle?.getAttribute('data-mm-state')).toBeNull();
   toggle?.click();
   expect(actions.collapseAll).toHaveBeenCalledTimes(1);
 });
@@ -344,16 +346,23 @@ test('the layout and theme buttons are highlighted while their override is activ
   const { controls, buttons } = setup();
   const [layout, theme] = [buttons[7], buttons[8]];
   expect(layout?.classList.contains('is-active')).toBe(false);
+  expect(layout?.getAttribute('data-mm-state')).toBeNull();
   expect(theme?.classList.contains('is-active')).toBe(false);
+  expect(theme?.getAttribute('data-mm-state')).toBeNull();
   controls.setLayout('left-to-right', true);
   expect(layout?.classList.contains('is-active')).toBe(true);
+  expect(layout?.getAttribute('data-mm-state')).toBe('active');
   expect(theme?.classList.contains('is-active')).toBe(false);
+  expect(theme?.getAttribute('data-mm-state')).toBeNull();
   controls.setTheme('forest', true);
   expect(theme?.classList.contains('is-active')).toBe(true);
+  expect(theme?.getAttribute('data-mm-state')).toBe('active');
   controls.setLayout('left-to-right', false);
   controls.setTheme('forest', false);
   expect(layout?.classList.contains('is-active')).toBe(false);
+  expect(layout?.getAttribute('data-mm-state')).toBeNull();
   expect(theme?.classList.contains('is-active')).toBe(false);
+  expect(theme?.getAttribute('data-mm-state')).toBeNull();
 });
 
 test('the menus can be opened without a click (commands), at their buttons', () => {
@@ -379,6 +388,7 @@ describe('drill-down button (issue #23)', () => {
     const b = drillButton(parent);
     expect(b.disabled).toBe(true);
     expect(b.classList.contains('is-active')).toBe(false);
+    expect(b.getAttribute('data-mm-state')).toBeNull();
     b.click();
     expect(actions.drill).not.toHaveBeenCalled();
   });
@@ -390,6 +400,7 @@ describe('drill-down button (issue #23)', () => {
     expect(b.disabled).toBe(false);
     expect(b.getAttribute('aria-label')).toBe('Drill down into selection');
     expect(b.classList.contains('is-active')).toBe(false);
+    expect(b.getAttribute('data-mm-state')).toBeNull();
     b.click();
     expect(actions.drill).toHaveBeenCalledTimes(1);
   });
@@ -400,13 +411,16 @@ describe('drill-down button (issue #23)', () => {
     controls.setDrill('out', true);
     expect(b.disabled).toBe(false);
     expect(b.classList.contains('is-active')).toBe(true);
+    expect(b.getAttribute('data-mm-state')).toBe('active');
     expect(b.getAttribute('aria-label')).toBe('Drill out one level');
     controls.setDrill('in', true);
     expect(b.classList.contains('is-active')).toBe(true);
+    expect(b.getAttribute('data-mm-state')).toBe('active');
     expect(b.getAttribute('aria-label')).toBe('Drill down into selection');
     controls.setDrill(null, false);
     expect(b.disabled).toBe(true);
     expect(b.classList.contains('is-active')).toBe(false);
+    expect(b.getAttribute('data-mm-state')).toBeNull();
   });
 
   test('German labels', () => {

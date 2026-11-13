@@ -104,8 +104,12 @@ describe('live update', function () {
     });
     expect(gap).toBeGreaterThanOrEqual(0);
     await expect(browser.$('.mind-mapper-collapse[data-node-id="Project/Tasks"]')).toHaveText('2');
+    // Same ID collapsed and expanded; the state is the attribute.
+    const tasks = browser.$(`${'[data-mm-id="node.toggle"]'}[data-node-id="Project/Tasks"]`);
+    await expect(tasks).toHaveAttribute('data-mm-state', 'collapsed');
     await browser.executeObsidianCommand('mind-mapper:expand-all');
     await expect(node('Project/Tasks/#1')).toExist();
+    await expect(tasks).toHaveAttribute('data-mm-state', 'expanded');
   });
 
   it('one collapse button collapses and expands all and shows the state', async function () {
@@ -118,6 +122,7 @@ describe('live update', function () {
     await expect(node('Project/Tasks')).toExist();
     await expect(button()).toHaveAttribute('aria-label', 'Expand all');
     await expect(button()).toHaveElementClass('is-active');
+    await expect(button()).toHaveAttribute('data-mm-state', 'active');
     // the icon is swapped, not added
     expect(await button().$$('svg').length).toBe(1);
     await button().click();

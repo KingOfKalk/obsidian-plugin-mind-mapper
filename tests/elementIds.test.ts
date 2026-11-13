@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ELEMENT_STATES, setElementState } from '../src/elementIds';
 import MindMapperPlugin from '../src/main';
 import { FakeWorkspace, fakeApp, fakeManifest } from './helpers';
 import type { MockSettingDefinition, Plugin as MockPlugin } from './mocks/obsidian';
@@ -83,6 +84,70 @@ test('data-mm-id is only written by src/elementIds.ts', () => {
     (path) => path !== join('src', 'elementIds.ts') && source(path).includes('data-mm-id'),
   );
   expect(others).toEqual([]);
+});
+
+/** States per ID from the "States" column of the catalog tables (backticked values). */
+function catalogStates(): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  let column = -1;
+  for (const line of CATALOG.split('\n')) {
+    if (!line.startsWith('|')) {
+      column = -1;
+      continue;
+    }
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim());
+    if (cells[0] === 'ID') {
+      column = cells.indexOf('States');
+      continue;
+    }
+    const id = /^`([^`]+)`$/.exec(cells[0] ?? '')?.[1];
+    if (!id || column < 0) continue;
+    const states = [...(cells[column] ?? '').matchAll(/`([^`]+)`/g)].map((m) => m[1] ?? '');
+    if (states.length > 0) result[id] = states;
+  }
+  return result;
+}
+
+test('data-mm-state values per ID: the typed map and the catalog list the same states', () => {
+  const typed = Object.fromEntries(
+    Object.entries(ELEMENT_STATES).map(([id, states]) => [id, [...states].sort()]),
+  );
+  const documented = Object.fromEntries(
+    Object.entries(catalogStates()).map(([id, states]) => [id, [...states].sort()]),
+  );
+  expect(Object.keys(typed).length).toBeGreaterThan(0);
+  expect(documented).toEqual(typed);
+  const ids = new Set(elementIdUnion());
+  for (const id of Object.keys(typed)) expect(ids.has(id)).toBe(true);
+});
+
+test('every listed state is set somewhere in src/', () => {
+  const code = sourceFiles()
+    .filter((path) => path !== join('src', 'elementIds.ts'))
+    .map(source)
+    .join('\n');
+  const unused = Object.entries(ELEMENT_STATES).flatMap(([id, states]) =>
+    states.filter((state) => !code.includes(`'${state}'`)).map((state) => `${id}=${state}`),
+  );
+  expect(unused).toEqual([]);
+});
+
+test('data-mm-state is only written by src/elementIds.ts', () => {
+  const others = sourceFiles().filter(
+    (path) => path !== join('src', 'elementIds.ts') && source(path).includes('data-mm-state'),
+  );
+  expect(others).toEqual([]);
+});
+
+test('setElementState sets the state, or removes the attribute for null', () => {
+  const el = document.createElement('button');
+  setElementState(el, 'controls.drill', 'active');
+  expect(el.getAttribute('data-mm-state')).toBe('active');
+  setElementState(el, 'controls.drill', null);
+  expect(el.hasAttribute('data-mm-state')).toBe(false);
 });
 
 test('commands: one catalog entry per registered command (dev ones included)', async () => {

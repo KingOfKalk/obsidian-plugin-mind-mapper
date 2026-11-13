@@ -66,6 +66,13 @@ function selectedId(): Promise<string | null> {
   );
 }
 
+function mmState(selector: string): Promise<string | null> {
+  return browser.execute(
+    (s) => document.querySelector(s)?.getAttribute('data-mm-state') ?? null,
+    selector,
+  );
+}
+
 function hasClass(selector: string, cls: string): Promise<boolean> {
   return browser.execute(
     (s, c) => document.querySelector(s)?.classList.contains(c) ?? false,
@@ -146,6 +153,7 @@ describe('drill-down', function () {
     expect(await hasClass(centre, 'is-drill-centre')).toBe(true);
     expect(await browser.$('.mind-mapper-drill-marker svg').isExisting()).toBe(true);
     expect(await hasClass(byId('controls.drill'), 'is-active')).toBe(true);
+    expect(await mmState(byId('controls.drill'))).toBe('active');
     // The link leads out of the drilled part: hidden.
     expect(await browser.$$('.mind-mapper-crosslink')).toHaveLength(0);
 

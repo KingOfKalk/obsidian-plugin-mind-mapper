@@ -1,4 +1,4 @@
-import { ELEMENT_ID_ATTR } from '../elementIds';
+import { ELEMENT_ID_ATTR, ELEMENT_STATE_ATTR } from '../elementIds';
 
 /** Below this size (px, both sides) an element gets its label beside it (toggles, icons). */
 const SMALL = 40;
@@ -38,7 +38,7 @@ type Placed = { boxes: Box[]; slanted: number[] };
 
 /**
  * Dev-only (issue #33, command "Show element IDs"): a fixed layer above the window that labels
- * every element with an ID (src/elementIds.ts) with that ID and outlines it, updated every frame
+ * every element with an ID (src/elementIds.ts) with that ID (and its state, `id [state]`) and outlines it, updated every frame
  * (nodes appear while panning, menus and modals open). Covered elements (behind the full screen
  * overlay) are left out. Inline styles: nothing of it ships in styles.css. The layer takes no
  * pointer events and does not change the layout.
@@ -87,7 +87,8 @@ export class ElementIdOverlay {
       if (rect.right < 0 || rect.bottom < 0) continue;
       if (rect.left > win.innerWidth || rect.top > win.innerHeight) continue;
       if (covered(doc, el, rect)) continue;
-      const text = el.getAttribute(ELEMENT_ID_ATTR) ?? '';
+      const state = el.getAttribute(ELEMENT_STATE_ATTR);
+      const text = (el.getAttribute(ELEMENT_ID_ATTR) ?? '') + (state ? ` [${state}]` : '');
       const box = boxes[used] ?? layer.createDiv({ cls: 'mind-mapper-dev-id-box' });
       const label = labels[used] ?? layer.createDiv({ cls: 'mind-mapper-dev-id-label' });
       used++;

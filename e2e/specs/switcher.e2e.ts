@@ -94,7 +94,10 @@ type MenuButton = 'controls.layout' | 'controls.theme';
 const button = (id: MenuButton) => browser.$(byId(id));
 
 async function isActive(id: MenuButton): Promise<boolean> {
-  return ((await button(id).getAttribute('class')) ?? '').split(' ').includes('is-active');
+  const active = ((await button(id).getAttribute('class')) ?? '').split(' ').includes('is-active');
+  // The state attribute always agrees with the class: `active`, else absent.
+  expect(await button(id).getAttribute('data-mm-state')).toBe(active ? 'active' : null);
+  return active;
 }
 
 /** Titles of the open menu's items, the checked ones marked with "*". */

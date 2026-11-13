@@ -100,3 +100,16 @@ test('lines are labelled even where a wider hit path covers them', () => {
   overlay.toggle(document);
   Reflect.deleteProperty(document, 'elementFromPoint');
 });
+
+test('an element with a data-mm-state is labelled "id [state]" and follows state changes', () => {
+  const el = element('node.toggle', { x: 100, y: 100, width: 18, height: 18 });
+  el.setAttribute('data-mm-state', 'collapsed');
+  element('controls.fit', { x: 300, y: 360, width: 24, height: 24 });
+  const overlay = new ElementIdOverlay();
+  overlay.toggle(document);
+  expect(labels().map((l) => l.textContent)).toEqual(['node.toggle [collapsed]', 'controls.fit']);
+  el.setAttribute('data-mm-state', 'expanded');
+  overlay.update();
+  expect(labels().map((l) => l.textContent)).toEqual(['node.toggle [expanded]', 'controls.fit']);
+  overlay.toggle(document);
+});

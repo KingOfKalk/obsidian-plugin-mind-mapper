@@ -1,5 +1,5 @@
 import { setIcon } from 'obsidian';
-import { setElementId } from '../elementIds';
+import { setElementId, setElementState } from '../elementIds';
 import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
@@ -521,8 +521,8 @@ export class DomMapRenderer implements MapRenderer {
       }
       const collapsed = count !== undefined;
       toggle.toggleClass('is-collapsed', collapsed);
-      // Collapsed, the toggle shows the hidden count: named as the badge it looks like.
-      setElementId(toggle, collapsed ? 'node.hidden-count' : 'node.toggle');
+      // Collapsed, the toggle shows the hidden count.
+      setElementState(toggle, 'node.toggle', collapsed ? 'collapsed' : 'expanded');
       toggle.setText(collapsed ? String(count) : '−');
       toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
       // Middle of the child-side edge; CSS moves it just outside the node.
@@ -548,6 +548,7 @@ export class DomMapRenderer implements MapRenderer {
       cls: 'mind-mapper-collapse',
       attr: { 'data-node-id': id },
     });
+    setElementId(toggle, 'node.toggle');
     toggle.addEventListener('click', (event) => {
       event.stopPropagation();
       this.hooks.toggle?.(id);
