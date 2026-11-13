@@ -6,9 +6,10 @@ import {
 } from 'obsidian';
 import { t } from './i18n';
 import type { MessageKey } from './i18n/en';
-import { LAYOUT_LABELS, THEME_LABELS } from './i18n/labels';
+import { LAYOUT_LABELS, TAG_POSITION_LABELS, THEME_LABELS } from './i18n/labels';
 import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
+import { TAG_POSITIONS } from './tagPositions';
 import { THEME_NAMES } from './themeNames';
 import { DEFAULT_SETTINGS, type NumericSetting, SETTING_RANGES } from './settings';
 
@@ -64,6 +65,17 @@ export class MindMapSettingTab extends PluginSettingTab {
               type: 'dropdown',
               key: 'defaultTheme',
               options: Object.fromEntries(THEME_NAMES.map((name) => [name, t(THEME_LABELS[name])])),
+            },
+          },
+          {
+            name: t('tagPositionName'),
+            desc: t('tagPositionDesc'),
+            control: {
+              type: 'dropdown',
+              key: 'tagPosition',
+              options: Object.fromEntries(
+                TAG_POSITIONS.map((name) => [name, t(TAG_POSITION_LABELS[name])]),
+              ),
             },
           },
           slider('fitMaxZoom', 'fitMaxZoomName', 'fitMaxZoomDesc', 'zoomPercent', 'percent'),

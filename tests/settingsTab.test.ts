@@ -71,7 +71,10 @@ test('the tab shows the settings in groups under headings', async () => {
       (group.items ?? []).map((d) => d.name),
     ]),
   ).toEqual([
-    ['Map', ['Default layout', 'Start collapsed', 'Default theme', 'Max zoom for fit']],
+    [
+      'Map',
+      ['Default layout', 'Start collapsed', 'Default theme', 'Tag position', 'Max zoom for fit'],
+    ],
     ['Nodes', ['Max node width', 'Max node height']],
     ['Spacing', ['Sibling gap', 'Level gap']],
     ['About', ['Version', 'Source code', 'Report an issue']],
@@ -85,6 +88,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
     ['Map', 'Default layout'],
     ['Map', 'Start collapsed'],
     ['Map', 'Default theme'],
+    ['Map', 'Tag position'],
     ['Map', 'Max zoom for fit'],
     ['Nodes', 'Max node width'],
     ['Nodes', 'Max node height'],
@@ -98,6 +102,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
   expect(row('Start collapsed').toggle?.value).toBe(false);
   expect(row('Default theme').dropdown?.value).toBe('rainbow');
+  expect(row('Tag position').dropdown?.value).toBe('outside');
   expect(row('Max node width').slider?.value).toBe(400);
   expect(row('Max node width').slider?.getValuePretty()).toBe('400 px');
   expect(row('Level gap').slider?.getValuePretty()).toBe('60 px');
@@ -115,6 +120,9 @@ test('every setting has a name and description, so Obsidian settings search find
   );
   expect(definition(mock, 'Default theme').desc).toBe(
     'Colors each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
+  );
+  expect(definition(mock, 'Tag position').desc).toBe(
+    'Where the tags at the end of a node go: in a row below its box, or inside it. For notes without mind-mapper-tags in their frontmatter.',
   );
   // The slider shows the value and its bounds; the description no longer repeats the range.
   expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
@@ -223,6 +231,35 @@ test('the default theme is a dropdown bound to defaultTheme: theme names as valu
       accent: 'Accent color',
     },
   });
+});
+
+// Issue #103.
+test('the tag position is a dropdown bound to tagPosition, in German too', async () => {
+  const { mock } = await setup();
+  expect(definition(mock, 'Tag position').control).toEqual({
+    type: 'dropdown',
+    key: 'tagPosition',
+    options: { outside: 'Outside', inside: 'Inside' },
+  });
+  useGerman();
+  const german = await setup();
+  expect(definition(german.mock, 'Tag-Position').control?.options).toEqual({
+    outside: 'Außerhalb',
+    inside: 'Innerhalb',
+  });
+});
+
+test('choosing a tag position saves it and refreshes open maps', async () => {
+  const { ws, plugin, mock } = await setup();
+  const view = new MindMapView({ app: ws.app } as unknown as WorkspaceLeaf);
+  const leaf = ws.addLeaf({ type: 'mind-mapper-view' });
+  leaf.view = view;
+  const refresh = vi.spyOn(view, 'refresh').mockImplementation(() => {});
+  display(mock);
+  await row('Tag position').dropdown?.changeHandler?.('inside');
+  expect(plugin.settings.tagPosition).toBe('inside');
+  expect(mock.data).toMatchObject({ tagPosition: 'inside' });
+  expect(refresh).toHaveBeenCalledTimes(1);
 });
 
 test('in German the theme labels are German, the values stay', async () => {
@@ -376,6 +413,7 @@ test('in German the groups, rows and values are German; layout values stay', asy
     ['Mindmap', 'Standard-Layout'],
     ['Mindmap', 'Eingeklappt starten'],
     ['Mindmap', 'Standard-Farbschema'],
+    ['Mindmap', 'Tag-Position'],
     ['Mindmap', 'Maximaler Zoom beim Einpassen'],
     ['Knoten', 'Maximale Knotenbreite'],
     ['Knoten', 'Maximale Knotenhöhe'],

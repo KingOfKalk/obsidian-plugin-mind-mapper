@@ -152,6 +152,7 @@ Obsidian notices (catalog only; the ID is the kebab-case message key in `src/i18
 | `notice.invalid-collapsed` | Invalid collapsed notice | Notice, once per note and value | `mind-mapper-collapsed` is not true or false; the setting is used |
 | `notice.invalid-title` | Invalid title notice | Notice, once per note and value | `mind-mapper-title` is not text; the default title is used |
 | `notice.invalid-theme` | Unknown theme notice | Notice, once per note and value | `mind-mapper-theme` has an unknown value; the setting is used |
+| `notice.invalid-tags` | Unknown tag position notice | Notice, once per note and value | `mind-mapper-tags` has an unknown value; the setting is used |
 
 ## Commands
 
@@ -187,6 +188,7 @@ Settings rows (catalog only; Obsidian renders them). The ID is `settings.<group>
 | `settings.map.default-layout` | Default layout | Settings, group "Map" | Layout of notes without `mind-mapper-layout` |
 | `settings.map.start-collapsed` | Start collapsed | Settings, group "Map" | Open maps with only the first level visible |
 | `settings.map.default-theme` | Default theme | Settings, group "Map" | Color theme of notes without `mind-mapper-theme` |
+| `settings.map.tag-position` | Tag position | Settings, group "Map" | Trailing tags of notes without `mind-mapper-tags`: outside (default, a row below the box) or inside |
 | `settings.map.fit-max-zoom` | Max zoom for fit | Settings, group "Map" | Upper zoom limit of fit to view |
 | `settings.nodes.max-node-width` | Max node width | Settings, group "Nodes" | Wider content is clipped |
 | `settings.nodes.max-node-height` | Max node height | Settings, group "Nodes" | Taller content is clipped |
@@ -206,3 +208,4 @@ Keys in a note's frontmatter (catalog only). The ID is `frontmatter.` plus the k
 | `frontmatter.layout` | `mind-mapper-layout` | Note frontmatter | Layout of this note's map |
 | `frontmatter.collapsed` | `mind-mapper-collapsed` | Note frontmatter | Start this note's map collapsed (`true`/`false`) |
 | `frontmatter.theme` | `mind-mapper-theme` | Note frontmatter | Color theme of this note's map |
+| `frontmatter.tags` | `mind-mapper-tags` | Note frontmatter | Tag position of this note's map (`outside`/`inside`) |

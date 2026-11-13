@@ -65,6 +65,7 @@ export const en = {
     'Mind Mapper: mind-mapper-collapsed "{value}" in {path} is not true or false, using {collapsed}',
   invalidTitle: 'Mind Mapper: mind-mapper-title in {path} is not text, using the default title',
   invalidTheme: 'Mind Mapper: unknown mind-mapper-theme "{value}" in {path}, using {theme}',
+  invalidTags: 'Mind Mapper: unknown mind-mapper-tags "{value}" in {path}, using {tags}',
 
   // Settings
   mapHeading: 'Map',
@@ -79,6 +80,11 @@ export const en = {
   defaultThemeName: 'Default theme',
   defaultThemeDesc:
     'Colors each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
+  tagPositionName: 'Tag position',
+  tagPositionDesc:
+    'Where the tags at the end of a node go: in a row below its box, or inside it. For notes without mind-mapper-tags in their frontmatter.',
+  tagPositionOutside: 'Outside',
+  tagPositionInside: 'Inside',
   fitMaxZoomName: 'Max zoom for fit',
   fitMaxZoomDesc:
     'Fit to view enlarges small maps up to this zoom. Open maps use it the next time they fit.',
