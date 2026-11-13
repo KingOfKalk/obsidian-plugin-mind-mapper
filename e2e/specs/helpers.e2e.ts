@@ -1,9 +1,10 @@
 import { browser, expect } from '@wdio/globals';
-import { byId, openMindMap, settle, waitForAnimation, writeNote } from '../helpers';
+import { byId, openMindMap, settle, waitForAnimation, waitForMenu, writeNote } from '../helpers';
 
 /**
  * The E2E helpers themselves (issue #62): `waitForAnimation` tells an animation that does not end
  * from a window that renders no frames for a while (the first Obsidian start on a CI runner).
+ * `waitForMenu` waits until an open menu takes keys (issue #89).
  */
 
 const NOTE = 'helpers.md';
@@ -24,6 +25,26 @@ async function renderNoFramesFor(ms: number): Promise<void> {
     win.hide();
     window.setTimeout(() => win.show(), duration);
   }, ms);
+}
+
+/**
+ * Clicks the control `id`; Esc follows in the same task, or after `setTimeout(…, 0)` with `defer`.
+ * Resolves to whether a menu is still open after the Esc.
+ */
+function clickThenEscape(id: string, defer: boolean): Promise<boolean> {
+  return browser.execute(
+    async (selector, later) => {
+      document.querySelector<HTMLElement>(selector)?.click();
+      if (later) await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      const target = document.activeElement ?? document.body;
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      return document.querySelector('.menu') !== null;
+    },
+    byId(id),
+    defer,
+  );
 }
 
 function isAnimating(): Promise<boolean> {
@@ -66,5 +87,16 @@ describe('E2E helpers', function () {
     await browser.execute((selector) => {
       document.querySelector(selector)?.classList.remove('is-animating');
     }, byId('map.canvas'));
+  });
+
+  it('waitForMenu waits until the menu takes keys', async function () {
+    // Obsidian shows a menu at once but takes keys from the next task: an Esc in between is lost.
+    expect(await clickThenEscape('controls.layout', false)).toBe(true);
+    await waitForMenu();
+    expect(await browser.$('.menu').isExisting()).toBe(true);
+    await browser.keys('Escape');
+    await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
+    // A timeout of 0 after the click (what waitForMenu waits for) runs after the menu's load.
+    expect(await clickThenEscape('controls.layout', true)).toBe(false);
   });
 });

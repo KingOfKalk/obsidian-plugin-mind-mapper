@@ -114,6 +114,18 @@ export async function waitForAnimation(): Promise<void> {
 }
 
 /**
+ * Waits until an Obsidian menu is open and takes keys (issue #89). `Menu.showAtPosition` adds the
+ * menu to the DOM at once but loads it (pushes its key scope: Esc, arrows, Enter) in a
+ * `setTimeout(…, 0)`; a key that arrives in between misses the menu, which then stays open. A
+ * timeout of 0 queued after the menu's runs after it (equal timeouts run in order), so the second
+ * step waits exactly for the menu's load.
+ */
+export async function waitForMenu(): Promise<void> {
+  await browser.$('.menu').waitForExist({ timeout: 5000 });
+  await browser.execute(() => new Promise<void>((resolve) => window.setTimeout(resolve, 0)));
+}
+
+/**
  * Waits until the layout no longer changes (rendering, measuring and re-layout have settled) and
  * no animation runs.
  */

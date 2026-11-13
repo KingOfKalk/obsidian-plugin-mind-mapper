@@ -1,5 +1,13 @@
 import { browser, expect } from '@wdio/globals';
-import { byId, nodeBoxes, openMindMap, settle, waitForCache, writeNote } from '../helpers';
+import {
+  byId,
+  nodeBoxes,
+  openMindMap,
+  settle,
+  waitForCache,
+  waitForMenu,
+  writeNote,
+} from '../helpers';
 
 const NOTE = 'switcher.md';
 const TEXT = [
@@ -162,7 +170,7 @@ describe('layout and colour theme switcher', function () {
     const before = await noteFile();
     expect(await isActive('controls.layout')).toBe(false);
     await button('controls.layout').click();
-    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await waitForMenu();
     expect(await menuItems()).toEqual([
       'Balanced clockwise',
       'Balanced counter-clockwise',
@@ -207,7 +215,7 @@ describe('layout and colour theme switcher', function () {
     const ocean = await alphaBackground();
     const boxes = await nodeBoxes();
     await button('controls.theme').click();
-    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await waitForMenu();
     expect(await menuItems()).toEqual([
       'None',
       'Rainbow',
@@ -299,15 +307,13 @@ describe('layout and colour theme switcher', function () {
     // Keyboard only (a hotkey user), the pointer away from where the menu opens.
     await browser.action('pointer').move({ x: 5, y: 5 }).perform();
     await browser.executeObsidianCommand('mind-mapper:change-theme');
-    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await waitForMenu();
     expect(await menuItems()).toContain('Forest *');
     const selected = () =>
       browser.execute(
         () => document.querySelector('.menu .menu-item.selected .menu-item-title')?.textContent,
       );
-    // The arrow keys walk the menu (from the top), Enter chooses. The menu takes keys a moment
-    // after it shows.
-    await browser.pause(300);
+    // The arrow keys walk the menu (from the top), Enter chooses.
     await browser.keys('ArrowDown');
     await browser.waitUntil(async () => (await selected()) === 'None', {
       timeout: 5000,

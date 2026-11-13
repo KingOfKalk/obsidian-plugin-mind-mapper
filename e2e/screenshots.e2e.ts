@@ -9,6 +9,7 @@ import {
   settle,
   waitForAnimation,
   waitForCache,
+  waitForMenu,
   writeNote,
 } from './helpers';
 import { generateNote } from './perf/generateNote';
@@ -736,7 +737,7 @@ async function saveControlsShots(prefix: string): Promise<void> {
   await controls.saveScreenshot(`${prefix}-editing.png`);
   await browser.keys('Escape');
   await browser.$(byId('controls.zoom-presets')).click();
-  await browser.$('.menu').waitForExist({ timeout: 5000 });
+  await waitForMenu();
   await browser.pause(200);
   await browser.saveScreenshot(`${prefix}-menu.png`);
   await browser.keys('Escape');
@@ -747,7 +748,7 @@ async function saveControlsShots(prefix: string): Promise<void> {
     [9, 'theme'],
   ] as const) {
     await browser.$(`.mind-mapper-controls > :nth-child(${child})`).click();
-    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await waitForMenu();
     await browser.pause(200);
     await browser.saveScreenshot(`${prefix}-${name}-menu.png`);
     await browser.keys('Escape');
