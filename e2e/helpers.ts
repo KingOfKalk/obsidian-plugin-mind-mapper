@@ -70,14 +70,47 @@ export async function nodeBoxes(): Promise<NodeBox[]> {
   );
 }
 
+/** Rendered time after which a running animation counts as stuck (the longest takes 550 ms). */
+const ANIMATION_TIMEOUT_MS = 5000;
+/** A frame gap counts at most this long: time without frames is not rendered time. */
+const MAX_FRAME_GAP_MS = 100;
+/** Gives up when the window renders no frames for this long. */
+const NO_FRAMES_TIMEOUT_MS = 20000;
+
 /**
  * Waits until no animation runs (drill-down, fit, zoom controls, layout switch: the canvas has
- * `is-animating` meanwhile).
+ * `is-animating` meanwhile). Animations advance on animation frames, so only time in which the
+ * window renders frames counts: the first Obsidian start on a CI runner renders none for several
+ * seconds (issue #62), which neither ends an animation nor makes it one that does not end.
  */
 export async function waitForAnimation(): Promise<void> {
-  await browser
-    .$('.mind-mapper-canvas.is-animating')
-    .waitForExist({ reverse: true, timeout: 5000, timeoutMsg: 'animation did not end' });
+  const result = await browser.execute(
+    (rendered, maxGap, noFrames) =>
+      new Promise<string>((resolve) => {
+        const animating = (): boolean =>
+          document.querySelector('.mind-mapper-canvas.is-animating') !== null;
+        if (!animating()) return resolve('ended');
+        let time = 0;
+        let last = performance.now();
+        let stall = window.setTimeout(() => resolve('no frames'), noFrames);
+        const frame = (): void => {
+          window.clearTimeout(stall);
+          if (!animating()) return resolve('ended');
+          const now = performance.now();
+          time += Math.min(now - last, maxGap);
+          last = now;
+          if (time >= rendered) return resolve('stuck');
+          stall = window.setTimeout(() => resolve('no frames'), noFrames);
+          window.requestAnimationFrame(frame);
+        };
+        window.requestAnimationFrame(frame);
+      }),
+    ANIMATION_TIMEOUT_MS,
+    MAX_FRAME_GAP_MS,
+    NO_FRAMES_TIMEOUT_MS,
+  );
+  if (result === 'stuck') throw new Error('animation did not end');
+  if (result === 'no frames') throw new Error('animation did not end: no frames rendered');
 }
 
 /**
