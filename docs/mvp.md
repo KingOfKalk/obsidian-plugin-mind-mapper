@@ -95,7 +95,7 @@ Project (root, H1)
     - An empty heading (`## `) has the segment `[]`, which no heading text can produce, so it never takes the file-name root's empty ID
   - Other nodes: parent ID + ordinal position among siblings
     - Inserting a sibling shifts later leaf IDs; accepted, because collapse state mostly lives on headings
-- Render cache key is separate from identity: content hash of the section text plus node width
+- Render cache key is separate from identity: the node's markdown string (rendered content is reused for the same markdown); the measured size cache adds the size variant (root or not, max node width and height)
   - Cache hits survive ID shifts
 - Collapse state kept in memory per ID for the session; persisting per note is a future feature
 - Collapse all mode (decided): "Collapse all" switches the map into collapse-all mode until "Expand all"
@@ -341,14 +341,14 @@ Project (root, H1)
   - A node is measured when it is first rendered: in place, in the map's own world container: the layout size (`offsetWidth` / `scrollWidth`) ignores the zoom transform, so it is the size at zoom 1; a hidden tab reports 0 and keeps the sizes measured before
   - `ResizeObserver` per rendered node catches late size changes (images, Mermaid, math, other plugins' post processors)
   - Size changes trigger a debounced re-layout that keeps the viewport anchored on the selected node, else the view center
-  - Measured sizes are cached by render cache key
+  - Measured sizes are cached by size variant (root or not, max node width and height) plus the node's markdown string
 - Rendering (decided): SVG / DOM for MVP
   - Own pan/zoom (or d3-zoom), node content via `MarkdownRenderer.render` (not the deprecated `renderMarkdown`), theming via Obsidian CSS variables
-  - Keep renderer behind an interface, three.js renderer as future option for very large maps
+  - The view talks to the concrete DOM renderer (no renderer interface); a three.js renderer for very large maps stays a future option and would extract one
 - Performance (decided)
   - Target: 1,000 nodes pan/zoom smooth at 60 fps, 5,000 nodes still usable
   - Render only nodes in the viewport plus a margin (filled nearest to the viewport first, at most twice the outline threshold in effect: 600 nodes, 120 below 20 % zoom); edges and cross-connection lines are kept even when one endpoint is off screen
-  - Render cache and measured size cache by content hash, reused on live update
+  - Render cache by markdown and measured size cache by size variant plus markdown, reused on live update
   - Verified with a benchmark harness on generated notes (frame times logged, compared against a baseline) plus a manual gate; no fps assertions in CI, they are flaky
 - Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` 1.15.0, the newest public Obsidian release (betas do not count); it unlocks the declarative settings API, so the settings appear in Obsidian's settings search
 ## Suggested milestones
@@ -378,7 +378,7 @@ Each milestone ends in something installable and usable in a real vault. Order i
   - Value: real notes render as they look in Obsidian; the main technical risk (render + measure + layout at scale) is retired
 - M3 - Live companion
   - Live update via the `changed` event, debounce, generation token, viewport and selection kept
-  - Stable node IDs, render and size cache by content hash
+  - Stable node IDs, render cache by markdown, size cache by size variant plus markdown
   - Collapse/expand: node toggle plus collapse all and expand all commands
   - Selection, double click jump to source with the target leaf rules
   - Rename, delete, loading and empty states

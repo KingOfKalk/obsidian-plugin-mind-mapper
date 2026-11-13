@@ -13,7 +13,9 @@
 - This environment is a devcontainer, set up for development of TypeScript projects.
 - TDD: write the failing test first, see it fail for the right reason, then implement.
 - All gates before opening a PR: `npm run check`, `npm run test:e2e`, and for UI changes `npm run screenshots:e2e` plus a look at the PNGs.
-- Agents push their branch to `origin` and open a PR with `gh pr create`: Conventional Commit title, PR template filled in (`Closes #<issue>`, summary, test plan).
+- Agents push their branch to `origin` and open a draft PR with `gh pr create --draft`: Conventional Commit title, PR template filled in (`Closes #<issue>`, summary, test plan).
+  - Mark it ready (`gh pr ready`) only when all gates pass, CI is green on the final commit and nothing more will be pushed.
+  - Follow-ups on an open PR: back to draft first (`gh pr ready --undo`). A merged PR's branch is never pushed to again: new branch from `origin/main`, new draft PR.
 - Visible changes get screenshots in the PR (before/after table) and bug issues get a screenshot of the problem, hosted in a secret gist per issue/PR, never in this repository: [CONTRIBUTING.md](CONTRIBUTING.md) (Screenshots in issues and pull requests). If uploading is not possible, keep the PNGs locally, list their paths in your report and write "Screenshots: will be added" in the PR.
 - Never push to `main` directly. Never force-push. Never commit on `main`. Never merge a PR (the owner does).
 - After a merge, run `npm run dev:build` in the main checkout to update the sandbox vault.
