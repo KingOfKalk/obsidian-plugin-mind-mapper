@@ -82,7 +82,7 @@ describe('README image', function () {
     // one collapsed branch with its hidden-node count
     await browser.$(`.mind-mapper-collapse[data-node-id="${COLLAPSED}"]`).click();
     await browser
-      .$(`.mind-mapper-collapse[data-node-id="${COLLAPSED}"].is-collapsed`)
+      .$(`.mind-mapper-collapse[data-node-id="${COLLAPSED}"][data-mm-state="collapsed"]`)
       .waitForExist();
     await settle();
     // the file explorer is the active leaf, so the command would not reach the map: use its button

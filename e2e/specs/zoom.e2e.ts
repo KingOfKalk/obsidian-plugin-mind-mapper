@@ -12,7 +12,7 @@ interface Box {
 function rectsInCanvas(): Promise<{
   width: number;
   height: number;
-  boxes: (Box & { what: string })[];
+  boxes: (Box & { what: string; state: string | null })[];
 }> {
   return browser.execute(() => {
     const canvas = document.querySelector('.mind-mapper-canvas');
@@ -24,6 +24,7 @@ function rectsInCanvas(): Promise<{
       const r = el.getBoundingClientRect();
       return {
         what: `${el.className} ${el.dataset.nodeId ?? ''}`,
+        state: el.dataset.mmState ?? null,
         left: r.left - c.left,
         top: r.top - c.top,
         right: r.right - c.left,
@@ -73,7 +74,7 @@ describe('zoom controls', function () {
       await control('controls.fit');
       await settle();
       const { width, height, boxes } = await rectsInCanvas();
-      expect(boxes.some((b) => b.what.includes('is-collapsed'))).toBe(true);
+      expect(boxes.some((b) => b.state === 'collapsed')).toBe(true);
       const margin = Math.max(48, 0.08 * Math.min(width, height));
       const outside = boxes.filter(
         (b) =>

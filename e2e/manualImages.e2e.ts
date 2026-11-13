@@ -190,7 +190,9 @@ describe('user manual images', function () {
     await showMap(SIMPLE);
     const toggle = 'Garden plans/Vegetables';
     await browser.$(`.mind-mapper-collapse[data-node-id="${toggle}"]`).click();
-    await browser.$(`.mind-mapper-collapse[data-node-id="${toggle}"].is-collapsed`).waitForExist();
+    await browser
+      .$(`.mind-mapper-collapse[data-node-id="${toggle}"][data-mm-state="collapsed"]`)
+      .waitForExist();
     await settle();
     await fit();
     await movePointerAway(400, 100);

@@ -428,7 +428,8 @@ button.mind-mapper-collapse:hover {
   border-color: var(--interactive-accent);
 }
 
-button.mind-mapper-collapse.is-collapsed {
+/* The state comes from data-mm-state (set by setElementState); expanded is the base look above. */
+button.mind-mapper-collapse[data-mm-state='collapsed'] {
   color: var(--text-on-accent);
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);

@@ -520,9 +520,9 @@ export class DomMapRenderer implements MapRenderer {
         this.toggles.set(node.id, toggle);
       }
       const collapsed = count !== undefined;
-      toggle.toggleClass('is-collapsed', collapsed);
-      // Collapsed, the toggle shows the hidden count.
+      // The element state is the only source of the collapsed highlight in styles.css (no class).
       setElementState(toggle, 'node.toggle', collapsed ? 'collapsed' : 'expanded');
+      // Collapsed, the toggle shows the hidden count.
       toggle.setText(collapsed ? String(count) : '−');
       toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
       // Middle of the child-side edge; CSS moves it just outside the node.

@@ -150,6 +150,11 @@ test('setElementState sets the state, or removes the attribute for null', () => 
   expect(el.hasAttribute('data-mm-state')).toBe(false);
 });
 
+test('styles.css highlights a collapsed node.toggle from its data-mm-state (issue #40)', () => {
+  const css = readFileSync('styles.css', 'utf8');
+  expect(css).toMatch(/button\.mind-mapper-collapse\[data-mm-state=['"]collapsed['"]\] \{/);
+});
+
 test('commands: one catalog entry per registered command (dev ones included)', async () => {
   const plugin = new MindMapperPlugin(fakeApp(new FakeWorkspace()), fakeManifest());
   await plugin.onload();

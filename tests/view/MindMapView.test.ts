@@ -323,7 +323,7 @@ test.each([
     );
     // Badges (left-to-right: right of the node, 18 px high, about 8 px per digit + 10).
     const toggles = [...view.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-collapse')];
-    expect(toggles.some((el) => el.classList.contains('is-collapsed'))).toBe(true);
+    expect(toggles.some((el) => el.dataset.mmState === 'collapsed')).toBe(true);
     for (const el of toggles) {
       const w = Math.max(18, 10 + 7 * (el.textContent ?? '').length);
       boxes.push({

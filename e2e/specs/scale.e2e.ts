@@ -1,6 +1,6 @@
 import { browser, expect } from '@wdio/globals';
 import { generateNote } from '../perf/generateNote';
-import { openMindMap, waitForCache } from '../helpers';
+import { byId, openMindMap, waitForCache } from '../helpers';
 
 function counts() {
   return browser.execute(() => ({
@@ -91,7 +91,7 @@ describe('scale', function () {
       document.querySelector<HTMLElement>('.mind-mapper-collapse')?.click();
     });
     await frames(5);
-    await expect(browser.$('.mind-mapper-collapse.is-collapsed')).toExist();
+    await expect(browser.$(`${byId('node.toggle')}[data-mm-state="collapsed"]`)).toExist();
     expect((await counts()).edges).toBeLessThan(edgesBefore);
     await browser.execute(() => {
       document
