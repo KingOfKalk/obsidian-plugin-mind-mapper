@@ -18,6 +18,7 @@ interface Metrics {
   zoomLongestFrameMs: number;
   renderedAt25: number;
   pan25LongestFrameMs: number;
+  editLatencyMs: number;
 }
 
 /**
@@ -160,8 +161,47 @@ describe('performance spike', function () {
             ),
           );
 
+          // Edit latency: write a paragraph under the H1 (vault.modify, as a save does), then time
+          // until the map has settled: 300 ms debounce, Obsidian's cache parse, parse, layout,
+          // render, measuring and re-layouts. Every (re-)layout is a new layout object of the view;
+          // the new node is the root's first child, often off screen (culled), so the DOM cannot
+          // show it. At 100 % on the root, like reading while typing.
+          commands.executeCommandById('mind-mapper:reset-zoom');
+          commands.executeCommandById('mind-mapper:back-to-root');
+          while (document.querySelector('.mind-mapper-canvas.is-animating')) await frame();
+          const view = leaf.view as unknown as { layout?: { nodes: { node: { id: string } }[] } };
+          if (!('layout' in view)) throw new Error('MindMapView has no `layout` field any more');
+          /** Time of the last layout change once `done()` holds and the layout kept for 500 ms. */
+          const settled = async (since: number, done: () => boolean): Promise<number> => {
+            let before = view.layout;
+            let changedAt = since;
+            for (;;) {
+              const now = await frame();
+              if (view.layout !== before) {
+                before = view.layout;
+                changedAt = now;
+              }
+              if (done() && now - changedAt >= 500) return changedAt;
+              if (now - since > 20000) throw new Error('map did not settle after the edit');
+            }
+          };
+          await settled(performance.now(), () => true);
+          const file = app.vault.getFileByPath(notePath);
+          if (!file) throw new Error(`missing ${notePath}`);
+          const text = await app.vault.read(file);
+          const heading = text.indexOf('\n');
+          const edited = `${text.slice(0, heading)}\n\nEdited paragraph.\n${text.slice(heading)}`;
+          const newId = `Generated ${nodeCount}/#1`;
+          const editStart = performance.now();
+          await app.vault.modify(file, edited);
+          const editSettled = await settled(
+            editStart,
+            () => view.layout?.nodes.some((p) => p.node.id === newId) ?? false,
+          );
+
           return {
             nodes: nodeCount,
+            editLatencyMs: Math.round(editSettled - editStart),
             renderedAt25,
             pan25LongestFrameMs,
             renderedAtFit,

@@ -33,7 +33,8 @@
   - Uses [wdio-obsidian-service](https://github.com/jesse-r-s-hines/wdio-obsidian-service), which downloads Obsidian into `.obsidian-cache/` and opens a temp copy of `tests/vault/`
   - Needs Xvfb and Electron libraries: `scripts/install-e2e-deps.sh` (run automatically when the devcontainer is created)
 - `npm run perf:e2e`: performance spike on generated 1,000 and 5,000 node notes in headless Obsidian
-  - Prints time to first layout, time until the layout settles, re-layout count and the longest frame while panning; writes `e2e/perf/last-run.json`
+  - Prints time to first layout, time until the layout settles, re-layout count, the longest frame while panning and the edit latency; writes `e2e/perf/last-run.json`
+  - Edit latency (`editLatencyMs`): a paragraph written into the note (`vault.modify`) until the map has settled (300 ms debounce, Obsidian's cache parse, parse, layout, render, measuring and re-layouts), at 100 % on the root
   - No timing assertions; compare against `e2e/perf/baseline.json` by hand
 - Merge gate: `npm run check` and `npm run test:e2e` pass
 
@@ -88,7 +89,7 @@
   - Not part of `npm run check`: run it before every merge
 - Performance benchmark (`npm run perf:e2e`)
   - Generated notes with 1,000 and 5,000 nodes (`e2e/perf/generateNote.ts`)
-  - No timing assertions (frame times are flaky); it prints a diff against the committed `e2e/perf/baseline.json` and writes `e2e/perf/last-run.json` (git-ignored)
+  - No timing assertions (frame times are flaky; E2E specs wait for states, never for durations); it prints a diff against the committed `e2e/perf/baseline.json` and writes `e2e/perf/last-run.json` (git-ignored)
   - Update `baseline.json` by hand only when a change is meant to move the numbers
 - Screenshot runs (`npm run screenshots:e2e`, `npm run readme:images`, `npm run manual:images`): see below
 
