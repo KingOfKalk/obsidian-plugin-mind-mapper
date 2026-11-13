@@ -23,6 +23,8 @@
   - The ID names what an element is and never changes with its state (`node.toggle` stays `node.toggle` collapsed); the state is `data-mm-state`, written only by `setElementState` with the allowed values in `ELEMENT_STATES` (convention: `active` for a highlighted button, attribute absent otherwise); `tests/elementIds.test.ts` checks them against the catalog's States column
   - Tests select elements by ID where practical: `byId('controls.fit')` in `e2e/helpers.ts`, `[data-mm-id="controls.fit"]` elsewhere
   - Dev builds: the command "Show element IDs (dev)" labels every element with its ID and, if it has one, its state (`node.toggle [collapsed]`; toggle; `src/dev/elementIdOverlay.ts`)
+    - Dev only, it never ships: `src/main.ts` registers it inside `if (__DEV__)`, which the release build drops with everything it imports; `tests/productionBuild.test.ts` checks that the release bundle has neither the overlay nor the dev commands
+    - Its styles (fixed colors, z-index) are set inline on purpose, against the "no hardcoded styling" guideline: in `styles.css` they would ship in every release; the plugin's own UI takes all static styling from `styles.css`
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
 - Parser fixtures: notes in `tests/vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
