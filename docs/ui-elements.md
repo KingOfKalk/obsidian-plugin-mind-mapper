@@ -20,7 +20,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ![Full screen with a collapsed branch, a drilled-in center, a highlighted link and the control bar, every element labelled](images/ui-elements-full-screen.png)
 
-![A small board in the kanban layout: the headline, two columns with their card counts, cards, a nested tag and a divider, every element labelled](images/ui-elements-kanban.png)
+![A small board in the kanban layout: the headline, two columns with their card counts, cards, a nested tag in its tag row below a card and a divider, every element labelled](images/ui-elements-kanban.png)
 
 ## Contents
 
