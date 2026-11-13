@@ -1,9 +1,6 @@
 import type { MindMapNode } from '../parser/types';
 import { DIVIDER_GAP, type LayoutDivider, type LayoutOptions, type PositionedNode } from './types';
 
-/** Indent of a subtask per level below its card. */
-export const KANBAN_INDENT = 20;
-
 /** Card count bubble of a column header, mirroring `.mind-mapper-card-count` in styles.css. */
 export const COUNT_BUBBLE = {
   /** Space between the header text and the bubble. */
@@ -24,12 +21,14 @@ export function countBubbleWidth(count: number): number {
 
 /**
  * Spec "Kanban" (issue #32): the root as a headline centered above the board; its children are
- * columns side by side, all as wide as the widest header (plus its count bubble), card or subtask
- * (plus its indent), at most the max node width (but never narrower than a node); their children are cards stacked downwards, all
- * deeper nodes subtasks indented below their card (pre-order). Column gap: twice the sibling gap;
- * root to headers: the level gap; everything stacked: the sibling gap. A divider (`---`) adds
- * DIVIDER_GAP: a vertical line between two columns, a horizontal one between two cards or
- * subtasks. Overlap-free: columns are disjoint, each column a single stack.
+ * columns side by side, all as wide as the widest header (plus its count bubble), card or subtask,
+ * at most the max node width (but never narrower than a node); their children are cards stacked
+ * downwards, all deeper nodes subtasks below their card (pre-order), as wide as the column, no
+ * indent (issue #91). Column gap: twice the sibling gap; root to headers: the level gap; header to
+ * card and card to card: the sibling gap; within a task (card to subtask, subtask to subtask):
+ * half of it. A divider (`---`) adds DIVIDER_GAP: a vertical line between two columns, a
+ * horizontal one between two cards or subtasks. Overlap-free: columns are disjoint, each column a
+ * single stack.
  */
 export function kanban(
   root: MindMapNode,
@@ -38,7 +37,7 @@ export function kanban(
   const { siblingGap, levelGap, nodeSize } = options;
   const columns = root.children;
   const countOf = (node: MindMapNode): number => options.childCount?.(node) ?? node.children.length;
-  const indentOf = (depth: number): number => Math.max(0, depth - 2) * KANBAN_INDENT;
+  const taskGap = siblingGap / 2;
 
   const sizes = new Map<MindMapNode, { width: number; height: number }>();
   const size = (node: MindMapNode) => {
@@ -50,13 +49,12 @@ export function kanban(
     return s;
   };
 
-  // Column width: the widest header (+ bubble), card or subtask (+ indent), capped; never
-  // narrower than a node itself (an image thumbnail can be wider than the cap).
+  // Column width: the widest header (+ bubble), card or subtask, capped; never narrower than a
+  // node itself (an image thumbnail can be wider than the cap).
   let widest = 0;
   let widestNode = 0;
   const measure = (node: MindMapNode, depth: number): void => {
-    const extra =
-      depth === 1 ? COUNT_BUBBLE.gap + countBubbleWidth(countOf(node)) : indentOf(depth);
+    const extra = depth === 1 ? COUNT_BUBBLE.gap + countBubbleWidth(countOf(node)) : 0;
     widest = Math.max(widest, size(node).width + extra);
     widestNode = Math.max(widestNode, size(node).width);
     for (const child of node.children) measure(child, depth + 1);
@@ -119,33 +117,32 @@ export function kanban(
       count: countOf(column),
     });
     let bottom = headerTop + header.height;
-    let top = cardTop;
 
     /** Places the children of `parent` (cards or subtasks) and their subtasks, top to bottom. */
     const stack = (parent: MindMapNode, depth: number): void => {
       parent.children.forEach((child, i) => {
-        const divider = i > 0 && child.dividerBefore === true;
         const own = size(child);
-        const indent = Math.min(indentOf(depth), Math.max(0, width - own.width));
-        const x = left + indent;
-        if (divider) {
-          const y = bottom + (siblingGap + DIVIDER_GAP) / 2;
-          dividers.push({ parentId: parent.id, from: { x, y }, to: { x: left + width, y } });
-          top = bottom + siblingGap + DIVIDER_GAP;
+        // The first card starts below the tallest header; a subtask is closer to its task.
+        const gap = depth > 2 ? taskGap : siblingGap;
+        let top = depth === 2 && i === 0 ? cardTop : bottom + gap;
+        if (i > 0 && child.dividerBefore === true) {
+          const y = bottom + (gap + DIVIDER_GAP) / 2;
+          dividers.push({ parentId: parent.id, from: { x: left, y }, to: { x: left + width, y } });
+          top += DIVIDER_GAP;
         }
         nodes.push({
           node: child,
-          x,
+          x: left,
           y: top,
-          width: width - indent,
+          width,
           height: own.height,
           childSide: 'bottom',
           align: 'left',
           depth,
           branch,
+          ...(depth > 2 ? { subtask: depth - 2 } : {}),
         });
         bottom = top + own.height;
-        top = bottom + siblingGap;
         stack(child, depth + 1);
       });
     };
