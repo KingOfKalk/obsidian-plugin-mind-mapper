@@ -482,6 +482,7 @@ button.mind-mapper-collapse[data-mm-state='collapsed'] {
   top: var(--size-4-4);
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
   max-width: calc(100% - 2 * var(--size-4-4));
   padding: var(--size-4-1) var(--size-4-3);
   border: 1px solid var(--background-modifier-error);

@@ -144,11 +144,12 @@ describe('screenshots', function () {
     );
     await openMindMap('inline-images.md');
     await settle();
-    await browser.executeObsidianCommand('mind-mapper:reset-zoom');
-    await browser.executeObsidianCommand('mind-mapper:back-to-root');
+    await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+    await browser.executeObsidianCommand('mind-mapper:fit-to-view');
     await waitForAnimation();
     await browser.pause(300);
     await browser.saveScreenshot(`${dir}/inline-images.png`);
+    await browser.keys('Escape');
   });
 
   it('update error notice', async function () {
