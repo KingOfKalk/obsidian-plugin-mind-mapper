@@ -73,3 +73,13 @@ test('in German the exit button is labelled German', () => {
   const exit = document.body.querySelector('.mind-mapper-exit-full-screen');
   expect(exit?.getAttribute('aria-label')).toBe('Vollbild beenden');
 });
+
+test('the overlay, its title chip and exit button carry their data-mm-id (issue #33)', () => {
+  const { fullScreen } = setup();
+  fullScreen.enter();
+  const mmId = (cls: string) => document.body.querySelector(cls)?.getAttribute('data-mm-id');
+  expect(mmId('.mind-mapper-full-screen')).toBe('fullscreen.overlay');
+  expect(mmId('.mind-mapper-title-chip')).toBe('fullscreen.title-chip');
+  expect(mmId('.mind-mapper-exit-full-screen')).toBe('fullscreen.exit');
+  fullScreen.exit();
+});

@@ -2390,3 +2390,11 @@ test('in German the title, placeholders and empty-note hint are German', async (
     view.contentEl.querySelector('.mind-mapper-controls [aria-label="Vergrößern"]'),
   ).not.toBeNull();
 });
+
+test('the placeholder and the empty-note hint carry their data-mm-id (issue #33)', async () => {
+  const { view } = newView();
+  await view.onOpen();
+  const mmId = (cls: string) => view.contentEl.querySelector(cls)?.getAttribute('data-mm-id');
+  expect(mmId('.mind-mapper-placeholder')).toBe('map.placeholder');
+  expect(mmId('.mind-mapper-hint')).toBe('map.empty-hint');
+});

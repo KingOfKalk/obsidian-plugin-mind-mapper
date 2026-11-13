@@ -2,7 +2,9 @@ import { Notice, Plugin, TFile } from 'obsidian';
 import { isMindMapSource, openMindMap } from './commands/openMindMap';
 import { registerViewCommands } from './commands/viewCommands';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from './constants';
+import { ElementIdOverlay } from './dev/elementIdOverlay';
 import { recordFixtures } from './dev/recordFixtures';
+import { setElementId } from './elementIds';
 import { loadLanguage, t } from './i18n';
 import { HOVER_SOURCE_ID } from './render/linkHandling';
 import { LeafRecency } from './view/leafRecency';
@@ -57,7 +59,7 @@ export default class MindMapperPlugin extends Plugin {
       }),
     );
 
-    this.addRibbonIcon(VIEW_ICON, t('openAsMindMap'), () => {
+    const ribbonIcon = this.addRibbonIcon(VIEW_ICON, t('openAsMindMap'), () => {
       const file = this.app.workspace.getActiveFile();
       if (!isMindMapSource(file)) {
         new Notice(t('openNoteFirst'));
@@ -65,6 +67,7 @@ export default class MindMapperPlugin extends Plugin {
       }
       this.open(file);
     });
+    setElementId(ribbonIcon, 'ribbon.open-mind-map');
 
     registerViewCommands(this);
 
@@ -95,6 +98,14 @@ export default class MindMapperPlugin extends Plugin {
               new Notice('Mind Mapper: recording fixtures failed, see console');
             });
         },
+      });
+      // Issue #33: labels every element with its ID (docs/ui-elements.md).
+      const overlay = new ElementIdOverlay();
+      this.register(() => overlay.hide());
+      this.addCommand({
+        id: 'show-element-ids',
+        name: 'Show element IDs (dev)',
+        callback: () => overlay.toggle(activeDocument),
       });
     }
   }

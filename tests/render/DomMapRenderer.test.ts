@@ -632,6 +632,7 @@ describe('culling', () => {
     expect(hooks.release).toHaveBeenCalledTimes(9);
     const skeleton = parent.querySelector('path.mind-mapper-skeleton');
     expect(skeleton?.getAttribute('d')?.match(/M /g)).toHaveLength(400);
+    expect(skeleton?.getAttribute('data-mm-id')).toBe('skeleton');
     renderer.setTransform({ x: 0, y: 0, zoom: 1 });
     renderer.updateVisible();
     expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
@@ -1077,5 +1078,48 @@ describe('drill-down (issue #23)', () => {
     expect(world?.style.opacity).toBe('0.25');
     renderer.setOpacity(null);
     expect(world?.style.opacity).toBe('');
+  });
+});
+
+describe('element IDs (issue #33)', () => {
+  const mmId = (el: Element | null | undefined) => el?.getAttribute('data-mm-id');
+
+  test('canvas, nodes, node parts and lines carry their data-mm-id', () => {
+    const { parent, renderer } = hooked();
+    const withBlock: MapLayout = {
+      ...layout,
+      nodes: layout.nodes.map((p) =>
+        p.node.id === 'R/B' ? { ...p, node: node('R/B', 'block') } : p,
+      ),
+      dividers: [{ parentId: 'R', from: { x: 260, y: 0 }, to: { x: 460, y: 0 } }],
+    };
+    renderer.setLayout(withBlock, { hidden: new Map(), hasChildren: withChildren });
+    renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 3 }]);
+    renderer.setHighlightedLink({ fromId: 'R/A', toId: 'R/B', line: 3 });
+    renderer.setDrillCentre('R');
+    expect(mmId(renderer.canvasEl)).toBe('map.canvas');
+    const byNode = (id: string) => parent.querySelector(`.mind-mapper-node[data-node-id="${id}"]`);
+    expect(mmId(byNode('R'))).toBe('node.root');
+    expect(mmId(byNode('R/A'))).toBe('node.text');
+    expect(mmId(byNode('R/B'))).toBe('node.block');
+    expect(mmId(byNode('R/A')?.querySelector('.mind-mapper-node-expand'))).toBe('node.expand');
+    expect(mmId(parent.querySelector('.mind-mapper-collapse'))).toBe('node.toggle');
+    expect(mmId(parent.querySelector('.mind-mapper-drill-marker'))).toBe('node.drill-marker');
+    expect(mmId(parent.querySelector('path.mind-mapper-edge'))).toBe('edge');
+    expect(mmId(parent.querySelector('path.mind-mapper-divider'))).toBe('divider');
+    expect(mmId(parent.querySelector('path.mind-mapper-crosslink'))).toBe('link.line');
+    expect(mmId(parent.querySelector('path.mind-mapper-crosslink-hit'))).toBe('link.hit-area');
+    expect(mmId(parent.querySelector('path.mind-mapper-crosslink-highlight'))).toBe(
+      'link.highlight',
+    );
+  });
+
+  test('a collapsed toggle is the hidden-count badge, expanded again the toggle', () => {
+    const { parent, renderer } = hooked();
+    const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 2), edges: [] };
+    renderer.setLayout(collapsed, { hidden: new Map([['R/A', 5]]), hasChildren: withChildren });
+    expect(mmId(parent.querySelector('.mind-mapper-collapse'))).toBe('node.hidden-count');
+    renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
+    expect(mmId(parent.querySelector('.mind-mapper-collapse'))).toBe('node.toggle');
   });
 });

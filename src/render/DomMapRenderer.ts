@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian';
+import { setElementId } from '../elementIds';
 import { t } from '../i18n';
 import type { CrossLink } from '../layout/crossLinks';
 import { crossLinkPath, edgePath } from '../layout/edgePath';
@@ -111,6 +112,7 @@ export class DomMapRenderer implements MapRenderer {
     this.culling = options.culling ?? false;
     this.canvasEl = parentEl.createDiv({ cls: 'mind-mapper-canvas' });
     this.canvasEl.addClass(themeClass(this.theme));
+    setElementId(this.canvasEl, 'map.canvas');
     this.worldEl = this.canvasEl.createDiv({ cls: 'mind-mapper-world' });
     this.worldEl.addEventListener('click', (event) => {
       const id = this.nodeIdOf(event);
@@ -222,6 +224,7 @@ export class DomMapRenderer implements MapRenderer {
       .join(' ');
     const path = this.worldEl.doc.createElementNS(SVG_NS, 'path');
     path.classList.add('mind-mapper-skeleton');
+    setElementId(path, 'skeleton');
     path.setAttribute('d', this.skeletonD);
     // Above the edges, below cross-links (appended later).
     const firstCrossLink = svg.querySelector('.mind-mapper-crosslink');
@@ -249,10 +252,12 @@ export class DomMapRenderer implements MapRenderer {
       const d = crossLinkPath(from, to);
       const path = doc.createElementNS(SVG_NS, 'path');
       path.classList.add('mind-mapper-crosslink');
+      setElementId(path, 'link.line');
       path.setAttribute('d', d);
       svg.appendChild(path);
       const hit = doc.createElementNS(SVG_NS, 'path');
       hit.classList.add('mind-mapper-crosslink-hit');
+      setElementId(hit, 'link.hit-area');
       hit.setAttribute('d', d);
       hit.setAttribute('data-from-id', link.fromId);
       hit.setAttribute('data-to-id', link.toId);
@@ -301,6 +306,7 @@ export class DomMapRenderer implements MapRenderer {
       this.highlightEl.classList.add('mind-mapper-highlight-layer');
       const path = doc.createElementNS(SVG_NS, 'path');
       path.classList.add('mind-mapper-crosslink-highlight');
+      setElementId(path, 'link.highlight');
       this.highlightEl.appendChild(path);
     }
     this.highlightEl.firstElementChild?.setAttribute('d', d);
@@ -373,6 +379,7 @@ export class DomMapRenderer implements MapRenderer {
         attr: { 'aria-label': t('drillCentre') },
       });
       setIcon(this.drillMarkerEl, 'focus');
+      setElementId(this.drillMarkerEl, 'node.drill-marker');
     }
     const below = centre.childSide === 'top';
     const el = this.drillMarkerEl;
@@ -464,6 +471,7 @@ export class DomMapRenderer implements MapRenderer {
       if (!path) {
         path = doc.createElementNS(SVG_NS, 'path');
         path.classList.add('mind-mapper-edge');
+        setElementId(path, 'edge');
         svg.insertBefore(path, firstCrossLink);
         this.edgePaths.push(path);
       }
@@ -483,6 +491,7 @@ export class DomMapRenderer implements MapRenderer {
     for (const { from, to } of layout.dividers) {
       const path = this.worldEl.doc.createElementNS(SVG_NS, 'path');
       path.classList.add('mind-mapper-divider');
+      setElementId(path, 'divider');
       path.setAttribute('d', `M ${from.x} ${from.y} L ${to.x} ${to.y}`);
       svg.insertBefore(path, firstCrossLink);
     }
@@ -512,6 +521,8 @@ export class DomMapRenderer implements MapRenderer {
       }
       const collapsed = count !== undefined;
       toggle.toggleClass('is-collapsed', collapsed);
+      // Collapsed, the toggle shows the hidden count: named as the badge it looks like.
+      setElementId(toggle, collapsed ? 'node.hidden-count' : 'node.toggle');
       toggle.setText(collapsed ? String(count) : '−');
       toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
       // Middle of the child-side edge; CSS moves it just outside the node.
@@ -568,9 +579,12 @@ export class DomMapRenderer implements MapRenderer {
       dom.node = node;
     }
     const { el } = dom;
-    el.toggleClass('is-root', node.kind === 'root');
+    const root = node.kind === 'root';
     // Colour themes: blocks keep a border at every level instead of becoming plain text.
-    el.toggleClass('is-block', node.kind === 'block' || isImageOnly(node.markdown));
+    const block = node.kind === 'block' || isImageOnly(node.markdown);
+    el.toggleClass('is-root', root);
+    el.toggleClass('is-block', block);
+    setElementId(el, root ? 'node.root' : block ? 'node.block' : 'node.text');
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);
     setAttr(el, 'data-level', levelAttr(depth));
@@ -598,6 +612,7 @@ export class DomMapRenderer implements MapRenderer {
       attr: { 'aria-label': t('showFullContent') },
     });
     setIcon(expand, 'maximize-2');
+    setElementId(expand, 'node.expand');
     expand.addEventListener('click', (event) => {
       event.stopPropagation();
       const current = this.nodes.get(node.id);

@@ -416,3 +416,23 @@ describe('drill-down button (issue #23)', () => {
     expect(drillButton(parent).getAttribute('aria-label')).toBe('Eine Ebene zurück');
   });
 });
+
+test('the bar, the zoom field and every button carry their data-mm-id (issue #33)', () => {
+  const { parent, buttons, input } = setup();
+  const mmId = (el: Element | null) => el?.getAttribute('data-mm-id');
+  expect(mmId(parent.querySelector('.mind-mapper-controls'))).toBe('controls.bar');
+  expect(mmId(parent.querySelector('.mind-mapper-zoom-field'))).toBe('controls.zoom-field');
+  expect(mmId(input)).toBe('controls.zoom-input');
+  expect(buttons.map(mmId)).toEqual([
+    'controls.zoom-out',
+    'controls.zoom-presets',
+    'controls.zoom-in',
+    'controls.fit',
+    'controls.collapse-all',
+    'controls.back-to-root',
+    'controls.drill',
+    'controls.layout',
+    'controls.theme',
+    'controls.full-screen',
+  ]);
+});
