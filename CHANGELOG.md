@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.8.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.7.0...1.8.0) (2026-11-13)
+
+
+### Features
+
+* tag position setting and frontmatter (outside below the box or inside) ([#104](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/104)) ([f214555](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/f214555619ba7b0731f349df183578a222926ce6))
+
+
+### Bug Fixes
+
+* **parser:** nested list items render as plain text with any indentation ([#100](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/100)) ([05ca95c](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/05ca95c59cea0c767c0450cbaa8596834f7f4ac0))
+
+
+### Documentation
+
+* bring the user manual up to date with 1.7.0 ([#98](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/98)) ([70ed0be](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/70ed0be618bf4df44fc73091aef16a8be067c50f))
+* use "control bar" consistently ([#102](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/102)) ([3419f20](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/3419f201dd07f8c37d8be91ddd322ea6e32db570))
+* use "control bar" consistently ([#102](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/102)) ([3f43c4d](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/3f43c4d83752ba3db898c3ec76acba9863eb6132))
+
 ## [1.7.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.6.0...1.7.0) (2026-11-13)
 
 
