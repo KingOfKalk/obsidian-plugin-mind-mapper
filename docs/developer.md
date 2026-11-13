@@ -64,7 +64,7 @@ The plugin uses the public API wherever there is one. These details are undocume
   - Guard: ignored in text fields (the zoom input); passes through when there is nothing to drill
   - Known weakness: the user cannot rebind or turn it off; if a reviewer objects, the options are a setting or removing the key. E2E: `e2e/specs/drill.e2e.ts`
 - `eState: { line }` in `openFile` (`src/commands/jumpToSource.ts`)
-  - Why: jump to source opens the note at the node's line; `eState` is typed only as `Record<string, unknown>`; `line` is the key Obsidian's own navigation uses
+  - Why: jump to source opens the note at the node's line; `eState` is typed only as `Record<string, unknown>`, and that the Markdown view scrolls to `line` is undocumented
   - Guard: in source mode the cursor is also set through the Editor API (`MarkdownView.editor`, checked with `instanceof`)
   - Fallback: the note opens without scrolling to the line. E2E: `e2e/specs/navigation.e2e.ts`
 - The `file` key in a Markdown leaf's view state (`leafFile` in `src/leafRecency.ts`)
