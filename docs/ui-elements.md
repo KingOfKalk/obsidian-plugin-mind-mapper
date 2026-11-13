@@ -60,7 +60,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `node.root` | Root node | Centre (balanced layouts), start of the map, or headline above the board (kanban) | The note itself: its title or `mind-mapper-title` | - |
 | `node.text` | Text node | Map | A heading, a paragraph or a list item, rendered like reading view; `data-level` (1, 2, 3) carries its emphasis | - |
 | `node.block` | Block node | Map | A code block, table, callout, quote, math block or image embed; keeps its border at every level | - |
-| `node.expand` | Expand button | Bottom right corner of a clipped node, on hover | Opens the [content overlay](#content-overlay) with the full content | - |
+| `node.expand` | Expand button | Top right corner of a clipped node, shown whenever the node is clipped | Opens the [content overlay](#content-overlay) with the full content | - |
 | `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it. None in the kanban layout | `expanded`, `collapsed` |
 | `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into | - |
 | `node.card-count` | Card count | Right end of a column header in the kanban layout | Number of cards (direct children) in the column, also when it is collapsed; info only, not clickable | - |

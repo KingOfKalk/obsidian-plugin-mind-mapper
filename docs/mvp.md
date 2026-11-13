@@ -1,10 +1,13 @@
+# Mind Mapper: specification
 
- 
+## Glossary
+
 - Section: an entry in Obsidian's `metadataCache` sections (paragraph, heading, list, code, table, blockquote, callout, math, ...)
 - Node: one box in the map
 - Block ID: a `^id` marker at the end of a section or list item
 - Block link: a link to a block ID (`[[#^id]]`)
 - Container: a section that can hold other content (list item, blockquote, callout)
+
 ## Mapping rules (Markdown to Map)
  
 - Root node (decided)
@@ -287,11 +290,17 @@ Project (root, H1)
 - Render ownership
   - The view is a `Component`; each rendered node gets a child `Component` passed to `MarkdownRenderer.render`
   - Child components are unloaded when a node is culled, replaced by an update, or the view closes
-  - All listeners via `registerEvent` / `registerDomEvent`, so they are removed on unload
+  - Listeners on long-lived objects (workspace, vault, metadata cache, the document) go through `registerEvent` / `registerDomEvent`, so they are removed on unload
+  - Listeners on elements the plugin creates itself (control bar, nodes, collapse and expand buttons, full screen overlay) may use `addEventListener`: they are removed together with the element
   - Plugin `onunload` does not detach leaves (Obsidian guideline)
 - Re-measure all nodes on theme or font change (`workspace` `css-change` event)
 - Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size
 - Popout windows: use the view's own `document` and `window`, never the global ones
+## Known limits
+
+- Renaming the root H1 resets collapse state, selection and drill-down, because node IDs start with the root text
+- Links in nodes show the page preview on `Ctrl/Cmd` + hover (the hover source is registered with `defaultMod: true`, like other plugin views); Obsidian's "Page preview" setting can change the modifier
+
 ## Future features
  
 - Presentation mode: step through branches one by one (next / previous, focus and zoom to the current branch, dim the rest)
@@ -328,7 +337,7 @@ Project (root, H1)
   - Renderer: positioned nodes to screen
 - Measuring (decided)
   - Initial sizes are estimated from section type and text length, so the first layout is instant at any note size
-  - A node is measured when it is first rendered: in an attached off-screen container with `visibility: hidden` at zoom 1 (never `display: none`, which measures 0)
+  - A node is measured when it is first rendered: in place, in the map's own world container: the layout size (`offsetWidth` / `scrollWidth`) ignores the zoom transform, so it is the size at zoom 1; a hidden tab reports 0 and keeps the sizes measured before
   - `ResizeObserver` per rendered node catches late size changes (images, Mermaid, math, other plugins' post processors)
   - Size changes trigger a debounced re-layout that keeps the viewport anchored on the selected node, else the view center
   - Measured sizes are cached by render cache key
