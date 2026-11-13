@@ -89,6 +89,7 @@ Project (root, H1)
  
 - Identity is used for collapse state and selection; it must survive edits in other places
   - Headings: path of heading texts with an occurrence index for duplicate siblings, separator escaped (e.g. `Project/Tasks`, `Project/Notes[2]`; a `/` in a heading is escaped)
+    - An empty heading (`## `) has the segment `[]`, which no heading text can produce, so it never takes the file-name root's empty ID
   - Other nodes: parent ID + ordinal position among siblings
     - Inserting a sibling shifts later leaf IDs; accepted, because collapse state mostly lives on headings
 - Render cache key is separate from identity: content hash of the section text plus node width

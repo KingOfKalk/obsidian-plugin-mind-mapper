@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { buildTree } from '../../src/parser/buildTree';
 import { toParserInput } from '../../src/parser/adapter';
 import type { MindMapNode } from '../../src/parser/types';
@@ -33,6 +35,9 @@ test.each<[string, string[]]>([
   ['frontmatter-only', ['']],
   ['setext', ['Title', '  Title/Sub', '  Title/ATX child']],
   ['headings-in-code', ['Root', '  Root/Real']],
+  ['empty-heading-no-h1', ['', '  []', '  Real', '  [][2]']],
+  ['empty-heading-h1', ['Root', '  Root/[]', '    Root/[]/[]', '  Root/[][2]']],
+  ['empty-h1', ['[]', '  []/[]', '  []/Named']],
   [
     'duplicates-and-special',
     [
@@ -220,4 +225,30 @@ test('dividers before headings mark that heading under its parent', () => {
     '  example/test three',
   ]);
   expect(flagged).toEqual(['example/test one/test two', 'example/test three']);
+});
+
+test('headings inside list items, quotes and callouts are not reported, so stay in their container', () => {
+  expect(nodes(treeOf('headings-in-containers'))).toEqual([
+    'Containers [root] Containers',
+    '  Containers/#1 [list-item] \\## Heading in item',
+    '  Containers/#2 [list-item] item\n## Heading in continuation',
+    '  Containers/#3 [block:blockquote] > ## Heading in quote\n> quote text',
+    '  Containers/#4 [block:callout] > [!note] Callout title\n> ## Heading in callout\n> callout text',
+    '  Containers/Real [heading] Real',
+    '    Containers/Real/#1 [paragraph] After.',
+  ]);
+});
+
+const fixtureNames = readdirSync(join(process.cwd(), 'tests', 'vault', 'fixtures'))
+  .filter((file) => file.endsWith('.cache.json'))
+  .map((file) => file.slice(0, -'.cache.json'.length));
+
+test.each(fixtureNames)('%s: all node IDs are unique', (name) => {
+  const ids: string[] = [];
+  const visit = (node: MindMapNode): void => {
+    ids.push(node.id);
+    node.children.forEach(visit);
+  };
+  visit(treeOf(name));
+  expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
 });

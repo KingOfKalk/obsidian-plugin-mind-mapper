@@ -1,4 +1,4 @@
-import { childId, escapeSegment, ordinalId } from './nodeId';
+import { childId, headingSegment, ordinalId } from './nodeId';
 import { itemMarkdown } from './listItems';
 import { escapeBlockStart, isCommentSource, sliceMarkdown } from './nodeMarkdown';
 import type {
@@ -30,7 +30,7 @@ export function buildTree(
 
   const root: MindMapNode =
     h1IsRoot && onlyH1
-      ? headingNode(escapeSegment(onlyH1.text), onlyH1, 'root')
+      ? headingNode(headingSegment(onlyH1.text), onlyH1, 'root')
       : node({
           id: '',
           kind: 'root',
