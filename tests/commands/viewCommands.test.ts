@@ -15,8 +15,8 @@ const COMMANDS = [
   ['toggle-full-screen', 'Toggle full screen', 'toggleFullScreen'],
   ['change-layout', 'Change layout…', 'showLayoutMenu'],
   ['next-layout', 'Next layout', 'nextLayout'],
-  ['change-theme', 'Change colour theme…', 'showThemeMenu'],
-  ['next-theme', 'Next colour theme', 'nextTheme'],
+  ['change-theme', 'Change color theme…', 'showThemeMenu'],
+  ['next-theme', 'Next color theme', 'nextTheme'],
 ] as const;
 
 async function setup() {
@@ -116,7 +116,7 @@ test('in German the view commands have German names', async () => {
   ]);
 });
 
-test('"Next layout" and "Next colour theme" cycle through all values of the active map and wrap around', async () => {
+test('"Next layout" and "Next color theme" cycle through all values of the active map and wrap around', async () => {
   const { commands, ws, view } = await setup();
   ws.addNote('Note.md', 'worked-example');
   await view.setState({ file: 'Note.md' }, { history: false });

@@ -1553,10 +1553,10 @@ describe('layout and colour theme of this view (overrides)', () => {
     expect(grows(view, 'Root', 'Root/A')).toBe('down');
     expect(view.getState()).toMatchObject({ file: 'Note.md', layout: null, theme: null });
     expect(active(view, 'Layout')).toBe(false);
-    expect(active(view, 'Colour theme')).toBe(false);
+    expect(active(view, 'Color theme')).toBe(false);
     control(view, 'Layout').click();
     expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);
-    control(view, 'Colour theme').click();
+    control(view, 'Color theme').click();
     expect(checkedIn(MockMenu.lastShown)).toEqual(['Rainbow']);
   });
 
@@ -1574,7 +1574,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     expect(root.y).toBeGreaterThanOrEqual(0);
     expect(root.y).toBeLessThan(600);
     expect(active(view, 'Layout')).toBe(true);
-    expect(active(view, 'Colour theme')).toBe(false);
+    expect(active(view, 'Color theme')).toBe(false);
     control(view, 'Layout').click();
     expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);
     expect(ws.vault.texts.get('Note.md')).toBe(text);
@@ -1620,7 +1620,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     setLayout.mockRestore();
     expect(view.getTransform()).toEqual(transform);
     expect(theme(view)).toEqual(['mind-mapper-theme-ocean']);
-    expect(active(view, 'Colour theme')).toBe(true);
+    expect(active(view, 'Color theme')).toBe(true);
     expect(active(view, 'Layout')).toBe(false);
     expect(view.getState()).toMatchObject({ theme: 'ocean', layout: null });
 
@@ -1634,7 +1634,7 @@ describe('layout and colour theme of this view (overrides)', () => {
 
     view.chooseTheme(null);
     expect(theme(view)).toEqual(['mind-mapper-theme-accent']);
-    expect(active(view, 'Colour theme')).toBe(false);
+    expect(active(view, 'Color theme')).toBe(false);
     change(ws, 'Note.md', 'fm-theme');
     await vi.advanceTimersByTimeAsync(300);
     expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
@@ -1661,7 +1661,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     expect(grows(restored, 'Theme', 'Theme/Alpha')).toBe('down');
     expect(theme(restored)).toEqual(['mind-mapper-theme-accent']);
     expect(active(restored, 'Layout')).toBe(true);
-    expect(active(restored, 'Colour theme')).toBe(true);
+    expect(active(restored, 'Color theme')).toBe(true);
     expect(restored.getState()).toMatchObject(saved);
 
     // A state from before this feature (only `file`): the note's layout and theme.
@@ -1670,7 +1670,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     expect(grows(restored, 'Theme', 'Theme/Alpha')).toBe('right');
     expect(theme(restored)).toEqual(['mind-mapper-theme-rainbow']);
     expect(active(restored, 'Layout')).toBe(false);
-    expect(active(restored, 'Colour theme')).toBe(false);
+    expect(active(restored, 'Color theme')).toBe(false);
     expect(restored.getState()).toMatchObject({ layout: null, theme: null });
   });
 
@@ -1831,7 +1831,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     setLayout.mockRestore();
   });
 
-  test('the menus open at their buttons (commands "Change layout…" and "Change colour theme…")', async () => {
+  test('the menus open at their buttons (commands "Change layout…" and "Change color theme…")', async () => {
     const { view } = await openWith('fm-layout', { settings: () => LTR_SETTINGS });
     view.showLayoutMenu();
     expect(checkedIn(MockMenu.lastShown)).toEqual(['Top → bottom']);

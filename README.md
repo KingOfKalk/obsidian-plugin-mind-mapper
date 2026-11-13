@@ -52,13 +52,13 @@ No command has a default hotkey (Obsidian plugin guidelines); assign your own in
 | Toggle full screen | a mind map is active | `Ctrl/Cmd + Shift + F11` |
 | Change layout… | a mind map is active | |
 | Next layout | a mind map is active | `Shift + L` |
-| Change colour theme… | a mind map is active | |
-| Next colour theme | a mind map is active | `Shift + T` |
+| Change color theme… | a mind map is active | |
+| Next color theme | a mind map is active | `Shift + T` |
 | Drill down into selection | a node with children is selected | |
 | Drill out one level | the map is drilled in | |
 | Show the whole map | the map is drilled in | |
 
-"Change layout…" and "Change colour theme…" open the menu of the control bar button; arrow keys and Enter choose without the mouse. "Next layout" and "Next colour theme" step to the next one (after the last, the first again), handy while presenting.
+"Change layout…" and "Change color theme…" open the menu of the control bar button; arrow keys and Enter choose without the mouse. "Next layout" and "Next color theme" step to the next one (after the last, the first again), handy while presenting.
 
 The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); it only works while the map has focus, so typing a "d" in a note is not affected.
 
@@ -71,7 +71,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Fit to view enlarges small maps (e.g. after Collapse all) up to the setting "Max zoom for fit" (default 150%); large maps shrink to fit; a margin keeps nodes and collapse badges off the edges
 - Zoom in / out snap to steps: 10, 25, 50, 75, 100, 125, 150, 200, 300, 400%
 - Fit to view, the zoom controls, back to root and layout changes glide smoothly (a layout change cross-fades first); wheel and trackpad stay immediate; with the system setting "reduce motion" everything jumps at once
-- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, drill down (arrow down to a dot), layout, colour theme, full screen
+- Floating controls (bottom center): zoom out, zoom level (type a zoom such as `129` and press Enter; the chevron next to it offers 50–200% and Fit to view), zoom in, fit to view (two boxes in a frame), collapse all / expand all (one button: highlighted while anything is collapsed, then it expands all), back to root, drill down (arrow down to a dot), layout, color theme, full screen
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
@@ -97,7 +97,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 
 ## Layout and theme of the open map
 
-The layout button (boxes joined by a line) and the colour theme button (palette) in the control bar, also in full screen, change only the map on screen, never the note:
+The layout button (boxes joined by a line) and the color theme button (palette) in the control bar, also in full screen, change only the map on screen, never the note:
 
 - The menu lists the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes; the shown one is checked
 - A layout change cross-fades into the new arrangement and glides to fit it to view; a theme change only recolours it
@@ -137,7 +137,7 @@ Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's
 |---|---|---|---|---|
 | Map | Default layout | dropdown | the layouts above | Balanced clockwise |
 | Map | Start collapsed | toggle | on / off | off |
-| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow |
 | Map | Max zoom for fit | slider, steps of 25% | 100–400% | 150% |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px |

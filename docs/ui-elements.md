@@ -93,7 +93,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `controls.back-to-root` | Back to root button | Control bar | Centres the root (or drilled-in centre) | - |
 | `controls.drill` | Drill button | Control bar | Drills into the selected node, else out one level; `active` (highlighted) while drilled in | `active` |
 | `controls.layout` | Layout button | Control bar | Opens the [layout menu](#menus); `active` (highlighted) while this map overrides the note's layout | `active` |
-| `controls.theme` | Colour theme button | Control bar | Opens the [colour theme menu](#menus); `active` (highlighted) while this map overrides the note's theme | `active` |
+| `controls.theme` | Color theme button | Control bar | Opens the [color theme menu](#menus); `active` (highlighted) while this map overrides the note's theme | `active` |
 | `controls.full-screen` | Full screen button | Control bar | Enters or leaves full screen | - |
 
 ## Menus
@@ -108,9 +108,9 @@ Rendered by Obsidian: catalog only.
 | `menu.layout` | Layout menu | Above `controls.layout`; command "Change layout…" | Picks the layout of this map |
 | `menu.layout.choice` | Layout item | Layout menu: the seven layouts | Shows this map in that layout; the shown one is checked |
 | `menu.layout.use-note` | "Use the note's layout" item | Layout menu, last item | Drops this map's layout choice |
-| `menu.theme` | Colour theme menu | Above `controls.theme`; command "Change colour theme…" | Picks the colour theme of this map |
-| `menu.theme.choice` | Colour theme item | Colour theme menu: the five themes | Shows this map in that theme; the shown one is checked |
-| `menu.theme.use-note` | "Use the note's theme" item | Colour theme menu, last item | Drops this map's theme choice |
+| `menu.theme` | Color theme menu | Above `controls.theme`; command "Change color theme…" | Picks the colour theme of this map |
+| `menu.theme.choice` | Color theme item | Color theme menu: the five themes | Shows this map in that theme; the shown one is checked |
+| `menu.theme.use-note` | "Use the note's theme" item | Color theme menu, last item | Drops this map's theme choice |
 
 ## Full screen
 
@@ -170,8 +170,8 @@ Command palette (catalog only). The ID is `command.` plus the command ID; Obsidi
 | `command.toggle-full-screen` | Toggle full screen | Command palette, with a map active | Like `controls.full-screen` |
 | `command.change-layout` | Change layout… | Command palette, with a map shown | Opens `menu.layout` |
 | `command.next-layout` | Next layout | Command palette, with a map shown | Shows this map in the next layout |
-| `command.change-theme` | Change colour theme… | Command palette, with a map shown | Opens `menu.theme` |
-| `command.next-theme` | Next colour theme | Command palette, with a map shown | Shows this map in the next colour theme |
+| `command.change-theme` | Change color theme… | Command palette, with a map shown | Opens `menu.theme` |
+| `command.next-theme` | Next color theme | Command palette, with a map shown | Shows this map in the next colour theme |
 | `command.drill-down` | Drill down into selection | Command palette, with a node with children selected | Drills into the selected node |
 | `command.drill-out` | Drill out one level | Command palette, while drilled in | Drills out one level |
 | `command.show-whole-map` | Show the whole map | Command palette, while drilled in | Drills out completely |
@@ -190,7 +190,7 @@ Settings rows (catalog only; Obsidian renders them). The ID is `settings.<group>
 | `settings.map.fit-max-zoom` | Max zoom for fit | Settings, group "Map" | Upper zoom limit of fit to view |
 | `settings.nodes.max-node-width` | Max node width | Settings, group "Nodes" | Wider content is clipped |
 | `settings.nodes.max-node-height` | Max node height | Settings, group "Nodes" | Taller content is clipped |
-| `settings.spacing.sibling-gap` | Sibling gap | Settings, group "Spacing" | Space between neighbouring branches |
+| `settings.spacing.sibling-gap` | Sibling gap | Settings, group "Spacing" | Space between neighboring branches |
 | `settings.spacing.level-gap` | Level gap | Settings, group "Spacing" | Space between a node and its children |
 | `settings.about.version` | Version | Settings, group "About" | The plugin version |
 | `settings.about.source-code` | Source code | Settings, group "About" | Link to the repository |

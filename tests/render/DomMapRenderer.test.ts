@@ -1361,7 +1361,7 @@ describe('drill-down (issue #23)', () => {
     renderer.setDrillCentre('R');
     const el = marker(parent);
     expect(el?.dataset.icon).toBe('focus');
-    expect(el?.getAttribute('aria-label')).toBe('Drilled-in centre');
+    expect(el?.getAttribute('aria-label')).toBe('Drilled-in center');
     // Middle of the top edge (CSS moves it just above the node).
     expect(el?.style.left).toBe('100px');
     expect(el?.style.top).toBe('-18px');

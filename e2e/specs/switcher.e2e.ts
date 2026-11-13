@@ -213,7 +213,7 @@ describe('layout and colour theme switcher', function () {
       'Rainbow',
       'Ocean *',
       'Forest',
-      'Accent colour',
+      'Accent color',
       "Use the note's theme",
     ]);
     await browser.keys('Escape');
@@ -228,7 +228,7 @@ describe('layout and colour theme switcher', function () {
 
   it('the overrides survive an Obsidian restart; "Use the note\'s …" goes back to the frontmatter', async function () {
     await choose('controls.layout', 'Top → bottom');
-    await choose('controls.theme', 'Accent colour');
+    await choose('controls.theme', 'Accent color');
     await settle();
     // Obsidian saves the workspace debounced.
     await browser.waitUntil(
@@ -280,7 +280,7 @@ describe('layout and colour theme switcher', function () {
     expect(await themeClass()).toEqual(['mind-mapper-theme-none']);
   });
 
-  it('commands: "Next layout" and "Next colour theme" cycle, "Change layout…" opens the menu', async function () {
+  it('commands: "Next layout" and "Next color theme" cycle, "Change layout…" opens the menu', async function () {
     await browser.executeObsidianCommand('mind-mapper:next-layout');
     await settle();
     expect(await side(ALPHA)).toBe('left');

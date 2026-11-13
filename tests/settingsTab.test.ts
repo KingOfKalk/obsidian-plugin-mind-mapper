@@ -113,7 +113,7 @@ test('every setting has a name and description, so Obsidian settings search find
     'For notes without mind-mapper-layout in their frontmatter.',
   );
   expect(definition(mock, 'Default theme').desc).toBe(
-    'Colours each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
+    'Colors each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
   );
   // The slider shows the value and its bounds; the description no longer repeats the range.
   expect(definition(mock, 'Max node width').desc).toBe('Wider content is clipped with a fade.');
@@ -219,7 +219,7 @@ test('the default theme is a dropdown bound to defaultTheme: theme names as valu
       rainbow: 'Rainbow',
       ocean: 'Ocean',
       forest: 'Forest',
-      accent: 'Accent colour',
+      accent: 'Accent color',
     },
   });
 });

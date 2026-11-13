@@ -135,7 +135,7 @@ The controls bar at the bottom center, left to right:
 | Back to root | centers the root (drilled in: the centre node) |
 | Drill down (arrow down to a dot) | shows the selected branch as a map of its own, or goes back out one level; see [Drill down](#drill-down) |
 | Layout (boxes joined by a line) | menu with the seven layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
-| Colour theme (palette) | menu with the colour themes for this map only; same section |
+| Color theme (palette) | menu with the colour themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
 
 ![A collapsed Vegetables branch with its badge 4, and the highlighted collapse button in the controls bar](images/manual/collapsed.png)
@@ -298,11 +298,11 @@ How a node looks depends on its level, in every theme:
 To show a map differently for a moment, e.g. while presenting, change its layout or colour theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
 
 - Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top and kanban; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
-- Colour theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent colour; the shown theme is checked. A choice recolours the map at once; nothing moves
+- Color theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent color; the shown theme is checked. A choice recolours the map at once; nothing moves
 - Below a line in each menu: "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the settings
 - While you have chosen a layout or theme, its button is highlighted. Your choice wins over later edits of `mind-mapper-layout` / `mind-mapper-theme` and over the settings, so the map does not jump while you edit
 - The choice belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. A map opened anew starts with the note's layout and theme
-- Commands: "Change layout…" and "Change colour theme…" open the same menus (arrow keys and `Enter` work); "Next layout" and "Next colour theme" step to the next one, after the last back to the first
+- Commands: "Change layout…" and "Change color theme…" open the same menus (arrow keys and `Enter` work); "Next layout" and "Next color theme" step to the next one, after the last back to the first
 
 ![The garden plans map in ocean colours with the highlighted colour theme button, and the layout menu open above the controls bar with balanced clockwise checked](images/manual/layout-menu.png)
 
@@ -337,11 +337,11 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 |---|---|---|---|---|---|
 | Map | Default layout | dropdown | the seven [layouts](#layouts), labelled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
-| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
-| Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighbouring branches |
+| Spacing | Sibling gap | slider, steps of 2 px | 0–200 px | 12 px | space between neighboring branches |
 | Spacing | Level gap | slider, steps of 10 px | 20–400 px | 60 px | space between a node and its children |
 
 - Each slider shows its value (e.g. "320 px" or "200 %") and has a "Restore default" button
@@ -366,8 +366,8 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Toggle full screen | a mind map is active | `Ctrl/Cmd + Shift + F11` |
 | Change layout… | a mind map is active | |
 | Next layout | a mind map is active | `Shift + L` |
-| Change colour theme… | a mind map is active | |
-| Next colour theme | a mind map is active | `Shift + T` |
+| Change color theme… | a mind map is active | |
+| Next color theme | a mind map is active | `Shift + T` |
 | Drill down into selection | a node with children is selected in the active mind map | |
 | Drill out one level | the active mind map is drilled in | |
 | Show the whole map | the active mind map is drilled in | |
