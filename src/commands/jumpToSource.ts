@@ -1,4 +1,4 @@
-import type { App, MarkdownView, WorkspaceLeaf } from 'obsidian';
+import { type App, MarkdownView, type WorkspaceLeaf } from 'obsidian';
 import { type LeafRecency, pickNoteLeaf } from '../leafRecency';
 
 /**
@@ -23,8 +23,8 @@ export async function jumpToSource(
   const cursorLine = line ?? 0;
   await target.openFile(file, { active: true, eState: { line: cursorLine } });
   await workspace.revealLeaf(target);
-  const view = target.view as MarkdownView;
-  if (view.getViewType() === 'markdown' && view.getMode() === 'source') {
+  const view = target.view;
+  if (view instanceof MarkdownView && view.getMode() === 'source') {
     const pos = { line: cursorLine, ch: 0 };
     view.editor.setCursor(pos);
     view.editor.scrollIntoView({ from: pos, to: pos }, true);

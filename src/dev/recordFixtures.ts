@@ -19,10 +19,18 @@ export async function recordFixtures(app: App): Promise<number> {
       text: await app.vault.cachedRead(file),
       cache: app.metadataCache.getFileCache(file),
     };
-    await app.vault.adapter.write(
+    await writeFile(
+      app,
       `${FIXTURE_FOLDER}/${file.basename}.cache.json`,
       `${JSON.stringify(fixture, null, 2)}\n`,
     );
   }
   return files.length;
+}
+
+/** Writes `data` to `path` through the Vault API: overwrites the file or creates it. */
+async function writeFile(app: App, path: string, data: string): Promise<void> {
+  const existing = app.vault.getFileByPath(path);
+  if (existing) await app.vault.modify(existing, data);
+  else await app.vault.create(path, data);
 }

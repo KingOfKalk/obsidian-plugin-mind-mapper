@@ -2,7 +2,7 @@
 export const en = {
   // Plugin: command, ribbon, file menu, notices
   openAsMindMap: 'Open as mind map',
-  openNoteFirst: 'Open a markdown note first',
+  openNoteFirst: 'Open a Markdown note first',
   couldNotOpenMap: 'Mind Mapper: could not open the mind map',
   couldNotOpenNote: 'Could not open the note',
 
@@ -25,11 +25,11 @@ export const en = {
 
   // Layout and colour theme of the map view (control bar menus and commands)
   layoutMenu: 'Layout',
-  themeMenu: 'Colour theme',
+  themeMenu: 'Color theme',
   changeLayout: 'Change layout…',
   nextLayout: 'Next layout',
-  changeTheme: 'Change colour theme…',
-  nextTheme: 'Next colour theme',
+  changeTheme: 'Change color theme…',
+  nextTheme: 'Next color theme',
   useNoteLayout: "Use the note's layout",
   useNoteTheme: "Use the note's theme",
   layoutCircleClockwise: 'Balanced clockwise',
@@ -44,7 +44,7 @@ export const en = {
   collapseNode: 'Collapse',
   expandNode: 'Expand',
   showFullContent: 'Show full content',
-  drillCentre: 'Drilled-in centre',
+  drillCentre: 'Drilled-in center',
   cardCountOne: '{count} card',
   cardCountOther: '{count} cards',
 
@@ -78,7 +78,7 @@ export const en = {
     'Open maps with only the root and the first level visible, for notes without mind-mapper-collapsed in their frontmatter.',
   defaultThemeName: 'Default theme',
   defaultThemeDesc:
-    'Colours each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
+    'Colors each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
   fitMaxZoomName: 'Max zoom for fit',
   fitMaxZoomDesc:
     'Fit to view enlarges small maps up to this zoom. Open maps use it the next time they fit.',
@@ -86,13 +86,13 @@ export const en = {
   themeRainbow: 'Rainbow',
   themeOcean: 'Ocean',
   themeForest: 'Forest',
-  themeAccent: 'Accent colour',
+  themeAccent: 'Accent color',
   maxNodeWidthName: 'Max node width',
   maxNodeWidthDesc: 'Wider content is clipped with a fade.',
   maxNodeHeightName: 'Max node height',
   maxNodeHeightDesc: 'Taller content is clipped with a fade.',
   siblingGapName: 'Sibling gap',
-  siblingGapDesc: 'Space between neighbouring branches.',
+  siblingGapDesc: 'Space between neighboring branches.',
   levelGapName: 'Level gap',
   levelGapDesc: 'Space between a node and its children.',
   pixels: '{value} px',

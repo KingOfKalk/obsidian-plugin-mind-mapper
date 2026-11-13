@@ -177,7 +177,7 @@ test('ribbon icon without a markdown note shows a notice', async () => {
   Notice.messages = [];
   ws.activeFile = fakeFile('pic.png');
   plugin.ribbonIcons[0]?.callback(new MouseEvent('click'));
-  expect(Notice.messages).toEqual(['Open a markdown note first']);
+  expect(Notice.messages).toEqual(['Open a Markdown note first']);
   expect(ws.getLeaf).not.toHaveBeenCalled();
 });
 

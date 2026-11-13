@@ -34,7 +34,7 @@ export class NodeContentModal extends Modal {
     super(app);
   }
 
-  override onOpen(): void {
+  override async onOpen(): Promise<void> {
     this.owner.load();
     setElementId(this.modalEl, 'modal.node-content');
     this.contentEl.addClass('mind-mapper-full-content', 'markdown-rendered');
@@ -47,21 +47,20 @@ export class NodeContentModal extends Modal {
         this.link.onNavigate?.();
       },
     });
-    MarkdownRenderer.render(
-      this.app,
-      this.node.markdown,
-      this.contentEl,
-      this.link.sourcePath(),
-      this.owner,
-    )
-      .then(() => {
-        disableCheckboxes(this.contentEl);
-        splitNestedTags(this.contentEl);
-      })
-      .catch((error: unknown) => {
-        console.error('Mind Mapper: full content render failed', error);
-        this.contentEl.setText(this.node.markdown);
-      });
+    try {
+      await MarkdownRenderer.render(
+        this.app,
+        this.node.markdown,
+        this.contentEl,
+        this.link.sourcePath(),
+        this.owner,
+      );
+      disableCheckboxes(this.contentEl);
+      splitNestedTags(this.contentEl);
+    } catch (error) {
+      console.error('Mind Mapper: full content render failed', error);
+      this.contentEl.setText(this.node.markdown);
+    }
   }
 
   override onClose(): void {

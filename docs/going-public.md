@@ -11,6 +11,7 @@ The repository is public and Mind Mapper is released (1.0.0 and later, via relea
 Not planned yet. Keep these for when the owner decides to submit. The kit below ([Submission kit](#submission-kit)) has the commands, texts and steps; this list is what is left to do on the day.
 
 - [ ] Run the [pre-flight checklist](#pre-flight-checklist) and fix whatever it finds
+- [ ] Submit right after a release (`main` equals the tag) and run the portal's preview scan first; rename `e2e/` only if that scan reports it (steps 2 and 6 of [Step by step for the owner](#step-by-step-for-the-owner))
 - [ ] Bump the `obsidian` types to the matching version once published (1.15.x types were not on npm on 2026-11-09)
 - [ ] Submit the plugin through the [Obsidian Community directory](https://community.obsidian.md) (not a pull request, see below); answer the automated review
 - [ ] README "Installation": switch to the [prepared final wording](#final-readme-installation) once the plugin is listed
@@ -148,14 +149,20 @@ For the long description, the README or a reply if a reviewer or the `#community
 ### Step by step for the owner
 
 1. Do the [pre-flight checklist](#pre-flight-checklist); fix problems through issues and PRs as usual. If anything changed in `manifest.json`, make sure it is on `main` and released (the release tag must equal the version).
-2. Sign in at [community.obsidian.md](https://community.obsidian.md) with your Obsidian account (create one if needed).
-3. On the community profile page, under **GitHub**, select **Connect**, authorize read-only access (the directory checks you own the repository). Optionally turn on **Action required notifications** (email when a review fails).
-4. Sidebar **Plugins**, **New plugin**. Enter the repository URL and Owner (see "Listing texts"), agree to the Developer policies, confirm you will keep supporting the plugin, **Submit**.
-5. Open the entry from **Plugins**. The automated review (Manifest, Releases, Source code, Build verification; each result is Error, Warning, Recommendation or Pass) runs on the release. Errors block installation; warnings do not, but fix what is reasonable. To test without a release: **Review branch** (blank = default branch) and **Run preview scan**. If a new release is not noticed, **...** then **Check for new releases**; to force a recheck, **...** then **Request review**.
-6. To fix a finding: change the repository and publish a new release with an incremented version (release-please does this); the review runs again. No resubmission is needed for updates, ever.
-7. **Edit listing**: icon, long description, categories, payment type Free, screenshots (see "Listing texts"), **Save**. Edit the description and select **Publish** (the plugin cannot be installed until all errors are resolved).
-8. Questions or an "invalid identifier" error: Discord, channel `#community-directory` ([FAQ](https://docs.obsidian.md/community-directory/faq)). The id cannot change after publishing.
-9. After it is listed: switch the README ([final wording](#final-readme-installation)), update [CONTRIBUTING.md](../CONTRIBUTING.md) ("Install channel for now: BRAT ..."), tell BRAT users they can switch (BRAT keeps working; a note in the release or on the forum is enough), check the plugin shows up under Settings, Community plugins, Browse. Optional: announce in [Share & showcase](https://forum.obsidian.md/c/share-showcase/9) and in `#updates` on [Discord](https://discord.gg/veuWUTm) (needs the `developer` role).
+2. Release first: submit right after a release, when `main` equals the release tag. The build verification compares a production build with the release asset, and the docs do not say which ref it builds, so a `main` ahead of the tag may not match (audit #81, F4). Check, expect `0`; otherwise merge the open release PR and wait for the release:
+
+   ```bash
+   git fetch origin && git rev-list --count "$(jq -r .version manifest.json)..origin/main"
+   ```
+3. Sign in at [community.obsidian.md](https://community.obsidian.md) with your Obsidian account (create one if needed).
+4. On the community profile page, under **GitHub**, select **Connect**, authorize read-only access (the directory checks you own the repository). Optionally turn on **Action required notifications** (email when a review fails).
+5. Sidebar **Plugins**, **New plugin**. Enter the repository URL and Owner (see "Listing texts"), agree to the Developer policies, confirm you will keep supporting the plugin, **Submit**.
+6. Open the entry from **Plugins** and run the preview scan first: **Review branch** (blank = default branch), **Run preview scan**, then read the Source code section. If it reports files under `e2e/` (the test specs; the lint plugin's scanner table skips `**/e2e/**`, the older FAQ list only `e2e-tests`), rename the folder to `e2e-tests/`, which both lists skip, through an issue and PR (`package.json` scripts, `wdio.conf.mts`, `e2e/tsconfig.json`, CI, docs), release, and scan again (audit #81, F11). If it does not, nothing to do.
+7. The automated review (Manifest, Releases, Source code, Build verification; each result is Error, Warning, Recommendation or Pass) runs on the release. Errors block installation; warnings do not, but fix what is reasonable. To test without a release: **Review branch** (blank = default branch) and **Run preview scan**. If a new release is not noticed, **...** then **Check for new releases**; to force a recheck, **...** then **Request review**.
+8. To fix a finding: change the repository and publish a new release with an incremented version (release-please does this); the review runs again. No resubmission is needed for updates, ever.
+9. **Edit listing**: icon, long description, categories, payment type Free, screenshots (see "Listing texts"), **Save**. Edit the description and select **Publish** (the plugin cannot be installed until all errors are resolved).
+10. Questions or an "invalid identifier" error: Discord, channel `#community-directory` ([FAQ](https://docs.obsidian.md/community-directory/faq)). The id cannot change after publishing.
+11. After it is listed: switch the README ([final wording](#final-readme-installation)), update [CONTRIBUTING.md](../CONTRIBUTING.md) ("Install channel for now: BRAT ..."), tell BRAT users they can switch (BRAT keeps working; a note in the release or on the forum is enough), check the plugin shows up under Settings, Community plugins, Browse. Optional: announce in [Share & showcase](https://forum.obsidian.md/c/share-showcase/9) and in `#updates` on [Discord](https://discord.gg/veuWUTm) (needs the `developer` role).
 
 ### Final README "Installation"
 

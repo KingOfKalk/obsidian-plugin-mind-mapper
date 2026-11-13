@@ -54,7 +54,7 @@ test('renders the buttons in order with aria labels', () => {
     'Back to root',
     'Drill down into selection',
     'Layout',
-    'Colour theme',
+    'Color theme',
     'Toggle full screen',
   ]);
   expect(buttons.map((b) => b.dataset.icon)).toEqual([
@@ -331,14 +331,14 @@ test('the theme button opens a menu of the five themes, the current one checked,
     'Rainbow',
     'Ocean',
     'Forest',
-    'Accent colour',
+    'Accent color',
     null,
     "Use the note's theme",
   ]);
   expect(checked(menu)).toEqual(['Ocean']);
   expect(menu?.shownAt?.doc).toBe(parent.ownerDocument);
 
-  void item(menu, 'Accent colour')?.clickHandler?.();
+  void item(menu, 'Accent color')?.clickHandler?.();
   expect(actions.chooseTheme).toHaveBeenLastCalledWith('accent');
   void item(menu, "Use the note's theme")?.clickHandler?.();
   expect(actions.chooseTheme).toHaveBeenLastCalledWith(null);
