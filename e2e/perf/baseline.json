@@ -1,5 +1,6 @@
 [
   {
+    "editLatencyMs": 479,
     "firstLayoutMs": 52,
     "longestPanFrameMs": 17,
     "nodes": 1000,
@@ -16,6 +17,7 @@
     "zoomLongestFrameMs": 17
   },
   {
+    "editLatencyMs": 464,
     "firstLayoutMs": 193,
     "longestPanFrameMs": 17,
     "nodes": 5000,

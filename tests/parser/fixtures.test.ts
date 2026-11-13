@@ -252,3 +252,26 @@ test.each(fixtureNames)('%s: all node IDs are unique', (name) => {
   visit(treeOf(name));
   expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
 });
+
+test('CRLF line endings: same structure, IDs and labels as LF; node markdown keeps the line endings', () => {
+  const { text, cache } = loadFixture('crlf');
+  expect(text).toContain('\r\n');
+  expect(cache?.frontmatter).toEqual({ 'mind-mapper-layout': 'left-to-right' });
+  // Multi-line nodes keep `\r\n` like the note (Obsidian renders CRLF markdown like LF).
+  expect(nodes(treeOf('crlf'))).toEqual([
+    'CRLF [root] CRLF',
+    '  CRLF/#1 [paragraph] First paragraph\r\nover two lines.',
+    '  CRLF/Lists [heading] Lists',
+    '    CRLF/Lists/#1 [list-item] item one\r\ncontinuation',
+    '      CRLF/Lists/#1/#1 [list-item] nested',
+    '    CRLF/Lists/#2 [list-item] item two',
+    '    CRLF/Lists/#3 [list-item] 1. first',
+    '    CRLF/Lists/#4 [list-item] 2. second',
+    '  CRLF/Blocks [heading] Blocks',
+    '    CRLF/Blocks/#1 [block:code] ```js\r\nconst a = 1;\r\n\r\nconst b = 2;\r\n```',
+    '    CRLF/Blocks/#2 [block:blockquote] > quote\r\n> second line',
+    '    CRLF/Blocks/#3 [block:table] | a | b |\r\n| - | - |\r\n| 1 | 2 |',
+    '  CRLF/Setext heading [heading] Setext heading',
+    '    CRLF/Setext heading/#1 [paragraph] Last paragraph.',
+  ]);
+});

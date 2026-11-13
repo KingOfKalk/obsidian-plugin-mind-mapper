@@ -1,6 +1,6 @@
 import { copyFileSync, mkdirSync, watch, writeFileSync } from 'node:fs';
-import { builtinModules } from 'node:module';
 import esbuild from 'esbuild';
+import { buildOptions } from './scripts/build-options.mjs';
 import { gitCommonDir, resolveDevTargets } from './scripts/dev-paths.mjs';
 import { docsMappings, enablePlugin, notesMappings, syncFiles } from './scripts/sandbox-vault.mjs';
 
@@ -8,8 +8,6 @@ const production = process.argv[2] === 'production';
 /** `once`: one dev build into the sandbox vault, then exit (no watch). */
 const once = process.argv[2] === 'once';
 const dev = production ? null : resolveDevTargets(process.env, gitCommonDir);
-/** Dev-only code (commands, element ID overlay); `MIND_MAPPER_DEV=1` keeps it in a production build (`npm run ui:images`). */
-const devCode = !production || process.env.MIND_MAPPER_DEV === '1';
 const devPluginDir = dev?.pluginDir ?? '';
 
 if (dev?.vaultDir) {
@@ -32,21 +30,14 @@ const devAssets = {
   },
 };
 
-const context = await esbuild.context({
-  entryPoints: ['src/main.ts'],
-  bundle: true,
-  format: 'cjs',
-  target: 'es2022',
-  platform: 'browser',
-  external: ['obsidian', 'electron', '@codemirror/*', '@lezer/*', ...builtinModules],
-  logLevel: 'info',
-  sourcemap: production ? false : 'inline',
-  minify: production,
-  treeShaking: true,
-  define: { __DEV__: JSON.stringify(devCode) },
-  outfile: production ? 'main.js' : `${devPluginDir}/main.js`,
-  plugins: production ? [] : [devAssets],
-});
+const context = await esbuild.context(
+  buildOptions({
+    production,
+    env: process.env,
+    devPluginDir,
+    plugins: production ? [] : [devAssets],
+  }),
+);
 
 if (production || once) {
   await context.rebuild();
