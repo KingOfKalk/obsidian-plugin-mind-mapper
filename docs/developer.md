@@ -41,6 +41,46 @@
   - No timing assertions; compare against `e2e/perf/baseline.json` by hand
 - Merge gate: `npm run check` and `npm run test:e2e` pass
 
+## Obsidian internals we rely on
+
+The plugin uses the public API wherever there is one. These details are undocumented or private; each one is guarded and has a harmless fallback, and the E2E specs (real Obsidian) fail if one of them changes. Re-check them when you raise `minAppVersion` or the tested Obsidian version.
+
+- View header title through `.view-header-title` (`updateHeaderTitle` in `src/view/MindMapView.ts`)
+  - Why: Obsidian fills the header title once, when the view loads (before `setState` has set the note), and only refreshes the tab title; the API has no hook to refresh the header
+  - Guard: a null check on the element
+  - Fallback: the header keeps the first title; the tab title stays right (`getDisplayText`). E2E: `e2e/specs/header.e2e.ts`
+- Esc keeps the map tab (`listenForEscape`, `keepTabOnRelayedEscape`, `keepTabOnEscape` in `src/view/MindMapView.ts`)
+  - Why: the workspace hands an Esc that nothing marked as handled from a non-navigation view (the map) to the most recent note tab; that would take the tab from the map and end full screen
+  - Main window: a `keydown` listener on the workspace document (`registerDomEvent`) calls `preventDefault` on Esc while the map is the active view
+  - Popout: the popout relays its keys to the main window before anything in the popout sees them, and only the keymap (scopes) can mark the relayed copy handled, so a catch-all handler in the view scope (`scope.register(null, null, …)`) does it; it returns nothing, so every key goes on to the other handlers
+  - Guard: only public, typed API; undocumented is only that the workspace skips an Esc already marked as handled
+  - Fallback: Obsidian's default (Esc makes the last note tab active); nothing breaks. E2E: `e2e/specs/escape.e2e.ts`
+- Tag click through `app.internalPlugins` (`openTagSearch` in `src/render/linkHandling.ts`)
+  - Why: no public API opens the tag search; reading view opens it on a tag click, so the map does the same through the search core plugin (`getEnabledPluginById('global-search').openGlobalSearch('tag:…')`)
+  - Guard: every step is optional-chained, the method is checked with `typeof`; the private shape is typed locally (`InternalPlugins`, `GlobalSearch`)
+  - Fallback: with the search core plugin off or the API gone the click does nothing and is not swallowed. E2E: `e2e/specs/tags.e2e.ts`
+- The `D` key (`src/view/MindMapView.ts`, `key` in `src/view/drillDown.ts`)
+  - Why: drill down from the keyboard while the map has focus (spec "Drill-down"); a key of the view scope, active only while the map leaf is active, not a command hotkey (the command "Drill down into selection" has none, as the guidelines ask)
+  - Guard: ignored in text fields (the zoom input); passes through when there is nothing to drill
+  - Known weakness: the user cannot rebind or turn it off; if a reviewer objects, the options are a setting or removing the key. E2E: `e2e/specs/drill.e2e.ts`
+- `eState: { line }` in `openFile` (`src/commands/jumpToSource.ts`)
+  - Why: jump to source opens the note at the node's line; `eState` is typed only as `Record<string, unknown>`; `line` is the key Obsidian's own navigation uses
+  - Guard: in source mode the cursor is also set through the Editor API (`MarkdownView.editor`, checked with `instanceof`)
+  - Fallback: the note opens without scrolling to the line. E2E: `e2e/specs/navigation.e2e.ts`
+- The `file` key in a Markdown leaf's view state (`leafFile` in `src/leafRecency.ts`)
+  - Why: a restored tab that is not shown yet (deferred view) has no loaded `MarkdownView`; only its view state names the note
+  - Guard: used only when the view is not a loaded `MarkdownView`, and only if it is a string
+  - Fallback: such a tab is not found, so jump to source opens a split next to the map instead of reusing the tab
+- Core CSS classes and markup of rendered Markdown
+  - `markdown-rendered` on node content and the content overlay (`src/render/DomMapRenderer.ts`, `src/render/NodeContentModal.ts`): Obsidian scopes its reading view styles (task checkboxes, code blocks, callouts) to it. Fallback: the content keeps its structure but looks plainer
+  - `clickable-icon` (and `is-active`) on the control bar and node buttons (`src/render/MapControls.ts`, `src/render/DomMapRenderer.ts`, `src/view/fullScreen.ts`): Obsidian's icon button look, so themes style them too. Fallback: plain buttons that still work
+  - `a.internal-link` with `data-href` and `a.tag` with `href` (`src/render/linkHandling.ts`, `src/render/nestedTags.ts`): the markup `MarkdownRenderer.render` produces for links and tags. Fallback: our click, middle-click and hover handling does nothing and leaves the event to Obsidian; nested tags stay single pills. E2E: `e2e/specs/links.e2e.ts`, `e2e/specs/tags.e2e.ts`
+
+Kept on purpose against a guideline (for reviewers):
+
+- The first settings group has the heading "Map" (`src/settingsTab.ts`), although the guidelines put general settings at the top without a heading: the tab has four groups (Map, Nodes, Spacing, About), and "Map" is a real section next to the others
+- The dev-only element ID overlay sets static inline styles: see "Element IDs" under [Development](#development)
+
 ## Release
 
 - Automated with [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release.yml`); there is no local release command
