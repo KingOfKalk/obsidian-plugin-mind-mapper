@@ -1,5 +1,5 @@
 import type { MapLayoutName } from '../layout/types';
-import type { MapThemeName } from '../render/themes';
+import type { MapThemeName } from '../themeNames';
 import type { MessageKey } from './en';
 
 /** Menu labels of the layouts; the values are the frontmatter names and stay untranslated. */

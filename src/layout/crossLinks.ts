@@ -14,26 +14,10 @@ export interface CrossLink {
   line: number;
 }
 
-/** The node with the smallest line span containing `line`, or null (blank line, skipped content). */
-export function nodeAtLine(tree: MindMapTree, line: number): MindMapNode | null {
-  let best: MindMapNode | null = null;
-  let bestSpan = Infinity;
-  walk(tree.root, (node) => {
-    if (node.line === null || node.endLine === undefined) return;
-    if (line < node.line || line > node.endLine) return;
-    const span = node.endLine - node.line;
-    if (span < bestSpan) {
-      best = node;
-      bestSpan = span;
-    }
-  });
-  return best;
-}
-
 /**
- * `nodeAtLine` as a lookup table built once per tree (cross-links are mapped on every edit).
- * Larger spans are written first, so the innermost node wins; among equal spans the first in
- * pre-order wins, like `nodeAtLine`.
+ * Line to the node with the smallest line span containing it, or null (blank line, skipped
+ * content); a lookup table built once per tree (cross-links are mapped on every edit). Larger
+ * spans are written first, so the innermost node wins; among equal spans the first in pre-order.
  */
 export function lineIndex(tree: MindMapTree): (line: number) => MindMapNode | null {
   const nodes: { node: MindMapNode; start: number; end: number }[] = [];

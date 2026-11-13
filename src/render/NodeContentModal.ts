@@ -8,7 +8,7 @@ import {
 } from 'obsidian';
 import { setElementId } from '../elementIds';
 import type { MindMapNode } from '../parser/types';
-import type { LeafRecency } from '../view/leafRecency';
+import type { LeafRecency } from '../leafRecency';
 import { attachLinkHandling } from './linkHandling';
 import { disableCheckboxes } from './NodeContentRenderer';
 

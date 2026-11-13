@@ -6,6 +6,7 @@ import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
+import type { MapThemeName } from '../themeNames';
 import {
   contentCap,
   detailLevel,
@@ -14,19 +15,12 @@ import {
   SpatialIndex,
   worldViewport,
 } from './culling';
-import { branchAttr, levelAttr, type MapThemeName, themeClass } from './themes';
+import { branchAttr, levelAttr, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 /** New nodes rendered per culling pass (one pass per frame): keeps panning into new areas smooth. */
 export const RENDER_BUDGET = 40;
-
-/** Renderer boundary from the spec; a three.js renderer is a future implementation. */
-export interface MapRenderer {
-  readonly canvasEl: HTMLElement;
-  setLayout(layout: MapLayout, collapse?: CollapseInfo): void;
-  setTransform(t: Transform): void;
-}
 
 /** How node content is produced; the default writes the markdown as plain text. */
 export interface NodeContentHooks {
@@ -80,7 +74,7 @@ const PLAIN_TEXT: NodeContentHooks = {
  * Absolutely positioned node divs plus one SVG edge layer inside a CSS-transformed world.
  * Node elements are kept across layouts by id; content is re-rendered only when its markdown changes.
  */
-export class DomMapRenderer implements MapRenderer {
+export class DomMapRenderer {
   readonly canvasEl: HTMLElement;
   private readonly worldEl: HTMLElement;
   private edgesEl: SVGSVGElement | null = null;
@@ -550,8 +544,11 @@ export class DomMapRenderer implements MapRenderer {
       // The element state is the only source of the collapsed highlight in styles.css (no class).
       setElementState(toggle, 'node.toggle', collapsed ? 'collapsed' : 'expanded');
       // Collapsed, the toggle shows the hidden count.
-      toggle.setText(collapsed ? String(count) : '−');
-      toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
+      // Written only on change: every culling pass (one per frame while panning) gets here.
+      const text = collapsed ? String(count) : '−';
+      if (toggle.textContent !== text) toggle.setText(text);
+      const label = t(collapsed ? 'expandNode' : 'collapseNode');
+      if (toggle.getAttribute('aria-label') !== label) toggle.setAttribute('aria-label', label);
       // Middle of the child-side edge; CSS moves it just outside the node.
       const at = {
         right: { left: x + width, top: y + height / 2 },

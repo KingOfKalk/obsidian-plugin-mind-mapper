@@ -1,5 +1,9 @@
 import type { MindMapNode, MindMapTree } from '../parser/types';
-import type { CollapseState } from '../view/collapseState';
+
+/** Collapsed node IDs as the layout reads them (the view's `CollapseState`). */
+export interface Collapsed {
+  has(id: string): boolean;
+}
 
 export interface VisibleTree {
   tree: MindMapTree;
@@ -11,7 +15,7 @@ export interface VisibleTree {
  * The tree without the subtrees of collapsed nodes; unchanged nodes keep their identity. The root is
  * never collapsed (a drilled-in centre may be collapsed in the whole map).
  */
-export function visibleTree(tree: MindMapTree, collapsed: CollapseState): VisibleTree {
+export function visibleTree(tree: MindMapTree, collapsed: Collapsed): VisibleTree {
   const hidden = new Map<string, number>();
 
   const visit = (node: MindMapNode): MindMapNode => {

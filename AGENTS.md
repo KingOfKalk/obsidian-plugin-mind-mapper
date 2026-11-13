@@ -55,6 +55,8 @@
 - `src/settings.ts`, `src/settingsTab.ts`: settings and settings tab
 - `src/dev`: dev-only code (fixture recording, element ID overlay)
 - `src/elementIds.ts`: stable element IDs (`data-mm-id`), catalog in `docs/ui-elements.md`
+- `src/themeNames.ts`, `src/leafRecency.ts`: shared by several layers (theme names; most recently active note leaf)
+- Module boundaries: `parser` < `layout` < `render` < `view`; a layer never imports from a higher one (ESLint `no-restricted-imports` in `eslint.config.mjs`)
 - `tests/`: unit and view integration tests; hand-written `obsidian` mock in `tests/mocks/obsidian.ts`
 - `e2e/`: E2E specs (`e2e/specs/`), screenshot, README, manual and UI element images, fixture recording and perf runs
 - `tests/vault/`: versioned test notes, parser fixtures in `tests/vault/fixtures/`

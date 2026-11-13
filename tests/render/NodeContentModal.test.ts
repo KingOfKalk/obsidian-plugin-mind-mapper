@@ -1,4 +1,4 @@
-import { LeafRecency } from '../../src/view/leafRecency';
+import { LeafRecency } from '../../src/leafRecency';
 import { type App, MarkdownRenderer } from 'obsidian';
 import type { MindMapNode } from '../../src/parser/types';
 import { NodeContentModal } from '../../src/render/NodeContentModal';

@@ -742,6 +742,34 @@ describe('culling', () => {
     expect(state('n2')).toBe('expanded');
   });
 
+  test('a culling pass does not rewrite unchanged toggle text and labels (issue #49)', () => {
+    const { parent, renderer } = culled();
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    renderer.setLayout(grid(), {
+      hidden: new Map([['n1', 3]]),
+      hasChildren: (id) => id === 'n1' || id === 'n2',
+    });
+    const toggles = [...parent.querySelectorAll<HTMLElement>('.mind-mapper-collapse')];
+    expect(toggles.map((el) => el.textContent)).toEqual(['3', '−']);
+    const observer = new MutationObserver(() => {});
+    for (const toggle of toggles) {
+      observer.observe(toggle, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+        attributes: true,
+      });
+    }
+    renderer.setTransform({ x: -10, y: 0, zoom: 1 });
+    renderer.updateVisible();
+    const rewrites = observer
+      .takeRecords()
+      .filter((r) => r.type !== 'attributes' || r.attributeName === 'aria-label');
+    observer.disconnect();
+    expect(rewrites).toEqual([]);
+    expect(toggles.map((el) => el.getAttribute('aria-label'))).toEqual(['Expand', 'Collapse']);
+  });
+
   test('a never sized (0 x 0) canvas renders all nodes on the first layout and keeps the DOM afterwards', () => {
     const { renderer } = culled();
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });

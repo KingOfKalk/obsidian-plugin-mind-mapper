@@ -7,7 +7,7 @@ import { recordFixtures } from './dev/recordFixtures';
 import { setElementId } from './elementIds';
 import { loadLanguage, t } from './i18n';
 import { HOVER_SOURCE_ID } from './render/linkHandling';
-import { LeafRecency } from './view/leafRecency';
+import { LeafRecency } from './leafRecency';
 import { type MindMapSettings, DEFAULT_SETTINGS, sanitizeSettings } from './settings';
 import { MindMapSettingTab } from './settingsTab';
 import { MindMapView } from './view/MindMapView';

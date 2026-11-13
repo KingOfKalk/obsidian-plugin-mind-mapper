@@ -1,6 +1,6 @@
 import { type CachedMetadata, MarkdownRenderer, type WorkspaceLeaf } from 'obsidian';
 import { estimateSize } from '../../src/layout/nodeSize';
-import { DEFAULT_LAYOUT, layoutTree } from '../../src/layout/tidyTree';
+import { layoutTree } from '../../src/layout/tidyTree';
 import { toParserInput } from '../../src/parser/adapter';
 import { buildTree } from '../../src/parser/buildTree';
 import { DomMapRenderer } from '../../src/render/DomMapRenderer';
@@ -179,8 +179,8 @@ function expectedFit(fixture: string, name: string, width: number, height: numbe
   const { cache, text } = loadFixture(fixture);
   const tree = buildTree(toParserInput(cache, text), name);
   const layout = layoutTree(tree, {
-    siblingGap: DEFAULT_LAYOUT.siblingGap,
-    levelGap: DEFAULT_LAYOUT.levelGap,
+    siblingGap: DEFAULT_SETTINGS.siblingGap,
+    levelGap: DEFAULT_SETTINGS.levelGap,
     nodeSize: estimateSize,
   });
   return fitToBounds(

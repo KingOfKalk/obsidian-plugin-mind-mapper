@@ -9,7 +9,7 @@ import type { MessageKey } from './i18n/en';
 import { LAYOUT_LABELS, THEME_LABELS } from './i18n/labels';
 import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
-import { THEME_NAMES } from './render/themes';
+import { THEME_NAMES } from './themeNames';
 import { DEFAULT_SETTINGS, type NumericSetting, SETTING_RANGES } from './settings';
 
 const REPOSITORY_URL = 'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper';

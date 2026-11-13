@@ -1,5 +1,5 @@
 import type { App, MarkdownView, WorkspaceLeaf } from 'obsidian';
-import { type LeafRecency, pickNoteLeaf } from '../view/leafRecency';
+import { type LeafRecency, pickNoteLeaf } from '../leafRecency';
 
 /**
  * Spec "Jump to source target": the most recently active leaf showing the note, else a vertical

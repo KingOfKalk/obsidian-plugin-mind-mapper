@@ -13,7 +13,7 @@ import {
 } from 'obsidian';
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from '../constants';
 import { setElementId } from '../elementIds';
-import { anchoredTransform, nearestNode } from '../layout/anchor';
+import { nearestNode } from '../layout/anchor';
 import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layout/nodeSize';
 import { SizeCache } from '../layout/sizeCache';
 import { visibleTree } from '../layout/visibleTree';
@@ -41,8 +41,9 @@ import { NodeContentRenderer } from '../render/NodeContentRenderer';
 import { attachLinkHandling } from '../render/linkHandling';
 import { type DrillAction, type MapActions, MapControls } from '../render/MapControls';
 import { attachPanZoom, type PanZoomTarget } from '../render/panZoomInput';
-import { type MapThemeName, THEME_NAMES } from '../render/themes';
+import { type MapThemeName, THEME_NAMES } from '../themeNames';
 import {
+  anchoredTransform,
   fitBounds,
   fitToBounds,
   IDENTITY,
@@ -57,7 +58,7 @@ import { CollapseState } from './collapseState';
 import { drilledTree, findNode, isValidDrillPath } from './drill';
 import { easeInOut, FADE_MS, GLIDE_MS, lerpTransform, type Phase, PhaseRunner } from './animation';
 import { FullScreen } from './fullScreen';
-import { LeafRecency } from './leafRecency';
+import { LeafRecency } from '../leafRecency';
 import { fileBasename, type MindMapViewState, parseViewState } from './viewState';
 
 /** What the plugin provides to each map view. */

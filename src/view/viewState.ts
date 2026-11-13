@@ -1,5 +1,5 @@
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
-import { type MapThemeName, THEME_NAMES } from '../render/themes';
+import { type MapThemeName, THEME_NAMES } from '../themeNames';
 
 export interface MindMapViewState {
   file: string | null;

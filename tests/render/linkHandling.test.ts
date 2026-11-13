@@ -1,6 +1,6 @@
 import { Component, type ItemView, type WorkspaceLeaf } from 'obsidian';
 import { attachLinkHandling, HOVER_SOURCE_ID } from '../../src/render/linkHandling';
-import { LeafRecency } from '../../src/view/leafRecency';
+import { LeafRecency } from '../../src/leafRecency';
 
 interface FakeLeaf {
   view: { getViewType(): string };

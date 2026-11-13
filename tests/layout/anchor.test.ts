@@ -1,4 +1,4 @@
-import { anchoredTransform, nearestNode } from '../../src/layout/anchor';
+import { nearestNode } from '../../src/layout/anchor';
 import type { MapLayout, PositionedNode } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
 
@@ -40,19 +40,4 @@ test('nearestNode picks the node whose center is closest', () => {
 
 test('nearestNode of an empty layout is null', () => {
   expect(nearestNode({ ...layout, nodes: [] }, { x: 0, y: 0 })).toBeNull();
-});
-
-test('anchoredTransform keeps the anchor at the same screen position', () => {
-  const t = { x: 30, y: -20, zoom: 0.5 };
-  const before = { x: 200, y: 100 };
-  const after = { x: 260, y: 40 };
-  const next = anchoredTransform(t, before, after);
-  expect(next.zoom).toBe(0.5);
-  expect(after.x * next.zoom + next.x).toBeCloseTo(before.x * t.zoom + t.x);
-  expect(after.y * next.zoom + next.y).toBeCloseTo(before.y * t.zoom + t.y);
-});
-
-test('anchoredTransform without movement keeps the transform', () => {
-  const t = { x: 1, y: 2, zoom: 3 };
-  expect(anchoredTransform(t, { x: 5, y: 5 }, { x: 5, y: 5 })).toEqual(t);
 });
