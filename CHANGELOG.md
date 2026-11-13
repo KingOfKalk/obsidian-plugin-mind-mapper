@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.4.0...1.5.0) (2026-11-13)
+
+
+### Features
+
+* kanban layout ([#42](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/42)) ([19f67f6](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/19f67f6e5d8cf222c6642b92cc489deb9e7b58a0))
+* stable IDs and names for every plugin element ([#34](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/34)) ([64b7af4](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/64b7af48a501acd1b8566124baae42f776633077))
+
+
+### Code Refactoring
+
+* element IDs name the element, state goes into data-mm-state ([#38](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/38)) ([f75d44f](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/f75d44f88a0251586c3187156be715f99b6bfe2c))
+* style the collapse button from data-mm-state ([#41](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/41)) ([728ca16](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/728ca16ecb0a8d56267ef050af02a9741353cca7))
+
 ## [1.4.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.3.1...1.4.0) (2026-11-09)
 
 
