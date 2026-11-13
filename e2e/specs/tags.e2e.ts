@@ -427,9 +427,10 @@ async function setTheme(theme: string): Promise<void> {
   await settle();
 }
 
-const RED = 'var(--color-red)';
+/** Branch red mixed towards the text color: the scope and outline, and (more) the text. */
+const INK = 'color-mix(in srgb, var(--color-red) 75%, var(--text-normal))';
+const TEXT = 'color-mix(in srgb, var(--color-red) 60%, var(--text-normal))';
 const WASH = 'color-mix(in srgb, var(--color-red) 12%, var(--background-primary))';
-const DARKER = 'color-mix(in srgb, var(--color-red) 75%, var(--text-normal))';
 const BG = 'var(--background-primary)';
 const TAG = 'var(--tag-color)';
 const TAG_BG = 'var(--tag-background)';
@@ -446,36 +447,33 @@ describe('tag colors and corners (issue #92)', function () {
     await setTheme('rainbow');
   });
 
-  it('branch themes: pills and plain tags in the branch color, small corners', async function () {
-    const level2 = await tagColors(SHORT, '#x/y', [RED, WASH, BG, RADIUS]);
-    const r = level2.resolved;
-    expect(level2.tag).toEqual({
-      radius: r[RADIUS],
-      border: r[RED],
-      background: r[RED],
-      color: r[BG],
-      valueBackground: r[WASH],
-      valueColor: r[RED],
-    });
+  // Owner decision on #94: the darker mix on every level (readable light branch colors), the text
+  // of value parts and plain tags darker still.
+  it('branch themes: pills and plain tags in a darker branch color on every level, small corners', async function () {
+    for (const [selector, href] of [
+      [SHORT, '#x/y'],
+      [HEADING, '#area/events'],
+    ] as const) {
+      const pill = await tagColors(selector, href, [INK, TEXT, WASH, BG, RADIUS]);
+      const r = pill.resolved;
+      expect(pill.tag).toEqual({
+        radius: r[RADIUS],
+        border: r[INK],
+        background: r[INK],
+        color: r[BG],
+        valueBackground: r[WASH],
+        valueColor: r[TEXT],
+      });
+    }
     // A plain tag looks like the value part.
-    const plain = await tagColors(MID, '#solo', [RED, WASH, RADIUS]);
+    const plain = await tagColors(MID, '#solo', [INK, TEXT, WASH, RADIUS]);
     expect(plain.tag).toEqual({
       radius: plain.resolved[RADIUS],
-      border: plain.resolved[RED],
+      border: plain.resolved[INK],
       background: plain.resolved[WASH],
-      color: plain.resolved[RED],
+      color: plain.resolved[TEXT],
       valueBackground: null,
       valueColor: null,
-    });
-  });
-
-  it('on a filled level 1 node the branch color is darker', async function () {
-    const level1 = await tagColors(HEADING, '#area/events', [DARKER, BG]);
-    expect(level1.tag).toMatchObject({
-      border: level1.resolved[DARKER],
-      background: level1.resolved[DARKER],
-      color: level1.resolved[BG],
-      valueColor: level1.resolved[DARKER],
     });
   });
 
