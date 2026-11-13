@@ -132,6 +132,7 @@ Project (root, H1)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
+  - Settings changed outside this window (Obsidian Sync, another window or vault copy writing `data.json`; `onExternalSettingsChange`) are reloaded, sanitized and applied to open maps like a change in the tab, without saving again
 ## Colour themes (decided)
  
 - Colour per branch: each first-level node starts a branch with its own colour from the palette, in source order (branch 1 colour 1, branch 2 colour 2, …); colours repeat when there are more branches than colours
