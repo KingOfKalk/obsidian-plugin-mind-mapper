@@ -1,16 +1,4 @@
-/**
- * Spec "Colour themes": each first-level branch gets a colour of the theme's palette; `none` is the
- * same look in greys.
- */
-export type MapThemeName = 'none' | 'rainbow' | 'ocean' | 'forest' | 'accent';
-
-export const THEME_NAMES: readonly MapThemeName[] = [
-  'none',
-  'rainbow',
-  'ocean',
-  'forest',
-  'accent',
-];
+import type { MapThemeName } from '../themeNames';
 
 /** Number of colours of each palette in styles.css (`--mind-mapper-color-<n>`). */
 export const PALETTE_SIZE: Readonly<Record<MapThemeName, number>> = {

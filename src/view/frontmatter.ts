@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
-import { type MapThemeName, THEME_NAMES } from '../render/themes';
+import { type MapThemeName, THEME_NAMES } from '../themeNames';
 
 export type MapOptionKey =
   'mind-mapper-title' | 'mind-mapper-layout' | 'mind-mapper-collapsed' | 'mind-mapper-theme';

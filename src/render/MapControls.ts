@@ -4,7 +4,7 @@ import { t } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 import { LAYOUT_LABELS, THEME_LABELS } from '../i18n/labels';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
-import { type MapThemeName, THEME_NAMES } from './themes';
+import { type MapThemeName, THEME_NAMES } from '../themeNames';
 import { parseZoomPercent } from './viewport';
 
 export interface MapActions {

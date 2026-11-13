@@ -14,7 +14,8 @@ import {
   SpatialIndex,
   worldViewport,
 } from './culling';
-import { branchAttr, levelAttr, type MapThemeName, themeClass } from './themes';
+import type { MapThemeName } from '../themeNames';
+import { branchAttr, levelAttr, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

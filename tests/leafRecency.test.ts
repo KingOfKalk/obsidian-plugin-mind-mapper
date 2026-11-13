@@ -1,5 +1,5 @@
 import type { Workspace, WorkspaceLeaf } from 'obsidian';
-import { LeafRecency, pickNoteLeaf } from '../../src/view/leafRecency';
+import { LeafRecency, pickNoteLeaf } from '../src/leafRecency';
 
 function leaf(type: string, path?: string): WorkspaceLeaf {
   return {

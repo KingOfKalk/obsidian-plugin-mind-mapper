@@ -1,6 +1,6 @@
 import { type App, type Component, type HoverParent, Keymap, type WorkspaceLeaf } from 'obsidian';
 import { VIEW_TYPE_MIND_MAP } from '../constants';
-import { type LeafRecency, pickNoteLeaf } from '../view/leafRecency';
+import { type LeafRecency, pickNoteLeaf } from '../leafRecency';
 
 /** Hover source id registered with the page preview core plugin. */
 export const HOVER_SOURCE_ID = VIEW_TYPE_MIND_MAP;

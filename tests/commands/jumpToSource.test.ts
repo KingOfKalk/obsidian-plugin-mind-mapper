@@ -1,6 +1,6 @@
 import type { App, WorkspaceLeaf } from 'obsidian';
 import { jumpToSource } from '../../src/commands/jumpToSource';
-import { LeafRecency } from '../../src/view/leafRecency';
+import { LeafRecency } from '../../src/leafRecency';
 import { fakeFile } from '../helpers';
 
 interface TestLeaf {

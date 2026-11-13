@@ -28,6 +28,15 @@ function clampZoom(zoom: number): number {
   return Math.min(ZOOM_LIMITS.max, Math.max(ZOOM_LIMITS.min, zoom));
 }
 
+/** Pans so that a node that moved from world point `before` to `after` stays at the same screen point. */
+export function anchoredTransform(t: Transform, before: Point, after: Point): Transform {
+  return {
+    x: t.x + (before.x - after.x) * t.zoom,
+    y: t.y + (before.y - after.y) * t.zoom,
+    zoom: t.zoom,
+  };
+}
+
 /** Zooms by `factor`, keeping the world point under screen point `at` fixed. */
 export function zoomAt(t: Transform, factor: number, at: Point): Transform {
   return zoomTo(t, t.zoom * factor, at);
