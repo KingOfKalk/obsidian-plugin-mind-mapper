@@ -84,7 +84,7 @@ test('a divider deeper in the tree is placed under its own parent', () => {
   expect(layout.dividers.map((d) => d.parentId)).toEqual(['p']);
 });
 
-describe('the line spans the two neighbouring subtrees', () => {
+describe('the line spans the two neighboring subtrees', () => {
   // a has one child (a1), b a deeper branch (b1 > b11): b's subtree reaches further out.
   const tree = () => ({
     root: n('r', [n('a', [n('a1')]), n('b', [n('b1', [n('b11')])], true)]),
@@ -131,7 +131,7 @@ describe('the line spans the two neighbouring subtrees', () => {
     expect(Math.min(divider?.from.x ?? 0, divider?.to.x ?? 0)).toBeCloseTo(z.x);
   });
 
-  test('a collapsed neighbour counts only with its visible part', () => {
+  test('a collapsed neighbor counts only with its visible part', () => {
     const collapsed = new CollapseState();
     collapsed.toggle('b1');
     const layout = layoutTree(visibleTree(tree(), collapsed).tree, options('left-to-right'));

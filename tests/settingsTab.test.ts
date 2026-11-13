@@ -248,7 +248,7 @@ test('choosing a default theme in the tab saves it and re-applies only the theme
   await row('Default theme').dropdown?.changeHandler?.('forest');
   expect(plugin.settings.defaultTheme).toBe('forest');
   expect(mock.data).toMatchObject({ defaultTheme: 'forest' });
-  // Spec "Colour themes": pure CSS, no re-measure and no re-layout.
+  // Spec "Color themes": pure CSS, no re-measure and no re-layout.
   expect(applyTheme).toHaveBeenCalledTimes(1);
   expect(refresh).not.toHaveBeenCalled();
   // Any other change still refreshes.

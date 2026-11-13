@@ -238,7 +238,7 @@ test('zoom actions change the transform and the controls label', async () => {
   expect(view.getTransform()).toEqual(expectedFit('worked-example', 'Note', 800, 600));
 });
 
-test('zoom in / out snap to the next step, centred on the canvas', async () => {
+test('zoom in / out snap to the next step, centered on the canvas', async () => {
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
   await setSize(view, 800, 600);
@@ -1249,7 +1249,7 @@ describe('kanban (issue #32)', () => {
     for (const id of COLUMNS) expect(nodeBox(view, id).width).toBe(160);
   });
 
-  test('drilled in, the centre is the headline and its children the columns', async () => {
+  test('drilled in, the center is the headline and its children the columns', async () => {
     const { view } = await openWith('kanban', {});
     view.select(COLUMNS[1]);
     view.drillDown();
@@ -1292,7 +1292,7 @@ describe('layouts, frontmatter and settings', () => {
     }
   });
 
-  test('node text is aligned towards the parent; the root centred, or towards its branches', async () => {
+  test('node text is aligned towards the parent; the root centered, or towards its branches', async () => {
     const settings = { ...DEFAULT_SETTINGS };
     const { view, ws } = await openWith('worked-example', { settings: () => settings });
     const align = (id: string) => {
@@ -1414,7 +1414,7 @@ describe('layouts, frontmatter and settings', () => {
   });
 });
 
-describe('colour themes', () => {
+describe('color themes', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
@@ -1499,7 +1499,7 @@ describe('colour themes', () => {
   });
 });
 
-describe('layout and colour theme of this view (overrides)', () => {
+describe('layout and color theme of this view (overrides)', () => {
   let frames: MockInstance[] = [];
   beforeEach(() => {
     vi.useFakeTimers();
@@ -1608,7 +1608,7 @@ describe('layout and colour theme of this view (overrides)', () => {
     expect(grows(view, 'Live', 'Live/Beta')).toBe('up');
   });
 
-  test('choosing a colour theme applies it without a re-layout; it wins over frontmatter edits until reset', async () => {
+  test('choosing a color theme applies it without a re-layout; it wins over frontmatter edits until reset', async () => {
     const settings: MindMapSettings = { ...LTR_SETTINGS, defaultTheme: 'forest' };
     const { view, ws } = await openWith('fm-theme', { settings: () => settings });
     expect(theme(view)).toEqual(['mind-mapper-theme-rainbow']);
@@ -2117,7 +2117,7 @@ describe('double click on the empty canvas', () => {
 describe('back to root and full screen', () => {
   afterEach(() => document.body.empty());
 
-  test('back to root selects the root and centres it, zoom unchanged', async () => {
+  test('back to root selects the root and centers it, zoom unchanged', async () => {
     const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
     view.setTransform({ x: -700, y: 40, zoom: 0.6 });
     view.backToRoot();
@@ -2385,7 +2385,7 @@ describe('culling at scale', () => {
     expect(nodeBox(view, fresh ?? '')).toMatchObject({ width: 268, height: 104 });
   });
 
-  test('measuring nodes rendered by panning keeps the centre node in place, even with an off-screen selection', async () => {
+  test('measuring nodes rendered by panning keeps the center node in place, even with an off-screen selection', async () => {
     const { view } = await openBig();
     view.setTransform({ x: 0, y: 0, zoom: 1 });
     await vi.advanceTimersByTimeAsync(20);

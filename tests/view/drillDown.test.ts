@@ -83,7 +83,7 @@ test('the whole map: nothing to drill until a node with children is selected', (
   expect(drill.isDrilled).toBe(false);
   expect(drill.centre).toBeNull();
   expect(drill.action()).toBeNull();
-  // A leaf cannot become the centre, nor can the centre itself.
+  // A leaf cannot become the center, nor can the center itself.
   state.selected = 'Links/Alpha/#1';
   expect(drill.canDrillDown()).toBe(false);
   state.selected = 'Links';
@@ -93,7 +93,7 @@ test('the whole map: nothing to drill until a node with children is selected', (
   expect(drill.action()).toBe('in');
 });
 
-test('down makes the selected node the centre, shows it fitted and reports the new path', () => {
+test('down makes the selected node the center, shows it fitted and reports the new path', () => {
   const { drill, state, camera, pathChanged, showCentre } = setup();
   state.selected = 'Links/Beta';
   drill.down();
@@ -103,7 +103,7 @@ test('down makes the selected node the centre, shows it fitted and reports the n
   expect(pathChanged).toHaveBeenCalledTimes(1);
   expect(showCentre).toHaveBeenCalledWith('Links/Beta');
   expect(camera.fitted).toBe(true);
-  // The centre itself is selected: the button drills out.
+  // The center itself is selected: the button drills out.
   expect(drill.action()).toBe('out');
 });
 

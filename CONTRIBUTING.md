@@ -66,7 +66,7 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 Add screenshots whenever something is visible: they make reviews and bug reports much faster.
 
 - Bug issues: a screenshot of the problem (and the note's Markdown in the form).
-- Pull requests with a visible change: before and after, side by side in a table. For colour or styling changes, also a loud-palette shot (see [docs/developer.md](docs/developer.md), Screenshots).
+- Pull requests with a visible change: before and after, side by side in a table. For color or styling changes, also a loud-palette shot (see [docs/developer.md](docs/developer.md), Screenshots).
 - Make them with the headless screenshot run: `npm run screenshots:e2e` on the branch ("after") and in a worktree of `origin/main` ("before"); use the same spec step for both so they are comparable.
 
 Screenshots never go into this repository (no branch, no folder): they would bloat every clone. They live in one secret gist per issue or PR, owned by the maintainer, and are linked by their raw URL (which contains the file's revision, so the link stays stable). `gh` cannot upload images directly, but a gist is a git repository:

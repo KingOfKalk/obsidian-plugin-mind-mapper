@@ -23,7 +23,7 @@ export function countBubbleWidth(count: number): number {
 }
 
 /**
- * Spec "Kanban" (issue #32): the root as a headline centred above the board; its children are
+ * Spec "Kanban" (issue #32): the root as a headline centered above the board; its children are
  * columns side by side, all as wide as the widest header (plus its count bubble), card or subtask
  * (plus its indent), at most the max node width (but never narrower than a node); their children are cards stacked downwards, all
  * deeper nodes subtasks indented below their card (pre-order). Column gap: twice the sibling gap;

@@ -11,9 +11,9 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 - **Live companion:** open the map next to the note; edits show up in the map after Obsidian saves the note (about 2 s), and pan, zoom, selection and collapsed branches are kept
 - **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself; nested tags as two-part pills (`#project/alpha` | `backend`)
 - **Layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom, bottom-to-top and a kanban board (columns with cards and their counts); per note via frontmatter, or for the open map from the control bar
-- **Colour themes:** every main branch in its own colour (`rainbow` by default, `ocean`, `forest`, your `accent` colour or plain grey), with filled first-level nodes and a large root; per note or as default, or for the open map from the control bar; follows light and dark mode
+- **Color themes:** every main branch in its own color (`rainbow` by default, `ocean`, `forest`, your `accent` color or plain gray), with filled first-level nodes and a large root; per note or as default, or for the open map from the control bar; follows light and dark mode
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, tags open the tag search, links to headings and blocks in the same note are drawn as dashed lines
-- **Drill down:** show one branch as a map of its own, with the branch as the centre; step back out one level at a time
+- **Drill down:** show one branch as a map of its own, with the branch as the center; step back out one level at a time
 - **Collapse, full screen, back to root,** and smooth panning on notes with thousands of nodes
 - **Languages:** English and German; follows Obsidian's language setting (Settings → General → Language)
 
@@ -84,14 +84,14 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 
 ## Drill down
 
-Focus on one branch: the selected node becomes the centre of the map, and only it and everything below it are shown.
+Focus on one branch: the selected node becomes the center of the map, and only it and everything below it are shown.
 
-- Select a node with children, then the drill down button in the control bar (arrow down to a dot) or the key `D` (while the map has focus): the node becomes the centre, large and without a box like the root; its children become the first level with their own branch colours; the map is fitted
+- Select a node with children, then the drill down button in the control bar (arrow down to a dot) or the key `D` (while the map has focus): the node becomes the center, large and without a box like the root; its children become the first level with their own branch colors; the map is fitted
 - Inside a drilled view, select another node and drill again (e.g. Project → Tasks → Phase 2)
-- The button or `D` with nothing to drill into (the centre or nothing selected) goes back out one level; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view like after "Fit to view"
-- While drilled in, the centre has a small target icon above it and the button is highlighted; the button is disabled when there is nothing to drill into or out of
+- The button or `D` with nothing to drill into (the center or nothing selected) goes back out one level; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view like after "Fit to view"
+- While drilled in, the center has a small target icon above it and the button is highlighted; the button is disabled when there is nothing to drill into or out of
 - Link lines to nodes outside the drilled part are hidden
-- "Back to root" goes to the current centre; collapse, layout, theme, full screen and double click to jump work as usual
+- "Back to root" goes to the current center; collapse, layout, theme, full screen and double click to jump work as usual
 - The view glides towards the node, then the map cross-fades into the drilled view (drilling out runs it in reverse); with the system setting "reduce motion" it switches instantly. Pressing `D` again during the animation finishes it at once
 - The drilled branch belongs to the map tab: it survives closing and reopening Obsidian; if the branch is deleted, its heading or list item text is changed, or a list item or paragraph is inserted above a drilled list item, the map quietly shows the whole note again. The note file is never written
 
@@ -100,7 +100,7 @@ Focus on one branch: the selected node becomes the centre of the map, and only i
 The layout button (boxes joined by a line) and the color theme button (palette) in the control bar, also in full screen, change only the map on screen, never the note:
 
 - The menu lists the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes; the shown one is checked
-- A layout change cross-fades into the new arrangement and glides to fit it to view; a theme change only recolours it
+- A layout change cross-fades into the new arrangement and glides to fit it to view; a theme change only recolors it
 - "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the plugin setting
 - While a choice is active the button is highlighted, and it wins over later frontmatter edits and setting changes
 - The choice belongs to the map tab: it survives closing and reopening Obsidian and following a rename; the note file is never written
@@ -125,7 +125,7 @@ The layout button (boxes joined by a line) and the color theme button (palette) 
 
 `mind-mapper-collapsed: true` opens the map like after "Collapse all": root and first level visible, and branches added by later edits stay collapsed until "Expand all". Changing the value while the map is open collapses or expands all once; other edits keep what you expanded or collapsed.
 
-`mind-mapper-theme` gives each first-level branch its own colour, in note order, repeating after the last one; everything below takes the colour of its branch. First-level nodes are filled with it, second-level nodes lightly tinted, deeper nodes are plain text on a coloured line; code, tables, callouts and other blocks keep a thin border in the branch colour. The root is large bold text. `rainbow`: red, orange, yellow, green, cyan, blue, purple. `ocean`: blue, cyan, green, purple. `forest`: green, yellow, orange, olive. `accent`: Obsidian's accent colour for every branch. `none`: the same look in greys. The colours come from the Obsidian theme, so they suit light and dark mode.
+`mind-mapper-theme` gives each first-level branch its own color, in note order, repeating after the last one; everything below takes the color of its branch. First-level nodes are filled with it, second-level nodes lightly tinted, deeper nodes are plain text on a colored line; code, tables, callouts and other blocks keep a thin border in the branch color. The root is large bold text. `rainbow`: red, orange, yellow, green, cyan, blue, purple. `ocean`: blue, cyan, green, purple. `forest`: green, yellow, orange, olive. `accent`: Obsidian's accent color for every branch. `none`: the same look in grays. The colors come from the Obsidian theme, so they suit light and dark mode.
 
 An unknown layout or theme, a title that is not text or a `mind-mapper-collapsed` that is not `true`/`false` falls back to the default and shows a notice once per note and value (per session).
 

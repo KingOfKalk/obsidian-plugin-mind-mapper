@@ -62,15 +62,15 @@ export interface PositionedNode extends Rect {
   /** Edge the children grow from (collapse toggle position). */
   childSide: Side;
   /**
-   * Text alignment: towards the parent (left on the right side, right on the left side, centred in
-   * vertical layouts); the root centred, or towards its branches in left-to-right and right-to-left.
+   * Text alignment: towards the parent (left on the right side, right on the left side, centered in
+   * vertical layouts); the root centered, or towards its branches in left-to-right and right-to-left.
    */
   align: TextAlign;
-  /** Tree depth: 0 for the root, 1 for the first level (colour themes). */
+  /** Tree depth: 0 for the root, 1 for the first level (color themes). */
   depth: number;
   /**
    * Source index of the first-level node this node belongs to (0 for the first branch, the node
-   * itself on the first level); -1 for the root (colour themes).
+   * itself on the first level); -1 for the root (color themes).
    */
   branch: number;
   /** Kanban column header: the number of its cards (direct children), shown in a bubble. */

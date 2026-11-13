@@ -9,6 +9,7 @@ import {
   settle,
   waitForAnimation,
   waitForCache,
+  waitForMenu,
   writeNote,
 } from './helpers';
 import { generateNote } from './perf/generateNote';
@@ -242,7 +243,7 @@ describe('screenshots', function () {
     });
   }
 
-  // Colour themes in light and dark mode, in full screen so the nodes are readable.
+  // Color themes in light and dark mode, in full screen so the nodes are readable.
   for (const theme of ['rainbow', 'ocean', 'forest', 'accent', 'none']) {
     for (const mode of ['light', 'dark'] as const) {
       it(`theme ${theme} ${mode}`, async function () {
@@ -254,7 +255,7 @@ describe('screenshots', function () {
     }
   }
 
-  // Eight levels: level 1 filled, level 2 tinted, level 3 and deeper plain text, all in the branch colour.
+  // Eight levels: level 1 filled, level 2 tinted, level 3 and deeper plain text, all in the branch color.
   for (const [theme, mode] of [
     ['rainbow', 'light'],
     ['rainbow', 'dark'],
@@ -289,7 +290,7 @@ describe('screenshots', function () {
     });
   }
 
-  // Nine first-level branches: rainbow (7 colours) starts again at branch 8; blocks at level 3.
+  // Nine first-level branches: rainbow (7 colors) starts again at branch 8; blocks at level 3.
   for (const mode of ['light', 'dark'] as const) {
     it(`theme rainbow ${mode}, nine branches`, async function () {
       await useTheme('rainbow', mode);
@@ -326,7 +327,7 @@ describe('screenshots', function () {
     await withLoudPalette(() => saveFullScreenShot(`${dir}/loud-none-branches.png`));
   });
 
-  // Loud palette (see LOUD_PALETTE): wrong, missing or leaking colours stand out. Review by eye.
+  // Loud palette (see LOUD_PALETTE): wrong, missing or leaking colors stand out. Review by eye.
   const deepNote = [
     '---',
     'mind-mapper-layout: left-to-right',
@@ -449,7 +450,7 @@ describe('screenshots', function () {
     });
   }
 
-  // Issue #23: a selected branch, drilled into (centre marker, highlighted button), then stacked
+  // Issue #23: a selected branch, drilled into (center marker, highlighted button), then stacked
   // (light, dark and loud palette). In full screen, the pointer moved just before each shot: the
   // control bar shows.
   for (const [mode, loud] of [
@@ -599,7 +600,7 @@ describe('screenshots', function () {
     });
   }
 
-  it('back to light mode without a colour theme', async function () {
+  it('back to light mode without a color theme', async function () {
     await useTheme('none', 'light');
   });
 
@@ -649,9 +650,9 @@ describe('screenshots', function () {
 });
 
 /**
- * Loud palette (test-only, never shipped): Obsidian's real colours are subtle, so a colour on the
+ * Loud palette (test-only, never shipped): Obsidian's real colors are subtle, so a color on the
  * wrong element is hard to see. These overrides give every variable that styles.css uses its own
- * unmistakable colour. Legend (variable -> colour; the plugin element that uses it):
+ * unmistakable color. Legend (variable -> color; the plugin element that uses it):
  *   --color-red     magenta  #ff00ff  rainbow branch 1 / 8
  *   --color-orange  lime     #00ff00  rainbow branch 2 / 9, forest branch 3
  *   --color-yellow  blue     #0000ff  rainbow branch 3, forest branch 2
@@ -661,7 +662,7 @@ describe('screenshots', function () {
  *   --color-purple  cyan     #00ffff  rainbow branch 7, ocean branch 4
  *   --color-pink    orange   #ff8000  (unused by the plugin)
  *   --interactive-accent  violet   #8000ff  accent theme, cross-links, selection ring, collapsed badge, hover
- *   (level 1 fill: 50 % branch colour, level 2: 18 %, mixed into --background-primary)
+ *   (level 1 fill: 50 % branch color, level 2: 18 %, mixed into --background-primary)
  *   --text-on-accent      gold     #ffcc00  count in the collapsed badge
  *   --text-faint          sky blue #00a0ff  theme none: edges, level 1 fill and level 2 tint (mixed)
  *   --hr-color            teal     #008080  dividers
@@ -724,7 +725,7 @@ async function withLoudPalette(shoot: () => Promise<void>): Promise<void> {
 
 /**
  * The controls bar as is, while typing a zoom ("87,5"), the window with the zoom preset, layout
- * and colour theme menus open, and the bar with both overrides active (highlighted). Ends with
+ * and color theme menus open, and the bar with both overrides active (highlighted). Ends with
  * the note's layout and theme again, fitted.
  */
 async function saveControlsShots(prefix: string): Promise<void> {
@@ -736,18 +737,18 @@ async function saveControlsShots(prefix: string): Promise<void> {
   await controls.saveScreenshot(`${prefix}-editing.png`);
   await browser.keys('Escape');
   await browser.$(byId('controls.zoom-presets')).click();
-  await browser.$('.menu').waitForExist({ timeout: 5000 });
+  await waitForMenu();
   await browser.pause(200);
   await browser.saveScreenshot(`${prefix}-menu.png`);
   await browser.keys('Escape');
   await browser.$('.menu').waitForExist({ reverse: true, timeout: 5000 });
-  // The layout (8th child) and colour theme (9th) menus; labels differ per language.
+  // The layout (8th child) and color theme (9th) menus; labels differ per language.
   for (const [child, name] of [
     [8, 'layout'],
     [9, 'theme'],
   ] as const) {
     await browser.$(`.mind-mapper-controls > :nth-child(${child})`).click();
-    await browser.$('.menu').waitForExist({ timeout: 5000 });
+    await waitForMenu();
     await browser.pause(200);
     await browser.saveScreenshot(`${prefix}-${name}-menu.png`);
     await browser.keys('Escape');
@@ -810,7 +811,7 @@ async function saveFullScreenShot(path: string): Promise<void> {
   await browser.keys('Escape');
 }
 
-/** The plugin's default colour theme and Obsidian's base theme (moonstone light, obsidian dark). */
+/** The plugin's default color theme and Obsidian's base theme (moonstone light, obsidian dark). */
 async function useTheme(theme: string, mode: 'light' | 'dark'): Promise<void> {
   await browser.executeObsidian(
     async ({ app }, name, base) => {

@@ -13,7 +13,7 @@ export interface VisibleTree {
 
 /**
  * The tree without the subtrees of collapsed nodes; unchanged nodes keep their identity. The root is
- * never collapsed (a drilled-in centre may be collapsed in the whole map).
+ * never collapsed (a drilled-in center may be collapsed in the whole map).
  */
 export function visibleTree(tree: MindMapTree, collapsed: Collapsed): VisibleTree {
   const hidden = new Map<string, number>();

@@ -1,5 +1,5 @@
 import { browser, expect } from '@wdio/globals';
-import { byId, openMindMap, openNote, settle } from '../helpers';
+import { byId, openMindMap, openNote, settle, waitForMenu } from '../helpers';
 
 const FULL_SCREEN = '.mind-mapper-full-screen';
 
@@ -19,9 +19,10 @@ async function pressEscape(): Promise<void> {
   await browser.pause(200);
 }
 
+/** Opens the menu and waits until it takes keys: an Esc before that would miss it (issue #89). */
 async function openMenu(buttonSelector: string): Promise<void> {
   await browser.$(buttonSelector).click();
-  await browser.$('.menu').waitForExist({ timeout: 5000 });
+  await waitForMenu();
 }
 
 // Obsidian hands an unhandled Esc from a non-navigation view to the last note tab (#13).

@@ -184,7 +184,7 @@ describe('drill-down commands (issue #23)', () => {
     expect(available()).toEqual([true, false, false]);
     find(commands, 'drill-down').checkCallback?.(false);
     expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
-    // The centre itself is selected: only out.
+    // The center itself is selected: only out.
     expect(available()).toEqual([false, true, true]);
     view.select('Links/Beta/Inner');
     expect(available()).toEqual([true, true, true]);

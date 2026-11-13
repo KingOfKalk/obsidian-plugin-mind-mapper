@@ -150,9 +150,9 @@ Kept on purpose against a guideline (for reviewers):
   - Run it for every UI change, then open the PNGs and look at them: tests have missed visual bugs (checkboxes, code, diagrams)
   - Look for: clipped or overlapping nodes, wrong fades, missing content (code, Mermaid, math, tables, callouts), edges not attached to nodes, dashed link lines and dividers, layout direction and balance, controls and collapse buttons
 - Loud palette (same run, `loud-*.png`)
-  - Obsidian's real colours are subtle, so a colour on the wrong element is hard to see; the spec injects `<style id="loud-palette">` (body variables, `!important`) around the loud shots and removes it afterwards; test-only, not shipped
+  - Obsidian's real colors are subtle, so a color on the wrong element is hard to see; the spec injects `<style id="loud-palette">` (body variables, `!important`) around the loud shots and removes it afterwards; test-only, not shipped
   - Shots: `loud-rainbow-deep` (8 levels, selected node), `loud-{rainbow,none}-branches` (9 branches with blocks at level 3), `loud-rainbow-tour` and `-tour-window` (collapsed branch with badge, cross-links, divider; full screen and in the window), `loud-rainbow-clipped` (expand button), `loud-{none,accent,ocean,forest}-tour`, `loud-none-full-screen`, `loud-crosslinks-{plain,highlight}` (link lines behind the nodes, then a clicked link line above them with both ends ringed; also `crosslinks-{plain,highlight}-{light,dark}` without the loud palette)
-  - Legend (variable: loud colour; used by):
+  - Legend (variable: loud color; used by):
     - `--color-red`: magenta; rainbow branch 1 and 8
     - `--color-orange`: lime; rainbow branch 2 and 9, forest branch 3
     - `--color-yellow`: blue; rainbow branch 3, forest branch 2
@@ -160,7 +160,7 @@ Kept on purpose against a guideline (for reviewers):
     - `--color-cyan`: black; rainbow branch 5, ocean branch 2
     - `--color-blue`: red; rainbow branch 6, ocean branch 1
     - `--color-purple`: cyan; rainbow branch 7, ocean branch 4
-    - Branch colours: level 1 fill 50 %, level 2 tint 18 % (mixed into `--background-primary`), lines and block borders 100 %
+    - Branch colors: level 1 fill 50 %, level 2 tint 18 % (mixed into `--background-primary`), lines and block borders 100 %
     - `--color-pink`: orange; unused by the plugin
     - `--interactive-accent` (and `--color-accent`): violet; selection ring, cross-links, collapsed badge, accent theme
     - `--text-on-accent`: gold; count in the collapsed badge
@@ -172,7 +172,7 @@ Kept on purpose against a guideline (for reviewers):
     - `--text-normal`: dark purple; node text
     - `--text-muted`: dark green; title chip, collapse button text, controls, expand button
     - `--text-error`: raspberry; render-error node border
-  - Anything that Obsidian styles itself (checkboxes, links, table borders, list markers, code background) also takes the loud colours; ignore those
+  - Anything that Obsidian styles itself (checkboxes, links, table borders, list markers, code background) also takes the loud colors; ignore those
 - README images (`npm run readme:images`)
   - Runs `e2e/readmeImages.e2e.ts`; writes the committed image `docs/images/hero.png` (800 x 600 px window with the file explorer and the map of `tests/vault/demo/Feature tour.md`)
   - Window resized through Electron (WebDriver window commands do not work in Obsidian), one branch collapsed, fit to view, window buttons hidden; re-run, look at it and commit when the look changes

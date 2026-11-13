@@ -876,7 +876,7 @@ describe('culling', () => {
     expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
   });
 
-  test('new nodes render at most 40 per pass, nearest to the centre first; skeleton until done', () => {
+  test('new nodes render at most 40 per pass, nearest to the center first; skeleton until done', () => {
     const { parent, renderer } = culled();
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 4000 });
     Object.defineProperty(renderer.canvasEl, 'clientHeight', { configurable: true, value: 4000 });
@@ -886,7 +886,7 @@ describe('culling', () => {
     renderer.setLayout(layout250);
     expect(renderer.renderedCount()).toBe(RENDER_BUDGET);
     expect(RENDER_BUDGET).toBe(40);
-    // the centre of the 4000 x 4000 view is (2000, 2000): node n210 renders first
+    // the center of the 4000 x 4000 view is (2000, 2000): node n210 renders first
     expect(ids(parent)).toContain('n210');
     expect(ids(parent)).not.toContain('n0');
     expect(parent.querySelector('path.mind-mapper-skeleton')).not.toBeNull();
@@ -1147,12 +1147,12 @@ test('nodes and the edges into them carry their emphasis level 1, 2 or 3 (deeper
   expect(levelsOf(parent, 'path.mind-mapper-edge')).toEqual(['1', '2', '3', '3', '3']);
 });
 
-test('nodes and the edges into them carry their branch colour, repeating after the palette; the root none', () => {
+test('nodes and the edges into them carry their branch color, repeating after the palette; the root none', () => {
   const { parent, renderer } = setup();
   renderer.setTheme('rainbow');
   renderer.setLayout(star(9));
   const rainbow = ['1', '2', '3', '4', '5', '6', '7', '1', '2'];
-  // node order: root, b0, b0/c, b1, b1/c, …; the child takes its branch's colour
+  // node order: root, b0, b0/c, b1, b1/c, …; the child takes its branch's color
   expect(attrsOf(parent, '.mind-mapper-node', 'data-branch')).toEqual([
     null,
     ...rainbow.flatMap((b) => [b, b]),
@@ -1169,7 +1169,7 @@ test.each([
   ['accent', ['1', '1', '1', '1', '1', '1', '1', '1', '1']],
   ['none', ['1', '1', '1', '1', '1', '1', '1', '1', '1']],
 ] as const)(
-  'setTheme(%s) re-colours the existing nodes and edges without a re-render',
+  'setTheme(%s) re-colors the existing nodes and edges without a re-render',
   (theme, branches) => {
     const { parent, renderer } = setup();
     renderer.setTheme('rainbow');
@@ -1208,7 +1208,7 @@ test('level and branch follow a new layout on reused node elements and edge path
   expect(edgeEl?.getAttribute('data-branch')).toBe('3');
 });
 
-test("nodes created later by culling get their level and the current theme's branch colour", () => {
+test("nodes created later by culling get their level and the current theme's branch color", () => {
   const parent = document.createElement('div');
   const renderer = new DomMapRenderer(parent, undefined, { culling: true });
   const canvas = renderer.canvasEl;
@@ -1354,7 +1354,7 @@ describe('drill-down (issue #23)', () => {
   const marker = (parent: HTMLElement) =>
     parent.querySelector<HTMLElement>('.mind-mapper-drill-marker');
 
-  test('setDrillCentre marks the centre node and shows the `focus` marker above it', () => {
+  test('setDrillCentre marks the center node and shows the `focus` marker above it', () => {
     const { parent, renderer } = setup();
     renderer.setLayout(layout);
     expect(marker(parent)).toBeNull();
@@ -1374,7 +1374,7 @@ describe('drill-down (issue #23)', () => {
     expect(parent.querySelectorAll('.is-drill-centre')).toHaveLength(0);
   });
 
-  test('the marker goes below the centre when its children grow upwards (bottom to top)', () => {
+  test('the marker goes below the center when its children grow upwards (bottom to top)', () => {
     const { parent, renderer } = setup();
     const [root, ...rest] = layout.nodes;
     if (!root) throw new Error('no root');
@@ -1384,7 +1384,7 @@ describe('drill-down (issue #23)', () => {
     expect(marker(parent)?.classList.contains('is-side-bottom')).toBe(true);
   });
 
-  test('the marker follows the centre across layouts and is removed when it is not laid out', () => {
+  test('the marker follows the center across layouts and is removed when it is not laid out', () => {
     const { parent, renderer } = setup();
     renderer.setDrillCentre('R');
     renderer.setLayout(layout);

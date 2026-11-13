@@ -216,7 +216,7 @@ describe('smooth camera', function () {
 
   for (const [name, act] of ACTIONS) {
     it(`${name} glides to where it put the view at once before`, async function () {
-      // The instant result (reduced motion: the behaviour before issue #24).
+      // The instant result (reduced motion: the behavior before issue #24).
       await setStart();
       await reduceMotion(true);
       await record();

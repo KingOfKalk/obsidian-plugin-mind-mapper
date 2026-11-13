@@ -26,7 +26,7 @@ export const de: Messages = {
   drillOut: 'Eine Ebene zurück',
   showWholeMap: 'Ganze Mindmap anzeigen',
 
-  // Layout and colour theme of the map view (control bar menus and commands)
+  // Layout and color theme of the map view (control bar menus and commands)
   layoutMenu: 'Layout',
   themeMenu: 'Farbschema',
   changeLayout: 'Layout ändern…',

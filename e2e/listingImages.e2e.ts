@@ -140,17 +140,6 @@ async function fit(): Promise<void> {
   await settle();
 }
 
-/** Selects the node with this ID (as a click on its content does). */
-async function selectNode(id: string): Promise<void> {
-  await browser.execute((nodeId) => {
-    document
-      .querySelector<HTMLElement>(
-        `.mind-mapper-node[data-node-id="${nodeId}"] .mind-mapper-node-content`,
-      )
-      ?.click();
-  }, id);
-}
-
 /** Pointer on an empty spot (no hover highlight), then the picture. */
 async function shoot(name: string, pointer = { x: WIDTH - 30, y: HEIGHT - 30 }): Promise<void> {
   await browser.action('pointer').move(pointer).perform();

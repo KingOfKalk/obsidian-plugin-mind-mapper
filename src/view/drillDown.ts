@@ -22,7 +22,7 @@ export interface DrillHost {
 }
 
 /**
- * Drill-down (issue #23): which node is the centre of the map, and the animated transitions in
+ * Drill-down (issue #23): which node is the center of the map, and the animated transitions in
  * and out. The path changes at once; the shown map follows when its animation swaps it.
  */
 export class DrillDown {
@@ -33,7 +33,7 @@ export class DrillDown {
    * edit (a sibling inserted above) drops the path. Empty for a restored path until the first tree.
    */
   private content: (string | undefined)[] = [];
-  /** Centre of the shown map (null: the whole map); trails `steps` while animating. */
+  /** Center of the shown map (null: the whole map); trails `steps` while animating. */
   private shown: string | null = null;
 
   constructor(
@@ -45,7 +45,7 @@ export class DrillDown {
     return this.steps;
   }
 
-  /** Centre of the shown map; null: the whole map. */
+  /** Center of the shown map; null: the whole map. */
   get centre(): string | null {
     return this.shown;
   }
@@ -62,7 +62,7 @@ export class DrillDown {
     this.shown = path.at(-1) ?? null;
   }
 
-  /** The selected node has children and is not the centre: it can become the centre. */
+  /** The selected node has children and is not the center: it can become the center. */
   canDrillDown(): boolean {
     const tree = this.host.tree();
     const selected = this.host.selected();
@@ -87,7 +87,7 @@ export class DrillDown {
     else if (action === 'out') this.out();
   }
 
-  /** The selected node becomes the centre: only it and its subtree, fitted. */
+  /** The selected node becomes the center: only it and its subtree, fitted. */
   down(): void {
     this.camera.finish();
     const id = this.host.selected();
@@ -163,7 +163,7 @@ export class DrillDown {
 
   /**
    * Shows the map around `centre` (null: the whole map). `keep`: that node (or its nearest shown
-   * ancestor) keeps the screen position of the old centre; otherwise the new map is fitted.
+   * ancestor) keeps the screen position of the old center; otherwise the new map is fitted.
    */
   private showCentre(centre: string | null, keep: string | null): void {
     const layout = this.host.layout();

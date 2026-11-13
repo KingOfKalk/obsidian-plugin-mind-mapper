@@ -5,7 +5,7 @@ export interface MindMapSettings {
   defaultLayout: MapLayoutName;
   /** Maps start like after "Collapse all"; frontmatter `mind-mapper-collapsed` overrides it. */
   startCollapsed: boolean;
-  /** Colour theme for notes without `mind-mapper-theme`. */
+  /** Color theme for notes without `mind-mapper-theme`. */
   defaultTheme: MapThemeName;
   maxNodeWidth: number;
   maxNodeHeight: number;

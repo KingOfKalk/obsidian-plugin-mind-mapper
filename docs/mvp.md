@@ -35,7 +35,7 @@
   - Skip: frontmatter, comments `%% %%`, HTML blocks, footnote definitions; footnote references stay as text
 - Nested tags (decided, issue #57): a tag with a `/` becomes a two-part pill, like a GitLab scoped label
   - Split at the last `/`: scope = `#` and everything before it, value = the last segment (`#obsidian/test` -> `#obsidian` + `test`, `#project/alpha/backend` -> `#project/alpha` + `backend`); tags without `/` keep Obsidian's look
-  - Look: scope filled, value outlined and lighter, in Obsidian's tag colours (`--tag-*`), not the branch colour; the value sits on the canvas background, so it reads on filled nodes (level 1, kanban column headers)
+  - Look: scope filled, value outlined and lighter, in Obsidian's tag colors (`--tag-*`), not the branch color; the value sits on the canvas background, so it reads on filled nodes (level 1, kanban column headers)
   - Only in the map (node content and the content overlay), not in the editor or reading view; always on, no setting
   - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node (opens the tag search with the full tag); the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
@@ -60,7 +60,7 @@
     - Nested heading links (`[[#A#B]]`): target is heading B under heading A
     - Heading text matching and duplicate headings: follow Obsidian's resolution (to verify with fixtures, see Open topics)
     - Target or source collapsed (decided): draw the line to the nearest visible ancestor
-    - Link highlight (decided, issue #21): an invisible ~12 px wide hit area along each line; hover shows a pointer and a slightly thicker line; a click (less than 4 px of movement) highlights the connection: both end nodes get the selection ring (accent colour), the line turns thicker and stays dashed (a link, not a tree edge) and is drawn above all nodes (all other lines stay behind the nodes); it is its own state, not a node selection; clicking the empty canvas, a node or another line ends it; a drag starting on a line pans; a collapsed end highlights the nearest visible ancestor; selecting a node never highlights links or linked nodes
+    - Link highlight (decided, issue #21): an invisible ~12 px wide hit area along each line; hover shows a pointer and a slightly thicker line; a click (less than 4 px of movement) highlights the connection: both end nodes get the selection ring (accent color), the line turns thicker and stays dashed (a link, not a tree edge) and is drawn above all nodes (all other lines stay behind the nodes); it is its own state, not a node selection; clicking the empty canvas, a node or another line ends it; a drag starting on a line pans; a collapsed end highlights the nearest visible ancestor; selecting a node never highlights links or linked nodes
     - Double click on a line: jump to the source line of the link (like a node double click); no fit
   - All other links (internal, external): clickable, with hover preview, same behavior as in Obsidian; click does not propagate to the node
     - Wired by the plugin: click handler with `workspace.openLinkText` (modifier keys open in new tab / split), hover preview via `registerHoverLinkSource` and the `hover-link` event
@@ -129,7 +129,7 @@ Project (root, H1)
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
 | `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `rainbow`) |
  
-- Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a colour theme (see Colour themes)
+- Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a color theme (see Color themes)
 - Validation
   - `mind-mapper-layout` not in the list: fall back to the plugin setting
   - `mind-mapper-title` not a string (YAML number, list, ...): fall back to the default
@@ -137,39 +137,39 @@ Project (root, H1)
   - `mind-mapper-theme` not in the list (case-sensitive, like `mind-mapper-layout`): fall back to the plugin setting
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
-- Plugin settings tab: global defaults for layout, start collapsed and colour theme, frontmatter overrides per note
+- Plugin settings tab: global defaults for layout, start collapsed and color theme, frontmatter overrides per note
   - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
   - Settings changed outside this window (Obsidian Sync, another window or vault copy writing `data.json`; `onExternalSettingsChange`) are reloaded, sanitized and applied to open maps like a change in the tab, without saving again
-## Colour themes (decided)
+## Color themes (decided)
  
-- Colour per branch: each first-level node starts a branch with its own colour from the palette, in source order (branch 1 colour 1, branch 2 colour 2, …); colours repeat when there are more branches than colours
-  - Everything below a first-level node takes its branch colour: the nodes and the lines leading into them
-  - The root has no branch colour
+- Color per branch: each first-level node starts a branch with its own color from the palette, in source order (branch 1 color 1, branch 2 color 2, …); colors repeat when there are more branches than colors
+  - Everything below a first-level node takes its branch color: the nodes and the lines leading into them
+  - The root has no branch color
   - Circle layouts: branch order is the order of the root's children in the note, regardless of side
 - Emphasis per level (every theme, also `none`)
   - Root: large bold text (1.5 times the normal size), no border, no visible box (its background is the canvas background, so lines behind it do not show through the text); the selection ring still shows
-  - Level 1: box filled with the branch colour mixed into the background (50 % in light mode, 35 % in dark mode), normal text colour, no border; text contrast at least 4.5:1 (WCAG AA) on every palette colour in light and dark mode
-  - Level 2: light tint of the branch colour (18 %), no border
-  - Level 3 and deeper: plain text, no visible box (canvas background, like the root); the coloured line leads into it
-  - Blocks (code, tables, math, quotes, callouts, Mermaid diagrams, image embeds) keep their box at every level: the normal background and a thin border in the branch colour
-  - Lines: branch colour; lines into first-level nodes slightly thicker
+  - Level 1: box filled with the branch color mixed into the background (50 % in light mode, 35 % in dark mode), normal text color, no border; text contrast at least 4.5:1 (WCAG AA) on every palette color in light and dark mode
+  - Level 2: light tint of the branch color (18 %), no border
+  - Level 3 and deeper: plain text, no visible box (canvas background, like the root); the colored line leads into it
+  - Blocks (code, tables, math, quotes, callouts, Mermaid diagrams, image embeds) keep their box at every level: the normal background and a thin border in the branch color
+  - Lines: branch color; lines into first-level nodes slightly thicker
   - Every theme and level has the same node size (borders stay, transparent), so a theme switch never changes the layout
-- Not coloured: cross-link lines, dividers, collapse toggles and badges, the selection ring; the expand button sits on the node's background (the canvas background on nodes without a box)
+- Not colored: cross-link lines, dividers, collapse toggles and badges, the selection ring; the expand button sits on the node's background (the canvas background on nodes without a box)
 - Themes
 
-| Theme | Branch colours |
+| Theme | Branch colors |
 |---|---|
 | `rainbow` (default) | red, orange, yellow, green, cyan, blue, purple |
 | `ocean` | blue, cyan, green, purple |
 | `forest` | green, yellow, orange, olive (green and orange mixed) |
-| `accent` | every branch in Obsidian's accent colour |
-| `none` | greys: level 1 and 2 from the faint text colour, lines faint, block borders the normal border colour |
+| `accent` | every branch in Obsidian's accent color |
+| `none` | grays: level 1 and 2 from the faint text color, lines faint, block borders the normal border color |
  
-- Colours come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--text-faint`, `--background-primary`), so light and dark mode and community themes keep working
-- Choice: the map view's own choice (controls bar, see "Layout and colour theme switcher"), else frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
+- Colors come only from Obsidian's CSS variables (`--color-red`, …, `--interactive-accent`, `--text-faint`, `--background-primary`), so light and dark mode and community themes keep working
+- Choice: the map view's own choice (controls bar, see "Layout and color theme switcher"), else frontmatter `mind-mapper-theme`, else the plugin setting "Default theme" (default `rainbow`; a saved setting is kept)
 - Live: a changed key or setting re-applies the theme while the map is open, without a re-layout
 ## Layout (decided)
  
@@ -197,20 +197,20 @@ Project (root, H1)
 - Optional later: tighter contour-based packing for variable node sizes (non-layered tidy tree, e.g. van der Ploeg 2014); same interface, internal swap, only if maps look too sparse
 - Edges: cubic bezier from parent edge to child edge; no routing or crossing avoidance in MVP
 - Text alignment: text nodes (headings, paragraphs, list items) sit flush towards the edge their line attaches to
-  - Right side: left-aligned; left side: right-aligned; `top-to-bottom`, `bottom-to-top`: centred
-  - Root: centred in circle and vertical layouts, right-aligned in `left-to-right`, left-aligned in `right-to-left`
+  - Right side: left-aligned; left side: right-aligned; `top-to-bottom`, `bottom-to-top`: centered
+  - Root: centered in circle and vertical layouts, right-aligned in `left-to-right`, left-aligned in `right-to-left`
   - Blocks (code, tables, math, quotes, callouts, diagrams, images) keep their own alignment; alignment never changes node sizes or positions
 - Kanban (decided, issue #32): `kanban`, a board instead of a tree, minimal
-  - Root: the headline, centred above the board (centred text); the level gap between it and the column headers
+  - Root: the headline, centered above the board (centered text); the level gap between it and the column headers
   - Level 1: columns side by side, left to right in source order, top-aligned; every column as wide as the widest header (plus its count bubble), card or subtask (plus its indent) of the whole board, at most the max node width (never narrower than a node itself, e.g. an image thumbnail); wider content is clipped with the fade as everywhere; gap between columns: twice the sibling gap
   - Level 2: cards stacked downwards in their column, from below the tallest header, as wide as the column
   - Level 3 and deeper: subtasks, still separate nodes (selection, double click, links), stacked below their card in note order, indented 20 px per level below the card (less when the node would not fit the column; never narrower than the node), reaching to the column's right edge
   - Gaps within a column: the sibling gap; text flush left; heights are the nodes' own; overlap-free (disjoint columns, one stack per column)
-  - Look: the level emphasis of the colour themes (root large and bold without a box, headers filled, cards tinted, subtasks plain text); no connection lines, no lane backgrounds
+  - Look: the level emphasis of the color themes (root large and bold without a box, headers filled, cards tinted, subtasks plain text); no connection lines, no lane backgrounds
   - Card count: each column header shows the number of its direct children in the note (also while collapsed) in a bubble at its right end, styled like the count of a collapsed toggle (accent fill); the layout leaves room for it; information only, a click selects the header; 0 for an empty column
   - No collapse toggles on nodes: collapse only via the controls bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
   - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap, from the node's (indented) left edge to the column's right edge
-  - Unchanged: link lines, drill-down (the centre becomes the headline, its children the columns), colour themes, smooth camera, full screen
+  - Unchanged: link lines, drill-down (the center becomes the headline, its children the columns), color themes, smooth camera, full screen
   - Later (not MVP): lane backgrounds, clickable counts, per-column collapse
 ## MVP features
  
@@ -226,30 +226,30 @@ Project (root, H1)
   - Visible: floating controls bottom center (same as normal view), exit button top right, optional title chip
   - Controls fade out after about 2 s idle, reappear on mouse move
   - Exit: Esc (handled by the plugin, after open overlays and modals have consumed it) and exit button
-    - Esc that closes a menu of the controls (zoom presets, layout, colour theme) only closes the menu; Esc on the map, in or out of full screen, never makes another tab active
+    - Esc that closes a menu of the controls (zoom presets, layout, color theme) only closes the menu; Esc on the map, in or out of full screen, never makes another tab active
   - Entering: fit to view; exiting: restore previous pan and zoom
   - Jump to source from full screen exits full screen first
   - Static map with free pan and zoom; no step-through (see Future features)
-- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, drill down, layout, colour theme, full screen
-  - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centred on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
+- Map controls (decided): floating Canvas-style controls, bottom center: zoom out, zoom field, zoom in, fit to view, collapse / expand all, back to root, drill down, layout, color theme, full screen
+  - Zoom field (decided): an editable input that shows the current zoom ("129%", German "129 %"); focus selects the text; typing a number (with or without "%", German comma decimals like "87,5") and Enter applies it, clamped to 10–400 %, centered on the canvas; Esc, leaving the input or invalid input restore the shown value; keys typed there never reach map or Obsidian hotkeys (Esc in the input does not leave full screen)
   - Next to it a chevron opens a menu: 50 %, 75 %, 100 %, 125 %, 150 %, 200 %, a separator, Fit to view; the current preset is checked
-- Layout and colour theme switcher (decided, issues #6 and #7): change the layout or colour theme of one map view without changing the note
-  - Two buttons in the controls bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and colour theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
-  - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes (None, Rainbow, Ocean, Forest, Accent colour), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
+- Layout and color theme switcher (decided, issues #6 and #7): change the layout or color theme of one map view without changing the note
+  - Two buttons in the controls bar (also in full screen), between back to root and full screen: layout (Lucide `workflow`, boxes joined by a line) and color theme (Lucide `palette`); both distinct from fit (`group`) and the view icon (`network`)
+  - Each opens an Obsidian `Menu` above the button, in the button's document (popout safe): the seven layouts (balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top, kanban) or the five themes (None, Rainbow, Ocean, Forest, Accent color), translated labels, the shown value checked; a separator; "Use the note's layout" / "Use the note's theme" clears the choice (frontmatter, else the setting)
   - Choosing a layout re-lays out and fits to view (like a frontmatter layout change); choosing the same layout that is shown only marks it as chosen. Choosing a theme applies it live without a re-layout
   - The choice (override) is per map view: stored in the view state (`layout`, `theme` next to `file`), so it survives an Obsidian restart and follows a rename (also of a deferred tab); the note and its frontmatter are never written. A view state without the keys (older versions) or with an unknown value has no override. A map opened anew (command, file menu, ribbon) starts without overrides
   - Precedence: override, else frontmatter, else plugin setting. An active override wins over later frontmatter edits and setting changes; while active, its button is highlighted (`is-active`, like the collapse button)
-  - Commands (no default hotkeys, `checkCallback` on an active map view): "Change layout…" and "Change colour theme…" open the same menus at their buttons (Obsidian's menu works with arrow keys and Enter; one picker for mouse and keyboard, no second UI); "Next layout" and "Next colour theme" step to the next value in menu order from the shown one, wrapping after the last
+  - Commands (no default hotkeys, `checkCallback` on an active map view): "Change layout…" and "Change color theme…" open the same menus at their buttons (Obsidian's menu works with arrow keys and Enter; one picker for mouse and keyboard, no second UI); "Next layout" and "Next color theme" step to the next value in menu order from the shown one, wrapping after the last
 - Drill-down (decided, issue #23): show one branch as a map of its own; the note is never changed
-  - Drilling in: a selected node with children, then the control-bar button (Lucide `arrow-down-to-dot`, between back to root and layout), the key `D` or the command "Drill down into selection". The node becomes the centre, styled like the root (kind `root`: large, bold, no box, no collapse toggle, never collapsed even when collapsed in the whole map); only it and its subtree are shown; its children are level 1, branch colours recomputed from the new centre; the map is fitted
+  - Drilling in: a selected node with children, then the control-bar button (Lucide `arrow-down-to-dot`, between back to root and layout), the key `D` or the command "Drill down into selection". The node becomes the center, styled like the root (kind `root`: large, bold, no box, no collapse toggle, never collapsed even when collapsed in the whole map); only it and its subtree are shown; its children are level 1, branch colors recomputed from the new center; the map is fitted
   - Key `D` (no modifiers): registered in the view's `Scope` (active with the map's leaf), not a command hotkey; ignored while typing in a text field (the zoom field, any input, textarea or contenteditable), so the editor and the zoom field are unaffected
   - Stacking: inside a drilled view, another selected node with children drills further; the drill path holds the drilled node IDs, outermost first, each inside the one before
-  - Drilling out: the button and `D` go back one level when no node to drill into is selected (the centre, nothing, a leaf), the command "Drill out one level" always; "Show the whole map" goes straight back. After drilling out the node drilled out of (whole map: the outermost one) is selected and the shown map is fitted: the same transform as "Fit to view" (margin, bounds with toggles and badges, "Max zoom for fit"), and it counts as fitted afterwards
-  - Indicators: the centre carries `is-drill-centre` and a small Lucide `focus` icon centred above it (below it when its children grow upwards); the button is highlighted (`is-active`) while drilled in, labelled "Drill out one level" when it drills out, and disabled when there is nothing to drill into or out of
+  - Drilling out: the button and `D` go back one level when no node to drill into is selected (the center, nothing, a leaf), the command "Drill out one level" always; "Show the whole map" goes straight back. After drilling out the node drilled out of (whole map: the outermost one) is selected and the shown map is fitted: the same transform as "Fit to view" (margin, bounds with toggles and badges, "Max zoom for fit"), and it counts as fitted afterwards
+  - Indicators: the center carries `is-drill-centre` and a small Lucide `focus` icon centered above it (below it when its children grow upwards); the button is highlighted (`is-active`) while drilled in, labelled "Drill out one level" when it drills out, and disabled when there is nothing to drill into or out of
   - Link lines to nodes outside the drilled part (also to its ancestors) are hidden
   - Robustness: when a live edit removes or renames a drilled node or its ID names another node now (a list item or paragraph after a sibling was inserted above it: ordinal IDs shift, so each drilled node's own content must still match; a restored path takes the node it finds) (the path no longer fits the tree), the map quietly shows the whole note, fitted, and saves the empty path
   - Persistence: the path is stored in the view state (`drill`, next to `layout` and `theme`), restored after a restart (fitted), kept on a rename; a view state without `drill` (older versions) or with a malformed one shows the whole map
-  - Unchanged: collapse state, layout, theme, full screen and jump to source; "Back to root" centres the current centre; "Collapse all" keeps collapsing all nodes of the note (the centre and its children stay visible)
+  - Unchanged: collapse state, layout, theme, full screen and jump to source; "Back to root" centers the current center; "Collapse all" keeps collapsing all nodes of the note (the center and its children stay visible)
   - Animation: drilling in, the view glides (about 250 ms, ease in-out, transform only) until the node sits where and as large as it will be in the fitted drilled view; then the map fades out and the drilled map fades in (about 150 ms each, opacity only). Drilling out reverses it: fade out, swap with the node kept in place, fade in, then glide to the fitted map (with reduced motion: straight to it). With `prefers-reduced-motion: reduce` (the view's window) it switches instantly. A new drill step, pan, zoom, fit, collapse, layout choice or live edit during an animation first finishes it at once (no pile-up). The canvas has `is-animating` while it runs; the drill state (path, selection, commands) changes at once
   - Commands (no default hotkeys): "Drill down into selection" (a node with children selected), "Drill out one level" and "Show the whole map" (drilled in)
 - Zoom and pan (decided, like Canvas)
@@ -258,17 +258,17 @@ Project (root, H1)
   - Drag on empty canvas: pan
   - Double click on empty canvas: fit to view, also in full screen; only when both presses were clicks without dragging, so a pan never fits
   - Fit to view (default on open), zoom in, zoom out, reset to 100%, back to root
-  - Zoom steps (decided): zoom in / out (controls and commands) snap to 10, 25, 50, 75, 100, 125, 150, 200, 300, 400 %: zoom in goes to the next step above the current zoom, zoom out to the next step below (from 129 %: in 150 %, out 125 %); at either end they stay; centred on the canvas; wheel and pinch zoom stay smooth
+  - Zoom steps (decided): zoom in / out (controls and commands) snap to 10, 25, 50, 75, 100, 125, 150, 200, 300, 400 %: zoom in goes to the next step above the current zoom, zoom out to the next step below (from 129 %: in 150 %, out 125 %); at either end they stay; centered on the canvas; wheel and pinch zoom stay smooth
   - Fit margin (decided): per side 8 % of the shorter canvas side, at least 48 px (screen pixels); the fitted area includes the collapse toggles and hidden-count badges outside the node boxes (none in kanban)
   - Fit zoom cap (decided): fit shows the whole map at the largest zoom that fits, at most the plugin setting "Max zoom for fit" (100 % to 400 %, steps of 25 %, default 150 %), so a small map (e.g. after Collapse all) is enlarged and a large one still shrinks; applies to every fit (open, control and command, double click, full screen, layout change); changing the setting does not re-fit open maps, the next fit uses it
-  - Smooth camera (decided, issue #24): Fit to view (control, command, zoom-preset menu, double click), zoom in / out, reset to 100 %, the zoom presets, a typed zoom and Back to root (when it moves the view) glide to the transform they used to set at once (about 250 ms, ease in-out, transform only); the zoom field follows on the way. A layout change (switcher, commands, a frontmatter or setting change) cross-fades like drilling out: the map fades out, the new layout fades in with the node at the view centre (or the selected one on screen) kept in place, then the view glides to the new fit. Same rules as drill-down: instant with `prefers-reduced-motion: reduce`, a new action (or pan and zoom input) finishes a running animation at once, `is-animating` on the canvas while it runs. A re-layout from measuring during a glide moves its target with the map (a fit glide lands on the new fit). Stay instant: wheel and trackpad pan / zoom, drag, opening a note (first fit), entering and leaving full screen, collapse and live edits (anchored as before)
+  - Smooth camera (decided, issue #24): Fit to view (control, command, zoom-preset menu, double click), zoom in / out, reset to 100 %, the zoom presets, a typed zoom and Back to root (when it moves the view) glide to the transform they used to set at once (about 250 ms, ease in-out, transform only); the zoom field follows on the way. A layout change (switcher, commands, a frontmatter or setting change) cross-fades like drilling out: the map fades out, the new layout fades in with the node at the view center (or the selected one on screen) kept in place, then the view glides to the new fit. Same rules as drill-down: instant with `prefers-reduced-motion: reduce`, a new action (or pan and zoom input) finishes a running animation at once, `is-animating` on the canvas while it runs. A re-layout from measuring during a glide moves its target with the map (a fit glide lands on the new fit). Stay instant: wheel and trackpad pan / zoom, drag, opening a note (first fit), entering and leaving full screen, collapse and live edits (anchored as before)
   - Fit to view icon: Lucide `group` (two boxes in a frame: the whole map in view), visually distinct from full screen (`maximize-2`, diagonal arrows) and back to root (`locate`, crosshair)
   - Clipped nodes do not scroll internally; the expand icon opens the overlay
 - Collapse / expand: toggle button on the node edge for single node (not in kanban)
   - All nodes (decided): one button in the map controls that shows the state; while any node is collapsed it shows "Expand all" and expands everything, otherwise "Collapse all" and collapses everything
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
-  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change colour theme…, next colour theme, drill down into selection, drill out one level, show the whole map
+  - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change color theme…, next color theme, drill down into selection, drill out one level, show the whole map
   - Each command is registered in the same milestone as its control
   - Commands use `checkCallback` and act on the active mind map view; hidden when no mind map view is active
   - No default hotkeys (Obsidian plugin guidelines discourage them because of conflicts); users assign their own
@@ -288,7 +288,7 @@ Project (root, H1)
 ## View lifecycle and error states
  
 - View state
-  - `getState` / `setState` persist the pinned file path, the view's layout and theme overrides (see "Layout and colour theme switcher") and the drill-down path (see "Drill-down"), so the map is restored after an Obsidian restart (views can be deferred until shown)
+  - `getState` / `setState` persist the pinned file path, the view's layout and theme overrides (see "Layout and color theme switcher") and the drill-down path (see "Drill-down"), so the map is restored after an Obsidian restart (views can be deferred until shown)
   - File renamed or moved (`vault` `rename` event): follow the file, update title
   - File deleted: keep the view, show an empty state "Note was deleted"
 - Loading and empty states

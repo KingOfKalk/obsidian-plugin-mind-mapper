@@ -19,7 +19,7 @@ export function splitTag(tag: string): TagParts | null {
 
 /**
  * Nested tags rendered by Obsidian (`a.tag`) become a two-part pill: scope + value, styled by
- * styles.css with Obsidian's tag colours. The link itself stays (href, Obsidian's handling); the
+ * styles.css with Obsidian's tag colors. The link itself stays (href, Obsidian's handling); the
  * `/` stays in its text, hidden, so its text and a copy are still the full tag. Plain tags keep
  * their look. Idempotent.
  */

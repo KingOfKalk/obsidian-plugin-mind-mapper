@@ -15,7 +15,7 @@ Mind Mapper shows a Markdown note as a mind map in Obsidian. Headings, paragraph
 - [Full screen](#full-screen)
 - [Drill down](#drill-down)
 - [Layouts](#layouts)
-- [Colour themes](#colour-themes)
+- [Color themes](#color-themes)
 - [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 - [Frontmatter keys](#frontmatter-keys)
 - [Settings](#settings)
@@ -70,7 +70,7 @@ Make the note active, then use one of:
 | Image embed `![[image.png]]` | a node with a thumbnail |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
 | Tag `#solo` | as in reading view; a click opens the tag search |
-| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined, in your theme's tag colours; hover shows the full tag |
+| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined, in your theme's tag colors; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
@@ -81,7 +81,7 @@ Make the note active, then use one of:
 ### Dividers
 
 - `---`, `***`, `___` (also `- - -`) are not nodes: they show as a dashed line in a wider gap between the two branches they separate
-- The line spans both neighbouring branches, down to their deepest visible nodes
+- The line spans both neighboring branches, down to their deepest visible nodes
 - Also shown before a heading, e.g. `***` between two `##` sections
 - Not shown: before the first or after the last node of a section, and in the circle layouts exactly at the split between the right and left side; several in a row count as one
 - Kanban layout: a vertical line between two columns, a horizontal line between two cards or two subtasks
@@ -132,10 +132,10 @@ The controls bar at the bottom center, left to right:
 | Zoom in | zooms in to the next step (from 129 %: 150 %) |
 | Fit to view (two boxes in a frame) | shows the whole map, enlarging a small one up to "Max zoom for fit" (also done when the map opens, or on a double click on the empty canvas) |
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
-| Back to root | centers the root (drilled in: the centre node) |
+| Back to root | centers the root (drilled in: the center node) |
 | Drill down (arrow down to a dot) | shows the selected branch as a map of its own, or goes back out one level; see [Drill down](#drill-down) |
 | Layout (boxes joined by a line) | menu with the seven layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
-| Color theme (palette) | menu with the colour themes for this map only; same section |
+| Color theme (palette) | menu with the color themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
 
 ![A collapsed Vegetables branch with its badge 4, and the highlighted collapse button in the controls bar](images/manual/collapsed.png)
@@ -176,22 +176,22 @@ The controls bar at the bottom center, left to right:
 
 ## Drill down
 
-Focus on one branch, e.g. while presenting or exploring a large map: the selected node becomes the centre of the map, and only it and everything below it are shown.
+Focus on one branch, e.g. while presenting or exploring a large map: the selected node becomes the center of the map, and only it and everything below it are shown.
 
 - Drill in: select a node with children, then the drill down button in the controls bar (arrow down to a dot), the key `D` or the command "Drill down into selection"
-  - The node becomes the centre: large and without a box, like the root
-  - Its children become the first level: filled boxes, each with its own branch colour
+  - The node becomes the center: large and without a box, like the root
+  - Its children become the first level: filled boxes, each with its own branch color
   - The map is fitted to view
 - `D` works only while the map has focus (it is not a hotkey): typing a "d" in the note or in the zoom level field is not affected
 - Drill again inside a drilled view: e.g. Project → Tasks → Phase 2
-- Drill out one level: the button or `D` while the centre (or nothing) is selected, or the command "Drill out one level"; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view, exactly like "Fit to view"
-- While drilled in, the centre has a small target icon above it (below it in the bottom → top layout) and the button is highlighted. The button is disabled when there is nothing to drill into or out of
+- Drill out one level: the button or `D` while the center (or nothing) is selected, or the command "Drill out one level"; the command "Show the whole map" goes straight back. The node you drilled out of stays selected, and the map is fitted to view, exactly like "Fit to view"
+- While drilled in, the center has a small target icon above it (below it in the bottom → top layout) and the button is highlighted. The button is disabled when there is nothing to drill into or out of
 - Link lines to nodes outside the drilled part are hidden
-- "Back to root" centres the current centre node; collapse, layouts, colour themes, full screen and double click to jump work as usual
+- "Back to root" centers the current center node; collapse, layouts, color themes, full screen and double click to jump work as usual
 - Animation: the view glides towards the node, then the map cross-fades into the drilled view; drilling out runs it in reverse. With the system setting "reduce motion" the map switches instantly. Pressing `D` again during the animation finishes it at once and goes on
 - The drilled branch belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. If the branch is deleted, or its heading renamed, the map quietly shows the whole note again. The note itself is never changed
 
-![The feature tour drilled into Timeline: Timeline as the centre with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the controls bar](images/manual/drill-down.png)
+![The feature tour drilled into Timeline: Timeline as the center with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the controls bar](images/manual/drill-down.png)
 
 ## Layouts
 
@@ -248,63 +248,63 @@ mind-mapper-layout: kanban
 - Launch date set
 ```
 
-- The root is the headline, centred above the board
+- The root is the headline, centered above the board
 - First-level nodes are the columns, side by side and all the same width (at most "Max node width"; wider content is clipped with a fade)
   - Each column header shows the number of its cards in a small bubble (information only, not a button)
 - Second-level nodes are the cards, stacked downwards in their column
 - Everything deeper is a subtask: plain text, indented below its card
-- Colours as usual: column headers filled in their branch colour, cards lightly tinted, subtasks plain text
+- Colors as usual: column headers filled in their branch color, cards lightly tinted, subtasks plain text
 - No lines between nodes and no collapse buttons on nodes; Collapse all shows only the headline and the column headers (with their counts), Expand all shows everything again
 - `---` between two columns draws a vertical line between them; between two cards or two subtasks a horizontal line in the column
-- Link lines, selecting, double click to jump, drill down (the node you drill into becomes the headline, its children the columns), colour themes and full screen work as in the other layouts
+- Link lines, selecting, double click to jump, drill down (the node you drill into becomes the headline, its children the columns), color themes and full screen work as in the other layouts
 
 ![The product launch note as a kanban board: To do, Doing and Done columns with their card counts, cards below them, two indented subtasks under the first card and a dashed line between To do and Doing](images/manual/layout-kanban.png)
 
-## Colour themes
+## Color themes
 
-A colour theme gives every first-level branch its own colour: the first branch gets the first colour, the second branch the second, and so on, in the order of the note (also in the circle layouts, whichever side a branch is on). Colours repeat after the last one. Everything below a first-level node takes the colour of its branch.
+A color theme gives every first-level branch its own color: the first branch gets the first color, the second branch the second, and so on, in the order of the note (also in the circle layouts, whichever side a branch is on). Colors repeat after the last one. Everything below a first-level node takes the color of its branch.
 
 How a node looks depends on its level, in every theme:
 
 - Root: large bold text, no box
-- First level: a box filled with the branch colour
-- Second level: a light tint of the branch colour
-- Third level and deeper: plain text; the coloured line leads into it
-- Code, tables, callouts, math, diagrams and images: a thin border in the branch colour at every level
-- Lines: the branch colour, slightly thicker into the first level
-- Unchanged: the text colour, dashed link lines, dividers, the collapse buttons and the selection ring
+- First level: a box filled with the branch color
+- Second level: a light tint of the branch color
+- Third level and deeper: plain text; the colored line leads into it
+- Code, tables, callouts, math, diagrams and images: a thin border in the branch color at every level
+- Lines: the branch color, slightly thicker into the first level
+- Unchanged: the text color, dashed link lines, dividers, the collapse buttons and the selection ring
 
-| Theme | Branch colours |
+| Theme | Branch colors |
 |---|---|
 | `rainbow` (default) | red, orange, yellow, green, cyan, blue, purple |
 | `ocean` | blue, cyan, green, purple |
 | `forest` | green, yellow, orange, olive |
-| `accent` | your accent colour (Settings → Appearance) for every branch |
-| `none` | the same look in greys |
+| `accent` | your accent color (Settings → Appearance) for every branch |
+| `none` | the same look in grays |
 
 - For all notes: setting "Default theme"
 - For one note: `mind-mapper-theme` in its frontmatter
-- For the open map only: the colour theme button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
-- The colours come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
+- For the open map only: the color theme button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
+- The colors come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
 - Changing the theme applies to an open map right away
-- If you chose "None" in an earlier version, the setting stays "None"; pick "Rainbow" to get the colours
+- If you chose "None" in an earlier version, the setting stays "None"; pick "Rainbow" to get the colors
 
 `rainbow`:
 
-![The garden plans map in rainbow: the root as large bold text, each first-level node filled in its own colour, the nodes below lightly tinted in the colour of their branch](images/manual/theme-rainbow.png)
+![The garden plans map in rainbow: the root as large bold text, each first-level node filled in its own color, the nodes below lightly tinted in the color of their branch](images/manual/theme-rainbow.png)
 
 ## Layout and theme of the open map
 
-To show a map differently for a moment, e.g. while presenting, change its layout or colour theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
+To show a map differently for a moment, e.g. while presenting, change its layout or color theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
 
 - Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top and kanban; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
-- Color theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent color; the shown theme is checked. A choice recolours the map at once; nothing moves
+- Color theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent color; the shown theme is checked. A choice recolors the map at once; nothing moves
 - Below a line in each menu: "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the settings
 - While you have chosen a layout or theme, its button is highlighted. Your choice wins over later edits of `mind-mapper-layout` / `mind-mapper-theme` and over the settings, so the map does not jump while you edit
 - The choice belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. A map opened anew starts with the note's layout and theme
 - Commands: "Change layout…" and "Change color theme…" open the same menus (arrow keys and `Enter` work); "Next layout" and "Next color theme" step to the next one, after the last back to the first
 
-![The garden plans map in ocean colours with the highlighted colour theme button, and the layout menu open above the controls bar with balanced clockwise checked](images/manual/layout-menu.png)
+![The garden plans map in ocean colors with the highlighted color theme button, and the layout menu open above the controls bar with balanced clockwise checked](images/manual/layout-menu.png)
 
 ## Frontmatter keys
 
@@ -313,7 +313,7 @@ To show a map differently for a moment, e.g. while presenting, change its layout
 | `mind-mapper-title` | any text | the single H1, else the file name |
 | `mind-mapper-layout` | one of the [layouts](#layouts) | setting "Default layout" |
 | `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | setting "Start collapsed" |
-| `mind-mapper-theme` | one of the [colour themes](#colour-themes) | setting "Default theme" |
+| `mind-mapper-theme` | one of the [color themes](#color-themes) | setting "Default theme" |
 
 ```yaml
 ---
@@ -327,7 +327,7 @@ mind-mapper-theme: ocean
 - Only the frontmatter at the very top of the note counts
 - A missing key or a key without a value uses the default silently
 - An invalid value uses the default and shows a notice once per note and value (per session), e.g. `Mind Mapper: unknown mind-mapper-layout "sideways" in Note.md, using circle-clockwise`
-  - Invalid: an unknown layout or colour theme, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
+  - Invalid: an unknown layout or color theme, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
 
 ## Settings
 
@@ -337,7 +337,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 |---|---|---|---|---|---|
 | Map | Default layout | dropdown | the seven [layouts](#layouts), labelled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
-| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
+| Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [color theme](#color-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
@@ -380,7 +380,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys, layout names and colour theme names stay English in every language (the settings dropdowns and the control bar menus show translated labels)
+- Frontmatter keys, layout names and color theme names stay English in every language (the settings dropdowns and the control bar menus show translated labels)
 
 ## Large notes
 
@@ -408,7 +408,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | The map does not show my latest typing | Obsidian saves about 2 s after you stop typing; the map follows then. Pan, zoom, selection and collapsed branches are kept |
 | A line of text became a heading | a `---` directly under it (see [Dividers](#dividers)); add a blank line above the `---` or use `***` |
 | Notice `Mind Mapper: unknown mind-mapper-layout …` | the layout name is misspelled; use one of the [layouts](#layouts) |
-| Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [colour themes](#colour-themes), in lower case |
+| Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [color themes](#color-themes), in lower case |
 | Notice `Mind Mapper: mind-mapper-collapsed … is not true or false …` | use `true` or `false` without quotes, or the checkbox in Properties |
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
 | Notice `Open a Markdown note first` | the ribbon icon needs an active Markdown note |

@@ -164,7 +164,7 @@ describe('drill-down', function () {
     await animationEnd();
     expect(await shownIds()).toEqual(PHASE_2_SUBTREE);
 
-    // D with the centre selected: out one level, Phase 2 still selected, fitted like "Fit to view".
+    // D with the center selected: out one level, Phase 2 still selected, fitted like "Fit to view".
     await browser.keys('d');
     await animationEnd();
     expect(await shownIds()).toEqual(TASKS_SUBTREE);

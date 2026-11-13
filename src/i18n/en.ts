@@ -23,7 +23,7 @@ export const en = {
   drillOut: 'Drill out one level',
   showWholeMap: 'Show the whole map',
 
-  // Layout and colour theme of the map view (control bar menus and commands)
+  // Layout and color theme of the map view (control bar menus and commands)
   layoutMenu: 'Layout',
   themeMenu: 'Color theme',
   changeLayout: 'Change layout…',

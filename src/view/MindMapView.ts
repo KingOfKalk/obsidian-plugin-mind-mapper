@@ -145,7 +145,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Layout of the current map; a different effective layout fits once. */
   private layoutName: MapLayoutName | null = null;
   /**
-   * Layout and colour theme chosen in this view (control bar, commands), null: the note's. Saved in
+   * Layout and color theme chosen in this view (control bar, commands), null: the note's. Saved in
    * the view state, never in the note; they win over the frontmatter and the settings.
    */
   private layoutOverride: MapLayoutName | null = null;
@@ -164,7 +164,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     shown: () => this.layout && { layout: this.layout, collapse: this.collapseInfo },
     fitMaxZoom: () => this.services.settings().fitMaxZoom / 100,
   });
-  /** Drill-down (issue #23): the centre of the map and the transitions in and out. */
+  /** Drill-down (issue #23): the center of the map and the transitions in and out. */
   private readonly drilling = new DrillDown(
     {
       tree: () => this.tree,
@@ -342,7 +342,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.beforeFullScreen = null;
   }
 
-  /** Selects the root (drilled in: the centre) and glides it to the centre at the current zoom. */
+  /** Selects the root (drilled in: the center) and glides it to the center at the current zoom. */
   backToRoot(): void {
     this.camera.finish();
     const rootId = this.drilling.centre ?? this.tree?.root.id;
@@ -373,7 +373,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.relayoutKeeping(anchor);
   }
 
-  /** The effective colour theme: pure CSS, no re-measure, no re-layout. */
+  /** The effective color theme: pure CSS, no re-measure, no re-layout. */
   applyTheme(): void {
     if (!this.dom) return;
     const theme = this.effectiveTheme();
@@ -403,7 +403,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.layoutFrame = null;
   }
 
-  /** Colour theme of this view only (null: the note's again), applied live without a re-layout. */
+  /** Color theme of this view only (null: the note's again), applied live without a re-layout. */
   chooseTheme(theme: MapThemeName | null): void {
     this.themeOverride = theme;
     this.app.workspace.requestSaveLayout();
@@ -415,7 +415,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.chooseLayout(following(LAYOUT_NAMES, this.effectiveLayout()));
   }
 
-  /** The colour theme after the shown one (wraps around). */
+  /** The color theme after the shown one (wraps around). */
   nextTheme(): void {
     this.chooseTheme(following(THEME_NAMES, this.effectiveTheme()));
   }
@@ -603,7 +603,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.camera.zoomOut();
   }
 
-  /** Zoom (1 = 100 %, clamped to the limits), centred on the canvas; glides there. */
+  /** Zoom (1 = 100 %, clamped to the limits), centered on the canvas; glides there. */
   zoomTo(zoom: number): void {
     this.camera.zoomTo(zoom);
   }
@@ -619,7 +619,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
 
   /**
    * A different layout (issue #24): the map fades out, the new one (`swap`) fades in with the node
-   * at the centre (or the selected one) kept in place, then the view glides to its fit. The choice
+   * at the center (or the selected one) kept in place, then the view glides to its fit. The choice
    * itself (view state, control bar) applies at once.
    */
   private switchLayout(swap: () => void): void {
@@ -643,7 +643,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     return this.drilling.isDrilled;
   }
 
-  /** The selected node has children and is not the centre: it can become the centre. */
+  /** The selected node has children and is not the center: it can become the center. */
   canDrillDown(): boolean {
     return this.drilling.canDrillDown();
   }
@@ -653,7 +653,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.drilling.drill();
   }
 
-  /** The selected node becomes the centre: only it and its subtree, fitted. */
+  /** The selected node becomes the center: only it and its subtree, fitted. */
   drillDown(): void {
     this.drilling.down();
   }
