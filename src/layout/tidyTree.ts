@@ -14,7 +14,6 @@ import {
   type TextAlign,
 } from './types';
 
-export const DEFAULT_LAYOUT = { siblingGap: 12, levelGap: 60, nodeWidth: 200, nodeHeight: 36 };
 export { DIVIDER_GAP };
 
 /**
