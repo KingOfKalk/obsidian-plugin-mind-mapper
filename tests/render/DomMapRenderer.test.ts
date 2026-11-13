@@ -265,14 +265,17 @@ test('toggle sits outside the node at its right edge and shows the hidden count 
   expect(toggle?.classList.contains('is-side-right')).toBe(true);
   expect(toggle?.textContent).toBe('−');
   expect(toggle?.getAttribute('aria-label')).toBe('Collapse');
-  expect(toggle?.classList.contains('is-collapsed')).toBe(false);
+  // The state lives only in data-mm-state (issue #40): no state class next to it.
+  expect(toggle?.getAttribute('data-mm-state')).toBe('expanded');
+  expect([...(toggle?.classList ?? [])].sort()).toEqual(['is-side-right', 'mind-mapper-collapse']);
 
   const collapsed: MapLayout = { ...layout, nodes: layout.nodes.slice(0, 2), edges: [] };
   renderer.setLayout(collapsed, { hidden: new Map([['R/A', 5]]), hasChildren: withChildren });
   const again = parent.querySelector<HTMLElement>('.mind-mapper-collapse');
   expect(again?.textContent).toBe('5');
   expect(again?.getAttribute('aria-label')).toBe('Expand');
-  expect(again?.classList.contains('is-collapsed')).toBe(true);
+  expect(again?.getAttribute('data-mm-state')).toBe('collapsed');
+  expect([...(again?.classList ?? [])].sort()).toEqual(['is-side-right', 'mind-mapper-collapse']);
   expect(parent.querySelectorAll('.mind-mapper-collapse')).toHaveLength(1);
 });
 
