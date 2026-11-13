@@ -770,11 +770,11 @@ describe('culling', () => {
     expect(toggles.map((el) => el.getAttribute('aria-label'))).toEqual(['Expand', 'Collapse']);
   });
 
-  test('a never sized (0 x 0) canvas renders all nodes on the first layout and keeps the DOM afterwards', () => {
+  test('a never sized (0 x 0) canvas renders no nodes (a map loaded while hidden), its first size renders the view; then a hidden canvas keeps the DOM', () => {
     const { renderer } = culled();
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 0 });
     renderer.setLayout(grid());
-    expect(renderer.renderedCount()).toBe(400);
+    expect(renderer.renderedCount()).toBe(0);
     Object.defineProperty(renderer.canvasEl, 'clientWidth', { configurable: true, value: 400 });
     renderer.updateVisible();
     expect(renderer.renderedCount()).toBe(9);

@@ -102,4 +102,44 @@ describe('scale', function () {
     await browser.keys('Escape');
     await browser.$('.mind-mapper-full-content').waitForExist({ reverse: true, timeout: 5000 });
   });
+  it('a map loaded while hidden (collapsed sidebar) renders no nodes until it is shown', async function () {
+    await waitForCache('scale-2000.md');
+    const hidden = await browser.executeObsidian(async ({ app }) => {
+      app.workspace.detachLeavesOfType('mind-mapper-view');
+      app.workspace.rightSplit.collapse();
+      const leaf = app.workspace.getRightLeaf(false);
+      if (!leaf) throw new Error('no sidebar leaf');
+      await leaf.setViewState({ type: 'mind-mapper-view', state: { file: 'scale-2000.md' } });
+      await new Promise((r) => setTimeout(r, 500));
+      const el = leaf.view.containerEl;
+      return {
+        width: el.querySelector('.mind-mapper-canvas')?.clientWidth,
+        nodes: el.querySelectorAll('.mind-mapper-node').length,
+        skeleton: el.querySelectorAll('path.mind-mapper-skeleton').length,
+      };
+    });
+    expect(hidden).toEqual({ width: 0, nodes: 0, skeleton: 0 });
+    await browser.executeObsidian(async ({ app }) => {
+      app.workspace.rightSplit.expand();
+      const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+      if (!leaf) return;
+      await app.workspace.revealLeaf(leaf);
+      // the commands below act on the active map
+      app.workspace.setActiveLeaf(leaf, { focus: true });
+    });
+    await frames(30);
+    try {
+      // fitted: 2,000 nodes are a skeleton; at 100 % the view renders its nodes
+      expect((await counts()).skeleton).toBe(1);
+      await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+      await browser.executeObsidianCommand('mind-mapper:back-to-root');
+      await frames(30);
+      expect((await counts()).nodes).toBeGreaterThan(0);
+    } finally {
+      await browser.executeObsidian(({ app }) => {
+        app.workspace.detachLeavesOfType('mind-mapper-view');
+        app.workspace.rightSplit.collapse();
+      });
+    }
+  });
 });

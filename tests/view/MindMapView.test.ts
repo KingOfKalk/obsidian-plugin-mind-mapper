@@ -126,7 +126,7 @@ test('getViewType and getIcon', () => {
 test('renders every node of the worked example with one edge per child', async () => {
   const { view, ws } = newView();
   ws.addNote('Worked example.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Worked example.md'));
   expect(placeholderText(view)).toBeNull();
   const ids = nodeIds(view);
@@ -146,6 +146,7 @@ test('null cache shows Loading and renders on the first changed event for the fi
   const { view, ws } = newView();
   const fixture = loadFixture('worked-example');
   ws.vault.texts.set('Note.md', fixture.text);
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(placeholderText(view)).toBe('Loading…');
 
@@ -167,6 +168,7 @@ test('stale load is discarded', async () => {
   const { view, ws } = newView();
   ws.addNote('First.md', 'worked-example');
   ws.addNote('Second.md', 'skipped-levels');
+  await setSize(view, 800, 600);
   const release = ws.vault.hold('First.md');
   const first = view.setState(...state('First.md'));
   await view.setState(...state('Second.md'));
@@ -395,7 +397,7 @@ test('node content is rendered by Obsidian with the pinned file as source path',
   const spy = vi.spyOn(MarkdownRenderer, 'render');
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(spy).toHaveBeenCalledWith(
     ws.app,
@@ -410,7 +412,7 @@ test('node content is rendered by Obsidian with the pinned file as source path',
 test('expand opens the full content modal for that node', async () => {
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   const button = view.contentEl.querySelector<HTMLElement>(
     '[data-node-id="Project/#1"] .mind-mapper-node-expand',
@@ -430,7 +432,7 @@ test('closing the view releases all node components', async () => {
   });
   const { view, ws } = newView();
   ws.addNote('Note.md', 'worked-example');
-  await view.onOpen();
+  await setSize(view, 800, 600);
   await view.setState(...state('Note.md'));
   expect(components.length).toBeGreaterThan(0);
   await view.onClose();
@@ -1697,11 +1699,13 @@ describe('layout and colour theme of this view (overrides)', () => {
     await setSize(restored, 0, 0);
     await restored.setState({ file: 'Note.md', layout: 'top-to-bottom' }, { history: false });
     await vi.advanceTimersByTimeAsync(300);
-    expect(grows(restored, 'Project', 'Project/Tasks')).toBe('down');
+    // Loaded while hidden: no node DOM until the tab has a size.
+    expect(nodeIds(restored)).toEqual([]);
     expect(restored.getTransform()).toEqual(IDENTITY);
     setElSize(restored.contentEl.querySelector('.mind-mapper-canvas'), 800, 600);
     restored.onResize();
     await vi.advanceTimersByTimeAsync(300);
+    expect(grows(restored, 'Project', 'Project/Tasks')).toBe('down');
     expect(restored.getTransform()).not.toEqual(IDENTITY);
     // Fits once: a later resize keeps the viewport.
     restored.setTransform({ x: 5, y: 6, zoom: 1 });
