@@ -41,6 +41,7 @@ Make the note active, then use one of:
 - Opening the same note again shows the map that is already open
 - The ribbon icon without an active Markdown note shows "Open a Markdown note first"
 - An open map is restored after an Obsidian restart
+- You can drag the map's tab into a window of its own; it keeps working there
 
 ![A note on the left and its map on the right, laid out top to bottom](images/manual/note-and-map.png)
 
@@ -67,7 +68,8 @@ Make the note active, then use one of:
 | Task | one node with its checkbox (read-only) |
 | Code block, Mermaid diagram, table, math block | one node, rendered like reading view |
 | Quote, callout | one node with everything inside it |
-| Image embed `![[image.png]]` | a node with a thumbnail |
+| Image embed `![[image.png]]` on its own | a node with a thumbnail |
+| Image inside text, a table or a callout (e.g. an icon `![[icon.png\|16]]`) | keeps its own size, at most the node width |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
 | Tag `#solo` | like in reading view with smaller corners; a click opens the tag search |
 | Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
@@ -75,7 +77,7 @@ Make the note active, then use one of:
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
 - Tags in a node take the color of its branch (in every color theme but "none"; the root and the full content overlay keep your theme's tag colors)
-- Tags at the end of a line move to the side opposite the text: to the right edge of a left-aligned node, to the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card
+- Tags at the end of a line move to the side opposite the text: to the right edge of a left-aligned node, to the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card, on a column header before the card count
 
 - Large content is clipped at the max node size with a fade; the expand icon in the node's corner shows all of it in an overlay (`Esc` closes it)
 
@@ -102,7 +104,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 
 ### Links
 
-- Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click opens in a new tab, `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
+- Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click or a middle click opens in a new tab, `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
 - Click a tag in a node or in the full content overlay: the search opens with that tag (`tag:#solo`; for a nested tag the full tag, `tag:#project/alpha/backend`, whichever part you click), like in reading view
   - Needs Obsidian's core plugin "Search" (on by default); when it is off, a tag click does nothing
 - Links to a heading or block in the same note are also drawn as dashed lines between the two nodes:
@@ -123,7 +125,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 | Zoom at the pointer | `Ctrl/Cmd` + wheel, or trackpad pinch (10 % to 400 %) |
 | Show the whole map | double click the empty canvas (also in full screen), or the Fit to view button; small maps are enlarged up to the setting "Max zoom for fit" (default 150 %); a margin keeps nodes and badges off the edges |
 
-Fit to view, the zoom buttons, the zoom presets, a typed zoom and Back to root glide to their place in about a quarter of a second; the zoom level follows along. Panning and zooming with the wheel or trackpad stay immediate, and a wheel turn or drag during a glide ends it at once. With the system setting "reduce motion" the view jumps instead.
+Fit to view, the zoom buttons, Reset zoom to 100%, the zoom presets, a typed zoom and Back to root glide to their place in about a quarter of a second; the zoom level follows along. Panning and zooming with the wheel or trackpad stay immediate, and a wheel turn or drag during a glide ends it at once. With the system setting "reduce motion" the view jumps instead.
 
 The controls bar at the bottom center, left to right:
 
@@ -171,8 +173,10 @@ The controls bar at the bottom center, left to right:
 
 - Full screen button or command "Toggle full screen": the map covers the whole Obsidian window
 - Shows the map, the controls, a title chip on top and an exit button top right
-- Controls fade after 2 s without mouse movement; move the mouse to show them
+- Entering fits the map to view
+- The controls, the title chip and the exit button fade after 2 s without mouse movement; move the mouse to show them
 - Exit: `Esc` or the exit button; the previous pan and zoom come back
+  - `Esc` while a menu of the controls is open only closes the menu
 - Page previews, menus and notices still show on top
 
 ![The feature tour note in full screen with title, exit button and controls](images/manual/full-screen.png)
@@ -192,7 +196,7 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
 - Link lines to nodes outside the drilled part are hidden
 - "Back to root" centers the current center node; collapse, layouts, color themes, full screen and double click to jump work as usual
 - Animation: the view glides towards the node, then the map cross-fades into the drilled view; drilling out runs it in reverse. With the system setting "reduce motion" the map switches instantly. Pressing `D` again during the animation finishes it at once and goes on
-- The drilled branch belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. If the branch is deleted, or its heading renamed, the map quietly shows the whole note again. The note itself is never changed
+- The drilled branch belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. If the branch is deleted, its heading or list item text is changed, or a list item or paragraph is inserted above a drilled list item, the map quietly shows the whole note again. The note itself is never changed
 
 ![The feature tour drilled into Timeline: Timeline as the center with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the controls bar](images/manual/drill-down.png)
 
@@ -334,11 +338,11 @@ mind-mapper-theme: ocean
 
 ## Settings
 
-Settings → Mind Mapper (in the Community plugins part of the sidebar), in four groups. All settings also show up in Obsidian's settings search. Changes apply to open maps right away; "Max zoom for fit" is used the next time a map fits.
+Settings → Mind Mapper (in the Community plugins part of the sidebar), in four groups. All settings also show up in Obsidian's settings search. Changes apply to open maps right away, also changes that arrive from Obsidian Sync or another window; "Max zoom for fit" is used the next time a map fits.
 
 | Group | Setting | Control | Range | Default | Does |
 |---|---|---|---|---|---|
-| Map | Default layout | dropdown | the seven [layouts](#layouts), labelled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
+| Map | Default layout | dropdown | the seven [layouts](#layouts), labeled like in the controls bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [color theme](#color-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
@@ -350,7 +354,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 - Each slider shows its value (e.g. "320 px" or "200 %") and has a "Restore default" button
 - About group: the plugin version, a link to the source code and a link to report an issue
 
-![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and five sliders](images/manual/settings.png)
+![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and five sliders, and the About group with the version, the source code link and the report an issue link](images/manual/settings.png)
 
 ## Commands
 
@@ -383,7 +387,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys, layout names and color theme names stay English in every language (the settings dropdowns and the control bar menus show translated labels)
+- Frontmatter keys, layout names and color theme names stay English in every language (the settings dropdowns and the controls bar menus show translated labels)
 
 ## Large notes
 
@@ -416,7 +420,12 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
 | Notice `Open a Markdown note first` | the ribbon icon needs an active Markdown note |
 | Notice `Mind Mapper: could not open the mind map` | try again; if it repeats, reload Obsidian |
-| The map shows "Note was deleted" | the note was deleted; close the map |
+| Notice `Could not open the note` | a double click could not open the note to jump to its line; try again |
+| "Could not update the map. Showing the last version." over the map | the newest version of the note could not be turned into a map; the map shows the last version that worked. The notice goes away with the next edit that works |
+| The map shows "Could not show the note" | the note could not be turned into a map when it opened; edit the note, the map follows the next version that works |
+| The map shows "Note not found: …" | the map's note does not exist (anymore); close the map |
+| The map shows "Note was deleted" | the note was deleted; close the map. If the note comes back at the same place (e.g. undo), the map shows it again |
+| The map shows only the root and "This note has no content yet" | the note is empty or has only frontmatter; start writing |
 | A hotkey does nothing | view commands only act on the active map: click into the map first |
 | A node shows only part of its content | it is larger than the max node size: use the expand icon, or raise Max node width / height |
 | Text in the map is not readable when zoomed out | large map drawn as outlines: zoom in |
