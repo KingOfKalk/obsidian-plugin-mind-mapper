@@ -1,8 +1,12 @@
 import { escapeBlockStart, sliceMarkdown } from './nodeMarkdown';
 import type { EmbedInput, ListItemInput } from './types';
 
-/** `marker`, whitespace after it, optional `[x] ` task box. */
-const ITEM_START = /^([-*+]|\d+[.)])([ \t]+)(\[(.)\][ \t]+)?/;
+/**
+ * Whitespace before the marker, `marker`, whitespace after it, optional `[x] ` task box. Obsidian
+ * starts a bullet nested deeper than its parent's content column at that column, not at the
+ * marker (`- a` / `    - b` starts `b` at column 2), so the item may begin with whitespace.
+ */
+const ITEM_START = /^([ \t]*)([-*+]|\d+[.)])([ \t]+)(\[(.)\][ \t]+)?/;
 const TAB_WIDTH = 4;
 
 /**
@@ -18,7 +22,6 @@ export function itemMarkdown(
   nested: ListItemInput[] = [],
 ): string {
   const lineStart = text.lastIndexOf('\n', item.startOffset - 1) + 1;
-  const indent = columnsAfter(text.slice(lineStart, item.startOffset), 0);
   const covered = (line: number): boolean =>
     nested.some((child) => line >= child.startLine && line <= child.endLine);
 
@@ -30,12 +33,13 @@ export function itemMarkdown(
 
   const match = ITEM_START.exec(first);
   if (!match) return lines.join('\n');
-  const [whole, marker = '', spacing = ''] = match;
+  const [whole, lead = '', marker = '', spacing = ''] = match;
   const content = escapeBlockStart(first.slice(whole.length));
+  const indent = columnsAfter(text.slice(lineStart, item.startOffset) + lead, 0);
   const contentIndent = columnsAfter(spacing, indent + marker.length);
 
   const isOrdered = /^\d/.test(marker);
-  const task = item.task ?? match[4];
+  const task = item.task ?? match[5];
   const head =
     task !== undefined
       ? `${isOrdered ? marker : '-'} [${task}] ${content}`

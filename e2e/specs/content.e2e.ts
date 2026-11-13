@@ -218,6 +218,45 @@ describe('node content in real Obsidian', function () {
       }
     }
   });
+
+  // Issue #96: items nested with 4 spaces render as plain text, flush with their parent's text.
+  for (const layout of ['left-to-right', 'kanban']) {
+    it(`items nested with 4 spaces start at their parent's text left edge (${layout})`, async function () {
+      const path = `nested-4-spaces-${layout}.md`;
+      await writeNote(
+        path,
+        `---\nmind-mapper-layout: ${layout}\n---\n\n# Board\n\n## To do\n\n- Card\n    - Subtask\n        - Deeper\n`,
+      );
+      await openMindMap(path);
+      await settle();
+      const ids = ['Board/To do/#1', 'Board/To do/#1/#1', 'Board/To do/#1/#1/#1'];
+      const text = await browser.execute((nodeIds: string[]) => {
+        return nodeIds.map((id) => {
+          const nodeEl = document.querySelector(`.mind-mapper-node[data-node-id="${id}"]`);
+          const content = nodeEl?.querySelector('.mind-mapper-node-content');
+          if (!nodeEl || !content) return null;
+          const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, (n) =>
+            n.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
+          );
+          const first = walker.nextNode();
+          if (!first) return null;
+          const range = document.createRange();
+          range.selectNodeContents(first);
+          return {
+            left: Math.round(
+              range.getBoundingClientRect().left - nodeEl.getBoundingClientRect().left,
+            ),
+            list: content.querySelector('ul, ol') !== null,
+          };
+        });
+      }, ids);
+      const [card, subtask, deeper] = text;
+      expect(card).not.toBeNull();
+      expect(subtask).toEqual(card);
+      expect(deeper).toEqual(card);
+      expect(card?.list).toBe(false);
+    });
+  }
 });
 
 describe('tab switching', function () {

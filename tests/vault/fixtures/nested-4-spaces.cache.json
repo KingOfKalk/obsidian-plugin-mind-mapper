@@ -1,0 +1,301 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Nested 4\n\n- Card\n    - Subtask\n        - Deeper\n- [ ] Task card\n    - [x] Done subtask\n        - [ ] Open deeper\n1. First\n    1. Sub one\n        1. Deeper one\n\n* Star card\n    + Plus subtask\n\n- Card with continuation\n    - Subtask\n      continuation line\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 10,
+            "offset": 10
+          }
+        },
+        "heading": "Nested 4",
+        "level": 1
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 10,
+            "offset": 10
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 12
+          },
+          "end": {
+            "line": 7,
+            "col": 25,
+            "offset": 114
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 115
+          },
+          "end": {
+            "line": 10,
+            "col": 21,
+            "offset": 160
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 12,
+            "col": 0,
+            "offset": 162
+          },
+          "end": {
+            "line": 13,
+            "col": 18,
+            "offset": 192
+          }
+        }
+      },
+      {
+        "type": "list",
+        "position": {
+          "start": {
+            "line": 15,
+            "col": 0,
+            "offset": 194
+          },
+          "end": {
+            "line": 17,
+            "col": 23,
+            "offset": 256
+          }
+        }
+      }
+    ],
+    "listItems": [
+      {
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 12
+          },
+          "end": {
+            "line": 2,
+            "col": 6,
+            "offset": 18
+          }
+        },
+        "parent": -2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 3,
+            "col": 2,
+            "offset": 21
+          },
+          "end": {
+            "line": 3,
+            "col": 13,
+            "offset": 32
+          }
+        },
+        "parent": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 6,
+            "offset": 39
+          },
+          "end": {
+            "line": 4,
+            "col": 16,
+            "offset": 49
+          }
+        },
+        "parent": 3
+      },
+      {
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 0,
+            "offset": 50
+          },
+          "end": {
+            "line": 5,
+            "col": 15,
+            "offset": 65
+          }
+        },
+        "parent": -2,
+        "task": " "
+      },
+      {
+        "position": {
+          "start": {
+            "line": 6,
+            "col": 2,
+            "offset": 68
+          },
+          "end": {
+            "line": 6,
+            "col": 22,
+            "offset": 88
+          }
+        },
+        "parent": 5,
+        "task": "x"
+      },
+      {
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 6,
+            "offset": 95
+          },
+          "end": {
+            "line": 7,
+            "col": 25,
+            "offset": 114
+          }
+        },
+        "parent": 6,
+        "task": " "
+      },
+      {
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 115
+          },
+          "end": {
+            "line": 8,
+            "col": 8,
+            "offset": 123
+          }
+        },
+        "parent": -8
+      },
+      {
+        "position": {
+          "start": {
+            "line": 9,
+            "col": 4,
+            "offset": 128
+          },
+          "end": {
+            "line": 9,
+            "col": 14,
+            "offset": 138
+          }
+        },
+        "parent": 8
+      },
+      {
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 8,
+            "offset": 147
+          },
+          "end": {
+            "line": 10,
+            "col": 21,
+            "offset": 160
+          }
+        },
+        "parent": 9
+      },
+      {
+        "position": {
+          "start": {
+            "line": 12,
+            "col": 0,
+            "offset": 162
+          },
+          "end": {
+            "line": 12,
+            "col": 11,
+            "offset": 173
+          }
+        },
+        "parent": -12
+      },
+      {
+        "position": {
+          "start": {
+            "line": 13,
+            "col": 2,
+            "offset": 176
+          },
+          "end": {
+            "line": 13,
+            "col": 18,
+            "offset": 192
+          }
+        },
+        "parent": 12
+      },
+      {
+        "position": {
+          "start": {
+            "line": 15,
+            "col": 0,
+            "offset": 194
+          },
+          "end": {
+            "line": 15,
+            "col": 24,
+            "offset": 218
+          }
+        },
+        "parent": -15
+      },
+      {
+        "position": {
+          "start": {
+            "line": 16,
+            "col": 2,
+            "offset": 221
+          },
+          "end": {
+            "line": 17,
+            "col": 23,
+            "offset": 256
+          }
+        },
+        "parent": 15
+      }
+    ]
+  }
+}

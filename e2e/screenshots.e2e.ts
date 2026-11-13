@@ -48,6 +48,16 @@ const kanbanSubtasksNote = `---\nmind-mapper-layout: kanban\n---\n${[
   '',
 ].join('\n\n')}`;
 
+/** Issue #96: items nested with 4 spaces (bullets, tasks, ordered) below a column heading. */
+const nested4SpacesNote = [
+  '# Board',
+  '## To do',
+  '- Card\n    - Subtask\n        - Deeper\n- [ ] Task card\n    - [x] Done subtask\n\n1. First\n    1. Sub one',
+  '## Done',
+  '- Shipped\n    - Release notes',
+  '',
+].join('\n\n');
+
 /**
  * Visual check: saves screenshots of a few maps to SCREENSHOT_DIR (default: e2e/screenshots/).
  * Not part of `test:e2e`; run with `npm run screenshots:e2e`.
@@ -73,6 +83,16 @@ describe('screenshots', function () {
       await waitForAnimation();
       await browser.pause(300);
       await browser.saveScreenshot(`${dir}/${note}.png`);
+    });
+  }
+
+  for (const layout of ['left-to-right', 'kanban']) {
+    it(`nested 4 spaces ${layout}`, async function () {
+      const path = `nested-4-spaces-${layout}.md`;
+      await writeNote(path, `---\nmind-mapper-layout: ${layout}\n---\n${nested4SpacesNote}`);
+      await openMindMap(path);
+      await settle();
+      await saveFullScreenShot(`${dir}/nested-4-spaces-${layout}.png`);
     });
   }
 
