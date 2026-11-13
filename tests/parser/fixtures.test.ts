@@ -275,3 +275,44 @@ test('CRLF line endings: same structure, IDs and labels as LF; node markdown kee
     '    CRLF/Setext heading/#1 [paragraph] Last paragraph.',
   ]);
 });
+
+/**
+ * Issue #96: Obsidian starts a bullet nested deeper than its parent's content column at that
+ * content column, not at the marker (`- Card` / `    - Subtask` starts at column 2), so the
+ * item's text begins with spaces. Every indentation style must give the same plain-text nodes.
+ */
+const nestedItems = [
+  '#1 [list-item] Card',
+  '  #1/#1 [list-item] Subtask',
+  '    #1/#1/#1 [list-item] Deeper',
+  '#2 [list-item] - [ ] Task card',
+  '  #2/#1 [list-item] - [x] Done subtask',
+  '    #2/#1/#1 [list-item] - [ ] Open deeper',
+  '#3 [list-item] 1. First',
+  '  #3/#1 [list-item] 1. Sub one',
+  '    #3/#1/#1 [list-item] 1. Deeper one',
+];
+
+/** Item nodes as lines relative to the root (root id prefix and indentation removed). */
+function itemNodes(name: string): string[] {
+  const root = treeOf(name);
+  return root.children
+    .flatMap((child) => nodes(child))
+    .map((line) => line.replace(`${root.id}/`, ''));
+}
+
+test.each([['nested-2-spaces'], ['nested-3-spaces'], ['nested-4-spaces'], ['nested-tabs']])(
+  'nested items render as plain text with any indentation: %s',
+  (name) => {
+    expect(itemNodes(name).slice(0, nestedItems.length)).toEqual(nestedItems);
+  },
+);
+
+test('4-space nesting: other bullet markers and dedented continuation', () => {
+  expect(itemNodes('nested-4-spaces').slice(nestedItems.length)).toEqual([
+    '#4 [list-item] Star card',
+    '  #4/#1 [list-item] Plus subtask',
+    '#5 [list-item] Card with continuation',
+    '  #5/#1 [list-item] Subtask\ncontinuation line',
+  ]);
+});
