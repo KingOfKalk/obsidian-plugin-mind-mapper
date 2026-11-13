@@ -1,7 +1,15 @@
-import type { LayoutEdge, Rect } from './types';
+import type { LayoutEdge, Point, Rect } from './types';
 
-/** Cubic bezier with tangents along the layout's main axis at both ends. */
-export function edgePath({ source: s, target: t, axis }: LayoutEdge): string {
+/**
+ * Cubic bezier with tangents along the layout's main axis at both ends; with `via` the curve ends
+ * there and a straight line runs on to the target.
+ */
+export function edgePath({ source, target, via, axis }: LayoutEdge): string {
+  if (via) return `${curve(source, via, axis)} L ${target.x} ${target.y}`;
+  return curve(source, target, axis);
+}
+
+function curve(s: Point, t: Point, axis: LayoutEdge['axis']): string {
   if (axis === 'y') {
     const my = s.y + (t.y - s.y) / 2;
     return `M ${s.x} ${s.y} C ${s.x} ${my}, ${t.x} ${my}, ${t.x} ${t.y}`;

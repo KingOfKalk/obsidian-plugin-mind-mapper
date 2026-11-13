@@ -1,4 +1,5 @@
 import {
+  LAST_LINE_CLASS,
   markTrailingTags,
   splitNestedTags,
   splitTag,
@@ -175,5 +176,79 @@ describe('markTrailingTags (issue #92)', () => {
     const once = el.innerHTML;
     markTrailingTags(el);
     expect(el.innerHTML).toBe(once);
+  });
+});
+
+/** The tags of the wrapper at the end of the node (`is-last-line`), else null. */
+function lastLine(el: HTMLElement): { tags: string[]; id: string | null } | null {
+  const wrappers = el.querySelectorAll(`.mind-mapper-trailing-tags.${LAST_LINE_CLASS}`);
+  expect(wrappers.length).toBeLessThanOrEqual(1);
+  const wrapper = wrappers[0];
+  if (!wrapper) return null;
+  return {
+    tags: Array.from(wrapper.querySelectorAll('a.tag')).map((a) => a.getAttribute('href') ?? ''),
+    id: wrapper.getAttribute('data-mm-id'),
+  };
+}
+
+describe('trailing tags of the last line (issue #103)', () => {
+  test('the wrapper at the end of the node is the tag row node.tags, all its tags in order', () => {
+    const el = document.createElement('div');
+    block(el, 'p', 'Refactor run ', '#team/dev', ' ', '#q3', ' ', '#q3');
+    markTrailingTags(el);
+    expect(lastLine(el)).toEqual({ tags: ['#team/dev', '#q3', '#q3'], id: 'node.tags' });
+  });
+
+  test('trailing tags of earlier lines stay inside: only the last block counts', () => {
+    const el = document.createElement('div');
+    block(el, 'p', 'First ', '#a/b');
+    block(el, 'p', 'Second ', '#c');
+    markTrailingTags(el);
+    expect(trailing(el)).toEqual([['#a/b'], ['#c']]);
+    expect(lastLine(el)).toEqual({ tags: ['#c'], id: 'node.tags' });
+  });
+
+  test('a block after the tags (more text, a nested list): no tag row', () => {
+    const el = document.createElement('div');
+    block(el, 'p', 'First ', '#a/b');
+    block(el, 'p', 'More text without tags');
+    markTrailingTags(el);
+    expect(trailing(el)).toEqual([['#a/b']]);
+    expect(lastLine(el)).toBeNull();
+
+    const list = document.createElement('div');
+    const li = list.createEl('ul').createEl('li');
+    li.append('Item ');
+    tag(li, '#x');
+    li.createEl('ul').createEl('li', { text: 'nested' });
+    markTrailingTags(list);
+    expect(lastLine(list)).toBeNull();
+  });
+
+  test('a task item at the end of the node; whitespace after it does not count', () => {
+    const el = document.createElement('div');
+    const ul = el.createEl('ul', { cls: 'contains-task-list' });
+    const li = ul.createEl('li', { cls: 'task-list-item' });
+    li.createEl('input', { type: 'checkbox' });
+    li.append('Fix the login ');
+    tag(li, '#bug');
+    li.append('\n');
+    ul.append('\n');
+    el.append('\n');
+    markTrailingTags(el);
+    expect(lastLine(el)).toEqual({ tags: ['#bug'], id: 'node.tags' });
+  });
+
+  test('earlier-line wrappers have no ID; running twice changes nothing', () => {
+    const el = document.createElement('div');
+    block(el, 'h2', 'Backlog ', '#status/open');
+    block(el, 'p', 'Body ', '#solo');
+    markTrailingTags(el);
+    const once = el.innerHTML;
+    markTrailingTags(el);
+    expect(el.innerHTML).toBe(once);
+    expect(el.querySelector('h2 .mind-mapper-trailing-tags')?.hasAttribute('data-mm-id')).toBe(
+      false,
+    );
   });
 });

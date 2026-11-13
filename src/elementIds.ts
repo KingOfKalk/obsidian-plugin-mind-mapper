@@ -20,6 +20,7 @@ export type ElementId =
   | 'node.drill-marker'
   | 'node.card-count'
   | 'node.tag'
+  | 'node.tags'
   | 'edge'
   | 'divider'
   | 'skeleton'

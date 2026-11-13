@@ -43,13 +43,20 @@ export function splitNestedTags(el: HTMLElement): void {
 /** On a content element with trailing tags: it may stretch to its node (styles.css, issue #92). */
 export const TRAILING_TAGS_CLASS = 'has-trailing-tags';
 
+/**
+ * On the trailing-tags wrapper at the very end of the node (its last line, issue #103): with the
+ * tag position `outside` it is the tag row below the box (`node.tags`, styles.css).
+ */
+export const LAST_LINE_CLASS = 'is-last-line';
+
 const TEXT_BLOCKS = 'p, h1, h2, h3, h4, h5, h6, li';
 
 /**
  * Trailing tags (issue #92): the tags at the end of a paragraph, heading or list item, after its
  * last text, go into one `span.mind-mapper-trailing-tags`, which styles.css moves to the side
  * opposite the node's text alignment. Tags in the middle of a sentence, inside formatting, before
- * a line break or without text before them stay inline. Idempotent.
+ * a line break or without text before them stay inline. The wrapper with nothing after it in the
+ * node gets LAST_LINE_CLASS (issue #103). Idempotent.
  */
 export function markTrailingTags(el: HTMLElement): void {
   for (const block of Array.from(el.querySelectorAll<HTMLElement>(TEXT_BLOCKS))) {
@@ -72,7 +79,23 @@ export function markTrailingTags(el: HTMLElement): void {
     first.before(wrapper);
     wrapper.append(...tags.slice(0, end));
   }
-  el.toggleClass(TRAILING_TAGS_CLASS, el.querySelector('.mind-mapper-trailing-tags') !== null);
+  const wrappers = Array.from(el.querySelectorAll<HTMLElement>('.mind-mapper-trailing-tags'));
+  el.toggleClass(TRAILING_TAGS_CLASS, wrappers.length > 0);
+  const last = wrappers[wrappers.length - 1];
+  if (last && endsNode(last, el)) {
+    last.addClass(LAST_LINE_CLASS);
+    setElementId(last, 'node.tags');
+  }
+}
+
+/** Nothing but whitespace after `node` up to the end of `root`. */
+function endsNode(node: Element, root: Element): boolean {
+  for (let n: Element | null = node; n && n !== root; n = n.parentElement) {
+    for (let next = n.nextSibling; next; next = next.nextSibling) {
+      if (!isBlank(next)) return false;
+    }
+  }
+  return true;
 }
 
 function isTag(node: ChildNode | undefined): boolean {
