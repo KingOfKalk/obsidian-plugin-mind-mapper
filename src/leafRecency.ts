@@ -1,4 +1,4 @@
-import type { MarkdownView, Workspace, WorkspaceLeaf } from 'obsidian';
+import { MarkdownView, type Workspace, type WorkspaceLeaf } from 'obsidian';
 
 /**
  * Order in which leaves were last active, fed by `active-leaf-change` (the public API has no
@@ -42,8 +42,7 @@ export function pickNoteLeaf(
 
 /** File of a note leaf; a restored tab that is not loaded yet only has it in its view state. */
 function leafFile(leaf: WorkspaceLeaf): string | undefined {
-  const loaded = (leaf.view as Partial<MarkdownView>).file?.path;
-  if (loaded) return loaded;
+  if (leaf.view instanceof MarkdownView && leaf.view.file) return leaf.view.file.path;
   const state = leaf.getViewState().state as { file?: unknown } | undefined;
   return typeof state?.file === 'string' ? state.file : undefined;
 }

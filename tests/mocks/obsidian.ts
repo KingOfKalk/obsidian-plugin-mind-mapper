@@ -159,6 +159,24 @@ export class ItemView extends Component {
   onResize(): void {}
 }
 
+/** Note view. The real one is an `ItemView`; tests create it without a leaf and set the fields. */
+export class MarkdownView {
+  file: TFile | null = null;
+  editor = {
+    setCursor: (_pos: { line: number; ch: number }): void => {},
+    scrollIntoView: (_range: unknown, _center?: boolean): void => {},
+  };
+  mode: 'source' | 'preview' = 'source';
+
+  getViewType(): string {
+    return 'markdown';
+  }
+
+  getMode(): 'source' | 'preview' {
+    return this.mode;
+  }
+}
+
 export class TFile {
   readonly basename: string;
   readonly extension: string;

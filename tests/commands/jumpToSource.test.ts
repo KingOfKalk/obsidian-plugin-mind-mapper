@@ -2,26 +2,35 @@ import type { App, WorkspaceLeaf } from 'obsidian';
 import { jumpToSource } from '../../src/commands/jumpToSource';
 import { LeafRecency } from '../../src/leafRecency';
 import { fakeFile } from '../helpers';
+import { MarkdownView } from '../mocks/obsidian';
 
-interface TestLeaf {
-  view: {
-    getViewType(): string;
-    file: { path: string } | null;
-    getMode(): string;
-    editor: { setCursor: ReturnType<typeof vi.fn>; scrollIntoView: ReturnType<typeof vi.fn> };
-  };
-  openFile: ReturnType<typeof vi.fn>;
+interface TestView {
+  getViewType(): string;
+  file: { path: string } | null;
+  getMode(): string;
+  editor: { setCursor: ReturnType<typeof vi.fn>; scrollIntoView: ReturnType<typeof vi.fn> };
 }
 
-function noteLeaf(path: string | null, type = 'markdown'): TestLeaf {
+interface TestLeaf {
+  view: TestView;
+  openFile: ReturnType<typeof vi.fn>;
+  getViewState(): { type: string; state: { file?: string } };
+}
+
+/** A leaf of `type`; a `markdown` leaf shows a real `MarkdownView` unless `plainView` is set. */
+function noteLeaf(path: string | null, type = 'markdown', plainView = false): TestLeaf {
+  const fields = {
+    file: path ? fakeFile(path) : null,
+    editor: { setCursor: vi.fn(), scrollIntoView: vi.fn() },
+  };
+  const view: TestView =
+    type === 'markdown' && !plainView
+      ? Object.assign(new MarkdownView(), fields)
+      : { getViewType: () => type, getMode: () => 'source', ...fields };
   return {
-    view: {
-      getViewType: () => type,
-      file: path ? { path } : null,
-      getMode: () => 'source',
-      editor: { setCursor: vi.fn(), scrollIntoView: vi.fn() },
-    },
+    view,
     openFile: vi.fn(() => Promise.resolve()),
+    getViewState: () => ({ type, state: path ? { file: path } : {} }),
   };
 }
 
@@ -91,4 +100,13 @@ test('jumpToSource of the virtual root (line null) opens the note at the top', a
     active: true,
     eState: { line: 0 },
   });
+});
+
+test('jumpToSource leaves the cursor alone when the leaf does not show a Markdown view', async () => {
+  // a view that reports the markdown type but is not a MarkdownView
+  const note = noteLeaf('Note.md', 'markdown', true);
+  const { app } = setup([note]);
+  await jumpToSource(app, new LeafRecency(), null, 'Note.md', 3);
+  expect(note.openFile).toHaveBeenCalled();
+  expect(note.view.editor.setCursor).not.toHaveBeenCalled();
 });
