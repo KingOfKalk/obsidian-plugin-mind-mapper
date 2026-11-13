@@ -1,6 +1,6 @@
 import { type App, Component, MarkdownRenderer } from 'obsidian';
 import type { MindMapNode } from '../parser/types';
-import { splitNestedTags } from './nestedTags';
+import { markTrailingTags, splitNestedTags } from './nestedTags';
 
 export const RENDER_TIMEOUT_MS = 5000;
 
@@ -58,6 +58,7 @@ export class NodeContentRenderer {
     if (!isCurrent()) return;
     disableCheckboxes(contentEl);
     splitNestedTags(contentEl);
+    markTrailingTags(contentEl);
   }
 
   release(contentEl: HTMLElement): void {

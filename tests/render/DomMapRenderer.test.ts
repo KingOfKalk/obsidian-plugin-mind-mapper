@@ -1,3 +1,4 @@
+import { COUNT_BUBBLE, countBubbleWidth } from '../../src/layout/kanban';
 import type { MapLayout, PositionedNode } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
 import { DomMapRenderer, RENDER_BUDGET } from '../../src/render/DomMapRenderer';
@@ -338,6 +339,22 @@ describe('kanban (issue #32)', () => {
     expect(bubbles(parent).map((b) => b.text)).toEqual(['12']);
     renderer.setLayout(layout, { hidden: new Map(), hasChildren: withChildren });
     expect(bubbles(parent)).toEqual([]);
+  });
+
+  // Issue #92: the header's content may stretch to the node (trailing tags), but not under the
+  // bubble: the room the layout leaves for it (gap + bubble width) as a CSS variable.
+  test('a column header carries the room of its bubble as --mind-mapper-count-space', () => {
+    const { parent, renderer } = hooked();
+    const space = () =>
+      parent
+        .querySelector<HTMLElement>('.mind-mapper-node[data-node-id="R/A"]')
+        ?.style.getPropertyValue('--mind-mapper-count-space');
+    renderer.setLayout(kanban(3));
+    expect(space()).toBe(`${COUNT_BUBBLE.gap + countBubbleWidth(3)}px`);
+    renderer.setLayout(kanban(12));
+    expect(space()).toBe(`${COUNT_BUBBLE.gap + countBubbleWidth(12)}px`);
+    renderer.setLayout(layout);
+    expect(space()).toBe('');
   });
 
   test('one card and German', () => {

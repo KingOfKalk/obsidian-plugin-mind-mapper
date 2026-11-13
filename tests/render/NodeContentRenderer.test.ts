@@ -198,6 +198,19 @@ test('nested tags become scope + value pills after rendering (issue #57)', async
   expect(contentEl.querySelector('.mind-mapper-tag-value')?.textContent).toBe('test');
 });
 
+test('trailing tags are marked after rendering (issue #92)', async () => {
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+    const p = el.createEl('p', { text: 'Book the venue ' });
+    p.createEl('a', { cls: 'tag', text: '#area/events', attr: { href: '#area/events' } });
+    return Promise.resolve();
+  });
+  const { renderer, contentEl } = setup();
+  await renderer.render(node('Book the venue #area/events'), contentEl);
+  expect(
+    contentEl.querySelector('.mind-mapper-trailing-tags .mind-mapper-tag-value')?.textContent,
+  ).toBe('events');
+});
+
 test('release clears the pending render timeout', () => {
   vi.useFakeTimers();
   vi.spyOn(MarkdownRenderer, 'render').mockReturnValue(new Promise<void>(() => {}));

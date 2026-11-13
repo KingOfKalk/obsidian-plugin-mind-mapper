@@ -3,6 +3,7 @@ import { limitsFor } from '../../src/layout/nodeSize';
 import { SizeCache } from '../../src/layout/sizeCache';
 import type { MapLayout, PositionedNode, Size } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
+import { TRAILING_TAGS_CLASS } from '../../src/render/nestedTags';
 import { type MeasureHost, NodeMeasurer } from '../../src/view/nodeMeasurer';
 
 /** Node measuring of the map view (issue #50): ResizeObserver into the size cache. */
@@ -192,4 +193,30 @@ test('moveToWindow observes the same contents with a new observer; disconnect st
   expect([...(FakeRO.instances[1]?.observed ?? [])]).toEqual([elA, elB]);
   measurer.disconnect();
   expect(FakeRO.instances[1]?.connected).toBe(false);
+});
+
+// Issue #92: content with trailing tags stretches to its node (styles.css), e.g. a kanban card in
+// a wider column. Measured is its natural width (stretch off while measuring), or a node would
+// never get narrower again.
+test('stretched content (trailing tags) is measured without its stretch', () => {
+  const { measurer, sizes, a, elA, relayout } = setup();
+  measurer.observe(new Map([['a', elA]]));
+  elA.addClass(TRAILING_TAGS_CLASS);
+  const width = () => (elA.classList.contains('is-measuring') ? 50 : 200);
+  for (const key of ['offsetWidth', 'scrollWidth']) {
+    Object.defineProperty(elA, key, { configurable: true, get: width });
+  }
+  for (const key of ['offsetHeight', 'scrollHeight']) {
+    Object.defineProperty(elA, key, { configurable: true, value: 20 });
+  }
+  FakeRO.trigger();
+  const natural = sizes.get(a)?.size.width;
+  expect(natural).toBeLessThan(100);
+  expect(elA.classList.contains('is-measuring')).toBe(false);
+  // Without trailing tags nothing is toggled.
+  elA.removeClass(TRAILING_TAGS_CLASS);
+  measurer.measureAll();
+  expect(sizes.get(a)?.size.width).toBeGreaterThan(200);
+  vi.advanceTimersByTime(100);
+  expect(relayout).toHaveBeenCalled();
 });
