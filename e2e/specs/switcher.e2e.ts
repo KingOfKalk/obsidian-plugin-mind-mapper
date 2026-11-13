@@ -158,7 +158,7 @@ describe('layout and colour theme switcher', function () {
     await settle();
   });
 
-  it('the layout menu lists the six layouts, the current one checked; each choice changes the node positions, never the note', async function () {
+  it('the layout menu lists the seven layouts, the current one checked; each choice changes the node positions, never the note', async function () {
     const before = await noteFile();
     expect(await isActive('controls.layout')).toBe(false);
     await button('controls.layout').click();
@@ -170,6 +170,7 @@ describe('layout and colour theme switcher', function () {
       'Right → left',
       'Top → bottom',
       'Bottom → top',
+      'Kanban',
       "Use the note's layout",
     ]);
     await browser.keys('Escape');
@@ -183,6 +184,8 @@ describe('layout and colour theme switcher', function () {
       // Three branches: two on the right, one on the left (counter-clockwise mirrored).
       ['Balanced clockwise', 'right', 'left'],
       ['Balanced counter-clockwise', 'left', 'right'],
+      // Kanban: the columns below the headline, the level gap between them.
+      ['Kanban', 'below', 'below'],
       ['Left → right', 'right', 'right'],
     ];
     for (const [item, alpha, gamma] of expected) {
