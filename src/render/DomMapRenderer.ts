@@ -87,8 +87,8 @@ export class DomMapRenderer {
   private drillMarkerEl: HTMLElement | null = null;
   /** Hit path of each drawn cross-link -> the link (a tap on a line looks it up). */
   private readonly linkHits = new Map<EventTarget, CrossLink>();
-  /** Visible path of each drawn cross-link by `linkKey`. */
-  private readonly linkLines = new Map<string, SVGPathElement>();
+  /** Visible and hit path of each drawn cross-link by `linkKey` (kept across re-layouts). */
+  private linkPaths = new Map<string, LinkPaths>();
   private highlighted: CrossLink | null = null;
   /** Layer after all nodes with a copy of the highlighted line (painted above the nodes). */
   private highlightEl: SVGSVGElement | null = null;
@@ -251,39 +251,52 @@ export class DomMapRenderer {
   /**
    * Dashed lines for same-note links (spec "Links"); replaces the previous ones. Each line is
    * followed by a wide invisible hit path that takes the clicks (issue #21). A highlighted link
-   * stays highlighted while a link with the same ends is drawn.
+   * stays highlighted while a link with the same ends is drawn. Paths of links with the same ends
+   * are reused and their `d` written only when it changes (issue #76: a re-layout runs this).
    */
   setCrossLinks(links: CrossLink[]): void {
     const svg = this.edgesEl;
     if (!svg) return;
-    const old = svg.querySelectorAll('.mind-mapper-crosslink, .mind-mapper-crosslink-hit');
-    for (const el of Array.from(old)) el.remove();
+    const old = this.linkPaths;
+    this.linkPaths = new Map();
     this.linkHits.clear();
-    this.linkLines.clear();
-    const doc = this.worldEl.doc;
     let highlighted: CrossLink | null = null;
     for (const link of links) {
       const from = this.rects.get(link.fromId);
       const to = this.rects.get(link.toId);
       if (!from || !to) continue;
+      const key = linkKey(link);
       const d = crossLinkPath(from, to);
-      const path = doc.createElementNS(SVG_NS, 'path');
-      path.classList.add('mind-mapper-crosslink');
-      setElementId(path, 'link.line');
-      path.setAttribute('d', d);
-      svg.appendChild(path);
-      const hit = doc.createElementNS(SVG_NS, 'path');
-      hit.classList.add('mind-mapper-crosslink-hit');
-      setElementId(hit, 'link.hit-area');
-      hit.setAttribute('d', d);
-      hit.setAttribute('data-from-id', link.fromId);
-      hit.setAttribute('data-to-id', link.toId);
-      svg.appendChild(hit);
-      this.linkHits.set(hit, link);
-      this.linkLines.set(linkKey(link), path);
-      if (this.highlighted && linkKey(this.highlighted) === linkKey(link)) highlighted = link;
+      const paths = old.get(key) ?? this.createLinkPaths(svg, link, d);
+      old.delete(key);
+      setAttr(paths.line, 'd', d);
+      setAttr(paths.hit, 'd', d);
+      this.linkHits.set(paths.hit, link);
+      this.linkPaths.set(key, paths);
+      if (this.highlighted && linkKey(this.highlighted) === key) highlighted = link;
+    }
+    for (const { line, hit } of old.values()) {
+      line.remove();
+      hit.remove();
     }
     this.setHighlightedLink(highlighted);
+  }
+
+  private createLinkPaths(svg: SVGSVGElement, link: CrossLink, d: string): LinkPaths {
+    const doc = this.worldEl.doc;
+    const line = doc.createElementNS(SVG_NS, 'path');
+    line.classList.add('mind-mapper-crosslink');
+    setElementId(line, 'link.line');
+    line.setAttribute('d', d);
+    svg.appendChild(line);
+    const hit = doc.createElementNS(SVG_NS, 'path');
+    hit.classList.add('mind-mapper-crosslink-hit');
+    setElementId(hit, 'link.hit-area');
+    hit.setAttribute('d', d);
+    hit.setAttribute('data-from-id', link.fromId);
+    hit.setAttribute('data-to-id', link.toId);
+    svg.appendChild(hit);
+    return { line, hit };
   }
 
   /** The cross-link whose hit path `target` is, else null. */
@@ -301,8 +314,8 @@ export class DomMapRenderer {
    */
   setHighlightedLink(link: CrossLink | null): void {
     for (const id of this.linkEndIds()) this.nodes.get(id)?.el.removeClass('is-link-end');
-    for (const line of this.linkLines.values()) line.classList.remove('is-highlighted');
-    const line = link && this.linkLines.get(linkKey(link));
+    for (const { line } of this.linkPaths.values()) line.classList.remove('is-highlighted');
+    const line = link && this.linkPaths.get(linkKey(link))?.line;
     this.highlighted = line ? link : null;
     this.drawHighlight(line?.getAttribute('d') ?? null);
     if (!line) return;
@@ -462,13 +475,16 @@ export class DomMapRenderer {
     this.edgesEl = null;
     this.edgePaths = [];
     this.linkHits.clear();
-    this.linkLines.clear();
+    this.linkPaths.clear();
     this.highlighted = null;
     this.highlightEl = null;
     this.drillMarkerEl = null;
   }
 
-  /** Edge paths are reused across layouts (a re-layout of a large map only updates `d`). */
+  /**
+   * Edge paths are reused across layouts; `d` is written only when it changes (issue #76: rewriting
+   * every unchanged path of a large map invalidated the style of all of them on each re-layout).
+   */
   private renderEdges(layout: MapLayout): void {
     const doc = this.worldEl.doc;
     let svg = this.edgesEl;
@@ -492,7 +508,7 @@ export class DomMapRenderer {
         svg.insertBefore(path, firstCrossLink);
         this.edgePaths.push(path);
       }
-      path.setAttribute('d', edgePath(edge));
+      setAttr(path, 'd', edgePath(edge));
       // Colour themes: the edge takes the level and branch of the node it leads into.
       const to = this.rects.get(edge.toId);
       setAttr(path, 'data-level', levelAttr(to?.depth ?? 0));
@@ -681,6 +697,12 @@ export class DomMapRenderer {
     this.hooks.render(node, contentEl);
     return contentEl;
   }
+}
+
+/** The two paths of a drawn cross-link: the dashed line and its invisible hit path after it. */
+interface LinkPaths {
+  line: SVGPathElement;
+  hit: SVGPathElement;
 }
 
 /** Identity of a drawn cross-link: its ends (drawn links are unique by ends). */
