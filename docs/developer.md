@@ -95,6 +95,7 @@
   - Generated notes with 1,000 and 5,000 nodes (`e2e/perf/generateNote.ts`)
   - No timing assertions (frame times are flaky; E2E specs wait for states, never for durations); it prints a diff against the committed `e2e/perf/baseline.json` and writes `e2e/perf/last-run.json` (git-ignored)
   - Update `baseline.json` by hand only when a change is meant to move the numbers
+  - Known long frame (issue #66): `longestPanFrameMs` at 1,000 nodes is about 83 ms, not ours. The first code block a map renders (here while panning from the fit view) makes Obsidian load its bundled Prism (`app://obsidian.md/lib/prism.min.js`) once per app session; a Chromium trace shows that frame spent in `EvaluateScript` of that file plus its `load` handler, not in plugin code, style or layout. With `loadPrism()` called before the pan the frame stays at 17 to 33 ms; the 5,000 node run has no such frame because the 1,000 node run already loaded Prism in the same session.
 - Screenshot runs (`npm run screenshots:e2e`, `npm run readme:images`, `npm run manual:images`): see below
 
 ## Screenshots
