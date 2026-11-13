@@ -22,9 +22,10 @@ export interface LinkContext {
 }
 
 /**
- * Internal links inside `container` behave like in Obsidian: click opens (Ctrl/Cmd: new tab),
- * hover shows page preview. A plain click opens in the most recent note leaf, or a split when there
- * is none, never in the map leaf. Other links (external, tags, footnotes) are left to Obsidian.
+ * Internal links inside `container` behave like in Obsidian: click opens (Ctrl/Cmd click and
+ * middle click: new tab), hover shows page preview. A plain click opens in the most recent note
+ * leaf, or a split when there is none, never in the map leaf. Other links (external, tags,
+ * footnotes) are left to Obsidian.
  */
 export function attachLinkHandling(container: HTMLElement, ctx: LinkContext): void {
   // Capture phase: runs before listeners on the node, so the click never reaches the node.
@@ -33,6 +34,22 @@ export function attachLinkHandling(container: HTMLElement, ctx: LinkContext): vo
     'click',
     (event) => {
       const link = linkFrom(event, INTERNAL_LINK);
+      if (!link) return;
+      event.preventDefault();
+      event.stopPropagation();
+      open(ctx, linkText(link), Keymap.isModEvent(event));
+      ctx.onNavigate?.();
+    },
+    { capture: true },
+  );
+
+  // Middle click opens a new tab like in reading view (Chromium sends it as `auxclick`, not
+  // `click`; Obsidian's Keymap reads the middle button as "tab"). Other buttons are left alone.
+  ctx.events.registerDomEvent(
+    container,
+    'auxclick',
+    (event) => {
+      const link = event.button === 1 ? linkFrom(event, INTERNAL_LINK) : null;
       if (!link) return;
       event.preventDefault();
       event.stopPropagation();

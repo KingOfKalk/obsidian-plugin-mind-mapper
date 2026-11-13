@@ -75,7 +75,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
-- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
+- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click or middle click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written

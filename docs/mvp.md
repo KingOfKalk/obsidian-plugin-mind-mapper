@@ -269,7 +269,7 @@ Project (root, H1)
   - Double click on node: jump to the source line in the editor
   - Double click on empty canvas: fit to view (see "Zoom and pan"); links, buttons, collapse toggles, link lines and the controls keep their own behavior
   - Expand icon on clipped nodes: overlay with full content
-  - Links inside nodes: Obsidian behavior, no node click
+  - Links inside nodes: Obsidian behavior, no node click; internal links: click opens, Ctrl/Cmd click and middle click open a new tab (like reading view)
   - No click timers needed, double click does not trigger a jump plus something else
 - Jump to source target (decided)
   - Note already open in a leaf: reveal the most recently active one and set the cursor

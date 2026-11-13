@@ -69,6 +69,20 @@ describe('links inside nodes', function () {
     expect(leaves.some((l) => l.type === 'mind-mapper-view')).toBe(true);
   });
 
+  it('middle click opens a new tab, like reading view', async function () {
+    await openNoteThenMap();
+    const before = (await leafSummary()).length;
+    // A real middle click (WebDriver): Chromium sends it as `auxclick`, not `click`.
+    await browser.$(LINK).click({ button: 'middle' });
+    await browser.waitUntil(async () => (await leafSummary()).length === before + 1, {
+      timeout: 10000,
+      timeoutMsg: 'no new tab opened',
+    });
+    const leaves = await leafSummary();
+    expect(leaves.some((l) => l.file === 'fixtures/lists.md')).toBe(true);
+    expect(leaves.some((l) => l.type === 'mind-mapper-view')).toBe(true);
+  });
+
   it('hovering a link emits hover-link for page preview', async function () {
     await openNoteThenMap();
     await browser.executeObsidian(({ app }) => {
