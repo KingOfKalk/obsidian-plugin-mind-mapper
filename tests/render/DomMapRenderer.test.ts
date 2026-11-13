@@ -605,6 +605,90 @@ test('the overlay follows a re-layout and goes when its link is no longer drawn'
   expect(parent.querySelector('svg.mind-mapper-highlight-layer')).toBeNull();
 });
 
+describe('re-layout writes only changed paths (issue #76)', () => {
+  const links = [
+    { fromId: 'R/A', toId: 'R/B', line: 3 },
+    { fromId: 'R', toId: 'R/A', line: 5 },
+  ];
+  /** Same geometry as `layout`, new objects (a re-layout builds everything anew). */
+  const copy = (l: MapLayout): MapLayout => structuredClone(l);
+  /** R/B 100 px lower: its edge from R and its cross-link from R/A move. */
+  const movedB = (): MapLayout => {
+    const moved = copy(layout);
+    for (const p of moved.nodes) if (p.node.id === 'R/B') p.y += 100;
+    for (const e of moved.edges) if (e.toId === 'R/B') e.target.y += 100;
+    return moved;
+  };
+
+  /** `d` writes and added or removed paths in the edge layer during `act`. */
+  function writes(parent: HTMLElement, act: () => void): { d: Element[]; added: number } {
+    const svg = parent.querySelector('svg.mind-mapper-edges');
+    if (!svg) throw new Error('no edge layer');
+    const observer = new MutationObserver(() => {});
+    observer.observe(svg, { attributeFilter: ['d'], childList: true, subtree: true });
+    act();
+    const records = observer.takeRecords();
+    observer.disconnect();
+    return {
+      d: records.filter((r) => r.type === 'attributes').map((r) => r.target as Element),
+      added: records.reduce((n, r) => n + r.addedNodes.length + r.removedNodes.length, 0),
+    };
+  }
+
+  test('a re-layout with unchanged geometry writes no `d` and keeps every path', () => {
+    const { parent, renderer } = setup();
+    renderer.setLayout(layout);
+    renderer.setCrossLinks(links);
+    const result = writes(parent, () => {
+      renderer.setLayout(copy(layout));
+      renderer.setCrossLinks(structuredClone(links));
+    });
+    expect(result.d).toEqual([]);
+    expect(result.added).toBe(0);
+  });
+
+  test('a moved node rewrites only its own edge and cross-link paths', () => {
+    const { parent, renderer } = setup();
+    renderer.setLayout(layout);
+    renderer.setCrossLinks(links);
+    const result = writes(parent, () => {
+      renderer.setLayout(movedB());
+      renderer.setCrossLinks(links);
+    });
+    const touched = result.d.map((el) => [
+      el.getAttribute('class'),
+      el.getAttribute('data-to-id') ?? el.getAttribute('d'),
+    ]);
+    const edgeToB = parent.querySelectorAll('path.mind-mapper-edge')[1];
+    expect(touched).toEqual([
+      ['mind-mapper-edge', edgeToB?.getAttribute('d')],
+      [
+        'mind-mapper-crosslink',
+        parent.querySelector('path.mind-mapper-crosslink')?.getAttribute('d'),
+      ],
+      ['mind-mapper-crosslink-hit', 'R/B'],
+    ]);
+    expect(result.added).toBe(0);
+    // what is drawn equals a fresh renderer drawing the moved layout
+    const fresh = setup();
+    fresh.renderer.setLayout(movedB());
+    fresh.renderer.setCrossLinks(links);
+    const svgOf = (p: HTMLElement) => p.querySelector('svg.mind-mapper-edges')?.outerHTML;
+    expect(svgOf(parent)).toBe(svgOf(fresh.parent));
+  });
+
+  test('reused cross-link hit paths map to the new link objects', () => {
+    const { parent, renderer } = setup();
+    renderer.setLayout(layout);
+    renderer.setCrossLinks(links);
+    renderer.setCrossLinks([{ fromId: 'R/A', toId: 'R/B', line: 9 }]);
+    const hits = [...parent.querySelectorAll('path.mind-mapper-crosslink-hit')];
+    expect(hits).toHaveLength(1);
+    expect(renderer.crossLinkAt(hits[0] ?? null)).toEqual({ fromId: 'R/A', toId: 'R/B', line: 9 });
+    expect(parent.querySelectorAll('path.mind-mapper-crosslink')).toHaveLength(1);
+  });
+});
+
 describe('culling', () => {
   /** 20 x 20 grid of 100 x 20 nodes, 200 px apart; root at (0,0). */
   function grid(): MapLayout {
