@@ -390,7 +390,21 @@ export class DomMapRenderer {
     this.canvasEl.removeClass(tagPositionClass(this.tagPosition));
     this.tagPosition = position;
     this.canvasEl.addClass(tagPositionClass(position));
+    for (const [id, dom] of this.nodes) {
+      const rect = this.rects.get(id);
+      if (rect) this.setTagsOutside(dom.el, rect, isBlock(dom.node));
+    }
     return true;
+  }
+
+  /**
+   * `is-tags-outside`: styles.css moves the node's last trailing tags into a row below the box.
+   * Only for side-aligned text below the laid-out root (the root and centered text keep them
+   * inside, like blocks: there is no edge opposite the text, or a line leaves there).
+   */
+  private setTagsOutside(el: HTMLElement, { depth, align }: PositionedNode, block: boolean): void {
+    const outside = this.tagPosition === 'outside' && depth > 0 && align !== 'center' && !block;
+    el.toggleClass('is-tags-outside', outside);
   }
 
   /** `data-branch` in the current theme; written only when it changes (reconcile runs per frame). */
@@ -614,10 +628,8 @@ export class DomMapRenderer {
     return toggle;
   }
 
-  private placeNode(
-    { node, x, y, width, height, depth, branch, align, count, subtask }: PositionedNode,
-    pool: Map<string, HTMLElement[]>,
-  ): void {
+  private placeNode(positioned: PositionedNode, pool: Map<string, HTMLElement[]>): void {
+    const { node, x, y, width, height, depth, branch, align, count, subtask } = positioned;
     let dom = this.nodes.get(node.id);
     if (!dom) {
       dom = this.createNode(node, pool.get(node.markdown)?.shift());
@@ -641,7 +653,7 @@ export class DomMapRenderer {
     const root = node.kind === 'root';
     // Color themes: blocks keep a border at every level instead of becoming plain text.
     const image = isImageOnly(node.markdown);
-    const block = node.kind === 'block' || image;
+    const block = isBlock(node);
     el.toggleClass('is-root', root);
     el.toggleClass('is-block', block);
     // A single image embed: the fixed thumbnail box of the size estimate (styles.css).
@@ -649,6 +661,7 @@ export class DomMapRenderer {
     setElementId(el, root ? 'node.root' : block ? 'node.block' : 'node.text');
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);
+    this.setTagsOutside(el, positioned, block);
     setAttr(el, 'data-level', levelAttr(depth));
     setAttr(el, 'data-subtask', subtaskAttr(subtask));
     this.setBranch(el, branch);
@@ -724,6 +737,11 @@ export class DomMapRenderer {
     this.hooks.render(node, contentEl);
     return contentEl;
   }
+}
+
+/** Code, tables, callouts, quotes, math and single image embeds: they keep their own alignment. */
+function isBlock(node: MindMapNode): boolean {
+  return node.kind === 'block' || isImageOnly(node.markdown);
 }
 
 function tagPositionClass(position: TagPosition): string {

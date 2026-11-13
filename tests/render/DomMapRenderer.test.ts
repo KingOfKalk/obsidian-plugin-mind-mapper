@@ -1517,3 +1517,26 @@ describe('element IDs (issue #33)', () => {
     expect(toggle()?.getAttribute('data-mm-state')).toBe('expanded');
   });
 });
+
+// Issue #103: which nodes may show their trailing tags in a row below the box.
+test('tag position: a canvas class; is-tags-outside on side-aligned text nodes below the root', () => {
+  const { parent, renderer } = setup();
+  const block = { ...layout.nodes[2]!, node: node('R/C', 'block'), y: 60 };
+  const centered = { ...layout.nodes[2]!, node: node('R/D'), y: 120, align: 'center' as const };
+  const right = { ...layout.nodes[2]!, node: node('R/E'), y: 180, align: 'right' as const };
+  renderer.setLayout({ ...layout, nodes: [...layout.nodes, block, centered, right] });
+  const canvas = parent.querySelector('.mind-mapper-canvas');
+  const outside = () =>
+    [...parent.querySelectorAll<HTMLElement>('.mind-mapper-node.is-tags-outside')].map(
+      (el) => el.dataset.nodeId,
+    );
+  expect(canvas?.classList.contains('mind-mapper-tags-outside')).toBe(true);
+  expect(outside()).toEqual(['R/A', 'R/B', 'R/E']);
+  expect(renderer.setTagPosition('inside')).toBe(true);
+  expect(renderer.setTagPosition('inside')).toBe(false);
+  expect(canvas?.classList.contains('mind-mapper-tags-inside')).toBe(true);
+  expect(canvas?.classList.contains('mind-mapper-tags-outside')).toBe(false);
+  expect(outside()).toEqual([]);
+  renderer.setTagPosition('outside');
+  expect(outside()).toEqual(['R/A', 'R/B', 'R/E']);
+});

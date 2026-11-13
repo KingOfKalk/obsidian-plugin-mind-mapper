@@ -268,9 +268,12 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
 }
 
 /* A task's checkbox hangs into the item's start margin. Right-aligned, the tags take the item's
-   start edge instead (the node's edge) and leave the checkbox room after them. */
-.mind-mapper-node:not(.is-block, .is-render-error).is-align-right
-  .task-list-item:has(> .mind-mapper-trailing-tags) {
+   start edge instead (the node's edge) and leave the checkbox room after them (not when they
+   are in the tag row below the box, see below). */
+.mind-mapper-node:not(.is-block, .is-render-error, .is-tags-outside).is-align-right
+  .task-list-item:has(> .mind-mapper-trailing-tags),
+.mind-mapper-node.is-tags-outside.is-align-right
+  .task-list-item:has(> .mind-mapper-trailing-tags:not(.is-last-line)) {
   margin-inline-start: 0;
 }
 
@@ -278,6 +281,44 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
   .task-list-item
   > .mind-mapper-trailing-tags {
   margin-inline-end: calc(var(--size-4-2) + var(--checkbox-size) * 1.5);
+}
+
+/* Tag position outside (issue #103, `is-tags-outside` from the renderer: side-aligned text below
+   the root): the trailing tags of the node's last line (`is-last-line`, `node.tags`) leave the
+   box for a row 4 px below it, flush with the edge opposite the text. One row in the order of
+   the note, 4 px between the tags, wrapping at the max node width (not the box width); a row
+   wider than the box reaches past its text-side edge (the layout leaves room for it). Positioned
+   against the node, so the content (and the measured box) holds only the text. The node lets it
+   show outside its box. */
+.mind-mapper-node.is-tags-outside:has(.mind-mapper-trailing-tags.is-last-line) {
+  overflow: visible;
+}
+
+.mind-mapper-node.is-tags-outside .mind-mapper-trailing-tags.is-last-line {
+  position: absolute;
+  /* Below the 1 px border, then the 4 px gap (TAG_ROW_GAP in src/layout/types.ts). */
+  top: calc(100% + 1px + 4px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: max-content;
+  max-width: var(--mind-mapper-node-max-width, 320px);
+  margin: 0;
+  float: none;
+}
+
+.mind-mapper-node.is-tags-outside .mind-mapper-trailing-tags.is-last-line > * {
+  flex: none;
+}
+
+.mind-mapper-node.is-tags-outside.is-align-left .mind-mapper-trailing-tags.is-last-line {
+  right: -1px;
+  justify-content: flex-end;
+}
+
+.mind-mapper-node.is-tags-outside.is-align-right .mind-mapper-trailing-tags.is-last-line {
+  left: -1px;
+  justify-content: flex-start;
 }
 
 /* Image embed nodes (a node that is a single image): fixed thumbnail box, so the size is known
