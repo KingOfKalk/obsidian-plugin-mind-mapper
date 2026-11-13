@@ -6,7 +6,7 @@ import { crossLinkPath, edgePath } from '../layout/edgePath';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
-import { detailLevel, SpatialIndex, worldViewport } from './culling';
+import { detailLevel, overlaps, SpatialIndex, worldViewport } from './culling';
 import { branchAttr, levelAttr, type MapThemeName, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
@@ -161,8 +161,16 @@ export class DomMapRenderer implements MapRenderer {
       };
     }
     this.sized = true;
+    // The margin decides what to render (no pop-in while panning); the thresholds count only the
+    // nodes in the visible viewport.
     const ids = this.index.query(worldViewport(this.transform, size));
-    if (detailLevel(this.transform.zoom, ids.size) === 'skeleton') {
+    const view = worldViewport(this.transform, size, 0);
+    let inView = 0;
+    for (const id of ids) {
+      const rect = this.rects.get(id);
+      if (rect && overlaps(rect, view)) inView++;
+    }
+    if (detailLevel(this.transform.zoom, inView) === 'skeleton') {
       return { ids: new Set(), skeleton: true };
     }
     // Rendering content is the expensive part: at most RENDER_BUDGET new nodes per pass, nearest to

@@ -7,7 +7,7 @@ export const CULL_MARGIN = 0.5;
 export const SKELETON_ZOOM = 0.2;
 /** A skeleton only pays off for many nodes; a small map in a narrow pane keeps its content. */
 export const SKELETON_MIN_NODES = 60;
-/** More nodes than this in view (plus margin) are a skeleton at any zoom: the DOM stays bounded. */
+/** More nodes than this in view are a skeleton at any zoom: the DOM stays bounded. */
 export const MAX_CONTENT_NODES = 300;
 
 /** The canvas in world coordinates, grown by `margin` of its size on each side. */
@@ -22,6 +22,12 @@ export function worldViewport(t: Transform, size: Size, margin = CULL_MARGIN): R
   };
 }
 
+/** Whether two rects overlap (touching edges do not). */
+export function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/** `nodesInView` counts the visible viewport only, never the margin (README: "in view"). */
 export function detailLevel(zoom: number, nodesInView: number): 'content' | 'skeleton' {
   if (nodesInView > MAX_CONTENT_NODES) return 'skeleton';
   return zoom < SKELETON_ZOOM && nodesInView > SKELETON_MIN_NODES ? 'skeleton' : 'content';
@@ -49,14 +55,7 @@ export class SpatialIndex {
     for (const key of this.keys(rect)) {
       for (const node of this.cells.get(key) ?? []) {
         if (found.has(node.node.id)) continue;
-        if (
-          node.x < rect.x + rect.width &&
-          rect.x < node.x + node.width &&
-          node.y < rect.y + rect.height &&
-          rect.y < node.y + node.height
-        ) {
-          found.add(node.node.id);
-        }
+        if (overlaps(node, rect)) found.add(node.node.id);
       }
     }
     return found;
