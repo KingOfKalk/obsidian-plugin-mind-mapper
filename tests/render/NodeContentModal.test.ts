@@ -69,6 +69,17 @@ test('renders the full markdown with its own component, unloaded on close', asyn
   expect(modal.contentEl.childElementCount).toBe(0);
 });
 
+test('a failed render shows the raw markdown and logs the error', async () => {
+  const error = new Error('render failed');
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation(() => Promise.reject(error));
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const modal = new NodeContentModal({} as App, node, linkContext());
+  modal.open();
+  await vi.waitFor(() => expect(modal.contentEl.textContent).toBe(node.markdown));
+  expect(log).toHaveBeenCalledWith('Mind Mapper: full content render failed', error);
+  modal.close();
+});
+
 test('the overlay carries its data-mm-id (issue #33)', () => {
   vi.spyOn(MarkdownRenderer, 'render').mockImplementation(() => Promise.resolve());
   const modal = new NodeContentModal({} as App, node, linkContext());
