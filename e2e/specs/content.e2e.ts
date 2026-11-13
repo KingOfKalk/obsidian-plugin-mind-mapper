@@ -223,4 +223,29 @@ describe('tab switching', function () {
     await settle();
     expect(await snapshot()).toEqual(before);
   });
+  // Last in this file: the post processor stays registered until the plugin unloads.
+  it('a render that times out shows the raw markdown, also after the slow render ends', async function () {
+    await browser.executeObsidian(async ({ app }) => {
+      const plugin = (
+        app as unknown as {
+          plugins: { plugins: Record<string, import('obsidian').Plugin> };
+        }
+      ).plugins.plugins['mind-mapper'];
+      // A slow post processor (other plugins): writes into the node after the 5 s timeout.
+      plugin?.registerMarkdownPostProcessor(async (el) => {
+        if (!el.textContent?.includes('SLOW-RENDER')) return;
+        await new Promise((r) => setTimeout(r, 6500));
+        el.createEl('span', { cls: 'late-output', text: 'late' });
+      });
+      await app.vault.adapter.write('render-timeout.md', '# Timeout\n\nSLOW-RENDER text\n');
+    });
+    await openMindMap('render-timeout.md');
+    const content = '.mind-mapper-node[data-node-id="Timeout/#1"] .mind-mapper-node-content';
+    await browser
+      .$('.mind-mapper-node.is-render-error[data-node-id="Timeout/#1"]')
+      .waitForExist({ timeout: 10000 });
+    await browser.pause(3000);
+    expect(await browser.$(content).getText()).toBe('SLOW-RENDER text');
+    await expect(browser.$(`${content} .late-output`)).not.toExist();
+  });
 });

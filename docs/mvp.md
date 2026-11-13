@@ -295,7 +295,7 @@ Project (root, H1)
   - Listeners on elements the plugin creates itself (control bar, nodes, collapse and expand buttons, full screen overlay) may use `addEventListener`: they are removed together with the element
   - Plugin `onunload` does not detach leaves (Obsidian guideline)
 - Re-measure all nodes on theme or font change (`workspace` `css-change` event)
-- Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size
+- Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size; a timed-out render that still finishes later cannot add its output next to the raw source
 - Popout windows: use the view's own `document` and `window`, never the global ones; a tab moved to another window observes its node contents with a `ResizeObserver` of the new window (`onWindowMigrated`); a popout relays its keys to the main window, so there Esc is marked handled by the view scope
 ## Known limits
 

@@ -32,19 +32,27 @@ export class NodeContentRenderer {
     this.owners.set(contentEl, owner);
     const isCurrent = (): boolean => this.owners.get(contentEl) === owner;
 
+    const rendering = MarkdownRenderer.render(
+      this.app,
+      node.markdown,
+      contentEl,
+      this.sourcePath(),
+      owner,
+    );
     try {
-      await withTimeout(
-        MarkdownRenderer.render(this.app, node.markdown, contentEl, this.sourcePath(), owner),
-        RENDER_TIMEOUT_MS,
-        contentEl,
-        (cancel) => this.timers.set(contentEl, cancel),
+      await withTimeout(rendering, RENDER_TIMEOUT_MS, contentEl, (cancel) =>
+        this.timers.set(contentEl, cancel),
       );
     } catch (error) {
       if (!isCurrent()) return;
       console.error('Mind Mapper: node render failed', node.id, error);
-      contentEl.empty();
-      contentEl.setText(node.markdown);
-      contentEl.parentElement?.addClass('is-render-error');
+      showRawMarkdown(node, contentEl);
+      // A timed-out render keeps running and may still write into the element (slow post
+      // processors do): when it ends, the raw markdown replaces that output again.
+      const restore = (): void => {
+        if (isCurrent()) showRawMarkdown(node, contentEl);
+      };
+      rendering.then(restore, restore);
     }
     if (isCurrent()) disableCheckboxes(contentEl);
   }
@@ -61,6 +69,13 @@ export class NodeContentRenderer {
   releaseAll(): void {
     for (const contentEl of [...this.owners.keys()]) this.release(contentEl);
   }
+}
+
+/** Render failure fallback: the raw markdown, `is-render-error` on the node element. */
+function showRawMarkdown(node: MindMapNode, contentEl: HTMLElement): void {
+  contentEl.empty();
+  contentEl.setText(node.markdown);
+  contentEl.parentElement?.addClass('is-render-error');
 }
 
 function withTimeout(
