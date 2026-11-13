@@ -543,17 +543,20 @@ describe('screenshots', function () {
   });
 
   // Issue #57: nested tags as two-part pills (plain, two and three levels; in filled level 1
-  // headings and kanban column headers): light, dark and loud palette, the map and its nodes up close.
-  for (const [mode, loud] of [
-    ['light', false],
-    ['dark', false],
-    ['light', true],
+  // headings and kanban column headers): light, dark and loud palette, the map and its nodes up close;
+  // issue #92: branch colors, and Obsidian's tag colors in theme "none".
+  for (const [mode, loud, theme] of [
+    ['light', false, 'rainbow'],
+    ['dark', false, 'rainbow'],
+    ['light', true, 'rainbow'],
+    ['light', false, 'none'],
   ] as const) {
-    it(`nested tags ${loud ? 'loud' : mode}`, async function () {
-      await useTheme('rainbow', mode);
+    const label = loud ? 'loud' : theme === 'none' ? 'none' : mode;
+    it(`nested tags ${label}`, async function () {
+      await useTheme(theme, mode);
       await openMindMap('demo/Nested tags.md');
       await settle();
-      const name = loud ? `${dir}/loud-nested-tags` : `${dir}/nested-tags-${mode}`;
+      const name = loud ? `${dir}/loud-nested-tags` : `${dir}/nested-tags-${label}`;
       const shoot = async () => {
         // Full screen: the fitted map, then its nodes up close at 100 %.
         await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
@@ -565,6 +568,9 @@ describe('screenshots', function () {
         for (const [selector, suffix] of [
           ['[data-node-id="Nested tags/#1"]', 'paragraph'],
           [':has(a.tag[href="#status/closed"])', 'heading'],
+          // Issue #92: a node on each side of the map (text aligned left / right).
+          [':has(a.tag[href="#status/open"])', 'heading-open'],
+          [':has(a.tag[href="#bug"])', 'item'],
         ] as const) {
           await browser.$(`.mind-mapper-node${selector}`).saveScreenshot(`${name}-${suffix}.png`);
         }
@@ -588,6 +594,9 @@ describe('screenshots', function () {
         await browser
           .$('.mind-mapper-node:has(a.tag[href="#status/open"])')
           .saveScreenshot(`${name}-kanban-header.png`);
+        await browser
+          .$('.mind-mapper-node:has(a.tag[href="#bug"])')
+          .saveScreenshot(`${name}-kanban-card.png`);
         await browser.keys('Escape');
         await browser.executeObsidian(({ app }) => {
           for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
