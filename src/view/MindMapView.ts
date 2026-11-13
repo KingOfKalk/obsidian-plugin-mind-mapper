@@ -43,6 +43,7 @@ import { DrillDown } from './drillDown';
 import { type Anchor, Camera, centredAt } from './camera';
 import { FullScreen } from './fullScreen';
 import { NodeMeasurer } from './nodeMeasurer';
+import { NoteWatcher } from './noteWatcher';
 import { LeafRecency } from '../leafRecency';
 import { fileBasename, type MindMapViewState, parseViewState } from './viewState';
 
@@ -55,8 +56,7 @@ export interface ViewServices {
   warnOnce(id: string, message: string): void;
 }
 
-/** Spec "Live update": debounced about 300 ms. */
-export const LIVE_UPDATE_DEBOUNCE_MS = 300;
+export { LIVE_UPDATE_DEBOUNCE_MS } from './noteWatcher';
 const NO_CLIP = { x: false, y: false };
 
 interface MapDom {
@@ -77,13 +77,28 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private layout: MapLayout | null = null;
   /** Incremented on every load; an async load that is no longer current is discarded. */
   private generation = 0;
-  /** The one `changed` listener (live update, and the first render of a not yet indexed note). */
-  private changeRef: EventRef | null = null;
-  /** Vault rename / delete / create listeners. */
-  private vaultRefs: EventRef[] = [];
-  /** The pinned note was deleted; a note created at its path is shown again. */
-  private deleted = false;
-  private updateTimer: number | null = null;
+  /** Live update and the note's rename / delete / re-create. */
+  private readonly watcher = new NoteWatcher(this.app, {
+    win: () => this.contentEl.win,
+    path: () => this.pinnedFile,
+    hasMap: () => this.tree !== null,
+    register: (ref) => this.registerEvent(ref),
+    changed: (file, data, cache) => this.applyChange(file, data, cache),
+    renamed: (file, oldPath) => {
+      // Set first: setState then sees the same file and keeps the viewport (no fit).
+      this.pinnedFile = file.path;
+      if (this.mapPath === oldPath) this.mapPath = file.path;
+      // Updates the tab title and the saved workspace (setState also refreshes the view header title).
+      this.leaf
+        .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { ...this.viewState() } })
+        .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));
+    },
+    deleted: () => {
+      this.generation++;
+      this.showMessage(t('noteDeleted'));
+    },
+    recreated: () => void this.loadNote(),
+  });
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
   private readonly sizes = new SizeCache(() => this.limits());
@@ -510,8 +525,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.exitFullScreen();
     this.camera.cancel();
     this.generation++;
-    this.stopListening();
-    this.cancelUpdate();
+    this.watcher.stop();
     this.measurer.cancelRelayout();
     this.cancelLayoutFrame();
     this.measurer.disconnect();
@@ -661,9 +675,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private async loadNote(): Promise<void> {
     this.camera.finish();
     const generation = ++this.generation;
-    this.deleted = false;
-    this.cancelUpdate();
-    this.listenForChanges();
+    this.watcher.watch();
     const path = this.pinnedFile;
     if (path === null) return this.showMessage(t('noNoteSelected'));
 
@@ -737,71 +749,11 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.showLayout(this.computeLayout(tree));
   }
 
-  /** Spec "Live update": the event's text matches its cache, no separate read. */
-  private listenForChanges(): void {
-    if (this.changeRef) return;
-    this.listenToVault();
-    this.changeRef = this.app.metadataCache.on('changed', (file, data, cache) => {
-      if (file.path !== this.pinnedFile) return;
-      // Nothing shown yet (loading): render at once.
-      if (!this.tree) return this.applyChange(file, data, cache);
-      this.cancelUpdate();
-      this.updateTimer = this.contentEl.win.setTimeout(() => {
-        this.updateTimer = null;
-        this.applyChange(file, data, cache);
-      }, LIVE_UPDATE_DEBOUNCE_MS);
-    });
-    this.registerEvent(this.changeRef);
-  }
-
-  private stopListening(): void {
-    for (const ref of this.vaultRefs) this.app.vault.offref(ref);
-    this.vaultRefs = [];
-    if (!this.changeRef) return;
-    this.app.metadataCache.offref(this.changeRef);
-    this.changeRef = null;
-  }
-
-  /** Spec "View state": follow a rename, show a deleted note as such. */
-  private listenToVault(): void {
-    const { vault } = this.app;
-    this.vaultRefs = [
-      vault.on('rename', (file, oldPath) => {
-        if (oldPath !== this.pinnedFile) return;
-        // Set first: setState then sees the same file and keeps the viewport (no fit).
-        this.pinnedFile = file.path;
-        if (this.mapPath === oldPath) this.mapPath = file.path;
-        // Updates the tab title and the saved workspace (setState also refreshes the view header title).
-        this.leaf
-          .setViewState({ type: VIEW_TYPE_MIND_MAP, state: { ...this.viewState() } })
-          .catch((error: unknown) => console.error('Mind Mapper: rename failed', error));
-      }),
-      vault.on('delete', (file) => {
-        if (file.path !== this.pinnedFile) return;
-        this.deleted = true;
-        this.generation++;
-        this.cancelUpdate();
-        this.showMessage(t('noteDeleted'));
-      }),
-      vault.on('create', (file) => {
-        if (!this.deleted || file.path !== this.pinnedFile) return;
-        void this.loadNote();
-      }),
-    ];
-    for (const ref of this.vaultRefs) this.registerEvent(ref);
-  }
-
-  private cancelUpdate(): void {
-    if (this.updateTimer === null) return;
-    this.contentEl.win.clearTimeout(this.updateTimer);
-    this.updateTimer = null;
-  }
-
   /** New tree from the note; keeps the viewport anchored (never fits, except a fit still pending from opening). */
   private applyChange(file: TFile, data: string, cache: CachedMetadata): void {
     this.camera.finish();
     this.generation++; // a load still reading the file is outdated now
-    this.cancelUpdate();
+    this.watcher.cancelUpdate();
     this.measurer.cancelRelayout();
     this.safely(file.path, () => this.showChange(file, data, cache));
   }
