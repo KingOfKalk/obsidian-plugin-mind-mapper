@@ -75,6 +75,11 @@ export interface PositionedNode extends Rect {
   branch: number;
   /** Kanban column header: the number of its cards (direct children), shown in a bubble. */
   count?: number;
+  /**
+   * Kanban subtask (issue #91): its depth below its card (1 for a child of the card); a box lighter
+   * per depth. Columns, cards and the other layouts: none.
+   */
+  subtask?: number;
 }
 
 export interface LayoutEdge {

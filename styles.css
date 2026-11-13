@@ -373,11 +373,15 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
   --mind-mapper-color-1: var(--interactive-accent);
 }
 
-/* How much branch color goes into the level 1 fill and the level 2 tint (the rest is the
-   background). Dark mode fills less, so the light text keeps a contrast of at least 4.5:1. */
+/* How much branch color goes into the level 1 fill, the level 2 tint and the kanban subtask boxes
+   (lighter per depth below the card, issue #91; the rest is the background). Dark mode fills less,
+   so the light text keeps a contrast of at least 4.5:1. */
 .mind-mapper-canvas {
   --mind-mapper-fill: 50%;
   --mind-mapper-tint: 18%;
+  --mind-mapper-subtask-1: 12%;
+  --mind-mapper-subtask-2: 8%;
+  --mind-mapper-subtask-3: 5%;
 }
 
 .theme-dark .mind-mapper-canvas {
@@ -477,6 +481,32 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
   background: var(--background-primary);
 }
 
+/* Kanban subtasks (issue #91): a box of their own in the branch color, lighter than the card and
+   lighter per depth below it (`data-subtask` 1, 2, or 3 for everything deeper). */
+.mind-mapper-node[data-subtask='1'] {
+  background: color-mix(
+    in srgb,
+    var(--mind-mapper-branch) var(--mind-mapper-subtask-1),
+    var(--background-primary)
+  );
+}
+
+.mind-mapper-node[data-subtask='2'] {
+  background: color-mix(
+    in srgb,
+    var(--mind-mapper-branch) var(--mind-mapper-subtask-2),
+    var(--background-primary)
+  );
+}
+
+.mind-mapper-node[data-subtask='3'] {
+  background: color-mix(
+    in srgb,
+    var(--mind-mapper-branch) var(--mind-mapper-subtask-3),
+    var(--background-primary)
+  );
+}
+
 /* Blocks (code, tables, callouts, diagrams, images, …) keep a box at every level. */
 .mind-mapper-node.is-block[data-level] {
   background: var(--background-primary);
@@ -506,6 +536,11 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
 /* Nodes without a box (root, level 3 and deeper): the canvas background, not the text behind. */
 .mind-mapper-node:is(.is-root, [data-level='3']):not(.is-block) .mind-mapper-node-expand {
   background: var(--background-primary);
+}
+
+/* Kanban subtasks have a box again (issue #91): its background. */
+.mind-mapper-node[data-subtask]:not(.is-block) .mind-mapper-node-expand {
+  background: inherit;
 }
 
 .mind-mapper-node.is-clipped .mind-mapper-node-expand {

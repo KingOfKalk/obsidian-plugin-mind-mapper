@@ -157,7 +157,7 @@ Project (root, H1)
   - Root: large bold text (1.5 times the normal size), no border, no visible box (its background is the canvas background, so lines behind it do not show through the text); the selection ring still shows
   - Level 1: box filled with the branch color mixed into the background (50 % in light mode, 35 % in dark mode), normal text color, no border; text contrast at least 4.5:1 (WCAG AA) on every palette color in light and dark mode
   - Level 2: light tint of the branch color (18 %), no border
-  - Level 3 and deeper: plain text, no visible box (canvas background, like the root); the colored line leads into it
+  - Level 3 and deeper: plain text, no visible box (canvas background, like the root); the colored line leads into it; kanban subtasks: see "Kanban"
   - Blocks (code, tables, math, quotes, callouts, Mermaid diagrams, image embeds) keep their box at every level: the normal background and a thin border in the branch color
   - Lines: branch color; lines into first-level nodes slightly thicker
   - Every theme and level has the same node size (borders stay, transparent), so a theme switch never changes the layout
@@ -206,14 +206,14 @@ Project (root, H1)
   - Blocks (code, tables, math, quotes, callouts, diagrams, images) keep their own alignment; alignment never changes node sizes or positions
 - Kanban (decided, issue #32): `kanban`, a board instead of a tree, minimal
   - Root: the headline, centered above the board (centered text); the level gap between it and the column headers
-  - Level 1: columns side by side, left to right in source order, top-aligned; every column as wide as the widest header (plus its count bubble), card or subtask (plus its indent) of the whole board, at most the max node width (never narrower than a node itself, e.g. an image thumbnail); wider content is clipped with the fade as everywhere; gap between columns: twice the sibling gap
+  - Level 1: columns side by side, left to right in source order, top-aligned; every column as wide as the widest header (plus its count bubble), card or subtask of the whole board, at most the max node width (never narrower than a node itself, e.g. an image thumbnail); wider content is clipped with the fade as everywhere; gap between columns: twice the sibling gap
   - Level 2: cards stacked downwards in their column, from below the tallest header, as wide as the column
-  - Level 3 and deeper: subtasks, still separate nodes (selection, double click, links), stacked below their card in note order, indented 20 px per level below the card (less when the node would not fit the column; never narrower than the node), reaching to the column's right edge
-  - Gaps within a column: the sibling gap; text flush left; heights are the nodes' own; overlap-free (disjoint columns, one stack per column)
-  - Look: the level emphasis of the color themes (root large and bold without a box, headers filled, cards tinted, subtasks plain text); no connection lines, no lane backgrounds
+  - Level 3 and deeper: subtasks, still separate nodes (selection, double click, links), stacked below their card in note order, as wide as the column with no indent at any depth (issue #91)
+  - Gaps within a column: the sibling gap from the header to the first card and between two cards (from the last subtask of a card to the next card); within a task (card to its first subtask, subtask to subtask) a third of the sibling gap, rounded, so each task reads as one group; text flush left; heights are the nodes' own; overlap-free (disjoint columns, one stack per column)
+  - Look: the level emphasis of the color themes (root large and bold without a box, headers filled, cards tinted); subtasks (issue #91) get a box of their own in the branch color, lighter than the card and lighter per depth below it: 12 % for the card's children, 8 % one level deeper, 5 % for everything deeper (cards 18 %), same in light and dark mode; theme `none`: the same in grays; blocks keep their bordered box; depth shows through brightness, not indentation; no connection lines, no lane backgrounds
   - Card count: each column header shows the number of its direct children in the note (also while collapsed) in a bubble at its right end, styled like the count of a collapsed toggle (accent fill); the layout leaves room for it; information only, a click selects the header; 0 for an empty column
   - No collapse toggles on nodes: collapse only via the controls bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
-  - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap, from the node's (indented) left edge to the column's right edge
+  - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap (the gap there plus the divider gap), across the whole column
   - Unchanged: link lines, drill-down (the center becomes the headline, its children the columns), color themes, smooth camera, full screen
   - Later (not MVP): lane backgrounds, clickable counts, per-column collapse
 ## MVP features

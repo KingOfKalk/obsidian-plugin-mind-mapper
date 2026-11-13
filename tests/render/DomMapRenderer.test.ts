@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { COUNT_BUBBLE, countBubbleWidth } from '../../src/layout/kanban';
 import type { MapLayout, PositionedNode } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
@@ -366,6 +367,50 @@ describe('kanban (issue #32)', () => {
     expect(bubbles(parent)[0]?.label).toBe('0 Karten');
     renderer.setLayout(kanban(1));
     expect(bubbles(parent)[0]?.label).toBe('1 Karte');
+  });
+
+  test('issue #91: subtasks carry their depth below the card (1, 2, or 3 for deeper) for their box', () => {
+    const { parent, renderer } = setup();
+    const board = chain(6);
+    renderer.setLayout({
+      ...board,
+      nodes: board.nodes.map((p) => (p.depth > 2 ? { ...p, subtask: p.depth - 2 } : p)),
+      edges: [],
+      toggles: false,
+    });
+    const subtasks = () => attrsOf(parent, '.mind-mapper-node', 'data-subtask');
+    expect(subtasks()).toEqual([null, null, null, '1', '2', '3', '3']);
+    // The level emphasis stays as it is.
+    expect(levelsOf(parent, '.mind-mapper-node')).toEqual([null, '1', '2', '3', '3', '3', '3']);
+    // Another layout (same node elements): no subtask boxes.
+    renderer.setLayout(chain(6));
+    expect(subtasks()).toEqual([null, null, null, null, null, null, null]);
+  });
+
+  test('issue #91: styles.css boxes subtasks in the branch color, lighter than the card, lighter per depth', () => {
+    const css = readFileSync('styles.css', 'utf8');
+    const percent = (name: string): number => {
+      const match = new RegExp(`--mind-mapper-${name}: (\\d+)%;`).exec(css);
+      if (!match?.[1]) throw new Error(`no --mind-mapper-${name}`);
+      return Number(match[1]);
+    };
+    const tints = [
+      percent('tint'),
+      percent('subtask-1'),
+      percent('subtask-2'),
+      percent('subtask-3'),
+    ];
+    expect(tints.every((tint, i) => i === 0 || (tint < (tints[i - 1] ?? 0) && tint > 0))).toBe(
+      true,
+    );
+    for (const depth of [1, 2, 3]) {
+      const rule = new RegExp(
+        `\\.mind-mapper-node\\[data-subtask='${depth}'\\] \\{\\s*background: color-mix\\(\\s*in srgb,\\s*var\\(--mind-mapper-branch\\) var\\(--mind-mapper-subtask-${depth}\\),\\s*var\\(--background-primary\\)\\s*\\);`,
+      );
+      expect(css).toMatch(rule);
+      // After the plain text rule of level 3, so it wins in kanban.
+      expect(css.search(rule)).toBeGreaterThan(css.indexOf(".mind-mapper-node[data-level='3'] {"));
+    }
   });
 
   test('a header rendered later (culling) gets its bubble', () => {
