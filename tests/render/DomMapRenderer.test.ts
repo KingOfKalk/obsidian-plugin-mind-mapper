@@ -785,6 +785,47 @@ describe('culling', () => {
     raf.mockRestore();
   });
 
+  /** The root in view at (0, 0) plus `count` 10 x 10 nodes from (`x0`, `y0`), `perRow` per row, 20 px apart. */
+  function marginOnly(count: number, x0: number, y0: number, perRow: number): MapLayout {
+    const root = grid().nodes[0]!;
+    const extra = Array.from({ length: count }, (_, i) => ({
+      ...root,
+      node: { ...node(`m${i}`), markdown: `m${i}` },
+      x: x0 + (i % perRow) * 20,
+      y: y0 + Math.floor(i / perRow) * 20,
+      width: 10,
+      height: 10,
+      depth: 1,
+      branch: i,
+    }));
+    return { ...grid(), nodes: [root, ...extra], edges: [] };
+  }
+
+  test('nodes only in the margin do not count towards the 300 node cap; they still render (issue #47)', () => {
+    const { parent, renderer } = culled();
+    const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
+    renderer.setTransform({ x: 0, y: 0, zoom: 1 });
+    // view 0..400, margin -200..600: 351 nodes in the strip x 410..580, y -190..580 (margin only)
+    renderer.setLayout(marginOnly(351, 410, -190, 9));
+    expect(renderer.renderedCount()).toBe(RENDER_BUDGET);
+    for (let pass = 0; pass < 10; pass++) renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(352);
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+    raf.mockRestore();
+  });
+
+  test('nodes only in the margin do not count towards the skeleton zoom minimum (issue #47)', () => {
+    const { parent, renderer } = culled();
+    const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
+    renderer.setTransform({ x: 0, y: 0, zoom: 0.1 });
+    // view 0..4000 (world), margin -2000..6000: 61 nodes at x 4100..5300 (margin only)
+    renderer.setLayout(marginOnly(61, 4100, 0, 61));
+    for (let pass = 0; pass < 3; pass++) renderer.updateVisible();
+    expect(renderer.renderedCount()).toBe(62);
+    expect(parent.querySelector('path.mind-mapper-skeleton')).toBeNull();
+    raf.mockRestore();
+  });
+
   test('setTransform schedules one culling pass per animation frame', () => {
     const { renderer } = culled();
     const raf = vi.spyOn(renderer.canvasEl.win, 'requestAnimationFrame').mockReturnValue(1);
