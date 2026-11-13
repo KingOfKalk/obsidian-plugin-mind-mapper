@@ -271,3 +271,15 @@ test('trailing tags in the box (inside, the root, centered text) are no tag row'
   FakeRO.trigger();
   expect(sizes.get(a)?.tags).toBeNull();
 });
+
+// A clipped node fades its overflowing edge with a mask, which would hide the row too: styles.css
+// leaves the row out (the content overlay shows the full content), the layout reserves no room.
+test('a clipped node has no tag row', () => {
+  const { measurer, sizes, a, elA } = setup();
+  measurer.observe(new Map([['a', elA]]));
+  sized(elA, 50, 900);
+  tagRow(elA, [[0, 80]], 22).style.position = 'absolute';
+  FakeRO.trigger();
+  expect(sizes.get(a)?.clip.y).toBe(true);
+  expect(sizes.get(a)?.tags).toBeNull();
+});

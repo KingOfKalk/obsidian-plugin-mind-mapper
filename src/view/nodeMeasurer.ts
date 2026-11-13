@@ -117,7 +117,9 @@ export class NodeMeasurer {
       if (!node || !el.instanceOf(HTMLElement)) continue;
       // Not laid out (yet): no real size to take.
       if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
-      const measured = { ...measuredSize(el, this.host.limits()), tags: tagRowSize(el) };
+      const size = measuredSize(el, this.host.limits());
+      // A clipped node shows no tag row (styles.css: its fade mask would hide it).
+      const measured = { ...size, tags: size.clipped ? null : tagRowSize(el) };
       if (this.sizes.set(node, measured)) changed = true;
       this.host.setClipped(node.id, measured.clip);
     }

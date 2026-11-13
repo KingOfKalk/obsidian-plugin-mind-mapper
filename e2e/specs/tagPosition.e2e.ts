@@ -403,6 +403,24 @@ describe('tag rows (issue #103)', function () {
   });
 });
 
+describe('a clipped node (issue #103)', function () {
+  it('shows no tag row and gets no room for one', async function () {
+    const long = Array.from({ length: 14 }, (_, i) => `Line ${i} of a long paragraph`).join(' ');
+    await writeNote(
+      'tag-clipped.md',
+      `---\nmind-mapper-layout: left-to-right\n---\n# Clipped\n\n${long} #end/tag\n\nNext\n`,
+    );
+    await openMindMap('tag-clipped.md');
+    await settle();
+    const clipped = await geometry('Clipped/#1');
+    const next = await geometry('Clipped/#2');
+    expect(clipped.row).not.toBeNull();
+    expect(clipped.pills[0]!.right - clipped.pills[0]!.left).toBe(0);
+    // Sibling gap 12: no room for a row.
+    expect(near(next.box.top, clipped.box.bottom + 12)).toBe(true);
+  });
+});
+
 const BOARD = 'tag-board.md';
 const BOARD_TEXT = [
   '---',

@@ -311,6 +311,13 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
   flex: none;
 }
 
+/* A clipped node fades its overflowing edge with a mask on the content, which would hide the row
+   as well: no row (its last line is cut off anyway; the content overlay shows the full content).
+   The view measures no row for it either. */
+.mind-mapper-node.is-tags-outside.is-clipped .mind-mapper-trailing-tags.is-last-line {
+  display: none;
+}
+
 .mind-mapper-node.is-tags-outside.is-align-left .mind-mapper-trailing-tags.is-last-line {
   right: -1px;
   justify-content: flex-end;
