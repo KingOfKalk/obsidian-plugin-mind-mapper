@@ -2148,6 +2148,86 @@ test('Esc that nothing handled is marked handled while the map is the active vie
   expect(press()).toBe(false);
 });
 
+/**
+ * Obsidian's Scope.handleKey: the first matching handler decides, except that a catch-all (no key,
+ * no modifiers) returning nothing lets the key go on.
+ */
+function handleKey(view: MindMapView, evt: KeyboardEvent): unknown {
+  for (const h of (view.scope as unknown as MockScope).handlers) {
+    if (h.key !== null && h.key.toLowerCase() !== evt.key.toLowerCase()) continue;
+    const result = h.func(evt);
+    if (result !== undefined || h.key !== null || h.modifiers !== null) return result;
+  }
+  return undefined;
+}
+
+test('Esc on a map in a popout is marked handled by the view scope (the relayed key, #44)', async () => {
+  const ws = new FakeWorkspace();
+  ws.addNote('Note.md', 'worked-example');
+  const { view } = newView(ws);
+  await view.onOpen();
+  ws.activeView = view;
+  const escape = (win: Window) => {
+    const Keyboard = (win as Window & typeof globalThis).KeyboardEvent;
+    return new Keyboard('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+  };
+  // In the main window the document listener marks it; the scope leaves it alone.
+  const inMain = escape(window);
+  expect(handleKey(view, inMain)).toBeUndefined();
+  expect(inMain.defaultPrevented).toBe(false);
+
+  const frame = document.createElement('iframe');
+  document.body.appendChild(frame);
+  const popout = frame.contentWindow!;
+  (
+    globalThis as unknown as { migrateToWindow: (el: HTMLElement, win: Window) => void }
+  ).migrateToWindow(view.containerEl, popout);
+  // In a popout: marked handled, and the key goes on (nothing returned).
+  const inPopout = escape(window);
+  expect(handleKey(view, inPopout)).toBeUndefined();
+  expect(inPopout.defaultPrevented).toBe(true);
+  // A later Esc handler (full screen registers one) still runs after it.
+  const later = vi.fn(() => false);
+  view.scope!.register([], 'Escape', later);
+  expect(handleKey(view, escape(window))).toBe(false);
+  expect(later).toHaveBeenCalledOnce();
+  // Another view is active: untouched.
+  ws.activeView = null;
+  const other = escape(window);
+  handleKey(view, other);
+  expect(other.defaultPrevented).toBe(false);
+
+  await view.onClose();
+  document.body.empty();
+});
+
+test('a map moved to another window observes its contents with an observer of that window (#44)', async () => {
+  const start = FakeRO.instances.length;
+  const { view } = await openWith('worked-example', { settings: () => LTR_SETTINGS });
+  document.body.appendChild(view.containerEl);
+  const before = FakeRO.instances.slice(start);
+  expect(before).toHaveLength(1);
+  const contents = [...before[0]!.observed];
+  expect(contents.length).toBeGreaterThan(0);
+
+  const frame = document.createElement('iframe');
+  document.body.appendChild(frame);
+  class PopoutObserver extends (FakeRO as unknown as typeof ResizeObserver) {}
+  Object.assign(frame.contentWindow!, { ResizeObserver: PopoutObserver });
+  (
+    globalThis as unknown as { migrateToWindow: (el: HTMLElement, win: Window) => void }
+  ).migrateToWindow(view.containerEl, frame.contentWindow!);
+
+  // The old window's observer is released, one of the new window observes the same contents.
+  expect(before[0]!.connected).toBe(false);
+  const after = FakeRO.instances.slice(start + 1);
+  expect(after).toHaveLength(1);
+  expect(after[0]).toBeInstanceOf(PopoutObserver);
+  expect([...after[0]!.observed]).toEqual(contents);
+  await view.onClose();
+  document.body.empty();
+});
+
 /** Headings-only note: `# Big`, `groups` H2s with `perGroup` H3s each (1 + groups * (1 + perGroup) nodes). */
 function bigNote(groups: number, perGroup: number): { text: string; cache: CachedMetadata } {
   const lines: string[] = [];

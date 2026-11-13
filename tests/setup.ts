@@ -78,6 +78,26 @@ Object.defineProperty(Node.prototype, 'win', {
   },
 });
 
+/** `onWindowMigrated` listeners per element; `migrateToWindow` calls them like Obsidian does. */
+const migrationListeners = new WeakMap<HTMLElement, Set<(win: Window) => unknown>>();
+
+Object.assign(HTMLElement.prototype, {
+  onWindowMigrated(this: HTMLElement, listener: (win: Window) => unknown) {
+    const listeners = migrationListeners.get(this) ?? new Set();
+    migrationListeners.set(this, listeners);
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
+});
+
+/** Moves `el` into the body of `win` (e.g. a tab dragged into a popout) and reports the move. */
+function migrateToWindow(el: HTMLElement, win: Window): void {
+  win.document.body.appendChild(win.document.adoptNode(el));
+  for (const listener of migrationListeners.get(el) ?? []) listener(win);
+}
+
+Object.assign(globalThis, { migrateToWindow });
+
 // jsdom has no pointer capture; Electron does.
 Object.assign(Element.prototype, {
   setPointerCapture() {},

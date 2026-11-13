@@ -296,7 +296,7 @@ Project (root, H1)
   - Plugin `onunload` does not detach leaves (Obsidian guideline)
 - Re-measure all nodes on theme or font change (`workspace` `css-change` event)
 - Render failure (exception or timeout): node shows the raw source as plain text with an error marker and a fallback size
-- Popout windows: use the view's own `document` and `window`, never the global ones
+- Popout windows: use the view's own `document` and `window`, never the global ones; a tab moved to another window observes its node contents with a `ResizeObserver` of the new window (`onWindowMigrated`); a popout relays its keys to the main window, so there Esc is marked handled by the view scope
 ## Known limits
 
 - Renaming the root H1 resets collapse state, selection and drill-down, because node IDs start with the root text
