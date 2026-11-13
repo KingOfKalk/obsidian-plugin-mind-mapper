@@ -127,7 +127,7 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 
 Fit to view, the zoom buttons, Reset zoom to 100%, the zoom presets, a typed zoom and Back to root glide to their place in about a quarter of a second; the zoom level follows along. Panning and zooming with the wheel or trackpad stay immediate, and a wheel turn or drag during a glide ends it at once. With the system setting "reduce motion" the view jumps instead.
 
-The controls bar at the bottom center, left to right:
+The control bar at the bottom center, left to right:
 
 | Button | Does |
 |---|---|
@@ -143,7 +143,7 @@ The controls bar at the bottom center, left to right:
 | Color theme (palette) | menu with the color themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
 
-![A collapsed Vegetables branch with its badge 4, and the highlighted collapse button in the controls bar](images/manual/collapsed.png)
+![A collapsed Vegetables branch with its badge 4, and the highlighted collapse button in the control bar](images/manual/collapsed.png)
 
 ## Select nodes and jump to the note
 
@@ -185,7 +185,7 @@ The controls bar at the bottom center, left to right:
 
 Focus on one branch, e.g. while presenting or exploring a large map: the selected node becomes the center of the map, and only it and everything below it are shown.
 
-- Drill in: select a node with children, then the drill down button in the controls bar (arrow down to a dot), the key `D` or the command "Drill down into selection"
+- Drill in: select a node with children, then the drill down button in the control bar (arrow down to a dot), the key `D` or the command "Drill down into selection"
   - The node becomes the center: large and without a box, like the root
   - Its children become the first level: filled boxes, each with its own branch color
   - The map is fitted to view
@@ -198,7 +198,7 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
 - Animation: the view glides towards the node, then the map cross-fades into the drilled view; drilling out runs it in reverse. With the system setting "reduce motion" the map switches instantly. Pressing `D` again during the animation finishes it at once and goes on
 - The drilled branch belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. If the branch is deleted, its heading or list item text is changed, or a list item or paragraph is inserted above a drilled list item, the map quietly shows the whole note again. The note itself is never changed
 
-![The feature tour drilled into Timeline: Timeline as the center with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the controls bar](images/manual/drill-down.png)
+![The feature tour drilled into Timeline: Timeline as the center with a small target icon above it, Before launch and Launch day as filled first-level nodes, and the highlighted drill down button in the control bar](images/manual/drill-down.png)
 
 ## Layouts
 
@@ -214,7 +214,7 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
 
 - For all notes: setting "Default layout"
 - For one note: `mind-mapper-layout` in its frontmatter
-- For the open map only: the layout button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
+- For the open map only: the layout button in the control bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 
 `circle-clockwise`:
 
@@ -291,7 +291,7 @@ How a node looks depends on its level, in every theme:
 
 - For all notes: setting "Default theme"
 - For one note: `mind-mapper-theme` in its frontmatter
-- For the open map only: the color theme button in the controls bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
+- For the open map only: the color theme button in the control bar, see [Layout and theme of the open map](#layout-and-theme-of-the-open-map)
 - The colors come from the Obsidian theme: they suit light and dark mode, and community themes can tune them
 - Changing the theme applies to an open map right away
 - If you chose "None" in an earlier version, the setting stays "None"; pick "Rainbow" to get the colors
@@ -302,7 +302,7 @@ How a node looks depends on its level, in every theme:
 
 ## Layout and theme of the open map
 
-To show a map differently for a moment, e.g. while presenting, change its layout or color theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
+To show a map differently for a moment, e.g. while presenting, change its layout or color theme from the control bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
 
 - Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top and kanban; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
 - Color theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent color; the shown theme is checked. A choice recolors the map at once; nothing moves
@@ -311,7 +311,7 @@ To show a map differently for a moment, e.g. while presenting, change its layout
 - The choice belongs to the map tab: it stays after closing and reopening Obsidian and after renaming the note. A map opened anew starts with the note's layout and theme
 - Commands: "Change layout…" and "Change color theme…" open the same menus (arrow keys and `Enter` work); "Next layout" and "Next color theme" step to the next one, after the last back to the first
 
-![The garden plans map in ocean colors with the highlighted color theme button, and the layout menu open above the controls bar with balanced clockwise checked](images/manual/layout-menu.png)
+![The garden plans map in ocean colors with the highlighted color theme button, and the layout menu open above the control bar with balanced clockwise checked](images/manual/layout-menu.png)
 
 ## Frontmatter keys
 
@@ -342,7 +342,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 
 | Group | Setting | Control | Range | Default | Does |
 |---|---|---|---|---|---|
-| Map | Default layout | dropdown | the seven [layouts](#layouts), labeled like in the controls bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
+| Map | Default layout | dropdown | the seven [layouts](#layouts), labeled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [color theme](#color-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
@@ -379,7 +379,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | Drill out one level | the active mind map is drilled in | |
 | Show the whole map | the active mind map is drilled in | |
 
-- Collapse all and Expand all are two commands, so a hotkey always does the same; the controls bar has one button for both
+- Collapse all and Expand all are two commands, so a hotkey always does the same; the control bar has one button for both
 - The key `D` drills in and out without a hotkey, while the map has focus; see [Drill down](#drill-down)
 
 ## Languages
@@ -387,7 +387,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 - English and German
 - Follows Obsidian's language (Settings → General → Language); German when Obsidian is German, else English
 - Obsidian applies a language change after a restart
-- Frontmatter keys, layout names and color theme names stay English in every language (the settings dropdowns and the controls bar menus show translated labels)
+- Frontmatter keys, layout names and color theme names stay English in every language (the settings dropdowns and the control bar menus show translated labels)
 
 ## Large notes
 
