@@ -10,6 +10,7 @@ import { setElementId } from '../elementIds';
 import type { MindMapNode } from '../parser/types';
 import type { LeafRecency } from '../leafRecency';
 import { attachLinkHandling } from './linkHandling';
+import { splitNestedTags } from './nestedTags';
 import { disableCheckboxes } from './NodeContentRenderer';
 
 export interface ModalLinkContext {
@@ -53,7 +54,10 @@ export class NodeContentModal extends Modal {
       this.link.sourcePath(),
       this.owner,
     )
-      .then(() => disableCheckboxes(this.contentEl))
+      .then(() => {
+        disableCheckboxes(this.contentEl);
+        splitNestedTags(this.contentEl);
+      })
       .catch((error: unknown) => {
         console.error('Mind Mapper: full content render failed', error);
         this.contentEl.setText(this.node.markdown);

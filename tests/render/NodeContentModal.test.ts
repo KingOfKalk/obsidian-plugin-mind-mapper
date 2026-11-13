@@ -76,3 +76,17 @@ test('the overlay carries its data-mm-id (issue #33)', () => {
   expect(modal.modalEl.getAttribute('data-mm-id')).toBe('modal.node-content');
   modal.close();
 });
+
+test('nested tags in the overlay look like in the node (issue #57)', async () => {
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+    el.createEl('a', { cls: 'tag', text: '#obsidian/test', attr: { href: '#obsidian/test' } });
+    return Promise.resolve();
+  });
+  const modal = new NodeContentModal({} as App, node, linkContext());
+  modal.open();
+  await vi.waitFor(() =>
+    expect(modal.contentEl.querySelector('a.tag')?.getAttribute('data-mm-id')).toBe('node.tag'),
+  );
+  expect(modal.contentEl.querySelector('.mind-mapper-tag-scope')?.textContent).toBe('#obsidian');
+  modal.close();
+});

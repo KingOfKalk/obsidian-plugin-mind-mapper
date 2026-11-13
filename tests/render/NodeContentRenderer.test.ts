@@ -183,6 +183,21 @@ test('checkboxes are disabled after rendering', async () => {
   expect(contentEl.querySelector<HTMLInputElement>('input')?.disabled).toBe(true);
 });
 
+test('nested tags become scope + value pills after rendering (issue #57)', async () => {
+  vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+    el.createEl('p').createEl('a', {
+      cls: 'tag',
+      text: '#obsidian/test',
+      attr: { href: '#obsidian/test' },
+    });
+    return Promise.resolve();
+  });
+  const { renderer, contentEl } = setup();
+  await renderer.render(node('#obsidian/test'), contentEl);
+  expect(contentEl.querySelector('a.tag')?.getAttribute('data-mm-id')).toBe('node.tag');
+  expect(contentEl.querySelector('.mind-mapper-tag-value')?.textContent).toBe('test');
+});
+
 test('release clears the pending render timeout', () => {
   vi.useFakeTimers();
   vi.spyOn(MarkdownRenderer, 'render').mockReturnValue(new Promise<void>(() => {}));

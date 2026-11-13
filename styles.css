@@ -167,6 +167,45 @@
   list-style: none;
 }
 
+/* Nested tags (issue #57, src/render/nestedTags.ts): a two-part pill like a GitLab scoped label,
+   the scope filled, the value outlined, in Obsidian's tag colours (--tag-*), not the branch colour.
+   The value sits on the canvas background below the tag tint, so it reads on filled nodes too. */
+a.tag.mind-mapper-tag,
+a.tag.mind-mapper-tag:hover {
+  display: inline-flex;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--tag-color);
+  background: var(--background-primary);
+  vertical-align: baseline;
+}
+
+.mind-mapper-tag-scope,
+.mind-mapper-tag-value {
+  padding: var(--tag-padding-y) var(--tag-padding-x);
+}
+
+.mind-mapper-tag-scope {
+  padding-inline-end: calc(var(--tag-padding-x) * 0.6);
+  background: var(--tag-color);
+  color: var(--background-primary);
+}
+
+.mind-mapper-tag-value {
+  padding-inline-start: calc(var(--tag-padding-x) * 0.6);
+  background: var(--tag-background);
+  color: var(--tag-color);
+}
+
+a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
+  background: var(--tag-background-hover);
+}
+
+/* The `/` stays in the text (copying gives the full tag) but takes no room. */
+.mind-mapper-tag-separator {
+  font-size: 0;
+}
+
 /* Image embed nodes (a node that is a single image): fixed thumbnail box, so the size is known
    before the image loads (the layout estimate). Images inside text, tables or callouts keep their
    own size (an icon stays an icon), at most the node width. */

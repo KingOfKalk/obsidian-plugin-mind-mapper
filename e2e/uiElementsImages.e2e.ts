@@ -53,7 +53,7 @@ mind-mapper-layout: kanban
 ## To book
 
 - Flight
-- Hotel
+- Hotel #area/old-town
 
 ---
 

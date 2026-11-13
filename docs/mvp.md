@@ -33,6 +33,11 @@
   - Callout (decided): one node, rendered as in Obsidian
   - Block ID `^id`: hidden in the node
   - Skip: frontmatter, comments `%% %%`, HTML blocks, footnote definitions; footnote references stay as text
+- Nested tags (decided, issue #57): a tag with a `/` becomes a two-part pill, like a GitLab scoped label
+  - Split at the last `/`: scope = `#` and everything before it, value = the last segment (`#obsidian/test` -> `#obsidian` + `test`, `#project/alpha/backend` -> `#project/alpha` + `backend`); tags without `/` keep Obsidian's look
+  - Look: scope filled, value outlined and lighter, in Obsidian's tag colours (`--tag-*`), not the branch colour; the value sits on the canvas background, so it reads on filled nodes (level 1, kanban column headers)
+  - Only in the map (node content and the content overlay), not in the editor or reading view; always on, no setting
+  - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node; the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
   - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
   - Ignored: before a parent's first child, after the last child (no next node)

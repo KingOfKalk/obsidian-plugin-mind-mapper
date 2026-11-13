@@ -19,6 +19,7 @@ export type ElementId =
   | 'node.toggle'
   | 'node.drill-marker'
   | 'node.card-count'
+  | 'node.tag'
   | 'edge'
   | 'divider'
   | 'skeleton'

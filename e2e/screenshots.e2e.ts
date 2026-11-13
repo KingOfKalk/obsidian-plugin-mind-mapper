@@ -541,6 +541,64 @@ describe('screenshots', function () {
     await browser.keys('Escape');
   });
 
+  // Issue #57: nested tags as two-part pills (plain, two and three levels; in filled level 1
+  // headings and kanban column headers): light, dark and loud palette, the map and its nodes up close.
+  for (const [mode, loud] of [
+    ['light', false],
+    ['dark', false],
+    ['light', true],
+  ] as const) {
+    it(`nested tags ${loud ? 'loud' : mode}`, async function () {
+      await useTheme('rainbow', mode);
+      await openMindMap('demo/Nested tags.md');
+      await settle();
+      const name = loud ? `${dir}/loud-nested-tags` : `${dir}/nested-tags-${mode}`;
+      const shoot = async () => {
+        // Full screen: the fitted map, then its nodes up close at 100 %.
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await browser.pause(300);
+        await browser.saveScreenshot(`${name}.png`);
+        await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+        await waitForAnimation();
+        await pointerAway();
+        for (const [selector, suffix] of [
+          ['[data-node-id="Nested tags/#1"]', 'paragraph'],
+          [':has(a.tag[href="#status/closed"])', 'heading'],
+        ] as const) {
+          await browser.$(`.mind-mapper-node${selector}`).saveScreenshot(`${name}-${suffix}.png`);
+        }
+        await browser.keys('Escape');
+        await browser.executeObsidian(({ app }) => {
+          for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+            (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(
+              'kanban',
+            );
+          }
+        });
+        await settle();
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await browser.executeObsidianCommand('mind-mapper:fit-to-view');
+        await waitForAnimation();
+        await pointerAway();
+        await browser.saveScreenshot(`${name}-kanban.png`);
+        await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+        await waitForAnimation();
+        await pointerAway();
+        await browser
+          .$('.mind-mapper-node:has(a.tag[href="#status/open"])')
+          .saveScreenshot(`${name}-kanban-header.png`);
+        await browser.keys('Escape');
+        await browser.executeObsidian(({ app }) => {
+          for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+            (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(null);
+          }
+        });
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
+
   it('back to light mode without a colour theme', async function () {
     await useTheme('none', 'light');
   });
