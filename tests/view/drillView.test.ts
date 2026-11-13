@@ -113,7 +113,7 @@ function shown(view: MindMapView): { x: number; y: number; zoom: number } {
   return { x: Number(match[1]), y: Number(match[2]), zoom: Number(match[3]) };
 }
 
-/** Screen position of the node's centre. */
+/** Screen position of the node's center. */
 function screenCentre(view: MindMapView, id: string): { x: number; y: number } {
   const el = nodeEl(view, id);
   const t = shown(view);
@@ -167,7 +167,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     reducedMotion = true;
   });
 
-  test('a selected node with children becomes the centre: only its subtree, styled like the root, fitted', async () => {
+  test('a selected node with children becomes the center: only its subtree, styled like the root, fitted', async () => {
     const { view, ws } = await open('crosslinks');
     const save = vi.spyOn(ws, 'requestSaveLayout');
     expect(view.canDrillDown()).toBe(false);
@@ -185,17 +185,17 @@ describe('drilling in and out (reduced motion: instant)', () => {
     expect(centre.hasAttribute('data-branch')).toBe(false);
     expect(view.selectedId).toBe('Links/Beta');
     expect(view.getTransform()).toEqual(fitted(view));
-    // Centre marker and highlighted button (it drills out now: the centre is selected).
+    // Center marker and highlighted button (it drills out now: the center is selected).
     expect(view.contentEl.querySelector('.mind-mapper-drill-marker')).not.toBeNull();
     expect(drillButton(view).classList.contains('is-active')).toBe(true);
     expect(drillButton(view).getAttribute('aria-label')).toBe('Drill out one level');
-    // The centre has no collapse toggle, like the root.
+    // The center has no collapse toggle, like the root.
     expect(view.contentEl.querySelector('[data-node-id="Links/Beta"].mind-mapper-collapse')).toBe(
       null,
     );
   });
 
-  test('levels and branch colours are recomputed from the new centre', async () => {
+  test('levels and branch colors are recomputed from the new center', async () => {
     const { view } = await open('crosslinks');
     expect(nodeEl(view, 'Links/Gamma/#2').getAttribute('data-level')).toBe('2');
     expect(nodeEl(view, 'Links/Gamma/#2').getAttribute('data-branch')).toBe('3');
@@ -235,7 +235,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     view.drill();
     expect(view.getState()).toMatchObject({ drill: ['Links/Beta', 'Links/Beta/Inner'] });
     expect(nodeIds(view)).toEqual(['Links/Beta/Inner', 'Links/Beta/Inner/#1']);
-    // The centre is selected: the button and D drill out one level.
+    // The center is selected: the button and D drill out one level.
     view.drill();
     expect(view.getState()).toMatchObject({ drill: ['Links/Beta'] });
     expect(nodeIds(view)).toEqual(BETA);
@@ -251,7 +251,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     expect(view.selectedId).toBe('Links/Beta');
     expect(view.contentEl.querySelector('.mind-mapper-drill-marker')).toBeNull();
     expect(drillButton(view).classList.contains('is-active')).toBe(false);
-    // The whole map, fitted (margin, badges, "Max zoom for fit"), not the node centred.
+    // The whole map, fitted (margin, badges, "Max zoom for fit"), not the node centered.
     expect(view.getTransform()).toEqual(fitted(view));
   });
 
@@ -303,7 +303,7 @@ describe('drilling in and out (reduced motion: instant)', () => {
     expect(view.getState()).toMatchObject({ drill: ['Links/Alpha'] });
   });
 
-  test('"Back to root" goes to the current centre', async () => {
+  test('"Back to root" goes to the current center', async () => {
     const { view } = await open('crosslinks');
     drillInto(view, 'Links/Beta');
     view.select('Links/Beta/Inner/#1');

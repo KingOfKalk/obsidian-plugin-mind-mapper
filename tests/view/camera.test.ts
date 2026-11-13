@@ -207,7 +207,7 @@ test('center and onScreen use the last real size while the canvas is hidden', ()
   expect(camera.onScreen({ x: 900, y: 10, width: 10, height: 10 })).toBe(false);
 });
 
-test('centredAt puts the centre of a rect at a screen point (inverse of screenCentreOf)', () => {
+test('centredAt puts the center of a rect at a screen point (inverse of screenCentreOf)', () => {
   const rect = { x: 40, y: 60, width: 100, height: 20 };
   const t = centredAt(rect, { x: 300, y: 200 }, 1.5);
   expect(t.zoom).toBe(1.5);

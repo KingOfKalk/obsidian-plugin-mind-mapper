@@ -47,7 +47,7 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
     case 'circle-counter-clockwise': {
       const clockwise = circle(tree.root, options);
       const raw = layout === 'circle-clockwise' ? clockwise : mirrorX(clockwise, tree.root);
-      // The root has children on both sides; it gets no collapse toggle and centred text.
+      // The root has children on both sides; it gets no collapse toggle and centered text.
       const nodes = raw.nodes.map((p) =>
         p.node === tree.root ? { ...p, childSide: 'right' as const, align: 'center' as const } : p,
       );
@@ -141,7 +141,7 @@ function canonical(
       const gap = gapBefore(node, i);
       if (previous && dividerAt(node, i)) {
         const y = childTop + gap / 2;
-        // Spans both neighbouring branches, not just the two nodes (spec "Dividers").
+        // Spans both neighboring branches, not just the two nodes (spec "Dividers").
         const length = Math.max(extents.get(previous) ?? 0, extents.get(child) ?? 0);
         dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + length, y } });
       }

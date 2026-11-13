@@ -88,7 +88,7 @@ export class Camera {
     this.zoomTo(nextZoomStep(this.current.zoom, -1));
   }
 
-  /** Zoom (1 = 100 %, clamped to the limits), centred on the canvas; glides there. */
+  /** Zoom (1 = 100 %, clamped to the limits), centered on the canvas; glides there. */
   zoomTo(zoom: number): void {
     this.finish();
     this.glideTo(() => zoomTo(this.current, zoom, this.center()));
@@ -276,7 +276,7 @@ export class Camera {
   }
 }
 
-/** Screen position of the centre of `rect` (world) under `t`. */
+/** Screen position of the center of `rect` (world) under `t`. */
 export function screenCentreOf(rect: Rect, t: Transform): Point {
   return {
     x: (rect.x + rect.width / 2) * t.zoom + t.x,
@@ -284,7 +284,7 @@ export function screenCentreOf(rect: Rect, t: Transform): Point {
   };
 }
 
-/** The transform at `zoom` that puts the centre of `rect` (world) at the screen point `at`. */
+/** The transform at `zoom` that puts the center of `rect` (world) at the screen point `at`. */
 export function centredAt(rect: Rect, at: Point, zoom: number): Transform {
   return {
     x: at.x - (rect.x + rect.width / 2) * zoom,

@@ -43,7 +43,7 @@ test('visibleTree with nothing collapsed returns the same root object', () => {
   expect(hidden.size).toBe(0);
 });
 
-test('visibleTree never collapses the root (a drilled-in centre that is collapsed in the whole map)', () => {
+test('visibleTree never collapses the root (a drilled-in center that is collapsed in the whole map)', () => {
   const tree = fixtureTree('lists', 'lists');
   const state = new CollapseState();
   state.toggle(tree.root.id);

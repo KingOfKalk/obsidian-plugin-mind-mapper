@@ -196,7 +196,7 @@ describe('user manual images', function () {
     await shoot('layout-balanced');
   });
 
-  it('rainbow colour theme', async function () {
+  it('rainbow color theme', async function () {
     await setWindowSize(820, 480);
     await showMap(SIMPLE);
     await fit();

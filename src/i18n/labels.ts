@@ -13,7 +13,7 @@ export const LAYOUT_LABELS: Readonly<Record<MapLayoutName, MessageKey>> = {
   kanban: 'layoutKanban',
 };
 
-/** Dropdown and menu labels of the colour themes. */
+/** Dropdown and menu labels of the color themes. */
 export const THEME_LABELS: Readonly<Record<MapThemeName, MessageKey>> = {
   none: 'themeNone',
   rainbow: 'themeRainbow',

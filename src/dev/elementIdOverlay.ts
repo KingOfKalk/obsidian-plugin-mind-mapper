@@ -111,7 +111,7 @@ export class ElementIdOverlay {
   }
 
   /**
-   * Elements of the control bar: slanted above them, moved right past close neighbours. Small
+   * Elements of the control bar: slanted above them, moved right past close neighbors. Small
    * elements: on their right (left at the window edge), the bar below it, both moved down past other
    * labels. Others: just
    * above their top left corner (inside it at the window top), moved up past other labels. Skipped
@@ -178,7 +178,7 @@ export class ElementIdOverlay {
 }
 
 /**
- * True when something else is on top at the element's centre (the full screen overlay over the
+ * True when something else is on top at the element's center (the full screen overlay over the
  * ribbon). Only for elements the hit test can find: not for lines (a wide hit path covers its link
  * line) and not for elements without pointer events (the title chip).
  */

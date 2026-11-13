@@ -488,7 +488,7 @@ describe('layout switches cross-fade and glide to the new fit', () => {
     return view.getTransform();
   }
 
-  test('choosing a layout: fade out, swap with the centre node kept in place, fade in, glide to the fit', async () => {
+  test('choosing a layout: fade out, swap with the center node kept in place, fade in, glide to the fit', async () => {
     const expected = await fitWith('worked-example', 'top-to-bottom');
     const { view } = await open();
     view.setTransform(START);
@@ -515,7 +515,7 @@ describe('layout switches cross-fade and glide to the new fit', () => {
     expect(zoomField(view).value).toBe(percent(expected.zoom));
   });
 
-  test('the node at the centre keeps its screen position across the swap', async () => {
+  test('the node at the center keeps its screen position across the swap', async () => {
     const { view } = await open();
     const box = nodeBox(view, 'Project/Tasks');
     view.setTransform({

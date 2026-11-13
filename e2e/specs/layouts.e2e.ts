@@ -134,7 +134,7 @@ describe('frontmatter', function () {
 });
 
 describe('dividers', function () {
-  it('are drawn in the gap between their two neighbours', async function () {
+  it('are drawn in the gap between their two neighbors', async function () {
     await openMindMap('fixtures/thematic-breaks.md');
     await settle();
     const result = await browser.execute(() => {

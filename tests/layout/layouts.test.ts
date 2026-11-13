@@ -151,7 +151,7 @@ test('childSide per layout', () => {
   expect(sides('circle-counter-clockwise')).toEqual({ r: 'right', c1: 'left', c2: 'right' });
 });
 
-test('align per layout: towards the parent; the root towards its branches or centred', () => {
+test('align per layout: towards the parent; the root towards its branches or centered', () => {
   const tree = n('r', n('c1', n('c1x')), n('c2', n('c2x')));
   const aligns = (layout: MapLayoutName) =>
     Object.fromEntries(

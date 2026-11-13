@@ -4,7 +4,7 @@ Stable IDs and English names for every part of Mind Mapper. Use them in issues, 
 
 - **The ID names what an element is; its current state goes into `data-mm-state`.** An ID never changes with the state: the collapse button is `node.toggle` expanded and collapsed (`data-mm-state="expanded"` / `"collapsed"`), a highlighted control-bar button keeps its ID and gets `data-mm-state="active"`. Different kinds or separate elements get different IDs (`node.root` / `node.text` / `node.block`, `link.line` / `link.highlight`).
 - States: written only through `setElementState` in `src/elementIds.ts`, allowed values per ID in `ELEMENT_STATES`, listed per element in the "States" column below. Convention: a highlighted button has `data-mm-state="active"`; when it is not highlighted the attribute is absent (never `"inactive"`). Select by state with `[data-mm-id="node.toggle"][data-mm-state="collapsed"]`.
-- Styling follows `data-mm-state` too: `styles.css` highlights a collapsed `node.toggle` with `[data-mm-state="collapsed"]`, there is no state class next to it. One exception, on purpose: a highlighted control-bar button also keeps Obsidian's `is-active` class. `.clickable-icon.is-active` is Obsidian's own convention for a highlighted icon button, so Obsidian and community themes draw it in the theme's colours; `data-mm-state="active"` stays next to it for tests and this catalog. Both are set in the same place in `src/render/MapControls.ts`.
+- Styling follows `data-mm-state` too: `styles.css` highlights a collapsed `node.toggle` with `[data-mm-state="collapsed"]`, there is no state class next to it. One exception, on purpose: a highlighted control-bar button also keeps Obsidian's `is-active` class. `.clickable-icon.is-active` is Obsidian's own convention for a highlighted icon button, so Obsidian and community themes draw it in the theme's colors; `data-mm-state="active"` stays next to it for tests and this catalog. Both are set in the same place in `src/render/MapControls.ts`.
 - ID format: dotted, kebab-case segments, `area.element` (`controls.zoom-presets`); the lines of the map are single words (`edge`, `divider`, `skeleton`).
 - IDs are stable: renaming one is a breaking change for issues, tests and this catalog. A new element gets a new ID.
 - In the DOM: every element of the plugin's own DOM carries its ID as `data-mm-id` (set through `setElementId` in `src/elementIds.ts`).
@@ -18,7 +18,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ![The map with every element labelled with its ID](images/ui-elements.png)
 
-![Full screen with a collapsed branch, a drilled-in centre, a highlighted link and the control bar, every element labelled](images/ui-elements-full-screen.png)
+![Full screen with a collapsed branch, a drilled-in center, a highlighted link and the control bar, every element labelled](images/ui-elements-full-screen.png)
 
 ![A small board in the kanban layout: the headline, two columns with their card counts, cards, a nested tag and a divider, every element labelled](images/ui-elements-kanban.png)
 
@@ -50,22 +50,22 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | ID | Name | Where | What for |
 |---|---|---|---|
 | `map.canvas` | Map canvas | The whole content area of a map tab | Holds the map; pan by dragging, zoom with the wheel, double click fits |
-| `map.placeholder` | Placeholder | Centre of a map tab instead of the canvas | Shows a [placeholder message](#placeholder-messages) when there is no map to show |
+| `map.placeholder` | Placeholder | Center of a map tab instead of the canvas | Shows a [placeholder message](#placeholder-messages) when there is no map to show |
 | `map.empty-hint` | Empty-note hint | Below the root node of a note without content | "This note has no content yet" |
-| `map.update-error` | Update error notice | Top centre of the canvas, over the last good map | "Could not update the map. Showing the last version.": the note's newest version could not be parsed or laid out; gone with the next version that works |
+| `map.update-error` | Update error notice | Top center of the canvas, over the last good map | "Could not update the map. Showing the last version.": the note's newest version could not be parsed or laid out; gone with the next version that works |
 
 ## Nodes
 
 | ID | Name | Where | What for | States |
 |---|---|---|---|---|
-| `node.root` | Root node | Centre (balanced layouts), start of the map, or headline above the board (kanban) | The note itself: its title or `mind-mapper-title` | - |
+| `node.root` | Root node | Center (balanced layouts), start of the map, or headline above the board (kanban) | The note itself: its title or `mind-mapper-title` | - |
 | `node.text` | Text node | Map | A heading, a paragraph or a list item, rendered like reading view; `data-level` (1, 2, 3) carries its emphasis | - |
 | `node.block` | Block node | Map | A code block, table, callout, quote, math block or image embed; keeps its border at every level | - |
 | `node.expand` | Expand button | Top right corner of a clipped node, shown whenever the node is clipped | Opens the [content overlay](#content-overlay) with the full content | - |
 | `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it. None in the kanban layout | `expanded`, `collapsed` |
-| `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into | - |
+| `node.drill-marker` | Drill marker | Above (or below) the drilled-in center node | Marks the node the map is drilled into | - |
 | `node.card-count` | Card count | Right end of a column header in the kanban layout | Number of cards (direct children) in the column, also when it is collapsed; info only, not clickable | - |
-| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), in Obsidian's tag colours; hover shows the full tag. Still Obsidian's tag link: a click on either part opens the tag search with the full tag (issue #77). Tags without `/` keep Obsidian's look and have no ID | - |
+| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), in Obsidian's tag colors; hover shows the full tag. Still Obsidian's tag link: a click on either part opens the tag search with the full tag (issue #77). Tags without `/` keep Obsidian's look and have no ID | - |
 
 ## Lines
 
@@ -82,7 +82,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 | ID | Name | Where | What for | States |
 |---|---|---|---|---|
-| `controls.bar` | Control bar | Bottom centre of the map | Holds the buttons below | - |
+| `controls.bar` | Control bar | Bottom center of the map | Holds the buttons below | - |
 | `controls.zoom-out` | Zoom out button | Control bar | Zooms out one step | - |
 | `controls.zoom-field` | Zoom field | Control bar | Holds the zoom input and the zoom presets button | - |
 | `controls.zoom-input` | Zoom input | Zoom field | Shows the zoom; type a percentage and press Enter | - |
@@ -90,7 +90,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `controls.zoom-in` | Zoom in button | Control bar | Zooms in one step | - |
 | `controls.fit` | Fit button | Control bar | Fits the whole map into the view | - |
 | `controls.collapse-all` | Collapse/expand all button | Control bar | Collapses all branches; while any is collapsed it expands all; `active` while any is collapsed | `active` |
-| `controls.back-to-root` | Back to root button | Control bar | Centres the root (or drilled-in centre) | - |
+| `controls.back-to-root` | Back to root button | Control bar | Centers the root (or drilled-in center) | - |
 | `controls.drill` | Drill button | Control bar | Drills into the selected node, else out one level; `active` (highlighted) while drilled in | `active` |
 | `controls.layout` | Layout button | Control bar | Opens the [layout menu](#menus); `active` (highlighted) while this map overrides the note's layout | `active` |
 | `controls.theme` | Color theme button | Control bar | Opens the [color theme menu](#menus); `active` (highlighted) while this map overrides the note's theme | `active` |
@@ -108,7 +108,7 @@ Rendered by Obsidian: catalog only.
 | `menu.layout` | Layout menu | Above `controls.layout`; command "Change layout…" | Picks the layout of this map |
 | `menu.layout.choice` | Layout item | Layout menu: the seven layouts | Shows this map in that layout; the shown one is checked |
 | `menu.layout.use-note` | "Use the note's layout" item | Layout menu, last item | Drops this map's layout choice |
-| `menu.theme` | Color theme menu | Above `controls.theme`; command "Change color theme…" | Picks the colour theme of this map |
+| `menu.theme` | Color theme menu | Above `controls.theme`; command "Change color theme…" | Picks the color theme of this map |
 | `menu.theme.choice` | Color theme item | Color theme menu: the five themes | Shows this map in that theme; the shown one is checked |
 | `menu.theme.use-note` | "Use the note's theme" item | Color theme menu, last item | Drops this map's theme choice |
 
@@ -171,7 +171,7 @@ Command palette (catalog only). The ID is `command.` plus the command ID; Obsidi
 | `command.change-layout` | Change layout… | Command palette, with a map shown | Opens `menu.layout` |
 | `command.next-layout` | Next layout | Command palette, with a map shown | Shows this map in the next layout |
 | `command.change-theme` | Change color theme… | Command palette, with a map shown | Opens `menu.theme` |
-| `command.next-theme` | Next color theme | Command palette, with a map shown | Shows this map in the next colour theme |
+| `command.next-theme` | Next color theme | Command palette, with a map shown | Shows this map in the next color theme |
 | `command.drill-down` | Drill down into selection | Command palette, with a node with children selected | Drills into the selected node |
 | `command.drill-out` | Drill out one level | Command palette, while drilled in | Drills out one level |
 | `command.show-whole-map` | Show the whole map | Command palette, while drilled in | Drills out completely |
@@ -186,7 +186,7 @@ Settings rows (catalog only; Obsidian renders them). The ID is `settings.<group>
 |---|---|---|---|
 | `settings.map.default-layout` | Default layout | Settings, group "Map" | Layout of notes without `mind-mapper-layout` |
 | `settings.map.start-collapsed` | Start collapsed | Settings, group "Map" | Open maps with only the first level visible |
-| `settings.map.default-theme` | Default theme | Settings, group "Map" | Colour theme of notes without `mind-mapper-theme` |
+| `settings.map.default-theme` | Default theme | Settings, group "Map" | Color theme of notes without `mind-mapper-theme` |
 | `settings.map.fit-max-zoom` | Max zoom for fit | Settings, group "Map" | Upper zoom limit of fit to view |
 | `settings.nodes.max-node-width` | Max node width | Settings, group "Nodes" | Wider content is clipped |
 | `settings.nodes.max-node-height` | Max node height | Settings, group "Nodes" | Taller content is clipped |
@@ -205,4 +205,4 @@ Keys in a note's frontmatter (catalog only). The ID is `frontmatter.` plus the k
 | `frontmatter.title` | `mind-mapper-title` | Note frontmatter | Text of the root node and the title chip |
 | `frontmatter.layout` | `mind-mapper-layout` | Note frontmatter | Layout of this note's map |
 | `frontmatter.collapsed` | `mind-mapper-collapsed` | Note frontmatter | Start this note's map collapsed (`true`/`false`) |
-| `frontmatter.theme` | `mind-mapper-theme` | Note frontmatter | Colour theme of this note's map |
+| `frontmatter.theme` | `mind-mapper-theme` | Note frontmatter | Color theme of this note's map |

@@ -1,6 +1,6 @@
 import type { MapThemeName } from '../themeNames';
 
-/** Number of colours of each palette in styles.css (`--mind-mapper-color-<n>`). */
+/** Number of colors of each palette in styles.css (`--mind-mapper-color-<n>`). */
 export const PALETTE_SIZE: Readonly<Record<MapThemeName, number>> = {
   none: 1,
   rainbow: 7,
@@ -14,7 +14,7 @@ export function levelAttr(depth: number): string | null {
   return depth < 1 ? null : String(Math.min(depth, 3));
 }
 
-/** `data-branch`: the palette colour (1-based) of branch `branch` in `theme`; the root none. */
+/** `data-branch`: the palette color (1-based) of branch `branch` in `theme`; the root none. */
 export function branchAttr(branch: number, theme: MapThemeName): string | null {
   return branch < 0 ? null : String((branch % PALETTE_SIZE[theme]) + 1);
 }

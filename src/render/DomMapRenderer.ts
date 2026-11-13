@@ -82,7 +82,7 @@ export class DomMapRenderer {
   private readonly nodes = new Map<string, NodeDom>();
   private readonly toggles = new Map<string, HTMLElement>();
   private selectedId: string | null = null;
-  /** Drill-down centre (issue #23): `is-drill-centre` and the marker above it. */
+  /** Drill-down center (issue #23): `is-drill-centre` and the marker above it. */
   private drillCentreId: string | null = null;
   private drillMarkerEl: HTMLElement | null = null;
   /** Hit path of each drawn cross-link -> the link (a tap on a line looks it up). */
@@ -181,7 +181,7 @@ export class DomMapRenderer {
     }
     for (const p of margin.slice(0, room)) ids.add(p.node.id);
     // Rendering content is the expensive part: at most RENDER_BUDGET new nodes per pass, nearest to
-    // the view centre first; the skeleton shows the rest until a later frame renders them.
+    // the view center first; the skeleton shows the rest until a later frame renders them.
     const missing = [...ids].filter((id) => !this.nodes.has(id));
     if (missing.length <= RENDER_BUDGET) return { ids, skeleton: false };
     const cx = (size.width / 2 - this.transform.x) / this.transform.zoom;
@@ -354,8 +354,8 @@ export class DomMapRenderer {
   }
 
   /**
-   * Spec "Colour themes": one class on the canvas picks the palette; nodes and edges carry their
-   * palette colour (`data-branch`) and emphasis (`data-level`), so a switch only rewrites
+   * Spec "Color themes": one class on the canvas picks the palette; nodes and edges carry their
+   * palette color (`data-branch`) and emphasis (`data-level`), so a switch only rewrites
    * attributes (no re-render, no re-layout: every theme has the same node sizes).
    */
   setTheme(name: MapThemeName): void {
@@ -385,7 +385,7 @@ export class DomMapRenderer {
     if (id !== null) this.nodes.get(id)?.el.addClass('is-selected');
   }
 
-  /** The drilled-in centre node (issue #23), null: the whole map (kept for nodes created later). */
+  /** The drilled-in center node (issue #23), null: the whole map (kept for nodes created later). */
   setDrillCentre(id: string | null): void {
     if (this.drillCentreId !== null) {
       this.nodes.get(this.drillCentreId)?.el.removeClass('is-drill-centre');
@@ -396,7 +396,7 @@ export class DomMapRenderer {
   }
 
   /**
-   * The `focus` icon centred on the edge without lines: above the centre, below it when its
+   * The `focus` icon centered on the edge without lines: above the center, below it when its
    * children grow upwards. A world-level sibling like the collapse toggles (nodes clip overflow).
    */
   private placeDrillMarker(): void {
@@ -509,7 +509,7 @@ export class DomMapRenderer {
         this.edgePaths.push(path);
       }
       setAttr(path, 'd', edgePath(edge));
-      // Colour themes: the edge takes the level and branch of the node it leads into.
+      // Color themes: the edge takes the level and branch of the node it leads into.
       const to = this.rects.get(edge.toId);
       setAttr(path, 'data-level', levelAttr(to?.depth ?? 0));
       this.setBranch(path, to?.branch ?? -1);
@@ -619,7 +619,7 @@ export class DomMapRenderer {
     }
     const { el } = dom;
     const root = node.kind === 'root';
-    // Colour themes: blocks keep a border at every level instead of becoming plain text.
+    // Color themes: blocks keep a border at every level instead of becoming plain text.
     const image = isImageOnly(node.markdown);
     const block = node.kind === 'block' || image;
     el.toggleClass('is-root', root);

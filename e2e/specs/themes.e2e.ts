@@ -38,7 +38,7 @@ const DEEP_LONG = 'Theme/Alpha/Deep/#3';
 /** Level 2, clipped */
 const BETA_LONG = 'Theme/Beta/#1';
 
-/** Seven first-level branches: every rainbow colour once. */
+/** Seven first-level branches: every rainbow color once. */
 const PALETTE_NOTE = 'theme-palette.md';
 const PALETTE_TEXT = `# Palette\n\n${[1, 2, 3, 4, 5, 6, 7].map((i) => `## Branch ${i}\n`).join('\n')}`;
 
@@ -55,11 +55,11 @@ interface Styles {
   node: Record<string, NodeStyle>;
   /** Stroke and width of the edge into each node, by target node id. */
   edge: Record<string, { stroke: string; width: string }>;
-  /** `expression` (a CSS colour using variables) resolved in the map, by expression. */
+  /** `expression` (a CSS color using variables) resolved in the map, by expression. */
   resolved: Record<string, string>;
 }
 
-/** Computed styles of the nodes and edges, and CSS colour expressions resolved in the canvas. */
+/** Computed styles of the nodes and edges, and CSS color expressions resolved in the canvas. */
 function styles(expressions: string[] = []): Promise<Styles> {
   return browser.execute((exprs) => {
     const canvas = document.querySelector<HTMLElement>('.mind-mapper-canvas');
@@ -143,7 +143,7 @@ async function updateSettings(patch: Record<string, unknown>): Promise<void> {
   }, patch);
 }
 
-/** Obsidian's base colour scheme (moonstone light, obsidian dark). */
+/** Obsidian's base color scheme (moonstone light, obsidian dark). */
 async function useMode(mode: 'light' | 'dark'): Promise<void> {
   await browser.executeObsidian(({ app }, base) => {
     (app as unknown as { changeTheme(theme: string): void }).changeTheme(
@@ -168,7 +168,7 @@ function themeClass(): Promise<string[]> {
   );
 }
 
-describe('colour themes', function () {
+describe('color themes', function () {
   before(async function () {
     await writeNote(NOTE, `---\nmind-mapper-theme: rainbow\n---\n${TEXT}`);
     await writeNote(PALETTE_NOTE, PALETTE_TEXT);
@@ -179,7 +179,7 @@ describe('colour themes', function () {
     await useMode('light');
   });
 
-  it('rainbow: each first-level branch has its own colour, inherited below it; level 1 filled, level 2 tinted', async function () {
+  it('rainbow: each first-level branch has its own color, inherited below it; level 1 filled, level 2 tinted', async function () {
     await openMindMap(NOTE);
     await settle();
     const { node, edge, resolved } = await styles([
@@ -196,9 +196,9 @@ describe('colour themes', function () {
     expect(node[ALPHA_TEXT]?.background).toBe(resolved[tint('--color-red')]);
     expect(node[ALPHA]?.border).toBe(TRANSPARENT);
     expect(node[ALPHA_TEXT]?.border).toBe(TRANSPARENT);
-    // text keeps the normal colour
+    // text keeps the normal color
     expect(node[ALPHA]?.color).toBe(resolved['var(--text-normal)']);
-    // lines in the branch colour; into the first level thicker
+    // lines in the branch color; into the first level thicker
     expect(edge[ALPHA]?.stroke).toBe(resolved['var(--color-red)']);
     expect(edge[BETA]?.stroke).toBe(resolved['var(--color-orange)']);
     expect(edge[ALPHA_TEXT]?.stroke).toBe(resolved['var(--color-red)']);
@@ -208,7 +208,7 @@ describe('colour themes', function () {
     );
   });
 
-  it('level 3 is plain text, a code block there keeps a branch-coloured border; the root is large text without a box', async function () {
+  it('level 3 is plain text, a code block there keeps a branch-colored border; the root is large text without a box', async function () {
     await openMindMap(NOTE);
     await settle();
     const { node, resolved } = await styles(['var(--color-red)', 'var(--background-primary)']);
@@ -276,7 +276,7 @@ describe('colour themes', function () {
     expect(plain.button).toBe(primary);
   });
 
-  it('none: the same emphasis in greys', async function () {
+  it('none: the same emphasis in grays', async function () {
     await openMindMap(NOTE);
     await settle();
     await setFrontmatterTheme(NOTE, 'none');
@@ -352,7 +352,7 @@ describe('colour themes', function () {
     }
   });
 
-  it('level 1 text has a WCAG contrast of at least 4.5:1 on every palette colour, light and dark', async function () {
+  it('level 1 text has a WCAG contrast of at least 4.5:1 on every palette color, light and dark', async function () {
     await openMindMap(PALETTE_NOTE);
     await settle();
     const failures: string[] = [];
@@ -366,7 +366,7 @@ describe('colour themes', function () {
         );
         await browser.pause(100);
         const ratios = await browser.execute(() => {
-          // Any CSS colour to sRGB bytes through a canvas (computed colours may be color(srgb …)).
+          // Any CSS color to sRGB bytes through a canvas (computed colors may be color(srgb …)).
           const ctx = document.createElement('canvas').getContext('2d', {
             willReadFrequently: true,
           });
@@ -400,7 +400,7 @@ describe('colour themes', function () {
         });
         expect(ratios).toHaveLength(7);
         for (const { branch, ratio, background } of ratios) {
-          const line = `${mode} ${theme} colour ${branch}: ${ratio.toFixed(2)} (${background})`;
+          const line = `${mode} ${theme} color ${branch}: ${ratio.toFixed(2)} (${background})`;
           results.push(line);
           if (ratio < 4.5) failures.push(line);
         }

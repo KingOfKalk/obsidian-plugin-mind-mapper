@@ -10,7 +10,7 @@ import { parseZoomPercent } from './viewport';
 export interface MapActions {
   zoomIn(): void;
   zoomOut(): void;
-  /** Zoom (1 = 100 %) centred on the canvas. */
+  /** Zoom (1 = 100 %) centered on the canvas. */
   zoomTo(zoom: number): void;
   fitToView(): void;
   collapseAll(): void;
@@ -19,7 +19,7 @@ export interface MapActions {
   toggleFullScreen(): void;
   /** Layout of this map view only; null: the note's layout again. */
   chooseLayout(layout: MapLayoutName | null): void;
-  /** Colour theme of this map view only; null: the note's theme again. */
+  /** Color theme of this map view only; null: the note's theme again. */
   chooseTheme(theme: MapThemeName | null): void;
   /** Drill-down (issue #23): into the selected node, else out one level. */
   drill(): void;
@@ -146,7 +146,7 @@ export class MapControls {
     setElementState(this.layoutButton, 'controls.layout', overridden ? 'active' : null);
   }
 
-  /** The shown colour theme; while this view overrides the note's theme the button is highlighted. */
+  /** The shown color theme; while this view overrides the note's theme the button is highlighted. */
   setTheme(theme: MapThemeName, overridden: boolean): void {
     this.theme = theme;
     this.themeButton.toggleClass('is-active', overridden);
@@ -165,7 +165,7 @@ export class MapControls {
     );
   }
 
-  /** The colour themes, the shown one checked, then "Use the note's theme"; above its button. */
+  /** The color themes, the shown one checked, then "Use the note's theme"; above its button. */
   showThemeMenu(): void {
     this.showChoiceMenu(
       this.themeButton,

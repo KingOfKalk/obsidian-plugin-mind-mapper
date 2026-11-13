@@ -76,7 +76,7 @@ describe('cross-links', function () {
     if (!probe) throw new Error('no root or level 3 node');
     // the fixture has a line crossing the root (circle layout)
     expect(probe.onRoot).toBe(true);
-    // opaque in the canvas colour: no box to see, but lines behind it are covered
+    // opaque in the canvas color: no box to see, but lines behind it are covered
     expect(probe.root).toBe(probe.canvas);
     expect(probe.plain).toBe(probe.canvas);
   });
@@ -130,7 +130,7 @@ function highlightedLines(): Promise<number> {
 }
 
 describe('clicking a link line', function () {
-  it('rings both end nodes in the accent colour; a node selection highlights no links', async function () {
+  it('rings both end nodes in the accent color; a node selection highlights no links', async function () {
     await openMindMap('fixtures/crosslinks.md');
     await settle();
     const { x, y } = await linkLinePoint('Links/Gamma/#1', 'Links/Beta/Inner');
@@ -193,7 +193,7 @@ describe('clicking a link line', function () {
     expect(overlay?.dash).not.toBe('');
     expect(overlay?.width).toBe('3px');
     expect(overlay?.pointerEvents).toBe('none');
-    // the same ring as a selected node, in the accent colour
+    // the same ring as a selected node, in the accent color
     const ring = await browser.execute(() => {
       const el = document.querySelector('.mind-mapper-node.is-link-end');
       const accent = getComputedStyle(document.body).getPropertyValue('--interactive-accent');
@@ -315,7 +315,7 @@ describe('full screen', function () {
 });
 
 describe('back to root', function () {
-  it('centres and selects the root', async function () {
+  it('centers and selects the root', async function () {
     await openMindMap('fixtures/lists.md');
     await settle();
     await browser.execute(() => {

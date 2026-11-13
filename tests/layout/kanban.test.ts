@@ -70,7 +70,7 @@ test('the count bubble is as wide as the collapsed-node bubble', () => {
   expect(countBubbleWidth(42)).toBe(COUNT_BUBBLE.chrome + 2 * COUNT_BUBBLE.digit);
 });
 
-test('root centred above the board, equal columns side by side, cards stacked, subtasks indented', () => {
+test('root centered above the board, equal columns side by side, cards stacked, subtasks indented', () => {
   const layout = layoutTree({ root: board() }, options());
   // Column width: the widest of headers (+ count bubble), cards and subtasks (+ indent): b1.
   const W = 140;
@@ -202,7 +202,7 @@ test('the root alone sits at the origin', () => {
   expect(layout.bounds).toEqual({ x: -50, y: 0, width: 100, height: 30 });
 });
 
-test('a root wider than the board stays centred on it', () => {
+test('a root wider than the board stays centered on it', () => {
   const layout = layoutTree(
     { root: n('r', [n('A')]) },
     options({ nodeSize: (node) => ({ width: node.id === 'r' ? 400 : 100, height: 20 }) }),

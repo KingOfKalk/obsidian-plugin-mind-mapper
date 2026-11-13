@@ -159,7 +159,7 @@ async function savedWorkspace(): Promise<string> {
   );
 }
 
-describe('layout and colour theme switcher', function () {
+describe('layout and color theme switcher', function () {
   beforeEach(async function () {
     await writeNote(NOTE, TEXT);
     await openMindMap(NOTE);
@@ -209,7 +209,7 @@ describe('layout and colour theme switcher', function () {
     expect(await noteFile()).toEqual(before);
   });
 
-  it('a theme choice changes the colours live without moving a node; the note is unchanged', async function () {
+  it('a theme choice changes the colors live without moving a node; the note is unchanged', async function () {
     const before = await noteFile();
     expect(await themeClass()).toEqual(['mind-mapper-theme-ocean']);
     const ocean = await alphaBackground();

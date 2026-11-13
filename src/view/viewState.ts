@@ -5,11 +5,11 @@ export interface MindMapViewState {
   file: string | null;
   /** Layout chosen in this map view (control bar or command), null: the note's layout. */
   layout: MapLayoutName | null;
-  /** Colour theme chosen in this map view, null: the note's theme. */
+  /** Color theme chosen in this map view, null: the note's theme. */
   theme: MapThemeName | null;
   /**
    * Drill-down path (issue #23): the IDs of the drilled-in nodes, outermost first; empty: the whole
-   * map. The last one is the centre of the map.
+   * map. The last one is the center of the map.
    */
   drill: string[];
 }
