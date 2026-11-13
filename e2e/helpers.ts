@@ -23,6 +23,10 @@ export async function waitForCache(path: string): Promise<void> {
  * covered by `openViaCommand` in the smoke spec.
  */
 export async function openMindMap(path: string): Promise<void> {
+  await browser.execute(() => {
+    const w = window as any;
+    (w.__mmAnim ??= []).push(`openMindMap ${Math.round(performance.now())}`);
+  });
   await waitForCache(path);
   await browser.execute(() => {
     const w = window as unknown as Record<string, any>;
