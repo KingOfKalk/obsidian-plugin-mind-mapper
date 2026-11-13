@@ -1,6 +1,6 @@
 {
   "name": "mind-mapper",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "Show any note as a live, read-only mind map that follows you while you write: headings, lists and blocks become nodes, rendered like reading view.",
   "private": true,
   "type": "module",
