@@ -75,7 +75,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Click a node: select it; click the empty canvas: clear the selection
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
-- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), hover shows the page preview
+- Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written
@@ -134,7 +134,7 @@ Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's
 
 | Group | Setting | Control | Range | Default |
 |---|---|---|---|---|
-| Map | Default layout | dropdown | the layouts above | `circle-clockwise` |
+| Map | Default layout | dropdown | the layouts above | Balanced clockwise |
 | Map | Start collapsed | toggle | on / off | off |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow |
 | Map | Max zoom for fit | slider, steps of 25% | 100–400% | 150% |
@@ -162,6 +162,7 @@ The About group shows the plugin version and a link to the source code on GitHub
 - Dashed link lines only connect headings and blocks within the same note; lines are not routed around nodes
 - The map updates when Obsidian saves the note (about 2 s after typing stops), not on every keystroke
 - Collapsed branches are remembered while the map is open, not across restarts
+- Renaming the root H1 resets collapse state, selection and drill-down (node IDs start with the root text)
 - A `---` directly under a line of text turns that text into a heading (Markdown rule, same as reading view); leave a blank line above a divider, or use `***`
 - A second `--- ... ---` block in the middle of a note is not frontmatter: its last line becomes a heading
 

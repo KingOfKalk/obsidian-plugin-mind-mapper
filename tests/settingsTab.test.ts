@@ -165,11 +165,34 @@ test.each([
   for (const value of [min, max, defaultValue]) expect((value - min) % step).toBe(0);
 });
 
-test('the default layout is a dropdown control bound to defaultLayout', async () => {
+test('the default layout is a dropdown bound to defaultLayout: layout names as values, translated labels', async () => {
   const { mock } = await setup();
   const control = definition(mock, 'Default layout').control;
   expect(control).toMatchObject({ type: 'dropdown', key: 'defaultLayout' });
   expect(Object.keys(control?.options ?? {})).toEqual(LAYOUT_NAMES);
+  expect(control?.options).toEqual({
+    'circle-clockwise': 'Balanced clockwise',
+    'circle-counter-clockwise': 'Balanced counter-clockwise',
+    'left-to-right': 'Left → right',
+    'right-to-left': 'Right → left',
+    'top-to-bottom': 'Top → bottom',
+    'bottom-to-top': 'Bottom → top',
+    kanban: 'Kanban',
+  });
+});
+
+test('in German the layout labels are German, the values stay', async () => {
+  useGerman();
+  const { mock } = await setup();
+  expect(definition(mock, 'Standard-Layout').control?.options).toEqual({
+    'circle-clockwise': 'Ausgewogen im Uhrzeigersinn',
+    'circle-counter-clockwise': 'Ausgewogen gegen den Uhrzeigersinn',
+    'left-to-right': 'Links → rechts',
+    'right-to-left': 'Rechts → links',
+    'top-to-bottom': 'Oben → unten',
+    'bottom-to-top': 'Unten → oben',
+    kanban: 'Kanban',
+  });
 });
 
 test('changing the default layout in the tab saves it and refreshes open maps', async () => {

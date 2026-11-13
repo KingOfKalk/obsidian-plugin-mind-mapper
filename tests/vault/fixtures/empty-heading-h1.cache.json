@@ -1,0 +1,194 @@
+{
+  "obsidianVersion": "1.15.0",
+  "text": "# Root\n\nIntro.\n\n## \nUnder the first empty heading.\n\n### \nDeeper empty.\n\n##\nUnder the second empty heading.\n",
+  "cache": {
+    "headings": [
+      {
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        },
+        "heading": "Root",
+        "level": 1
+      },
+      {
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 16
+          },
+          "end": {
+            "line": 4,
+            "col": 3,
+            "offset": 19
+          }
+        },
+        "heading": "",
+        "level": 2
+      },
+      {
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 52
+          },
+          "end": {
+            "line": 7,
+            "col": 4,
+            "offset": 56
+          }
+        },
+        "heading": "",
+        "level": 3
+      },
+      {
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 0,
+            "offset": 72
+          },
+          "end": {
+            "line": 10,
+            "col": 2,
+            "offset": 74
+          }
+        },
+        "heading": "",
+        "level": 2
+      }
+    ],
+    "sections": [
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 0,
+            "col": 0,
+            "offset": 0
+          },
+          "end": {
+            "line": 0,
+            "col": 6,
+            "offset": 6
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 2,
+            "col": 0,
+            "offset": 8
+          },
+          "end": {
+            "line": 2,
+            "col": 6,
+            "offset": 14
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 4,
+            "col": 0,
+            "offset": 16
+          },
+          "end": {
+            "line": 4,
+            "col": 3,
+            "offset": 19
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 5,
+            "col": 0,
+            "offset": 20
+          },
+          "end": {
+            "line": 5,
+            "col": 30,
+            "offset": 50
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 7,
+            "col": 0,
+            "offset": 52
+          },
+          "end": {
+            "line": 7,
+            "col": 4,
+            "offset": 56
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 8,
+            "col": 0,
+            "offset": 57
+          },
+          "end": {
+            "line": 8,
+            "col": 13,
+            "offset": 70
+          }
+        }
+      },
+      {
+        "type": "heading",
+        "position": {
+          "start": {
+            "line": 10,
+            "col": 0,
+            "offset": 72
+          },
+          "end": {
+            "line": 10,
+            "col": 2,
+            "offset": 74
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "position": {
+          "start": {
+            "line": 11,
+            "col": 0,
+            "offset": 75
+          },
+          "end": {
+            "line": 11,
+            "col": 31,
+            "offset": 106
+          }
+        }
+      }
+    ]
+  }
+}

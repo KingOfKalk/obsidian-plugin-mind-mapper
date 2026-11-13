@@ -34,3 +34,19 @@ test('escapeSegment escapes # so headings cannot collide with ordinals', () => {
   expect(escapeSegment('#1')).toBe('\\#1');
   expect(childId('R', '#1', 1)).not.toBe(ordinalId('R', 1));
 });
+
+test('an empty heading never gets the virtual root ID', () => {
+  expect(childId('', '', 1)).not.toBe('');
+});
+
+test('an empty heading has a segment no heading text or ordinal can produce', () => {
+  const empty = childId('R', '', 1);
+  expect(empty).not.toBe('R');
+  expect(empty).not.toBe(ordinalId('R', 1));
+  for (const text of ['[]', '#', '\\', '[', ' ']) expect(childId('R', text, 1)).not.toBe(empty);
+});
+
+test('duplicate empty headings get distinct IDs', () => {
+  expect(childId('', '', 2)).not.toBe(childId('', '', 1));
+  expect(childId('', '', 2)).not.toBe('[2]');
+});

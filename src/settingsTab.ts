@@ -6,7 +6,7 @@ import {
 } from 'obsidian';
 import { t } from './i18n';
 import type { MessageKey } from './i18n/en';
-import { THEME_LABELS } from './i18n/labels';
+import { LAYOUT_LABELS, THEME_LABELS } from './i18n/labels';
 import { LAYOUT_NAMES } from './layout/types';
 import type MindMapperPlugin from './main';
 import { THEME_NAMES } from './render/themes';
@@ -47,7 +47,9 @@ export class MindMapSettingTab extends PluginSettingTab {
             control: {
               type: 'dropdown',
               key: 'defaultLayout',
-              options: Object.fromEntries(LAYOUT_NAMES.map((name) => [name, name])),
+              options: Object.fromEntries(
+                LAYOUT_NAMES.map((name) => [name, t(LAYOUT_LABELS[name])]),
+              ),
             },
           },
           {
