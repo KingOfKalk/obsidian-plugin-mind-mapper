@@ -1,5 +1,4 @@
 import type { MindMapNode } from '../parser/types';
-import { fnv1a } from '../util/hash';
 import type { Clip, NodeLimits } from './nodeSize';
 import type { Size } from './types';
 
@@ -9,30 +8,43 @@ interface Measured {
 }
 
 /**
- * Measured node sizes keyed by the render cache key (content hash + max width, spec
- * "Node identity"), so they survive ID shifts and reopening the same content.
+ * Measured node sizes keyed by content (the markdown itself, so no two contents share an entry)
+ * plus what changes the rendered size (spec "Node identity"), so they survive ID shifts and
+ * reopening the same content. Lookups hash nothing themselves: the markdown strings come from the
+ * tree and the engine keeps their hash.
  */
 export class SizeCache {
-  private readonly entries = new Map<string, Measured>();
+  /** Variant (root styling, max node size) -> markdown -> measured. */
+  private entries = new Map<string, Map<string, Measured>>();
 
   constructor(private readonly limits: () => NodeLimits) {}
 
   get(node: MindMapNode): Measured | undefined {
-    return this.entries.get(cacheKey(node, this.limits()));
+    return this.entries.get(variant(node, this.limits()))?.get(node.markdown);
   }
 
   /** Keeps only the entries of these nodes (e.g. the current tree after a live update). */
   retain(nodes: Iterable<MindMapNode>): void {
-    const keep = new Set<string>();
-    for (const node of nodes) keep.add(cacheKey(node, this.limits()));
-    for (const key of [...this.entries.keys()]) if (!keep.has(key)) this.entries.delete(key);
+    const limits = this.limits();
+    const kept = new Map<string, Map<string, Measured>>();
+    for (const node of nodes) {
+      const key = variant(node, limits);
+      const measured = this.entries.get(key)?.get(node.markdown);
+      if (!measured) continue;
+      let byMarkdown = kept.get(key);
+      if (!byMarkdown) kept.set(key, (byMarkdown = new Map<string, Measured>()));
+      byMarkdown.set(node.markdown, measured);
+    }
+    this.entries = kept;
   }
 
   /** Returns true if the stored size or clip state changed (sub-pixel differences ignored). */
   set(node: MindMapNode, measured: Measured): boolean {
-    const key = cacheKey(node, this.limits());
-    const previous = this.entries.get(key);
-    this.entries.set(key, measured);
+    const key = variant(node, this.limits());
+    let byMarkdown = this.entries.get(key);
+    if (!byMarkdown) this.entries.set(key, (byMarkdown = new Map<string, Measured>()));
+    const previous = byMarkdown.get(node.markdown);
+    byMarkdown.set(node.markdown, measured);
     return (
       !previous ||
       previous.clip.x !== measured.clip.x ||
@@ -43,8 +55,8 @@ export class SizeCache {
   }
 }
 
-/** Content hash plus what changes the rendered size: root styling and the max node size. */
-export function cacheKey(node: MindMapNode, limits: NodeLimits): string {
+/** What changes the rendered size besides the content: root styling and the max node size. */
+function variant(node: MindMapNode, limits: NodeLimits): string {
   const kind = node.kind === 'root' ? 'root' : 'node';
-  return `${fnv1a(node.markdown)}:${kind}:${limits.maxWidth}x${limits.maxHeight}`;
+  return `${kind}:${limits.maxWidth}x${limits.maxHeight}`;
 }

@@ -544,8 +544,11 @@ export class DomMapRenderer {
       // The element state is the only source of the collapsed highlight in styles.css (no class).
       setElementState(toggle, 'node.toggle', collapsed ? 'collapsed' : 'expanded');
       // Collapsed, the toggle shows the hidden count.
-      toggle.setText(collapsed ? String(count) : '−');
-      toggle.setAttribute('aria-label', t(collapsed ? 'expandNode' : 'collapseNode'));
+      // Written only on change: every culling pass (one per frame while panning) gets here.
+      const text = collapsed ? String(count) : '−';
+      if (toggle.textContent !== text) toggle.setText(text);
+      const label = t(collapsed ? 'expandNode' : 'collapseNode');
+      if (toggle.getAttribute('aria-label') !== label) toggle.setAttribute('aria-label', label);
       // Middle of the child-side edge; CSS moves it just outside the node.
       const at = {
         right: { left: x + width, top: y + height / 2 },

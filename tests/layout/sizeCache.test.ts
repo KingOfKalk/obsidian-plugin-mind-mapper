@@ -42,3 +42,19 @@ test('cache entries depend on the max node size', () => {
   limits = NODE_LIMITS;
   expect(cache.get(node('x'))).toEqual(measured);
 });
+
+test('nodes whose content hashes collide never get the size of the other (issue #49)', () => {
+  // Same 32-bit FNV-1a hash (be8a61cd), different markdown.
+  const a = node('node 667793');
+  const b = node('node 1267970');
+  const other = { size: { width: 300, height: 90 }, clip: { x: false, y: true } };
+  const cache = new SizeCache(() => NODE_LIMITS);
+  cache.set(a, measured);
+  expect(cache.get(b)).toBeUndefined();
+  expect(cache.set(b, other)).toBe(true);
+  expect(cache.get(a)).toEqual(measured);
+  expect(cache.get(b)).toEqual(other);
+  cache.retain([b]);
+  expect(cache.get(a)).toBeUndefined();
+  expect(cache.get(b)).toEqual(other);
+});
