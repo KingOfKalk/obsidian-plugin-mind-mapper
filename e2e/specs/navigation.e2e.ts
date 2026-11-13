@@ -7,6 +7,7 @@ import {
   openNote,
   settle,
   waitForAnimation,
+  writeNote,
 } from '../helpers';
 
 const CANVAS = '.mind-mapper-canvas';
@@ -586,5 +587,139 @@ describe('popout window', function () {
       return result;
     });
     expect(fullScreen).toEqual({ inPopout: true, inMain: false });
+  });
+});
+
+// A map tab dragged into another window (#44): measuring and Esc must follow it there.
+describe('map moved to another window', function () {
+  const path = 'window-move.md';
+
+  /** The map's container is in a popout window (not the main one) and in its DOM. */
+  function mapInPopout(): Promise<boolean> {
+    return browser.executeObsidian(({ app }) => {
+      const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+      const el = leaf?.view.containerEl;
+      return el !== undefined && el.ownerDocument !== document && el.isConnected;
+    });
+  }
+
+  async function moveMapToPopout(): Promise<void> {
+    const before = await browser.executeObsidian(({ app }) => {
+      const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+      if (!leaf) throw new Error('no map');
+      const doc = leaf.view.containerEl.ownerDocument;
+      app.workspace.moveLeafToPopout(leaf);
+      return doc === document ? 'main' : 'popout';
+    });
+    await browser.waitUntil(
+      () =>
+        browser.executeObsidian(({ app }, from) => {
+          const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+          const el = leaf?.view.containerEl;
+          if (!el?.isConnected || el.ownerDocument === document) return false;
+          // Moved out of a popout: Obsidian closes the emptied window, one popout is left.
+          const floating = (app.workspace as unknown as { floatingSplit: { children: unknown[] } })
+            .floatingSplit;
+          return from === 'main' || floating.children.length === 1;
+        }, before),
+      { timeout: 10000, timeoutMsg: 'map did not move to a popout' },
+    );
+  }
+
+  /** Visible nodes without a measured size (or a marker while `node` is not shown yet). */
+  function unmeasured(node = 'Moved/Gamma'): Promise<string[]> {
+    return browser.executeObsidian(({ app }, waitFor) => {
+      const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+      const view = leaf?.view as unknown as {
+        layout: { nodes: { node: { id: string } }[] } | null;
+        sizes: { get(node: unknown): unknown };
+      };
+      const nodes = view.layout?.nodes ?? [];
+      if (!nodes.some((p) => p.node.id === waitFor)) return [`(${waitFor} not shown yet)`];
+      return nodes.filter((p) => view.sizes.get(p.node) === undefined).map((p) => p.node.id);
+    }, node);
+  }
+
+  /** (a) A changed and a new node get measured sizes; (b) Esc on the map keeps it the active tab. */
+  async function expectMeasuringAndEscape(): Promise<void> {
+    await browser.executeObsidian(async ({ app }, notePath) => {
+      const file = app.vault.getFileByPath(notePath);
+      if (!file) throw new Error(`missing ${notePath}`);
+      await app.vault.modify(
+        file,
+        '# Moved\n\n## Alpha\n\nAlpha text, changed after the move.\n\n## Gamma\n\nGamma text, new after the move.\n',
+      );
+    }, path);
+    await browser
+      .waitUntil(async () => (await unmeasured()).length === 0, { timeout: 10000 })
+      .catch(() => undefined);
+    expect(await unmeasured()).toEqual([]);
+
+    const escape = await browser.executeObsidian(({ app, obsidian }) => {
+      const [leaf] = app.workspace.getLeavesOfType('mind-mapper-view');
+      if (!leaf) throw new Error('no map');
+      app.workspace.setActiveLeaf(leaf, { focus: true });
+      const canvas = leaf.view.containerEl.querySelector<HTMLElement>('.mind-mapper-canvas');
+      if (!canvas) throw new Error('no canvas');
+      const Keyboard = (canvas.win as unknown as typeof window).KeyboardEvent;
+      const evt = new Keyboard('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      canvas.dispatchEvent(evt);
+      return {
+        handled: evt.defaultPrevented,
+        active: app.workspace.getActiveViewOfType(obsidian.ItemView)?.getViewType() ?? null,
+      };
+    });
+    // A moment for Obsidian's (debounced) active leaf events.
+    await browser.pause(200);
+    const activeAfter = await browser.executeObsidian(
+      ({ app, obsidian }) =>
+        app.workspace.getActiveViewOfType(obsidian.ItemView)?.getViewType() ?? null,
+    );
+    expect({ ...escape, activeAfter }).toEqual({
+      handled: true,
+      active: 'mind-mapper-view',
+      activeAfter: 'mind-mapper-view',
+    });
+  }
+
+  beforeEach(async function () {
+    await writeNote(path, '# Moved\n\n## Alpha\n\nAlpha text.\n');
+    // A note tab: the tab Obsidian would switch to on an unhandled Esc.
+    await openNote('fixtures/lists.md');
+  });
+
+  afterEach(async function () {
+    await browser.executeObsidian(({ app }) =>
+      app.workspace.detachLeavesOfType('mind-mapper-view'),
+    );
+  });
+
+  it('from the main window into a popout', async function () {
+    await openMindMap(path);
+    await settle();
+    await moveMapToPopout();
+    expect(await mapInPopout()).toBe(true);
+    await expectMeasuringAndEscape();
+  });
+
+  it('from a popout into another popout (the first one closes)', async function () {
+    await browser.executeObsidian(async ({ app }, notePath) => {
+      app.workspace.detachLeavesOfType('mind-mapper-view');
+      const leaf = app.workspace.openPopoutLeaf();
+      await leaf.setViewState({
+        type: 'mind-mapper-view',
+        active: true,
+        state: { file: notePath },
+      });
+    }, path);
+    await browser.waitUntil(
+      async () => (await unmeasured('Moved/Alpha')).length === 0 && (await mapInPopout()),
+      {
+        timeout: 15000,
+        timeoutMsg: 'popout map did not render',
+      },
+    );
+    await moveMapToPopout();
+    await expectMeasuringAndEscape();
   });
 });
