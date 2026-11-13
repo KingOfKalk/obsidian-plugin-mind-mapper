@@ -138,7 +138,7 @@ Project (root, H1)
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
 - Plugin settings tab: global defaults for layout, start collapsed and colour theme, frontmatter overrides per note
-  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository)
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated

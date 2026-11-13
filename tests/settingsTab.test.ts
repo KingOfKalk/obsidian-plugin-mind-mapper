@@ -74,7 +74,7 @@ test('the tab shows the settings in groups under headings', async () => {
     ['Map', ['Default layout', 'Start collapsed', 'Default theme', 'Max zoom for fit']],
     ['Nodes', ['Max node width', 'Max node height']],
     ['Spacing', ['Sibling gap', 'Level gap']],
-    ['About', ['Version', 'Source code']],
+    ['About', ['Version', 'Source code', 'Report an issue']],
   ]);
 });
 
@@ -92,6 +92,7 @@ test('the rendered tab shows each row in its group with the current value', asyn
     ['Spacing', 'Level gap'],
     ['About', 'Version'],
     ['About', 'Source code'],
+    ['About', 'Report an issue'],
   ]);
   expect(row('Default layout').dropdown?.options.size).toBe(7);
   expect(row('Default layout').dropdown?.value).toBe('circle-clockwise');
@@ -357,6 +358,16 @@ test('the About group shows the plugin version and links to the repository', asy
   expect(row('Source code').desc).toContain('github.com/KingOfKalk/obsidian-plugin-mind-mapper');
 });
 
+test('the About group links to the issue tracker', async () => {
+  const { mock } = await setup();
+  display(mock);
+  const link = row('Report an issue').descEl?.querySelector('a');
+  expect(link?.getAttribute('href')).toBe(
+    'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues',
+  );
+  expect(link?.textContent).toBe('github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues');
+});
+
 test('in German the groups, rows and values are German; layout values stay', async () => {
   useGerman();
   const { mock } = await setup();
@@ -372,6 +383,7 @@ test('in German the groups, rows and values are German; layout values stay', asy
     ['Abstände', 'Ebenenabstand'],
     ['Über', 'Version'],
     ['Über', 'Quellcode'],
+    ['Über', 'Problem melden'],
   ]);
   expect(row('Maximale Knotenbreite').desc).toBe(
     'Breiterer Inhalt wird abgeschnitten und ausgeblendet.',

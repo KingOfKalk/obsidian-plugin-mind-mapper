@@ -4,9 +4,6 @@ The repository is public and Mind Mapper is released (1.0.0 and later, via relea
 
 ## Open
 
-- [ ] `manifest.json`: add `authorUrl` (and `fundingUrl` if wanted)
-- [ ] `package.json`: add `repository`, `bugs` and `homepage`
-- [ ] "Report an issue" row in the settings tab's About group, linking to the issue tracker (code change, own issue and PR)
 - [ ] Social preview image (`docs/images/hero.png`) set in the repository settings (not checkable from the API)
 
 ## Community directory (postponed)
@@ -134,7 +131,7 @@ Run from the repository root on the day, on `main` with the latest release publi
   - Short description: the manifest description above.
   - Long description (draft): "Mind Mapper shows any Markdown note as a mind map and keeps it up to date while you write. Headings, list items, paragraphs, code, tables, math, callouts and more become nodes; nodes render like reading view, so links, tags, image thumbnails and Mermaid diagrams work. Pan, zoom, collapse and expand branches, drill into a branch, switch layouts, and jump from a node to its place in the note. The map is read-only: you edit the note, the map follows. Desktop only. No network access, no telemetry, no account."
   - Categories: choose what the form offers (unknown until signed in).
-  - Screenshots: up to 5 desktop images at 1200 by 800 px, JPEG, PNG or WebP, up to 5 MB each. `docs/images/hero.png` is 800 by 600 and the annotated `ui-elements*.png` are not suitable: render fresh ones at 1200 by 800 (see `e2e/readmeImages.e2e.ts`) before the day. Not checked against the form, it may accept other sizes.
+  - Screenshots: up to 5 desktop images at 1200 by 800 px, JPEG, PNG or WebP, up to 5 MB each. `docs/images/hero.png` is 800 by 600 and the annotated `ui-elements*.png` are not suitable: fresh ones at 1200 by 800 are in `docs/images/listing/` (`npm run listing:images`, five PNGs; re-run it first if visible labels changed). Not checked against the form, it may accept other sizes.
 
 ### Reviewer notes
 

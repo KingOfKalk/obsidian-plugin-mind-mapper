@@ -98,6 +98,7 @@ export const en = {
   pixels: '{value} px',
   versionName: 'Version',
   sourceCodeName: 'Source code',
+  reportIssueName: 'Report an issue',
 };
 
 export type MessageKey = keyof typeof en;

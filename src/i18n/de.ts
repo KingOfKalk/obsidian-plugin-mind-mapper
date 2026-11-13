@@ -105,4 +105,5 @@ export const de: Messages = {
   pixels: '{value} px',
   versionName: 'Version',
   sourceCodeName: 'Quellcode',
+  reportIssueName: 'Problem melden',
 };
