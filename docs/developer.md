@@ -17,6 +17,11 @@
 - One-time setup on the host: open `sandbox-vault/` of the main checkout as a vault in Obsidian, turn on community plugins; optionally install [Hot Reload](https://github.com/pjeby/hot-reload) into it
 - README images: `npm run readme:images` (headless, writes `docs/images/`)
 - User manual images: `npm run manual:images` (headless, writes `docs/images/manual/`)
+- UI element reference images: `npm run ui:images` (headless, writes `docs/images/ui-elements*.png`)
+- Element IDs: every element of the plugin's DOM has a stable ID (`data-mm-id`), catalogued in [ui-elements.md](ui-elements.md)
+  - A new element gets a member of `ElementId` in `src/elementIds.ts`, `setElementId(el, '<id>')` where it is created and a row in the catalog; `tests/elementIds.test.ts` fails otherwise
+  - Tests select elements by ID where practical: `byId('controls.fit')` in `e2e/helpers.ts`, `[data-mm-id="controls.fit"]` elsewhere
+  - Dev builds: the command "Show element IDs (dev)" labels every element with its ID (toggle; `src/dev/elementIdOverlay.ts`)
 - E2E against another Obsidian version: `OBSIDIAN_VERSION=<version> OBSIDIAN_INSTALLER=<version|earliest|latest> npm run test:e2e` (default 1.15.0, the minimum supported version)
 - Parser fixtures: notes in `tests/vault/fixtures/`, recordings of Obsidian's metadata cache next to them (`*.cache.json`)
   - Headless (preferred): `npm run fixtures:record` records all of them in real Obsidian; commit them
@@ -112,6 +117,10 @@
   - One topic per image, cropped by the window size (Electron `setContentSize`), not by image editing; sidebars closed, window buttons and status bar hidden
   - Uses `tests/vault/demo/` notes plus small notes written by the spec into the temporary vault (`Trip to Lisbon.md`, `Reading notes.md`, `Team offsite.md`)
   - Not part of `test:e2e` (`wdio.conf.mts` only runs `e2e/specs/`); re-run, look at every image and commit when the look changes
+- UI element reference images (`npm run ui:images`)
+  - Runs `e2e/uiElementsImages.e2e.ts` with "Show element IDs (dev)" turned on; writes the committed images `docs/images/ui-elements.png` (map, control bar) and `docs/images/ui-elements-full-screen.png` (full screen, drilled in, highlighted link), used by [ui-elements.md](ui-elements.md)
+  - Needs the dev code in the plugin under test: the script builds `main.js` with `MIND_MAPPER_DEV=1` (a production build that keeps `__DEV__` code); the next `npm run build` replaces it
+  - Re-run after adding or moving elements, look at both images (labels legible, not piled up) and commit them
 
 ## Devcontainer and headless Obsidian
 

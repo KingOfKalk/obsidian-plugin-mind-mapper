@@ -23,6 +23,7 @@
   - No default hotkeys for commands.
   - Popout-safe DOM: use `el.doc` / `el.win` / `instanceOf` instead of `document` / `window` / `instanceof`.
 - Code, comments and commit messages in English.
+- Element IDs: every visible element has a stable ID and a row in [docs/ui-elements.md](docs/ui-elements.md). A new element gets an ID (`src/elementIds.ts`, `data-mm-id`) and a catalog entry in the same PR; new commands, settings rows, notices and frontmatter keys get a catalog entry. Refer to elements by ID in issues, PRs and reviews; tests select by `[data-mm-id=…]` where practical.
 - Format with Prettier (`npx prettier --write <files>`); `*.md` files are ignored by Prettier.
 
 ## Workflow
@@ -41,6 +42,7 @@
 - `npm run screenshots:e2e`: screenshots to `e2e/screenshots/`
 - `npm run fixtures:record`: re-record parser fixtures from real Obsidian
 - `npm run perf:e2e`: performance benchmark (1,000 and 5,000 nodes)
+- `npm run ui:images`: annotated element ID images for `docs/ui-elements.md`
 
 ## Code map
 
@@ -51,8 +53,9 @@
 - `src/commands`: command implementations
 - `src/main.ts`: plugin entry (commands, ribbon, file menu)
 - `src/settings.ts`, `src/settingsTab.ts`: settings and settings tab
-- `src/dev`: dev-only code (fixture recording)
+- `src/dev`: dev-only code (fixture recording, element ID overlay)
+- `src/elementIds.ts`: stable element IDs (`data-mm-id`), catalog in `docs/ui-elements.md`
 - `tests/`: unit and view integration tests; hand-written `obsidian` mock in `tests/mocks/obsidian.ts`
-- `e2e/`: E2E specs (`e2e/specs/`), screenshot, README image, fixture recording and perf runs
+- `e2e/`: E2E specs (`e2e/specs/`), screenshot, README, manual and UI element images, fixture recording and perf runs
 - `tests/vault/`: versioned test notes, parser fixtures in `tests/vault/fixtures/`
 - `sandbox-vault/`: git-ignored vault in the main checkout, shared by all worktrees
