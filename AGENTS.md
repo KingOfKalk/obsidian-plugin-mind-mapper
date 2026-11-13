@@ -23,7 +23,7 @@
   - No default hotkeys for commands.
   - Popout-safe DOM: use `el.doc` / `el.win` / `instanceOf` instead of `document` / `window` / `instanceof`.
 - Code, comments and commit messages in English.
-- Element IDs: every visible element has a stable ID and a row in [docs/ui-elements.md](docs/ui-elements.md). A new element gets an ID (`src/elementIds.ts`, `data-mm-id`) and a catalog entry in the same PR; new commands, settings rows, notices and frontmatter keys get a catalog entry. Refer to elements by ID in issues, PRs and reviews; tests select by `[data-mm-id=…]` where practical.
+- Element IDs: every visible element has a stable ID and a row in [docs/ui-elements.md](docs/ui-elements.md). A new element gets an ID (`src/elementIds.ts`, `data-mm-id`) and a catalog entry in the same PR; new commands, settings rows, notices and frontmatter keys get a catalog entry. The ID names what an element is and never changes with its state; a state worth querying goes into `data-mm-state` (`setElementState`, allowed values in `ELEMENT_STATES`, listed in the catalog's States column; `active` for highlighted buttons, attribute absent otherwise). Refer to elements by ID in issues, PRs and reviews; tests select by `[data-mm-id=…]` where practical.
 - Format with Prettier (`npx prettier --write <files>`); `*.md` files are ignored by Prettier.
 
 ## Workflow

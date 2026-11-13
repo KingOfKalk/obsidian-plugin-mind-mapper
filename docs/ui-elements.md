@@ -2,11 +2,13 @@
 
 Stable IDs and English names for every part of Mind Mapper. Use them in issues, pull requests, reviews and tests ("`controls.fit` stays highlighted", `[data-mm-id="node.toggle"]`).
 
+- **The ID names what an element is; its current state goes into `data-mm-state`.** An ID never changes with the state: the collapse button is `node.toggle` expanded and collapsed (`data-mm-state="expanded"` / `"collapsed"`), a highlighted control-bar button keeps its ID and gets `data-mm-state="active"`. Different kinds or separate elements get different IDs (`node.root` / `node.text` / `node.block`, `link.line` / `link.highlight`).
+- States: written only through `setElementState` in `src/elementIds.ts`, allowed values per ID in `ELEMENT_STATES`, listed per element in the "States" column below. Convention: a highlighted button has `data-mm-state="active"`; when it is not highlighted the attribute is absent (never `"inactive"`). Select by state with `[data-mm-id="node.toggle"][data-mm-state="collapsed"]`.
 - ID format: dotted, kebab-case segments, `area.element` (`controls.zoom-presets`); the lines of the map are single words (`edge`, `divider`, `skeleton`).
 - IDs are stable: renaming one is a breaking change for issues, tests and this catalog. A new element gets a new ID.
-- In the DOM: every element of the plugin's own DOM carries its ID as `data-mm-id` (set through `setElementId` in `src/elementIds.ts`). Elements whose ID depends on their state change it with the state (`node.toggle` becomes `node.hidden-count` when the branch is collapsed).
+- In the DOM: every element of the plugin's own DOM carries its ID as `data-mm-id` (set through `setElementId` in `src/elementIds.ts`).
 - Catalog only (no attribute): menus and menu items, the file menu item, settings rows, commands, notices, placeholder messages and frontmatter keys. Obsidian renders them; its API gives the plugin no element to tag (menu items, settings rows) or there is no element at all.
-- In sync: `tests/elementIds.test.ts` (part of `npm run check`) fails when a DOM ID is missing here or no longer set in `src/`, and when a command, settings row, notice, placeholder message or frontmatter key and this catalog differ. Menus and the file menu item are not checked.
+- In sync: `tests/elementIds.test.ts` (part of `npm run check`) fails when a DOM ID is missing here or no longer set in `src/`, when the states of an ID here and in `ELEMENT_STATES` differ or a listed state is not set in `src/`, and when a command, settings row, notice, placeholder message or frontmatter key and this catalog differ. Menus and the file menu item are not checked.
 - Dev builds (`npm run dev`, `npm run dev:build`): the command "Show element IDs (dev)" labels every element with its ID. Release builds do not contain it.
 
 ## Reference images
@@ -50,15 +52,14 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ## Nodes
 
-| ID | Name | Where | What for |
-|---|---|---|---|
-| `node.root` | Root node | Centre (balanced layouts) or start of the map | The note itself: its title or `mind-mapper-title` |
-| `node.text` | Text node | Map | A heading, a paragraph or a list item, rendered like reading view; `data-level` (1, 2, 3) carries its emphasis |
-| `node.block` | Block node | Map | A code block, table, callout, quote, math block or image embed; keeps its border at every level |
-| `node.expand` | Expand button | Bottom right corner of a clipped node, on hover | Opens the [content overlay](#content-overlay) with the full content |
-| `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Collapses the branch (shows "−") |
-| `node.hidden-count` | Hidden-count badge | Where the collapse toggle was, while the branch is collapsed | Number of hidden nodes; click expands the branch |
-| `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into |
+| ID | Name | Where | What for | States |
+|---|---|---|---|---|
+| `node.root` | Root node | Centre (balanced layouts) or start of the map | The note itself: its title or `mind-mapper-title` | - |
+| `node.text` | Text node | Map | A heading, a paragraph or a list item, rendered like reading view; `data-level` (1, 2, 3) carries its emphasis | - |
+| `node.block` | Block node | Map | A code block, table, callout, quote, math block or image embed; keeps its border at every level | - |
+| `node.expand` | Expand button | Bottom right corner of a clipped node, on hover | Opens the [content overlay](#content-overlay) with the full content | - |
+| `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it | `expanded`, `collapsed` |
+| `node.drill-marker` | Drill marker | Above (or below) the drilled-in centre node | Marks the node the map is drilled into | - |
 
 ## Lines
 
@@ -73,21 +74,21 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ## Control bar
 
-| ID | Name | Where | What for |
-|---|---|---|---|
-| `controls.bar` | Control bar | Bottom centre of the map | Holds the buttons below |
-| `controls.zoom-out` | Zoom out button | Control bar | Zooms out one step |
-| `controls.zoom-field` | Zoom field | Control bar | Holds the zoom input and the zoom presets button |
-| `controls.zoom-input` | Zoom input | Zoom field | Shows the zoom; type a percentage and press Enter |
-| `controls.zoom-presets` | Zoom presets button | Zoom field, right of the input | Opens the [zoom presets menu](#menus) |
-| `controls.zoom-in` | Zoom in button | Control bar | Zooms in one step |
-| `controls.fit` | Fit button | Control bar | Fits the whole map into the view |
-| `controls.collapse-all` | Collapse/expand all button | Control bar | Collapses all branches; while any is collapsed it expands all (highlighted) |
-| `controls.back-to-root` | Back to root button | Control bar | Centres the root (or drilled-in centre) |
-| `controls.drill` | Drill button | Control bar | Drills into the selected node, else out one level; highlighted while drilled in |
-| `controls.layout` | Layout button | Control bar | Opens the [layout menu](#menus); highlighted while this map overrides the note's layout |
-| `controls.theme` | Colour theme button | Control bar | Opens the [colour theme menu](#menus); highlighted while this map overrides the note's theme |
-| `controls.full-screen` | Full screen button | Control bar | Enters or leaves full screen |
+| ID | Name | Where | What for | States |
+|---|---|---|---|---|
+| `controls.bar` | Control bar | Bottom centre of the map | Holds the buttons below | - |
+| `controls.zoom-out` | Zoom out button | Control bar | Zooms out one step | - |
+| `controls.zoom-field` | Zoom field | Control bar | Holds the zoom input and the zoom presets button | - |
+| `controls.zoom-input` | Zoom input | Zoom field | Shows the zoom; type a percentage and press Enter | - |
+| `controls.zoom-presets` | Zoom presets button | Zoom field, right of the input | Opens the [zoom presets menu](#menus) | - |
+| `controls.zoom-in` | Zoom in button | Control bar | Zooms in one step | - |
+| `controls.fit` | Fit button | Control bar | Fits the whole map into the view | - |
+| `controls.collapse-all` | Collapse/expand all button | Control bar | Collapses all branches; while any is collapsed it expands all; `active` while any is collapsed | `active` |
+| `controls.back-to-root` | Back to root button | Control bar | Centres the root (or drilled-in centre) | - |
+| `controls.drill` | Drill button | Control bar | Drills into the selected node, else out one level; `active` (highlighted) while drilled in | `active` |
+| `controls.layout` | Layout button | Control bar | Opens the [layout menu](#menus); `active` (highlighted) while this map overrides the note's layout | `active` |
+| `controls.theme` | Colour theme button | Control bar | Opens the [colour theme menu](#menus); `active` (highlighted) while this map overrides the note's theme | `active` |
+| `controls.full-screen` | Full screen button | Control bar | Enters or leaves full screen | - |
 
 ## Menus
 

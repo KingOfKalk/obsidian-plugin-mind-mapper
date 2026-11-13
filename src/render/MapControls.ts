@@ -1,5 +1,5 @@
 import { Menu, setIcon } from 'obsidian';
-import { type ElementId, setElementId } from '../elementIds';
+import { type ElementId, setElementId, setElementState } from '../elementIds';
 import { t } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 import { LAYOUT_LABELS, THEME_LABELS } from '../i18n/labels';
@@ -126,6 +126,7 @@ export class MapControls {
     b.disabled = action === null;
     b.setAttribute('aria-label', t(action === 'out' ? 'drillOut' : 'drillDown'));
     b.toggleClass('is-active', drilled);
+    setElementState(b, 'controls.drill', drilled ? 'active' : null);
   }
 
   /** While any node is collapsed the button expands all (highlighted), otherwise it collapses all. */
@@ -134,6 +135,7 @@ export class MapControls {
     const b = this.collapseButton;
     b.setAttribute('aria-label', t(anyCollapsed ? 'expandAll' : 'collapseAll'));
     b.toggleClass('is-active', anyCollapsed);
+    setElementState(b, 'controls.collapse-all', anyCollapsed ? 'active' : null);
     setIcon(b, anyCollapsed ? 'chevrons-up-down' : 'chevrons-down-up');
   }
 
@@ -141,12 +143,14 @@ export class MapControls {
   setLayout(layout: MapLayoutName, overridden: boolean): void {
     this.layout = layout;
     this.layoutButton.toggleClass('is-active', overridden);
+    setElementState(this.layoutButton, 'controls.layout', overridden ? 'active' : null);
   }
 
   /** The shown colour theme; while this view overrides the note's theme the button is highlighted. */
   setTheme(theme: MapThemeName, overridden: boolean): void {
     this.theme = theme;
     this.themeButton.toggleClass('is-active', overridden);
+    setElementState(this.themeButton, 'controls.theme', overridden ? 'active' : null);
   }
 
   /** The six layouts, the shown one checked, then "Use the note's layout"; above its button. */
