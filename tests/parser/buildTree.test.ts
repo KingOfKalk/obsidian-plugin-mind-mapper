@@ -449,25 +449,38 @@ describe('large lists parse in linear time (issue #49)', () => {
     };
   }
 
-  function timed(input: ParserInput): { ms: number; tree: ReturnType<typeof buildTree> } {
+  /** Best of a few runs: the minimum is the least affected by GC pauses and scheduler noise. */
+  function bestMs(input: ParserInput, runs = 7): number {
     buildTree(lists(10, 10), 'warm-up');
-    const start = performance.now();
-    const tree = buildTree(input, 'big');
-    return { ms: performance.now() - start, tree };
+    let best = Infinity;
+    for (let i = 0; i < runs; i++) {
+      const start = performance.now();
+      buildTree(input, 'timing');
+      best = Math.min(best, performance.now() - start);
+    }
+    return best;
   }
 
+  /**
+   * Time ratio for 4x the input. Linear parsing gives about 4, quadratic about 16, whatever the
+   * machine speed or coverage instrumentation, so the bound compares two timings of the same
+   * run instead of using an absolute time. 8 leaves headroom for noise yet stays well below 16.
+   */
+  const MAX_RATIO = 8;
+
   test('one list of 20,000 top-level items', () => {
-    const { ms, tree } = timed(lists(1, 20_000));
+    const tree = buildTree(lists(1, 20_000), 'big');
     expect(tree.root.children).toHaveLength(20_001);
     expect(tree.root.children[20_000]?.markdown).toBe('item 0.19999');
-    // Linear takes a few ms; the quadratic version took seconds.
-    expect(ms).toBeLessThan(200);
+    const ratio = bestMs(lists(1, 20_000)) / bestMs(lists(1, 5_000));
+    expect(ratio).toBeLessThan(MAX_RATIO);
   });
 
   test('5,000 lists of 4 items', () => {
-    const { ms, tree } = timed(lists(5_000, 4));
+    const tree = buildTree(lists(5_000, 4), 'big');
     expect(tree.root.children).toHaveLength(25_000);
     expect(tree.root.children[24_999]?.markdown).toBe('item 4999.3');
-    expect(ms).toBeLessThan(200);
+    const ratio = bestMs(lists(5_000, 4)) / bestMs(lists(1_250, 4));
+    expect(ratio).toBeLessThan(MAX_RATIO);
   });
 });
