@@ -80,7 +80,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written
-- Full screen covers the whole Obsidian window (previews, menus and notices stay on top); `Esc` or the button top right exits and restores the previous view; the controls fade after 2 s without mouse movement
+- Full screen covers the whole Obsidian window (previews, menus and notices stay on top); entering fits the map; `Esc` or the button top right exits and restores the previous view; the controls, the title and the exit button fade after 2 s without mouse movement
 
 ## Drill down
 
@@ -146,7 +146,7 @@ Settings > Mind Mapper, in four groups. Every setting also appears in Obsidian's
 
 Each slider shows its value (e.g. "320 px") and has a "Restore default" button. Content larger than the max node size is clipped with a fade; the expand icon shows all of it. Changes apply to open maps right away; "Max zoom for fit" is used the next time a map fits.
 
-The About group shows the plugin version and a link to the source code on GitHub.
+The About group shows the plugin version, a link to the source code on GitHub and a link to report an issue.
 
 ## Large notes
 

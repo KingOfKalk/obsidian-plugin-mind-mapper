@@ -117,7 +117,7 @@ Rendered by Obsidian: catalog only.
 | ID | Name | Where | What for |
 |---|---|---|---|
 | `fullscreen.overlay` | Full screen overlay | Covers the whole Obsidian window | Shows the map without the workspace around it |
-| `fullscreen.title-chip` | Title chip | Top left of the full screen overlay | Name of the note (or `mind-mapper-title`) |
+| `fullscreen.title-chip` | Title chip | Top center of the full screen overlay | Name of the note (or `mind-mapper-title`) |
 | `fullscreen.exit` | Exit button | Top right of the full screen overlay | Leaves full screen (like Esc) |
 
 ## Content overlay
