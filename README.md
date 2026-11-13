@@ -192,3 +192,7 @@ Bugs and ideas: [open an issue](https://github.com/KingOfKalk/obsidian-plugin-mi
 ## Credits
 
 - Built with the help of [obra/superpowers](https://github.com/obra/superpowers), skills for coding agents
+
+## License
+
+[GPL-3.0](LICENSE) (GNU General Public License v3.0)
