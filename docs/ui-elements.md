@@ -194,6 +194,7 @@ Settings rows (catalog only; Obsidian renders them). The ID is `settings.<group>
 | `settings.spacing.level-gap` | Level gap | Settings, group "Spacing" | Space between a node and its children |
 | `settings.about.version` | Version | Settings, group "About" | The plugin version |
 | `settings.about.source-code` | Source code | Settings, group "About" | Link to the repository |
+| `settings.about.report-an-issue` | Report an issue | Settings, group "About" | Link to the issue tracker |
 
 ## Frontmatter keys
 

@@ -8,8 +8,19 @@ interface Manifest {
   minAppVersion: string;
   description: string;
   isDesktopOnly: boolean;
+  authorUrl?: string;
   fundingUrl?: unknown;
 }
+
+interface Package {
+  version: string;
+  description?: string;
+  repository?: unknown;
+  bugs?: unknown;
+  homepage?: string;
+}
+
+const REPOSITORY = 'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper';
 
 const read = <T>(file: string): T =>
   JSON.parse(readFileSync(join(process.cwd(), file), 'utf8')) as T;
@@ -25,12 +36,30 @@ test('manifest follows the community submission rules', () => {
   expect(manifest.description.length).toBeLessThanOrEqual(250);
   expect(manifest.description).toMatch(/\.$/);
   expect(manifest.description).not.toMatch(/^this is a plugin/i);
-  expect(manifest.description).toContain('Markdown');
+  // Correct capitalization of trademarks ("Markdown", "Obsidian", "PDF"), no emoji.
+  expect(manifest.description).not.toMatch(/\b(markdown|obsidian|pdf)\b/);
+  expect(manifest.description).not.toMatch(/\p{Extended_Pictographic}/u);
   expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
   expect(versions[manifest.version]).toBe(manifest.minAppVersion);
   expect(read<{ version: string }>('package.json').version).toBe(manifest.version);
   expect(manifest.isDesktopOnly).toBe(true);
   expect(manifest.fundingUrl).toBeUndefined();
+});
+
+test('manifest description and author URL (issue #80)', () => {
+  const manifest = read<Manifest>('manifest.json');
+  expect(manifest.description).toBe(
+    'Show any note as a live, read-only mind map that follows you while you write: headings, lists and blocks become nodes, rendered like reading view.',
+  );
+  expect(manifest.authorUrl).toBe('https://github.com/KingOfKalk');
+});
+
+test('package.json links the repository, issues and README, description in sync', () => {
+  const pkg = read<Package>('package.json');
+  expect(pkg.repository).toEqual({ type: 'git', url: `git+${REPOSITORY}.git` });
+  expect(pkg.bugs).toEqual({ url: `${REPOSITORY}/issues` });
+  expect(pkg.homepage).toBe(`${REPOSITORY}#readme`);
+  expect(pkg.description).toBe(read<Manifest>('manifest.json').description);
 });
 
 /** Declarative settings (getSettingDefinitions) exist since 1.13.0; the tab has no display() fallback. */

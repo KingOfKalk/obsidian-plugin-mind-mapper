@@ -90,16 +90,9 @@ export class MindMapSettingTab extends PluginSettingTab {
         heading: t('aboutHeading'),
         items: [
           { name: t('versionName'), desc: this.mindMapper.manifest.version },
-          {
-            name: t('sourceCodeName'),
-            // Obsidian opens an external link in the browser.
-            desc: createFragment((el) => {
-              el.createEl('a', {
-                text: REPOSITORY_URL.replace('https://', ''),
-                href: REPOSITORY_URL,
-              });
-            }),
-          },
+          // Obsidian opens an external link in the browser.
+          { name: t('sourceCodeName'), desc: externalLink(REPOSITORY_URL) },
+          { name: t('reportIssueName'), desc: externalLink(`${REPOSITORY_URL}/issues`) },
         ],
       },
     ];
@@ -109,6 +102,13 @@ export class MindMapSettingTab extends PluginSettingTab {
   override setControlValue(key: string, value: unknown): Promise<void> {
     return this.mindMapper.updateSettings({ [key]: value });
   }
+}
+
+/** A link showing its URL without the scheme. */
+function externalLink(url: string): DocumentFragment {
+  return createFragment((el) => {
+    el.createEl('a', { text: url.replace('https://', ''), href: url });
+  });
 }
 
 /** Obsidian's built-in slider: shows the value (px by default) and a "Restore default" button. */
