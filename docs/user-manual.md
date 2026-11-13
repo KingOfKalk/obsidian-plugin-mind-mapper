@@ -82,6 +82,7 @@ Make the note active, then use one of:
 - The line spans both neighbouring branches, down to their deepest visible nodes
 - Also shown before a heading, e.g. `***` between two `##` sections
 - Not shown: before the first or after the last node of a section, and in the circle layouts exactly at the split between the right and left side; several in a row count as one
+- Kanban layout: a vertical line between two columns, a horizontal line between two cards or two subtasks
 - Inside a list item, quote or callout a divider is part of that node
 - Gotcha: `---` directly under a line of text turns that text into a heading (Markdown rule, same in reading view). Leave a blank line above the divider, or use `***`
 
@@ -129,7 +130,7 @@ The controls bar at the bottom center, left to right:
 | Collapse all / Expand all | one button: highlighted while anything is collapsed, then a click expands all; otherwise a click collapses all |
 | Back to root | centers the root (drilled in: the centre node) |
 | Drill down (arrow down to a dot) | shows the selected branch as a map of its own, or goes back out one level; see [Drill down](#drill-down) |
-| Layout (boxes joined by a line) | menu with the six layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
+| Layout (boxes joined by a line) | menu with the seven layouts for this map only; see [Layout and theme of the open map](#layout-and-theme-of-the-open-map) |
 | Colour theme (palette) | menu with the colour themes for this map only; same section |
 | Full screen | see [Full screen](#full-screen) |
 
@@ -149,6 +150,7 @@ The controls bar at the bottom center, left to right:
   - Collapsed, it shows the number of hidden nodes
   - A collapse that hides the selected node selects the nearest visible node above it
 - Collapse all (button or command): only the root and the first level stay visible
+- Kanban layout: nodes have no round button; collapse and expand with Collapse all / Expand all. Collapse all leaves the headline and the column headers with their card counts. What you collapsed in another layout stays collapsed
   - The map stays in this mode until Expand all: branches added or moved by later edits start collapsed too
   - Branches you expand by hand stay expanded
 - Expand all: shows everything and ends the Collapse all mode
@@ -197,6 +199,7 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
 | `right-to-left` | all branches grow to the left |
 | `top-to-bottom` | all branches grow downwards |
 | `bottom-to-top` | all branches grow upwards |
+| `kanban` | a board: the root as headline, the first level as columns, the second as cards, everything deeper as subtasks; see [Kanban](#kanban) |
 
 - For all notes: setting "Default layout"
 - For one note: `mind-mapper-layout` in its frontmatter
@@ -209,6 +212,49 @@ Focus on one branch, e.g. while presenting or exploring a large map: the selecte
 `top-to-bottom`:
 
 ![A map growing downwards: Agenda, Travel and Food with two items each](images/manual/layout-top-to-bottom.png)
+
+### Kanban
+
+For planning and presenting work: the note as a board with columns and cards, read left to right.
+
+```markdown
+---
+mind-mapper-layout: kanban
+---
+
+# Product launch
+
+## To do
+
+- Write the press release
+  - Draft
+  - Review with legal
+- Book the venue
+
+---
+
+## Doing
+
+- Website redesign
+- Beta feedback
+
+## Done
+
+- Name and logo
+- Launch date set
+```
+
+- The root is the headline, centred above the board
+- First-level nodes are the columns, side by side and all the same width (at most "Max node width"; wider content is clipped with a fade)
+  - Each column header shows the number of its cards in a small bubble (information only, not a button)
+- Second-level nodes are the cards, stacked downwards in their column
+- Everything deeper is a subtask: plain text, indented below its card
+- Colours as usual: column headers filled in their branch colour, cards lightly tinted, subtasks plain text
+- No lines between nodes and no collapse buttons on nodes; Collapse all shows only the headline and the column headers (with their counts), Expand all shows everything again
+- `---` between two columns draws a vertical line between them; between two cards or two subtasks a horizontal line in the column
+- Link lines, selecting, double click to jump, drill down (the node you drill into becomes the headline, its children the columns), colour themes and full screen work as in the other layouts
+
+![The product launch note as a kanban board: To do, Doing and Done columns with their card counts, cards below them, two indented subtasks under the first card and a dashed line between To do and Doing](images/manual/layout-kanban.png)
 
 ## Colour themes
 
@@ -247,7 +293,7 @@ How a node looks depends on its level, in every theme:
 
 To show a map differently for a moment, e.g. while presenting, change its layout or colour theme from the controls bar (also in full screen). This changes only the map on screen; the note and its frontmatter stay as they are.
 
-- Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom and bottom → top; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
+- Layout button (boxes joined by a line): a menu with balanced clockwise, balanced counter-clockwise, left → right, right → left, top → bottom, bottom → top and kanban; the shown layout is checked. A choice fades the map into the new arrangement (the node in the middle of the view stays put), then glides to fit it to view
 - Colour theme button (palette): a menu with None, Rainbow, Ocean, Forest and Accent colour; the shown theme is checked. A choice recolours the map at once; nothing moves
 - Below a line in each menu: "Use the note's layout" / "Use the note's theme" go back to the note's frontmatter, else the settings
 - While you have chosen a layout or theme, its button is highlighted. Your choice wins over later edits of `mind-mapper-layout` / `mind-mapper-theme` and over the settings, so the map does not jump while you edit
@@ -285,7 +331,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 
 | Group | Setting | Control | Range | Default | Does |
 |---|---|---|---|---|---|
-| Map | Default layout | dropdown | the six [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
+| Map | Default layout | dropdown | the seven [layouts](#layouts) | `circle-clockwise` | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent colour | Rainbow | [colour theme](#colour-themes) for notes without `mind-mapper-theme` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
