@@ -3,7 +3,7 @@ import { limitsFor } from '../../src/layout/nodeSize';
 import { SizeCache } from '../../src/layout/sizeCache';
 import type { MapLayout, PositionedNode, Size } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
-import { TRAILING_TAGS_CLASS } from '../../src/render/nestedTags';
+import { LAST_LINE_CLASS, TRAILING_TAGS_CLASS } from '../../src/render/nestedTags';
 import { type MeasureHost, NodeMeasurer } from '../../src/view/nodeMeasurer';
 
 /** Node measuring of the map view (issue #50): ResizeObserver into the size cache. */
@@ -219,4 +219,67 @@ test('stretched content (trailing tags) is measured without its stretch', () => 
   expect(sizes.get(a)?.size.width).toBeGreaterThan(200);
   vi.advanceTimersByTime(100);
   expect(relayout).toHaveBeenCalled();
+});
+
+/** A tag row (`is-last-line` wrapper) in `content` with pills at these offsets (left, width). */
+function tagRow(content: HTMLElement, pills: [number, number][], height: number): HTMLElement {
+  const row = content.createSpan({ cls: `mind-mapper-trailing-tags ${LAST_LINE_CLASS}` });
+  Object.defineProperty(row, 'offsetHeight', { configurable: true, value: height });
+  Object.defineProperty(row, 'offsetWidth', { configurable: true, value: 300 });
+  for (const [left, width] of pills) {
+    const pill = row.createEl('a', { cls: 'tag' });
+    Object.defineProperty(pill, 'offsetLeft', { configurable: true, value: left });
+    Object.defineProperty(pill, 'offsetWidth', { configurable: true, value: width });
+  }
+  return row;
+}
+
+// Issue #103: with the tag position outside, the tag row (positioned below the box by styles.css)
+// is measured too: the layout spaces nodes by box and row.
+test('a tag row below the box is measured: the extent of its pills and its height', () => {
+  const { measurer, sizes, a, elA, relayout } = setup();
+  measurer.observe(new Map([['a', elA]]));
+  sized(elA, 50, 20);
+  const row = tagRow(
+    elA,
+    [
+      [120, 100],
+      [224, 76],
+    ],
+    22,
+  );
+  row.style.position = 'absolute';
+  FakeRO.trigger();
+  // Right-aligned pills in a row as wide as the max node width: only the pills count.
+  expect(sizes.get(a)?.tags).toEqual({ width: 180, height: 22 });
+  vi.advanceTimersByTime(100);
+  expect(relayout).toHaveBeenCalledTimes(1);
+  // A second row of pills (wrapped): taller; a change on its own re-lays out.
+  row.createEl('a', { cls: 'tag' });
+  Object.defineProperty(row, 'offsetHeight', { configurable: true, value: 48 });
+  measurer.measureAll();
+  expect(sizes.get(a)?.tags?.height).toBe(48);
+  vi.advanceTimersByTime(100);
+  expect(relayout).toHaveBeenCalledTimes(2);
+});
+
+test('trailing tags in the box (inside, the root, centered text) are no tag row', () => {
+  const { measurer, sizes, a, elA } = setup();
+  measurer.observe(new Map([['a', elA]]));
+  sized(elA, 50, 20);
+  tagRow(elA, [[0, 80]], 22);
+  FakeRO.trigger();
+  expect(sizes.get(a)?.tags).toBeNull();
+});
+
+// A clipped node fades its overflowing edge with a mask, which would hide the row too: styles.css
+// leaves the row out (the content overlay shows the full content), the layout reserves no room.
+test('a clipped node has no tag row', () => {
+  const { measurer, sizes, a, elA } = setup();
+  measurer.observe(new Map([['a', elA]]));
+  sized(elA, 50, 900);
+  tagRow(elA, [[0, 80]], 22).style.position = 'absolute';
+  FakeRO.trigger();
+  expect(sizes.get(a)?.clip.y).toBe(true);
+  expect(sizes.get(a)?.tags).toBeNull();
 });

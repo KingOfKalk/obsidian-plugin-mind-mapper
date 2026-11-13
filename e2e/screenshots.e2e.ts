@@ -676,6 +676,54 @@ describe('screenshots', function () {
     });
   }
 
+  // Issue #103: tag position. Outside (default): trailing tags in a row below the box, at the
+  // edge opposite the text (#99's note on one line, several tags wrapping, both sides of a
+  // balanced map, a kanban board); inside: the 1.7.0 look for comparison.
+  for (const [mode, loud, theme, position] of [
+    ['light', false, 'rainbow', 'outside'],
+    ['dark', false, 'rainbow', 'outside'],
+    ['light', true, 'rainbow', 'outside'],
+    ['light', false, 'none', 'outside'],
+    ['light', false, 'rainbow', 'inside'],
+  ] as const) {
+    const label = loud ? 'loud' : theme === 'none' ? 'none' : `${mode}-${position}`;
+    it(`tag rows ${label}`, async function () {
+      await useTheme(theme, mode);
+      await writeNote('tag-rows.md', tagRowsNote(position));
+      await openMindMap('tag-rows.md');
+      await settle();
+      const name = `${dir}/tag-rows-${label}`;
+      const shoot = async () => {
+        await saveFullScreenShot(`${name}.png`);
+        for (const layout of ['right-to-left', 'kanban'] as const) {
+          await browser.executeObsidian(({ app }, l) => {
+            for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+              (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(l);
+            }
+          }, layout);
+          await settle();
+          await saveFullScreenShot(`${name}-${layout}.png`);
+        }
+        await browser.executeObsidian(({ app }) => {
+          for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+            (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(null);
+          }
+        });
+        await settle();
+        // #99's node up close: the In Progress branch at 100 %.
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await clickNodeEndingWith('/In Progress');
+        await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+        await waitForAnimation();
+        await pointerAway();
+        await browser.saveScreenshot(`${name}-100.png`);
+        await browser.keys('Escape');
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
+
   it('back to light mode without a color theme', async function () {
     await useTheme('none', 'light');
   });
@@ -964,4 +1012,27 @@ async function copyDocsIntoVault(): Promise<void> {
     );
   }
   await waitForCache('Docs/User manual.md');
+}
+
+/** Issue #103: #99's note plus several tags, a left side and a board-friendly shape. */
+function tagRowsNote(position: 'outside' | 'inside'): string {
+  return [
+    '---',
+    `mind-mapper-tags: ${position}`,
+    '---',
+    '# Agenda',
+    '## Tasks',
+    '### Backlog',
+    '- Plan #alpha/one #beta/two #gamma/three #delta/four #epsilon/five',
+    '- Write the spec',
+    '---',
+    '### In Progress',
+    '- Backup & restore playbook #server/dns',
+    '- Refactor Run #mindMapper',
+    '- Milestone Review #mindmapper/docs',
+    '## Ideas #idea',
+    '- Short #a/b #c',
+    '- A longer idea that wraps onto a second line in its node #x/y',
+    '',
+  ].join('\n');
 }

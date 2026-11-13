@@ -1507,6 +1507,48 @@ describe('color themes', () => {
   });
 });
 
+describe('tag position (issue #103)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function position(view: MindMapView): string[] {
+    const canvas = view.contentEl.querySelector('.mind-mapper-canvas');
+    return [...(canvas?.classList ?? [])].filter((c) => c.startsWith('mind-mapper-tags-'));
+  }
+
+  test('the setting gives the tag position of notes without mind-mapper-tags (default outside); a change applies', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view } = await openWith('live-before', { settings: () => settings });
+    expect(position(view)).toEqual(['mind-mapper-tags-outside']);
+    settings.tagPosition = 'inside';
+    view.refresh();
+    expect(position(view)).toEqual(['mind-mapper-tags-inside']);
+  });
+
+  test('mind-mapper-tags overrides the setting; editing it switches live', async () => {
+    const settings = { ...LTR_SETTINGS };
+    const { view, ws } = await openWith('fm-tags', { settings: () => settings });
+    expect(position(view)).toEqual(['mind-mapper-tags-inside']);
+    change(ws, 'Note.md', 'live-before');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(position(view)).toEqual(['mind-mapper-tags-outside']);
+  });
+
+  test('an unknown mind-mapper-tags falls back to the setting with a notice', async () => {
+    const warnOnce = vi.fn();
+    const settings = { ...LTR_SETTINGS, tagPosition: 'inside' as const };
+    const { view } = await openWith('fm-tags-invalid (warning expected)', {
+      warnOnce,
+      settings: () => settings,
+    });
+    expect(position(view)).toEqual(['mind-mapper-tags-inside']);
+    expect(warnOnce).toHaveBeenCalledWith(
+      'Note.md\0mind-mapper-tags\0below',
+      'Mind Mapper: unknown mind-mapper-tags "below" in Note.md, using inside',
+    );
+  });
+});
+
 describe('layout and color theme of this view (overrides)', () => {
   let frames: MockInstance[] = [];
   beforeEach(() => {

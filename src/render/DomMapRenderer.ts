@@ -7,12 +7,13 @@ import { COUNT_BUBBLE, countBubbleWidth } from '../layout/kanban';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
+import type { TagPosition } from '../tagPositions';
 import type { MapThemeName } from '../themeNames';
 import {
   contentCap,
   detailLevel,
   gapSquared,
-  overlaps,
+  nodeOverlaps,
   SpatialIndex,
   worldViewport,
 } from './culling';
@@ -108,6 +109,7 @@ export class DomMapRenderer {
   private frame: number | null = null;
   private skeletonD: string | null = null;
   private theme: MapThemeName = 'none';
+  private tagPosition: TagPosition = 'outside';
 
   constructor(
     parentEl: HTMLElement,
@@ -117,6 +119,7 @@ export class DomMapRenderer {
     this.culling = options.culling ?? false;
     this.canvasEl = parentEl.createDiv({ cls: 'mind-mapper-canvas' });
     this.canvasEl.addClass(themeClass(this.theme));
+    this.canvasEl.addClass(tagPositionClass(this.tagPosition));
     setElementId(this.canvasEl, 'map.canvas');
     this.worldEl = this.canvasEl.createDiv({ cls: 'mind-mapper-world' });
     this.worldEl.addEventListener('click', (event) => {
@@ -172,7 +175,7 @@ export class DomMapRenderer {
     for (const id of this.index.query(worldViewport(this.transform, size))) {
       const rect = this.rects.get(id);
       if (!rect) continue;
-      if (overlaps(rect, view)) ids.add(id);
+      if (nodeOverlaps(rect, view)) ids.add(id);
       else margin.push(rect);
     }
     if (detailLevel(this.transform.zoom, ids.size) === 'skeleton') {
@@ -375,6 +378,33 @@ export class DomMapRenderer {
       const path = this.edgePaths[i];
       if (path) this.setBranch(path, this.rects.get(edge.toId)?.branch ?? -1);
     });
+  }
+
+  /**
+   * Spec "Tag position" (issue #103): one class on the canvas; styles.css moves the trailing tags of a
+   * node's last line out of the box (outside) or keeps them in it. Returns whether it changed (node
+   * sizes change with it: measure again).
+   */
+  setTagPosition(position: TagPosition): boolean {
+    if (position === this.tagPosition) return false;
+    this.canvasEl.removeClass(tagPositionClass(this.tagPosition));
+    this.tagPosition = position;
+    this.canvasEl.addClass(tagPositionClass(position));
+    for (const [id, dom] of this.nodes) {
+      const rect = this.rects.get(id);
+      if (rect) this.setTagsOutside(dom.el, rect, isBlock(dom.node));
+    }
+    return true;
+  }
+
+  /**
+   * `is-tags-outside`: styles.css moves the node's last trailing tags into a row below the box.
+   * Only for side-aligned text below the laid-out root (the root and centered text keep them
+   * inside, like blocks: there is no edge opposite the text, or a line leaves there).
+   */
+  private setTagsOutside(el: HTMLElement, { depth, align }: PositionedNode, block: boolean): void {
+    const outside = this.tagPosition === 'outside' && depth > 0 && align !== 'center' && !block;
+    el.toggleClass('is-tags-outside', outside);
   }
 
   /** `data-branch` in the current theme; written only when it changes (reconcile runs per frame). */
@@ -598,10 +628,8 @@ export class DomMapRenderer {
     return toggle;
   }
 
-  private placeNode(
-    { node, x, y, width, height, depth, branch, align, count, subtask }: PositionedNode,
-    pool: Map<string, HTMLElement[]>,
-  ): void {
+  private placeNode(positioned: PositionedNode, pool: Map<string, HTMLElement[]>): void {
+    const { node, x, y, width, height, depth, branch, align, count, subtask } = positioned;
     let dom = this.nodes.get(node.id);
     if (!dom) {
       dom = this.createNode(node, pool.get(node.markdown)?.shift());
@@ -625,7 +653,7 @@ export class DomMapRenderer {
     const root = node.kind === 'root';
     // Color themes: blocks keep a border at every level instead of becoming plain text.
     const image = isImageOnly(node.markdown);
-    const block = node.kind === 'block' || image;
+    const block = isBlock(node);
     el.toggleClass('is-root', root);
     el.toggleClass('is-block', block);
     // A single image embed: the fixed thumbnail box of the size estimate (styles.css).
@@ -633,6 +661,7 @@ export class DomMapRenderer {
     setElementId(el, root ? 'node.root' : block ? 'node.block' : 'node.text');
     // Text flush towards the parent (styles.css applies it to text nodes only, not to blocks).
     for (const a of ALIGNS) el.toggleClass(`is-align-${a}`, a === align);
+    this.setTagsOutside(el, positioned, block);
     setAttr(el, 'data-level', levelAttr(depth));
     setAttr(el, 'data-subtask', subtaskAttr(subtask));
     this.setBranch(el, branch);
@@ -708,6 +737,15 @@ export class DomMapRenderer {
     this.hooks.render(node, contentEl);
     return contentEl;
   }
+}
+
+/** Code, tables, callouts, quotes, math and single image embeds: they keep their own alignment. */
+function isBlock(node: MindMapNode): boolean {
+  return node.kind === 'block' || isImageOnly(node.markdown);
+}
+
+function tagPositionClass(position: TagPosition): string {
+  return `mind-mapper-tags-${position}`;
 }
 
 /** The two paths of a drawn cross-link: the dashed line and its invisible hit path after it. */

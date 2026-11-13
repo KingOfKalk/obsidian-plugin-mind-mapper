@@ -1,5 +1,12 @@
 import type { MindMapNode } from '../parser/types';
-import { DIVIDER_GAP, type LayoutDivider, type LayoutOptions, type PositionedNode } from './types';
+import {
+  DIVIDER_GAP,
+  type LayoutDivider,
+  type LayoutOptions,
+  type PositionedNode,
+  type Size,
+  TAG_ROW_GAP,
+} from './types';
 
 /** Card count bubble of a column header, mirroring `.mind-mapper-card-count` in styles.css. */
 export const COUNT_BUBBLE = {
@@ -27,8 +34,9 @@ export function countBubbleWidth(count: number): number {
  * indent (issue #91). Column gap: twice the sibling gap; root to headers: the level gap; header to
  * card and card to card: the sibling gap; within a task (card to subtask, subtask to subtask):
  * a third of it, rounded. A divider (`---`) adds DIVIDER_GAP: a vertical line between two columns, a
- * horizontal one between two cards or subtasks. Overlap-free: columns are disjoint, each column a
- * single stack.
+ * horizontal one between two cards or subtasks. Tag rows (issue #103) sit below their header, card
+ * or subtask at its right edge and count towards the column width and the stack. Overlap-free:
+ * columns are disjoint, each column a single stack.
  */
 export function kanban(
   root: MindMapNode,
@@ -49,13 +57,22 @@ export function kanban(
     return s;
   };
 
-  // Column width: the widest header (+ bubble), card or subtask, capped; never narrower than a
-  // node itself (an image thumbnail can be wider than the cap).
+  const rows = new Map<MindMapNode, Size>();
+  /** Room below a node's box for its tag row. */
+  const below = (node: MindMapNode): number => {
+    const row = rows.get(node);
+    return row ? TAG_ROW_GAP + row.height : 0;
+  };
+
+  // Column width: the widest header (+ bubble), card, subtask or tag row, capped; never narrower
+  // than a node itself (an image thumbnail can be wider than the cap).
   let widest = 0;
   let widestNode = 0;
   const measure = (node: MindMapNode, depth: number): void => {
     const extra = depth === 1 ? COUNT_BUBBLE.gap + countBubbleWidth(countOf(node)) : 0;
-    widest = Math.max(widest, size(node).width + extra);
+    const row = options.tagRow?.(node) ?? null;
+    if (row) rows.set(node, row);
+    widest = Math.max(widest, size(node).width + extra, row?.width ?? 0);
     widestNode = Math.max(widestNode, size(node).width);
     for (const child of node.children) measure(child, depth + 1);
   };
@@ -87,7 +104,14 @@ export function kanban(
   );
   const headerTop = rootSize.height + levelGap;
   const cardTop =
-    headerTop + Math.max(...columns.map((column) => size(column).height)) + siblingGap;
+    headerTop +
+    Math.max(...columns.map((column) => size(column).height + below(column))) +
+    siblingGap;
+  /** The tag row of a node placed at `x`, `top` with `height`, flush with the column's right edge. */
+  const tagsOf = (node: MindMapNode, x: number, top: number, height: number) => {
+    const row = rows.get(node);
+    return row ? { tags: { x: x + width - row.width, y: top + height + TAG_ROW_GAP, ...row } } : {};
+  };
 
   let left = -boardWidth / 2;
   let previousBottom = 0;
@@ -115,8 +139,9 @@ export function kanban(
       depth: 1,
       branch,
       count: countOf(column),
+      ...tagsOf(column, left, headerTop, header.height),
     });
-    let bottom = headerTop + header.height;
+    let bottom = headerTop + header.height + below(column);
 
     /** Places the children of `parent` (cards or subtasks) and their subtasks, top to bottom. */
     const stack = (parent: MindMapNode, depth: number): void => {
@@ -141,8 +166,9 @@ export function kanban(
           depth,
           branch,
           ...(depth > 2 ? { subtask: depth - 2 } : {}),
+          ...tagsOf(child, left, top, own.height),
         });
-        bottom = top + own.height;
+        bottom = top + own.height + below(child);
         stack(child, depth + 1);
       });
     };

@@ -20,7 +20,7 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 
 ![Full screen with a collapsed branch, a drilled-in center, a highlighted link and the control bar, every element labelled](images/ui-elements-full-screen.png)
 
-![A small board in the kanban layout: the headline, two columns with their card counts, cards, a nested tag and a divider, every element labelled](images/ui-elements-kanban.png)
+![A small board in the kanban layout: the headline, two columns with their card counts, cards, a nested tag in its tag row below a card and a divider, every element labelled](images/ui-elements-kanban.png)
 
 ## Contents
 
@@ -65,7 +65,8 @@ Made with "Show element IDs (dev)" by `npm run ui:images` (writes `docs/images/u
 | `node.toggle` | Collapse toggle | Just outside a node with children, on its child side | Expanded: shows "−", click collapses the branch. Collapsed: shows the number of hidden nodes, click expands it. None in the kanban layout | `expanded`, `collapsed` |
 | `node.drill-marker` | Drill marker | Above (or below) the drilled-in center node | Marks the node the map is drilled into | - |
 | `node.card-count` | Card count | Right end of a column header in the kanban layout | Number of cards (direct children) in the column, also when it is collapsed; info only, not clickable | - |
-| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), small corners, in the branch color (Obsidian's tag colors in theme "none", on the root and in the content overlay); at the end of a line on the side opposite the text (issue #92); hover shows the full tag. Still Obsidian's tag link: a click on either part opens the tag search with the full tag (issue #77). Tags without `/` keep Obsidian's look and have no ID | - |
+| `node.tag` | Nested tag | Inside node content (and the [content overlay](#content-overlay)), wherever the note has a tag with a `/` | A nested tag as a two-part pill: the scope (`#project/alpha`, filled) and the value after the last `/` (`backend`, outlined), small corners, in the branch color (Obsidian's tag colors in theme "none", on the root and in the content overlay); at the end of a line on the side opposite the text (issue #92), at the end of the node in `node.tags`; hover shows the full tag. Still Obsidian's tag link: a click on either part opens the tag search with the full tag (issue #77). Tags without `/` keep Obsidian's look and have no ID | - |
+| `node.tags` | Tag row | Below the box of a node, 4 px apart, at the edge opposite the text (issue #103) | The tags at the end of the node's last line, in one row in the order of the note (4 px between them), wrapping into more rows at the max node width. Tag position `outside` (the default) only, on side-aligned text nodes (not the root, blocks or the vertical layouts): there and with `inside` the same element sits in the box like the trailing tags of earlier lines. A click on a tag opens the tag search, a click between the tags selects the node | - |
 
 ## Lines
 
@@ -152,6 +153,7 @@ Obsidian notices (catalog only; the ID is the kebab-case message key in `src/i18
 | `notice.invalid-collapsed` | Invalid collapsed notice | Notice, once per note and value | `mind-mapper-collapsed` is not true or false; the setting is used |
 | `notice.invalid-title` | Invalid title notice | Notice, once per note and value | `mind-mapper-title` is not text; the default title is used |
 | `notice.invalid-theme` | Unknown theme notice | Notice, once per note and value | `mind-mapper-theme` has an unknown value; the setting is used |
+| `notice.invalid-tags` | Unknown tag position notice | Notice, once per note and value | `mind-mapper-tags` has an unknown value; the setting is used |
 
 ## Commands
 
@@ -187,6 +189,7 @@ Settings rows (catalog only; Obsidian renders them). The ID is `settings.<group>
 | `settings.map.default-layout` | Default layout | Settings, group "Map" | Layout of notes without `mind-mapper-layout` |
 | `settings.map.start-collapsed` | Start collapsed | Settings, group "Map" | Open maps with only the first level visible |
 | `settings.map.default-theme` | Default theme | Settings, group "Map" | Color theme of notes without `mind-mapper-theme` |
+| `settings.map.tag-position` | Tag position | Settings, group "Map" | Trailing tags of notes without `mind-mapper-tags`: outside (default, a row below the box) or inside |
 | `settings.map.fit-max-zoom` | Max zoom for fit | Settings, group "Map" | Upper zoom limit of fit to view |
 | `settings.nodes.max-node-width` | Max node width | Settings, group "Nodes" | Wider content is clipped |
 | `settings.nodes.max-node-height` | Max node height | Settings, group "Nodes" | Taller content is clipped |
@@ -206,3 +209,4 @@ Keys in a note's frontmatter (catalog only). The ID is `frontmatter.` plus the k
 | `frontmatter.layout` | `mind-mapper-layout` | Note frontmatter | Layout of this note's map |
 | `frontmatter.collapsed` | `mind-mapper-collapsed` | Note frontmatter | Start this note's map collapsed (`true`/`false`) |
 | `frontmatter.theme` | `mind-mapper-theme` | Note frontmatter | Color theme of this note's map |
+| `frontmatter.tags` | `mind-mapper-tags` | Note frontmatter | Tag position of this note's map (`outside`/`inside`) |

@@ -77,7 +77,9 @@ Make the note active, then use one of:
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
 - Tags in a node take the color of its branch (in every color theme but "none"; the root and the full content overlay keep your theme's tag colors)
-- Tags at the end of a line move to the side opposite the text: to the right edge of a left-aligned node, to the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card, on a column header before the card count
+- Tags at the end of a node's text go into a row below its box, 4 px apart from it, at the edge opposite the text: under the right edge of a node on the right side, under the left edge on the left side. The box holds only the text, so a tag never pushes the text onto an extra line. Several tags stay in one row, in the order of the note; a row longer than the max node width wraps, every row at the same edge. In kanban the row sits below the card, subtask or column header at its right edge
+  - Stay in the box: tags in the middle of a sentence, tags at the end of an earlier paragraph of the node, the root's tags, the tags of centered nodes (top → bottom, bottom → top) and of blocks, and the tags of a clipped node (open the full content to see them)
+  - Tag position "Inside" (setting, or `mind-mapper-tags: inside` per note): the tags at the end of a line stay in the box at the side opposite the text: at the right edge of a left-aligned node, at the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card, on a column header before the card count. At the max node width they may wrap onto a line of their own
 
 - Large content is clipped at the max node size with a fade; the expand icon in the node's corner shows all of it in an overlay (`Esc` closes it)
 
@@ -321,6 +323,7 @@ To show a map differently for a moment, e.g. while presenting, change its layout
 | `mind-mapper-layout` | one of the [layouts](#layouts) | setting "Default layout" |
 | `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | setting "Start collapsed" |
 | `mind-mapper-theme` | one of the [color themes](#color-themes) | setting "Default theme" |
+| `mind-mapper-tags` | `outside` (tags at the end of a node in a row below its box) or `inside` (in the box) | setting "Tag position" |
 
 ```yaml
 ---
@@ -328,13 +331,14 @@ mind-mapper-title: Lumen 2.0
 mind-mapper-layout: top-to-bottom
 mind-mapper-collapsed: true
 mind-mapper-theme: ocean
+mind-mapper-tags: inside
 ---
 ```
 
 - Only the frontmatter at the very top of the note counts
 - A missing key or a key without a value uses the default silently
 - An invalid value uses the default and shows a notice once per note and value (per session), e.g. `Mind Mapper: unknown mind-mapper-layout "sideways" in Note.md, using circle-clockwise`
-  - Invalid: an unknown layout or color theme, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
+  - Invalid: an unknown layout, color theme or tag position, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
 
 ## Settings
 
@@ -345,6 +349,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 | Map | Default layout | dropdown | the seven [layouts](#layouts), labeled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [color theme](#color-themes) for notes without `mind-mapper-theme` |
+| Map | Tag position | dropdown | Outside, Inside | Outside | where the tags at the end of a node go ([nodes](#nodes)): in a row below its box, or inside it; for notes without `mind-mapper-tags` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
@@ -354,7 +359,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 - Each slider shows its value (e.g. "320 px" or "200 %") and has a "Restore default" button
 - About group: the plugin version, a link to the source code and a link to report an issue
 
-![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and five sliders, and the About group with the version, the source code link and the report an issue link](images/manual/settings.png)
+![The Mind Mapper settings tab: Map, Nodes and Spacing groups with three dropdowns, a toggle and five sliders, and the About group with the version, the source code link and the report an issue link](images/manual/settings.png)
 
 ## Commands
 
@@ -416,6 +421,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | A line of text became a heading | a `---` directly under it (see [Dividers](#dividers)); add a blank line above the `---` or use `***` |
 | Notice `Mind Mapper: unknown mind-mapper-layout …` | the layout name is misspelled; use one of the [layouts](#layouts) |
 | Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [color themes](#color-themes), in lower case |
+| Notice `Mind Mapper: unknown mind-mapper-tags …` | use `outside` or `inside`, in lower case |
 | Notice `Mind Mapper: mind-mapper-collapsed … is not true or false …` | use `true` or `false` without quotes, or the checkbox in Properties |
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
 | Notice `Open a Markdown note first` | the ribbon icon needs an active Markdown note |

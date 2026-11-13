@@ -5,6 +5,7 @@ test('defaults match the spec', () => {
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
     defaultTheme: 'rainbow',
+    tagPosition: 'outside',
     maxNodeWidth: 320,
     maxNodeHeight: 240,
     siblingGap: 12,
@@ -26,6 +27,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
       defaultLayout: 'spiral',
       startCollapsed: 'yes',
       defaultTheme: 'neon',
+      tagPosition: 'below',
       maxNodeWidth: '500',
       maxNodeHeight: 5,
       siblingGap: 'wide',
@@ -37,6 +39,7 @@ test('sanitizeSettings: missing, wrong-typed, out-of-range and unknown values', 
     defaultLayout: 'circle-clockwise',
     startCollapsed: false,
     defaultTheme: 'rainbow',
+    tagPosition: 'outside',
     maxNodeWidth: 500,
     maxNodeHeight: 120,
     siblingGap: 12,
@@ -51,6 +54,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
       defaultLayout: 'top-to-bottom',
       startCollapsed: true,
       defaultTheme: 'ocean',
+      tagPosition: 'inside',
       maxNodeWidth: 400.6,
       maxNodeHeight: 300,
       siblingGap: 0,
@@ -61,6 +65,7 @@ test('sanitizeSettings keeps valid values and rounds numbers', () => {
     defaultLayout: 'top-to-bottom',
     startCollapsed: true,
     defaultTheme: 'ocean',
+    tagPosition: 'inside',
     maxNodeWidth: 401,
     maxNodeHeight: 300,
     siblingGap: 0,
@@ -104,3 +109,14 @@ test.each([
 ])('fitMaxZoom %j becomes %j', (value, expected) => {
   expect(sanitizeSettings({ fitMaxZoom: value }).fitMaxZoom).toBe(expected);
 });
+
+test.each(['outside', 'inside'])('tagPosition %s is kept', (value) => {
+  expect(sanitizeSettings({ tagPosition: value }).tagPosition).toBe(value);
+});
+
+test.each(['Outside', 'below', '', 3, null, ['inside']])(
+  'tagPosition %j that is not a tag position falls back to outside',
+  (value) => {
+    expect(sanitizeSettings({ tagPosition: value }).tagPosition).toBe('outside');
+  },
+);

@@ -13,6 +13,7 @@ test('valid layout and title', () => {
     layout: 'top-to-bottom',
     collapsed: false,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
 });
@@ -23,6 +24,7 @@ test('absent keys use the defaults without warnings', () => {
     layout: 'left-to-right',
     collapsed: false,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
   expect(readMapOptions({ tags: ['x'] }, 'circle-clockwise', true)).toEqual({
@@ -30,6 +32,7 @@ test('absent keys use the defaults without warnings', () => {
     layout: 'circle-clockwise',
     collapsed: true,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
 });
@@ -60,6 +63,7 @@ test.each(['', '   '])('empty title %j falls back silently', (value) => {
     layout: 'circle-clockwise',
     collapsed: false,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
 });
@@ -72,16 +76,19 @@ test('keys without value (null) fall back silently', () => {
         'mind-mapper-layout': null,
         'mind-mapper-collapsed': null,
         'mind-mapper-theme': null,
+        'mind-mapper-tags': null,
       },
       'circle-clockwise',
       true,
       'ocean',
+      'inside',
     ),
   ).toEqual({
     title: null,
     layout: 'circle-clockwise',
     collapsed: true,
     theme: 'ocean',
+    tags: 'inside',
     invalid: [],
   });
 });
@@ -98,6 +105,7 @@ test('the old mind_map_* keys are ignored', () => {
     layout: 'circle-clockwise',
     collapsed: false,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
 });
@@ -113,6 +121,7 @@ test.each([
     layout: 'circle-clockwise',
     collapsed,
     theme: 'none',
+    tags: 'outside',
     invalid: [],
   });
 });
@@ -139,10 +148,12 @@ test('notice texts name the key, the value, the note and the fallback', () => {
       'mind-mapper-collapsed': 'yes',
       'mind-mapper-title': 3,
       'mind-mapper-theme': 'neon',
+      'mind-mapper-tags': 'below',
     },
     'left-to-right',
     true,
     'forest',
+    'inside',
   );
   expect(
     options.invalid.map(({ key, value }) => invalidOptionMessage(key, value, 'a/Note.md', options)),
@@ -151,6 +162,7 @@ test('notice texts name the key, the value, the note and the fallback', () => {
     'Mind Mapper: unknown mind-mapper-layout "spiral" in a/Note.md, using left-to-right',
     'Mind Mapper: mind-mapper-collapsed "yes" in a/Note.md is not true or false, using true',
     'Mind Mapper: unknown mind-mapper-theme "neon" in a/Note.md, using forest',
+    'Mind Mapper: unknown mind-mapper-tags "below" in a/Note.md, using inside',
   ]);
 });
 
@@ -162,10 +174,12 @@ test('notice texts in German keep key names and values', () => {
       'mind-mapper-collapsed': 'yes',
       'mind-mapper-title': 3,
       'mind-mapper-theme': 'neon',
+      'mind-mapper-tags': 'below',
     },
     'left-to-right',
     true,
     'forest',
+    'inside',
   );
   expect(
     options.invalid.map(({ key, value }) => invalidOptionMessage(key, value, 'a/Note.md', options)),
@@ -174,6 +188,7 @@ test('notice texts in German keep key names and values', () => {
     'Mind Mapper: Unbekanntes mind-mapper-layout "spiral" in a/Note.md, left-to-right wird verwendet',
     'Mind Mapper: mind-mapper-collapsed "yes" in a/Note.md ist nicht true oder false, true wird verwendet',
     'Mind Mapper: Unbekanntes mind-mapper-theme "neon" in a/Note.md, forest wird verwendet',
+    'Mind Mapper: Unbekanntes mind-mapper-tags "below" in a/Note.md, inside wird verwendet',
   ]);
 });
 
@@ -182,7 +197,14 @@ test.each(['none', 'rainbow', 'ocean', 'forest', 'accent'] as const)(
   (theme) => {
     expect(
       readMapOptions({ 'mind-mapper-theme': theme }, 'circle-clockwise', false, 'ocean'),
-    ).toEqual({ title: null, layout: 'circle-clockwise', collapsed: false, theme, invalid: [] });
+    ).toEqual({
+      title: null,
+      layout: 'circle-clockwise',
+      collapsed: false,
+      theme,
+      tags: 'outside',
+      invalid: [],
+    });
   },
 );
 
@@ -206,4 +228,46 @@ test.each([
   );
   expect(options.theme).toBe('forest');
   expect(options.invalid).toEqual([{ key: 'mind-mapper-theme', value: shown }]);
+});
+
+// Issue #103: the tag position per note.
+test.each(['outside', 'inside'] as const)('mind-mapper-tags %s overrides the setting', (tags) => {
+  const other = tags === 'outside' ? 'inside' : 'outside';
+  const options = readMapOptions(
+    { 'mind-mapper-tags': tags },
+    'circle-clockwise',
+    false,
+    'none',
+    other,
+  );
+  expect(options.tags).toBe(tags);
+  expect(options.invalid).toEqual([]);
+});
+
+test('without mind-mapper-tags the setting applies; the default is outside', () => {
+  expect(readMapOptions({}, 'circle-clockwise', false, 'none', 'inside').tags).toBe('inside');
+  expect(readMapOptions(undefined, 'circle-clockwise', false, 'none', 'outside').tags).toBe(
+    'outside',
+  );
+  expect(readMapOptions({ 'mind-mapper-tags': null }, 'circle-clockwise', false).tags).toBe(
+    'outside',
+  );
+});
+
+test.each([
+  ['below', 'below'],
+  ['Outside', 'Outside'],
+  [3, '3'],
+  [false, 'false'],
+  [['inside'], 'inside'],
+])('unknown mind-mapper-tags %j falls back to the setting with a warning', (value, shown) => {
+  const options = readMapOptions(
+    { 'mind-mapper-tags': value },
+    'circle-clockwise',
+    false,
+    'none',
+    'inside',
+  );
+  expect(options.tags).toBe('inside');
+  expect(options.invalid).toEqual([{ key: 'mind-mapper-tags', value: shown }]);
 });

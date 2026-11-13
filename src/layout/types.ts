@@ -35,6 +35,9 @@ export const LAYOUT_NAMES: readonly MapLayoutName[] = [
 /** Extra space between two siblings with a divider between them (spec "Dividers"). */
 export const DIVIDER_GAP = 16;
 
+/** Space between a node's box and its tag row below it (issue #103, styles.css). */
+export const TAG_ROW_GAP = 4;
+
 /** Edge of a node its children grow from. */
 export type Side = 'right' | 'left' | 'bottom' | 'top';
 
@@ -45,6 +48,12 @@ export interface LayoutOptions {
   siblingGap: number;
   levelGap: number;
   nodeSize: (node: MindMapNode) => Size;
+  /**
+   * The tag row below a node's box (tag position `outside`, issue #103), null: none. Used for
+   * side-aligned nodes only: not for the root and not in the vertical layouts (centered text keeps
+   * its tags inside). Default none.
+   */
+  tagRow?: (node: MindMapNode) => Size | null;
   /** Default `left-to-right`. */
   layout?: MapLayoutName;
   /** Kanban: the column width is capped at it (the max node width setting); default no cap. */
@@ -80,6 +89,12 @@ export interface PositionedNode extends Rect {
    * per depth. Columns, cards and the other layouts: none.
    */
   subtask?: number;
+  /**
+   * The tag row below the box (issue #103): TAG_ROW_GAP below it, flush with the edge opposite the
+   * text, reaching past the other edge when wider than the box. The node's footprint is the box
+   * plus this row; none without a row.
+   */
+  tags?: Rect;
 }
 
 export interface LayoutEdge {
@@ -87,6 +102,11 @@ export interface LayoutEdge {
   toId: string;
   source: Point;
   target: Point;
+  /**
+   * Where the curve ends when the child's column was moved away for tag rows reaching towards the
+   * parent (issue #103): a straight line at the target's height runs from here to the target.
+   */
+  via?: Point;
   /** Tangent direction at both ends: `x` for horizontal layouts, `y` for vertical ones. */
   axis: 'x' | 'y';
 }

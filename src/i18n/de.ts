@@ -72,6 +72,8 @@ export const de: Messages = {
     'Mind Mapper: mind-mapper-title in {path} ist kein Text, der Standardtitel wird verwendet',
   invalidTheme:
     'Mind Mapper: Unbekanntes mind-mapper-theme "{value}" in {path}, {theme} wird verwendet',
+  invalidTags:
+    'Mind Mapper: Unbekanntes mind-mapper-tags "{value}" in {path}, {tags} wird verwendet',
 
   // Settings
   mapHeading: 'Mindmap',
@@ -86,6 +88,11 @@ export const de: Messages = {
   defaultThemeName: 'Standard-Farbschema',
   defaultThemeDesc:
     'Färbt jeden Hauptast und alles darunter in einer eigenen Farbe, für Notizen ohne mind-mapper-theme im Frontmatter.',
+  tagPositionName: 'Tag-Position',
+  tagPositionDesc:
+    'Wohin die Tags am Ende eines Knotens kommen: in eine Zeile unter dem Kasten oder in ihn hinein. Für Notizen ohne mind-mapper-tags im Frontmatter.',
+  tagPositionOutside: 'Außerhalb',
+  tagPositionInside: 'Innerhalb',
   fitMaxZoomName: 'Maximaler Zoom beim Einpassen',
   fitMaxZoomDesc:
     'Einpassen vergrößert kleine Mindmaps bis zu diesem Zoom. Geöffnete Mindmaps nutzen ihn beim nächsten Einpassen.',

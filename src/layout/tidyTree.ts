@@ -11,6 +11,7 @@ import {
   type Rect,
   type Side,
   type Size,
+  TAG_ROW_GAP,
   type TextAlign,
 } from './types';
 
@@ -40,7 +41,7 @@ export function layoutTree(tree: MindMapTree, options: LayoutOptions): MapLayout
         const { width, height } = options.nodeSize(node);
         return { width: height, height: width };
       };
-      const vertical = swapAxes(canonical(tree.root, swapped, options, tree.root));
+      const vertical = swapAxes(canonical(tree.root, swapped, options, tree.root, null, false));
       return finish(layout === 'top-to-bottom' ? vertical : mirrorY(vertical, tree.root), 'y');
     }
     case 'circle-clockwise':
@@ -70,7 +71,9 @@ interface Raw {
  * `source`: the tree's real root; its children's order is the branch order (a circle side gets a
  * copy of the root with a slice of them). `reversed`: a parent whose children are stacked in
  * reverse source order (left side of the circle layouts); a divider belongs between two
- * source-order neighbors, wherever they stack.
+ * source-order neighbors, wherever they stack. `rows`: nodes below the root get their tag rows
+ * (issue #103): each subtree is stacked by its footprint (box, gap, row) and a child column moves
+ * away from its parent by the widest row reaching past its box towards the parent.
  */
 function canonical(
   root: MindMapNode,
@@ -78,11 +81,20 @@ function canonical(
   options: LayoutOptions,
   source: MindMapNode,
   reversed: MindMapNode | null = null,
+  rows = true,
 ): Raw {
   const branches = new Map(source.children.map((child, i) => [child, i]));
   const branchOf = (child: MindMapNode): number => branches.get(child) ?? -1;
   const sizes = new Map<MindMapNode, Size>();
-  const boxHeights = new Map<MindMapNode, number>();
+  const tagRows = new Map<MindMapNode, Size>();
+  /** Subtree extent above and below the middle of the node's box (edges attach there). */
+  const ups = new Map<MindMapNode, number>();
+  const downs = new Map<MindMapNode, number>();
+  const heightOf = (node: MindMapNode): number => (ups.get(node) ?? 0) + (downs.get(node) ?? 0);
+  /** Room before a node's child column for tag rows reaching past their boxes towards it. */
+  const shifts = new Map<MindMapNode, number>();
+  const overhang = (node: MindMapNode): number =>
+    Math.max(0, (tagRows.get(node)?.width ?? 0) - (sizes.get(node)?.width ?? 0));
 
   /** Divider between the stacked children `i - 1` and `i`. */
   const dividerAt = (node: MindMapNode, i: number): boolean =>
@@ -90,26 +102,33 @@ function canonical(
   const gapBefore = (node: MindMapNode, i: number): number =>
     i === 0 ? 0 : options.siblingGap + (dividerAt(node, i) ? DIVIDER_GAP : 0);
 
-  const childrenBlockHeight = (node: MindMapNode, height: (n: MindMapNode) => number): number =>
-    node.children.reduce((sum, child, i) => sum + gapBefore(node, i) + height(child), 0);
+  const childrenBlockHeight = (node: MindMapNode): number =>
+    node.children.reduce((sum, child, i) => sum + gapBefore(node, i) + heightOf(child), 0);
 
   /** Subtree extent along the level axis, from the node's near edge to its deepest descendant. */
   const extents = new Map<MindMapNode, number>();
 
-  const measure = (node: MindMapNode): number => {
+  const measure = (node: MindMapNode): void => {
     const size = nodeSize(node);
     sizes.set(node, size);
-    const box = Math.max(size.height, childrenBlockHeight(node, measure));
-    boxHeights.set(node, box);
+    const row = rows && node !== root ? (options.tagRow?.(node) ?? null) : null;
+    if (row) tagRows.set(node, row);
+    for (const child of node.children) measure(child);
+    const block = childrenBlockHeight(node);
+    const below = row ? TAG_ROW_GAP + row.height : 0;
+    ups.set(node, Math.max(size.height / 2, block / 2));
+    downs.set(node, Math.max(size.height / 2 + below, block / 2));
+    const shift = Math.max(0, ...node.children.map(overhang));
+    shifts.set(node, shift);
     const deepest = Math.max(0, ...node.children.map((child) => extents.get(child) ?? 0));
-    extents.set(node, size.width + (deepest > 0 ? options.levelGap + deepest : 0));
-    return box;
+    extents.set(node, size.width + (deepest > 0 ? options.levelGap + shift + deepest : 0));
   };
 
   const nodes: PositionedNode[] = [];
   const edges: Omit<LayoutEdge, 'axis'>[] = [];
   const dividers: LayoutDivider[] = [];
 
+  /** `top`: the top of the node's subtree. */
   const place = (
     node: MindMapNode,
     x: number,
@@ -118,12 +137,11 @@ function canonical(
     branch: number,
   ): PositionedNode => {
     const size = sizes.get(node) ?? { width: 0, height: 0 };
-    const box = boxHeights.get(node) ?? size.height;
-    const centerY = top + box / 2;
+    const middle = top + (ups.get(node) ?? 0);
     const positioned: PositionedNode = {
       node,
       x,
-      y: centerY - size.height / 2,
+      y: middle - size.height / 2,
       ...size,
       childSide: 'right',
       // Flush towards the parent; the root towards its children.
@@ -131,11 +149,22 @@ function canonical(
       depth,
       branch,
     };
+    const row = tagRows.get(node);
+    if (row) {
+      // Flush with the edge opposite the text (the right edge here).
+      positioned.tags = {
+        x: x + size.width - row.width,
+        y: middle + size.height / 2 + TAG_ROW_GAP,
+        ...row,
+      };
+    }
     nodes.push(positioned);
 
-    const block = childrenBlockHeight(node, (child) => boxHeights.get(child) ?? 0);
-    let childTop = centerY - block / 2;
-    const childX = x + size.width + options.levelGap;
+    // Children are centered on the middle of the box: a single child is level with it.
+    let childTop = middle - childrenBlockHeight(node) / 2;
+    const shift = shifts.get(node) ?? 0;
+    const columnX = x + size.width + options.levelGap;
+    const childX = columnX + shift;
     let previous: MindMapNode | null = null;
     node.children.forEach((child, i) => {
       const gap = gapBefore(node, i);
@@ -143,7 +172,11 @@ function canonical(
         const y = childTop + gap / 2;
         // Spans both neighboring branches, not just the two nodes (spec "Dividers").
         const length = Math.max(extents.get(previous) ?? 0, extents.get(child) ?? 0);
-        dividers.push({ parentId: node.id, from: { x: childX, y }, to: { x: childX + length, y } });
+        dividers.push({
+          parentId: node.id,
+          from: { x: columnX, y },
+          to: { x: childX + length, y },
+        });
       }
       childTop += gap;
       const placed = place(
@@ -153,20 +186,23 @@ function canonical(
         depth + 1,
         depth === 0 ? branchOf(child) : branch,
       );
+      const target = { x: placed.x, y: placed.y + placed.height / 2 };
       edges.push({
         fromId: node.id,
         toId: child.id,
-        source: { x: x + size.width, y: centerY },
-        target: { x: placed.x, y: placed.y + placed.height / 2 },
+        source: { x: x + size.width, y: middle },
+        target,
+        // Curves stay in the level gap, clear of the rows in the moved column's room.
+        ...(shift > 0 ? { via: { x: columnX, y: target.y } } : {}),
       });
-      childTop += boxHeights.get(child) ?? 0;
+      childTop += heightOf(child);
       previous = child;
     });
     return positioned;
   };
 
-  const rootBox = measure(root);
-  place(root, 0, -rootBox / 2, 0, -1);
+  measure(root);
+  place(root, 0, -(ups.get(root) ?? 0), 0, -1);
   return { nodes, edges, dividers };
 }
 
@@ -175,14 +211,16 @@ function mirrorX(raw: Raw, root: MindMapNode): Raw {
   const rootRect = raw.nodes.find((p) => p.node === root);
   const axis = rootRect ? rootRect.width : 0;
   const point = (p: Point): Point => ({ x: axis - p.x, y: p.y });
+  const rect = (r: Rect): Rect => ({ ...r, x: axis - r.x - r.width });
   return {
     nodes: raw.nodes.map((p) => ({
       ...p,
       x: axis - p.x - p.width,
       childSide: flip(p.childSide),
       align: flipAlign(p.align),
+      ...(p.tags ? { tags: rect(p.tags) } : {}),
     })),
-    edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    edges: raw.edges.map((e) => mapEdge(e, point)),
     dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
@@ -192,9 +230,10 @@ function mirrorY(raw: Raw, root: MindMapNode): Raw {
   const rootRect = raw.nodes.find((p) => p.node === root);
   const axis = rootRect ? 2 * rootRect.y + rootRect.height : 0;
   const point = (p: Point): Point => ({ x: p.x, y: axis - p.y });
+  // Vertical layouts have no tag rows (centered text keeps its tags inside).
   return {
     nodes: raw.nodes.map((p) => ({ ...p, y: axis - p.y - p.height, childSide: flip(p.childSide) })),
-    edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    edges: raw.edges.map((e) => mapEdge(e, point)),
     dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
@@ -212,7 +251,7 @@ function swapAxes(raw: Raw): Raw {
       childSide: 'bottom',
       align: 'center',
     })),
-    edges: raw.edges.map((e) => ({ ...e, source: point(e.source), target: point(e.target) })),
+    edges: raw.edges.map((e) => mapEdge(e, point)),
     dividers: raw.dividers.map((d) => ({ ...d, from: point(d.from), to: point(d.to) })),
   };
 }
@@ -236,6 +275,15 @@ function circle(root: MindMapNode, options: LayoutOptions): Raw {
     nodes,
     edges: [...right.edges, ...left.edges],
     dividers: [...right.dividers, ...left.dividers],
+  };
+}
+
+function mapEdge<E extends Omit<LayoutEdge, 'axis'>>(edge: E, point: (p: Point) => Point): E {
+  return {
+    ...edge,
+    source: point(edge.source),
+    target: point(edge.target),
+    ...(edge.via ? { via: point(edge.via) } : {}),
   };
 }
 
@@ -265,10 +313,12 @@ function finish(raw: Raw, axis: 'x' | 'y'): MapLayout {
   };
 }
 
+/** All node footprints: boxes and tag rows. */
 function boundsOf(nodes: PositionedNode[]): Rect {
-  const minX = Math.min(...nodes.map((n) => n.x));
-  const minY = Math.min(...nodes.map((n) => n.y));
-  const maxX = Math.max(...nodes.map((n) => n.x + n.width));
-  const maxY = Math.max(...nodes.map((n) => n.y + n.height));
+  const rects = nodes.flatMap((n) => (n.tags ? [n, n.tags] : [n]));
+  const minX = Math.min(...rects.map((r) => r.x));
+  const minY = Math.min(...rects.map((r) => r.y));
+  const maxX = Math.max(...rects.map((r) => r.x + r.width));
+  const maxY = Math.max(...rects.map((r) => r.y + r.height));
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }

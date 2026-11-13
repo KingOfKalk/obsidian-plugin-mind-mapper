@@ -1,4 +1,5 @@
 import type { MapLayoutName } from '../layout/types';
+import type { TagPosition } from '../tagPositions';
 import type { MapThemeName } from '../themeNames';
 import type { MessageKey } from './en';
 
@@ -20,4 +21,10 @@ export const THEME_LABELS: Readonly<Record<MapThemeName, MessageKey>> = {
   ocean: 'themeOcean',
   forest: 'themeForest',
   accent: 'themeAccent',
+};
+
+/** Dropdown labels of the tag positions (issue #103). */
+export const TAG_POSITION_LABELS: Readonly<Record<TagPosition, MessageKey>> = {
+  outside: 'tagPositionOutside',
+  inside: 'tagPositionInside',
 };

@@ -166,9 +166,11 @@ describe('nested tags in node content', function () {
 
 /** Issue #92: trailing tags on the side opposite the text, small corners, branch colors. */
 const TRAILING = 'trailing-tags.md';
+// Inside (issue #103): the 1.7.0 behavior, unchanged.
 const TRAILING_TEXT = [
   '---',
   'mind-mapper-theme: rainbow',
+  'mind-mapper-tags: inside',
   '---',
   '# Trailing #solo',
   '',

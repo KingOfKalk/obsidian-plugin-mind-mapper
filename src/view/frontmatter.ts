@@ -1,9 +1,14 @@
 import { t } from '../i18n';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
+import { TAG_POSITIONS, type TagPosition } from '../tagPositions';
 import { type MapThemeName, THEME_NAMES } from '../themeNames';
 
 export type MapOptionKey =
-  'mind-mapper-title' | 'mind-mapper-layout' | 'mind-mapper-collapsed' | 'mind-mapper-theme';
+  | 'mind-mapper-title'
+  | 'mind-mapper-layout'
+  | 'mind-mapper-collapsed'
+  | 'mind-mapper-theme'
+  | 'mind-mapper-tags';
 
 export interface MapOptions {
   /** `mind-mapper-title`, else null (default title). */
@@ -13,26 +18,31 @@ export interface MapOptions {
   collapsed: boolean;
   /** `mind-mapper-theme`, else the "Default theme" setting. */
   theme: MapThemeName;
+  /** `mind-mapper-tags`, else the "Tag position" setting (issue #103). */
+  tags: TagPosition;
   /** Values that were ignored; shown once per note and value (spec "Frontmatter"). */
   invalid: { key: MapOptionKey; value: string }[];
 }
 
 /**
- * Spec "Frontmatter": `mind-mapper-layout` outside the list and `mind-mapper-collapsed` that is
- * not a YAML boolean and `mind-mapper-theme` outside the list fall back to the plugin settings, `mind-mapper-title` that is not text falls
- * back to the default. Absent or empty keys fall back without a warning.
+ * Spec "Frontmatter": `mind-mapper-layout`, `mind-mapper-theme` and `mind-mapper-tags` outside
+ * their lists and `mind-mapper-collapsed` that is not a YAML boolean fall back to the plugin
+ * settings, `mind-mapper-title` that is not text falls back to the default. Absent or empty keys
+ * fall back without a warning.
  */
 export function readMapOptions(
   frontmatter: Record<string, unknown> | undefined,
   defaultLayout: MapLayoutName,
   startCollapsed: boolean,
   defaultTheme: MapThemeName = 'none',
+  defaultTags: TagPosition = 'outside',
 ): MapOptions {
   const invalid: MapOptions['invalid'] = [];
   const rawTitle = frontmatter?.['mind-mapper-title'];
   const rawLayout = frontmatter?.['mind-mapper-layout'];
   const rawCollapsed = frontmatter?.['mind-mapper-collapsed'];
   const rawTheme = frontmatter?.['mind-mapper-theme'];
+  const rawTags = frontmatter?.['mind-mapper-tags'];
 
   let title: string | null = null;
   if (typeof rawTitle === 'string') {
@@ -62,7 +72,14 @@ export function readMapOptions(
     invalid.push({ key: 'mind-mapper-theme', value: shown(rawTheme) });
   }
 
-  return { title, layout, collapsed, theme, invalid };
+  let tags = defaultTags;
+  if (TAG_POSITIONS.includes(rawTags as TagPosition)) {
+    tags = rawTags as TagPosition;
+  } else if (rawTags !== undefined && rawTags !== null) {
+    invalid.push({ key: 'mind-mapper-tags', value: shown(rawTags) });
+  }
+
+  return { title, layout, collapsed, theme, tags, invalid };
 }
 
 /** A YAML value as the user wrote it: lists comma separated, maps as JSON. */
@@ -88,5 +105,7 @@ export function invalidOptionMessage(
       return t('invalidTitle', { path });
     case 'mind-mapper-theme':
       return t('invalidTheme', { value, path, theme: options.theme });
+    case 'mind-mapper-tags':
+      return t('invalidTags', { value, path, tags: options.tags });
   }
 }

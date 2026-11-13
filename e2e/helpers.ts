@@ -193,7 +193,7 @@ export async function mouseOnNode(id: string, type: 'click' | 'dblclick'): Promi
   await browser.execute(
     (nodeId, eventType) => {
       const el = document.querySelector(
-        `.mind-mapper-node[data-node-id="${nodeId}"] .mind-mapper-node-content`,
+        `.mind-mapper-node[data-node-id="${CSS.escape(nodeId)}"] .mind-mapper-node-content`,
       );
       if (!el) throw new Error(`no node ${nodeId}`);
       el.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true, button: 0 }));

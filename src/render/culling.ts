@@ -33,6 +33,24 @@ export function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+/** The node's box grown by its tag row (issue #103): the whole area it draws on. */
+export function footprint(p: PositionedNode): Rect {
+  if (!p.tags) return { x: p.x, y: p.y, width: p.width, height: p.height };
+  const x = Math.min(p.x, p.tags.x);
+  const y = Math.min(p.y, p.tags.y);
+  return {
+    x,
+    y,
+    width: Math.max(p.x + p.width, p.tags.x + p.tags.width) - x,
+    height: Math.max(p.y + p.height, p.tags.y + p.tags.height) - y,
+  };
+}
+
+/** Whether the node's box or its tag row overlaps `rect`. */
+export function nodeOverlaps(p: PositionedNode, rect: Rect): boolean {
+  return overlaps(p, rect) || (p.tags !== undefined && overlaps(p.tags, rect));
+}
+
 /** `nodesInView` counts the visible viewport only, never the margin (README: "in view"). */
 export function detailLevel(zoom: number, nodesInView: number): 'content' | 'skeleton' {
   if (nodesInView > MAX_CONTENT_NODES) return 'skeleton';
@@ -51,7 +69,7 @@ export function gapSquared(a: Rect, b: Rect): number {
   return dx * dx + dy * dy;
 }
 
-/** Uniform grid over node rects; built once per layout, queried per frame. */
+/** Uniform grid over node rects and tag rows; built once per layout, queried per frame. */
 export class SpatialIndex {
   private readonly cells = new Map<string, PositionedNode[]>();
 
@@ -60,7 +78,7 @@ export class SpatialIndex {
     private readonly cell = 512,
   ) {
     for (const node of nodes) {
-      for (const key of this.keys(node)) {
+      for (const key of this.keys(footprint(node))) {
         const list = this.cells.get(key);
         if (list) list.push(node);
         else this.cells.set(key, [node]);
@@ -73,7 +91,7 @@ export class SpatialIndex {
     for (const key of this.keys(rect)) {
       for (const node of this.cells.get(key) ?? []) {
         if (found.has(node.node.id)) continue;
-        if (overlaps(node, rect)) found.add(node.node.id);
+        if (nodeOverlaps(node, rect)) found.add(node.node.id);
       }
     }
     return found;

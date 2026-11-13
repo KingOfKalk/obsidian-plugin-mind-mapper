@@ -44,3 +44,16 @@ test('crossLinkPath uses the facing horizontal edges when mostly vertical', () =
     crossLinkPath({ x: 0, y: 0, width: 100, height: 20 }, { x: 0, y: 200, width: 100, height: 20 }),
   ).toBe('M 50 20 C 50 92, 50 128, 50 200');
 });
+
+test('with via the curve ends there and a straight line runs on to the target (issue #103)', () => {
+  expect(
+    edgePath({
+      fromId: 'a',
+      toId: 'b',
+      source: { x: 0, y: 0 },
+      target: { x: 140, y: 50 },
+      via: { x: 100, y: 50 },
+      axis: 'x',
+    }),
+  ).toBe('M 0 0 C 50 0, 50 50, 100 50 L 140 50');
+});
