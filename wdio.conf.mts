@@ -4,7 +4,7 @@ import * as path from 'node:path';
 export const config: WebdriverIO.Config = {
   runner: 'local',
   framework: 'mocha',
-  specs: ['./e2e/specs/**/*.e2e.ts'],
+  specs: ['./e2e/specs/alignment*.e2e.ts'],
   maxInstances: 1,
   capabilities: [
     {

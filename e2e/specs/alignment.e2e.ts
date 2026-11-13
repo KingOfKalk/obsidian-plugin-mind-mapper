@@ -132,6 +132,22 @@ async function expectAligns(layout: string): Promise<void> {
 }
 
 describe('text alignment', function () {
+  before(async function () {
+    const rate = Number(process.env.MM_THROTTLE ?? '0');
+    if (!rate) return;
+    const res = await browser.execute(async (r) => {
+      const wc = (window as any).electron.remote.getCurrentWebContents();
+      try {
+        wc.debugger.attach('1.3');
+      } catch (e) {
+        /* attached */
+      }
+      await wc.debugger.sendCommand('Emulation.setCPUThrottlingRate', { rate: r });
+      return 'throttled ' + r;
+    }, rate);
+    console.log('THROTTLE', res);
+  });
+
   beforeEach(async function () {
     await writeNote(NOTE, TEXT);
   });

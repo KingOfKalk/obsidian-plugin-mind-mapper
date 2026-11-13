@@ -867,7 +867,13 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private runAnimation(phases: Phase[]): void {
     const canvas = this.dom?.renderer.canvasEl;
     canvas?.addClass('is-animating');
+    const dbg = ((window as any).__mmAnim ??= []) as string[];
+    const id = dbg.length;
+    dbg.push(
+      `${Math.round(performance.now())} start#${id} phases=${phases.length} ${new Error().stack?.split('\n').slice(2, 6).join(' | ')}`,
+    );
     const runner = new PhaseRunner(this.contentEl.win, phases, () => {
+      dbg.push(`${Math.round(performance.now())} end#${id}`);
       canvas?.removeClass('is-animating');
       if (this.animation !== runner) return;
       this.animation = null;
