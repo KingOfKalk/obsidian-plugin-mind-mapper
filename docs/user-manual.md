@@ -345,7 +345,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 | Spacing | Level gap | slider, steps of 10 px | 20–400 px | 60 px | space between a node and its children |
 
 - Each slider shows its value (e.g. "320 px" or "200 %") and has a "Restore default" button
-- About group: the plugin version and a link to the source code
+- About group: the plugin version, a link to the source code and a link to report an issue
 
 ![The Mind Mapper settings tab: Map, Nodes and Spacing groups with two dropdowns, a toggle and five sliders](images/manual/settings.png)
 

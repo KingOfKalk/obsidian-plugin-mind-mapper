@@ -119,7 +119,7 @@ describe('settings', function () {
     expect(await nodeWidth('Wide/#1')).toBeGreaterThan(320);
   });
 
-  it('the About group shows the plugin version and the repository link', async function () {
+  it('the About group shows the plugin version, the repository link and the issue tracker link', async function () {
     await openMindMapperSettings();
     const version = await browser.executeObsidian(
       ({ app }) => (app as unknown as ObsidianApp).plugins.plugins['mind-mapper']!.manifest.version,
@@ -130,6 +130,10 @@ describe('settings', function () {
     const link = settingRow('Source code').$('.setting-item-description a');
     expect(await link.getAttribute('href')).toBe(
       'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper',
+    );
+    const issues = settingRow('Report an issue').$('.setting-item-description a');
+    expect(await issues.getAttribute('href')).toBe(
+      'https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues',
     );
   });
 });

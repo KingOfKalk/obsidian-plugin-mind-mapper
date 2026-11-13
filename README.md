@@ -1,6 +1,6 @@
 # Mind Mapper
 
-Show any Markdown note as a live mind map in Obsidian. Headings, paragraphs, lists and blocks become nodes, rendered the way reading view renders them, and the map follows the note while you write.
+Show any note as a live, read-only mind map that follows you while you write: headings, lists and blocks become nodes, rendered like reading view.
 
 Full guide: [docs/user-manual.md](docs/user-manual.md)
 

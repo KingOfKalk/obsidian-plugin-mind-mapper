@@ -4,9 +4,6 @@ The repository is public and Mind Mapper is released (1.0.0 and later, via relea
 
 ## Open
 
-- [ ] `manifest.json`: add `authorUrl` (and `fundingUrl` if wanted)
-- [ ] `package.json`: add `repository`, `bugs` and `homepage`
-- [ ] "Report an issue" row in the settings tab's About group, linking to the issue tracker (code change, own issue and PR)
 - [ ] Social preview image (`docs/images/hero.png`) set in the repository settings (not checkable from the API)
 
 ## Community directory (postponed)

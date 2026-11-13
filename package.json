@@ -1,11 +1,19 @@
 {
   "name": "mind-mapper",
   "version": "1.5.1",
-  "description": "Show any Markdown note as a live mind map: headings, lists and blocks become nodes, rendered like reading view.",
+  "description": "Show any note as a live, read-only mind map that follows you while you write: headings, lists and blocks become nodes, rendered like reading view.",
   "private": true,
   "type": "module",
   "main": "main.js",
   "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KingOfKalk/obsidian-plugin-mind-mapper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues"
+  },
+  "homepage": "https://github.com/KingOfKalk/obsidian-plugin-mind-mapper#readme",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "dev:build": "node esbuild.config.mjs once",
