@@ -14,7 +14,7 @@ import {
 import { VIEW_ICON, VIEW_TYPE_MIND_MAP } from '../constants';
 import { setElementId } from '../elementIds';
 import { nearestNode } from '../layout/anchor';
-import { estimateSize, limitsFor, measuredSize, type NodeLimits } from '../layout/nodeSize';
+import { estimateSize, limitsFor, type NodeLimits } from '../layout/nodeSize';
 import { SizeCache } from '../layout/sizeCache';
 import { visibleTree } from '../layout/visibleTree';
 import { layoutTree } from '../layout/tidyTree';
@@ -41,6 +41,7 @@ import { CollapseState } from './collapseState';
 import { drillMarkdown, drilledTree, findNode, isValidDrillPath } from './drill';
 import { type Anchor, Camera, centredAt, screenCentreOf } from './camera';
 import { FullScreen } from './fullScreen';
+import { NodeMeasurer } from './nodeMeasurer';
 import { LeafRecency } from '../leafRecency';
 import { fileBasename, type MindMapViewState, parseViewState } from './viewState';
 
@@ -53,7 +54,6 @@ export interface ViewServices {
   warnOnce(id: string, message: string): void;
 }
 
-const RELAYOUT_DEBOUNCE_MS = 100;
 /** Spec "Live update": debounced about 300 ms. */
 export const LIVE_UPDATE_DEBOUNCE_MS = 300;
 const NO_CLIP = { x: false, y: false };
@@ -86,10 +86,18 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private readonly content = new NodeContentRenderer(this.app, () => this.pinnedFile ?? '', this);
   private tree: MindMapTree | null = null;
   private readonly sizes = new SizeCache(() => this.limits());
-  private observer: ResizeObserver | null = null;
-  /** Observed content element -> node id. */
-  private readonly observed = new Map<Element, string>();
-  private relayoutTimer: number | null = null;
+  /** Rendered node contents into `sizes`; a change re-lays out (debounced). */
+  private readonly measurer = new NodeMeasurer(
+    {
+      win: () => this.contentEl.win,
+      limits: () => this.limits(),
+      layout: () => (this.dom ? this.layout : null),
+      canvasSize: () => this.camera.size(),
+      setClipped: (id, clip) => this.dom?.renderer.setClipped(id, clip),
+      relayout: () => this.relayout(),
+    },
+    this.sizes,
+  );
   private relayoutOnResize = false;
   private readonly collapse = new CollapseState();
   /**
@@ -409,7 +417,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     if (!this.layout || !this.tree) return;
     // A new max node size changes the size cache keys and the content caps: measure again now
     // (the ResizeObserver only fires for content whose size changes).
-    this.measure([...this.observed.keys()]);
+    this.measurer.measureAll();
     this.applyStartCollapsed(this.tree);
     const tree = this.tree;
     if (this.layoutWillChange()) {
@@ -452,7 +460,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.camera.pendingFit = true;
     this.listenForEscape();
     // A tab dragged into another window: measuring follows it there.
-    this.register(this.containerEl.onWindowMigrated(() => this.observeAgain()));
+    this.register(this.containerEl.onWindowMigrated(() => this.measurer.moveToWindow()));
     await this.loadNote();
   }
 
@@ -478,18 +486,6 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   }
 
   /**
-   * The view moved to another window: the ResizeObserver belongs to the old one (which may close
-   * and take the observer with it), so a new one from the new window observes the contents.
-   */
-  private observeAgain(): void {
-    this.observer?.disconnect();
-    this.observer = null;
-    const observed = [...this.observed];
-    this.observed.clear();
-    if (observed.length > 0) this.observeContent(new Map(observed.map(([el, id]) => [id, el])));
-  }
-
-  /**
    * Obsidian's workspace hands an Esc nothing marked as handled from a non-navigation view (like
    * this one) to the most recent note tab: a bare Esc, or one that closed a menu of the control bar
    * (menus do not mark it), would take the active tab from the map and end full screen. The map is
@@ -507,11 +503,9 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.generation++;
     this.stopListening();
     this.cancelUpdate();
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     this.cancelLayoutFrame();
-    this.observer?.disconnect();
-    this.observer = null;
-    this.observed.clear();
+    this.measurer.disconnect();
     this.tree = null;
     this.layout = null;
     this.dom?.renderer.clear();
@@ -608,14 +602,14 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
    * itself (view state, control bar) applies at once.
    */
   private switchLayout(swap: () => void): void {
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     this.camera.fitted = false;
     this.camera.pendingFit = false;
     this.camera.run([
       this.camera.fade('out'),
       this.camera.fade('in', () => {
         const anchor = this.layout ? this.anchorIn(this.layout) : [];
-        this.cancelRelayout();
+        this.measurer.cancelRelayout();
         swap();
         this.camera.keepInPlace(anchor, this.layout);
       }),
@@ -721,7 +715,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const old = this.layout.nodes.find((p) => p.node.id === this.shownCentre) ?? null;
     const at = old && screenCentreOf(old, this.camera.transform);
     this.shownCentre = centre;
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     if (keep === null) this.camera.pendingFit = true;
     this.showLayout(this.computeLayout(this.tree));
     if (keep === null || !at) return;
@@ -905,7 +899,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     this.camera.finish();
     this.generation++; // a load still reading the file is outdated now
     this.cancelUpdate();
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     this.safely(file.path, () => this.showChange(file, data, cache));
   }
 
@@ -971,7 +965,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   /** Re-layout after a user action (collapse): no fit, the anchor keeps its screen position. */
   private relayoutKeeping(anchor: Anchor): void {
     if (!this.tree) return;
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     this.showLayout(this.computeLayout(this.tree));
     this.camera.fitted = false;
     this.camera.pendingFit = false;
@@ -1028,11 +1022,10 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
         render: (node, contentEl) => {
           void this.content.render(node, contentEl);
           // Content created by culling (panning, zooming) is measured like any other.
-          this.observeContent(new Map([[node.id, contentEl]]));
+          this.measurer.observe(new Map([[node.id, contentEl]]));
         },
         release: (contentEl) => {
-          this.observer?.unobserve(contentEl);
-          this.observed.delete(contentEl);
+          this.measurer.release(contentEl);
           this.content.release(contentEl);
         },
         expand: (node) =>
@@ -1089,9 +1082,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
       sourcePath: () => this.pinnedFile ?? '',
       onNavigate: () => this.exitFullScreen(),
     });
-    this.registerEvent(
-      this.app.workspace.on('css-change', () => this.measure([...this.observed.keys()])),
-    );
+    this.registerEvent(this.app.workspace.on('css-change', () => this.measurer.measureAll()));
     this.dom = { placeholderEl, hintEl, updateErrorEl, renderer, controls };
     this.camera.apply(this.camera.transform);
     return this.dom;
@@ -1100,7 +1091,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
   private showMessage(text: string): void {
     const dom = this.ensureDom();
     this.camera.cancel();
-    this.cancelRelayout();
+    this.measurer.cancelRelayout();
     this.cancelLayoutFrame();
     this.tree = null;
     this.layout = null;
@@ -1134,7 +1125,7 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     for (const { node } of layout.nodes) {
       dom.renderer.setClipped(node.id, this.sizes.get(node)?.clip ?? NO_CLIP);
     }
-    this.observeContent(dom.renderer.contentElements());
+    this.measurer.observe(dom.renderer.contentElements());
     if (this.camera.pendingFit) this.camera.tryFit();
   }
 
@@ -1144,55 +1135,6 @@ export class MindMapView extends ItemView implements MapActions, PanZoomTarget, 
     const shown = new Set(layout.nodes.map((p) => p.node.id));
     if (shown.has(this.selected)) return;
     this.select(this.ancestorIds(this.selected).find((id) => shown.has(id)) ?? null);
-  }
-
-  /** One ResizeObserver (from the view's own window, popout safe) for all node contents. */
-  private observeContent(contents: ReadonlyMap<string, Element>): void {
-    const win = this.contentEl.win as Window & typeof globalThis;
-    this.observer ??= new win.ResizeObserver((entries) =>
-      this.measure(entries.map((e) => e.target)),
-    );
-    for (const [id, el] of contents) {
-      if (this.observed.get(el) === id) continue;
-      this.observed.set(el, id);
-      this.observer.observe(el);
-    }
-  }
-
-  /** Reads rendered content sizes; a change schedules a debounced re-layout. */
-  private measure(elements: Element[]): void {
-    if (!this.layout || !this.dom) return;
-    // A hidden tab (display: none) reports 0 x 0 for everything; keep the measured sizes.
-    const { width, height } = this.camera.size();
-    if (width === 0 || height === 0) return;
-    const nodes = new Map(this.layout.nodes.map((p) => [p.node.id, p.node]));
-    let changed = false;
-    for (const el of elements) {
-      const id = this.observed.get(el);
-      const node = id === undefined ? undefined : nodes.get(id);
-      // instanceOf, not instanceof: works for nodes of popout windows too.
-      if (!node || !el.instanceOf(HTMLElement)) continue;
-      // Not laid out (yet): no real size to take.
-      if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
-      const measured = measuredSize(el, this.limits());
-      if (this.sizes.set(node, measured)) changed = true;
-      this.dom.renderer.setClipped(node.id, measured.clip);
-    }
-    if (changed) this.scheduleRelayout();
-  }
-
-  private scheduleRelayout(): void {
-    this.cancelRelayout();
-    this.relayoutTimer = this.contentEl.win.setTimeout(() => {
-      this.relayoutTimer = null;
-      this.relayout();
-    }, RELAYOUT_DEBOUNCE_MS);
-  }
-
-  private cancelRelayout(): void {
-    if (this.relayoutTimer === null) return;
-    this.contentEl.win.clearTimeout(this.relayoutTimer);
-    this.relayoutTimer = null;
   }
 
   /** Re-layout with measured sizes: re-fit while still fitted, else keep the node nearest the center in place. */
