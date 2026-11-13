@@ -7,3 +7,4 @@ tests/vault/.obsidian/
 sandbox-vault/
 tests/vault/fixtures/*.cache.json
 .obsidian-cache/
+coverage/

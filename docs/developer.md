@@ -46,7 +46,13 @@
   - Force a version: a commit on `main` with the footer `Release-As: x.y.z`
   - Commit messages on `main` (squash-merge titles) are the changelog: keep them Conventional Commits
 - CI (`.github/workflows/`)
-  - `ci.yml` on pushes to and pull requests into `main`: job `check` (`npm run check`, uploads the plugin files as artifact `mind-mapper-<sha>`) and job `e2e` (`scripts/install-e2e-deps.sh`, then `npm run test:e2e`; `.obsidian-cache` cached by the Obsidian version in `wdio.conf.mts`)
+  - `ci.yml` on pushes to and pull requests into `main`, in stages `lint` → (`unit` ‖ `e2e`) → `build`; job summaries and annotations come from `scripts/ci-summary.mjs`
+    - `lint`: Prettier (`format:check`), ESLint and TypeScript (`typecheck`, covers `e2e/` too) all run; the job summary lists what failed, with annotations on the affected lines; then the job fails if any of them failed
+    - `unit` (needs `lint`): `npm run test:coverage` (Vitest with `@vitest/coverage-v8`, files in `src/`); coverage table in the job summary, no threshold
+    - `e2e` (needs `lint`, parallel to `unit`): `scripts/install-e2e-deps.sh`, then `npm run test:e2e`; `.obsidian-cache` cached by the Obsidian version in `wdio.conf.mts`
+    - `build` (needs `unit` and `e2e`): `npm run build`, uploads the plugin files as artifact `mind-mapper-<sha7>` (14 days); bundle size of `main.js` (raw and gzip) in the job summary. Pushes to `main` upload it as artifact `bundle-size` (90 days); pull requests compare against the one from the latest successful `main` run ("No baseline yet" when there is none)
+    - Required checks on `main`: `lint`, `unit`, `e2e`, `build`
+    - Locally `npm run check` still runs format check, lint, typecheck, unit tests and build in one go; `npm run test:coverage` writes `coverage/` (git-ignored)
   - `codeql.yml`: CodeQL (security-and-quality) on push, pull request and weekly
   - `.github/dependabot.yml`: weekly npm and GitHub Actions updates, grouped; `dependabot-auto-merge.yml` approves and auto-merges minor and patch updates of dev dependencies and actions
   - `notify-failure.yml`: opens (or comments on) an issue labelled `workflow-failure` when CI or Release fails on `main`

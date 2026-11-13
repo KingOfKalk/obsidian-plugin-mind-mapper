@@ -53,7 +53,7 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
   - `npm run check` (format, lint, typecheck, unit tests, build)
   - `npm run test:e2e` (real headless Obsidian)
   - UI changes: `npm run screenshots:e2e`, then look at the PNGs in `e2e/screenshots/`
-- CI must pass before a merge.
+- CI must pass before a merge. It runs `lint` (Prettier, ESLint, TypeScript) → `unit` (Vitest with coverage) and `e2e` (headless Obsidian) in parallel → `build` (production build, plugin artifact, bundle size vs `main`); all four are required checks. Details: [docs/developer.md](docs/developer.md) (Release, CI).
 - The owner reviews and merges. Pull requests are squash-merged; the branch is deleted afterwards.
 - After a merge, run `npm run dev:build` in the main checkout so `sandbox-vault/` has the new build.
 - Keep scope tight: unrelated work goes on a separate issue and branch.
