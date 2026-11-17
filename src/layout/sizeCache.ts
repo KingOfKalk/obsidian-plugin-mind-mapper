@@ -1,5 +1,5 @@
 import type { MindMapNode } from '../parser/types';
-import type { TagPosition } from '../tagPositions';
+import { DEFAULT_TAG_POSITION, type TagPosition } from '../tagPositions';
 import type { Clip, NodeLimits } from './nodeSize';
 import type { Size } from './types';
 
@@ -22,7 +22,7 @@ export class SizeCache {
 
   constructor(
     private readonly limits: () => NodeLimits,
-    private readonly tagPosition: () => TagPosition = () => 'outside',
+    private readonly tagPosition: () => TagPosition = () => DEFAULT_TAG_POSITION,
   ) {}
 
   get(node: MindMapNode): Measured | undefined {

@@ -1,6 +1,7 @@
 import { LeafRecency } from '../../src/leafRecency';
 import { type App, MarkdownRenderer } from 'obsidian';
 import type { MindMapNode } from '../../src/parser/types';
+import type { TagPosition } from '../../src/tagPositions';
 import { NodeContentModal } from '../../src/render/NodeContentModal';
 import type { Component as MockComponent } from '../mocks/obsidian';
 
@@ -23,6 +24,7 @@ function linkContext(openLinkText = vi.fn(() => Promise.resolve())) {
     hoverParent: { hoverPopover: null },
     mapLeaf: null,
     recency: new LeafRecency(),
+    tagPosition: 'outside' as TagPosition,
     workspace: { openLinkText, getMostRecentLeaf: () => null, getLeavesOfType: () => [] },
   };
 }
@@ -124,4 +126,68 @@ test('a tag in the overlay opens the tag search and closes the overlay (issue #7
   value.click();
   expect(openGlobalSearch).toHaveBeenCalledWith('tag:#obsidian/test');
   expect(close).toHaveBeenCalled();
+});
+
+// Issue #105: the overlay follows the tags setting.
+describe('tags mode in the overlay (issue #105)', () => {
+  function renderTag() {
+    vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+      el.createEl('a', {
+        cls: 'tag',
+        text: '#test/brat/wurst',
+        attr: { href: '#test/brat/wurst' },
+      });
+      return Promise.resolve();
+    });
+  }
+
+  test.each(['text', 'outside', 'inside'] as const)('the content gets the class for %s', (mode) => {
+    renderTag();
+    const modal = new NodeContentModal({} as App, node, { ...linkContext(), tagPosition: mode });
+    modal.open();
+    expect(modal.contentEl.classList.contains(`mind-mapper-tags-${mode}`)).toBe(true);
+    modal.close();
+  });
+
+  test('text: each level is its own tag search and closes the overlay; segments have tooltips', async () => {
+    renderTag();
+    const openGlobalSearch = vi.fn();
+    const ctx = { ...linkContext(), tagPosition: 'text' as const };
+    const app = {
+      workspace: ctx.workspace,
+      internalPlugins: { getEnabledPluginById: () => ({ openGlobalSearch }) },
+    } as unknown as App;
+    const modal = new NodeContentModal(app, node, ctx);
+    const close = vi.spyOn(modal, 'close');
+    modal.open();
+    const segments = await vi.waitFor(() => {
+      const list = Array.from(
+        modal.contentEl.querySelectorAll<HTMLElement>('.mind-mapper-tag-segment'),
+      );
+      if (list.length === 0) throw new Error('not rendered yet');
+      return list;
+    });
+    expect(segments.map((s) => s.getAttribute('aria-label'))).toEqual([
+      '#test',
+      '#test/brat',
+      '#test/brat/wurst',
+    ]);
+    segments[1]?.click();
+    expect(openGlobalSearch).toHaveBeenCalledWith('tag:#test/brat');
+    expect(close).toHaveBeenCalled();
+  });
+
+  test('outside and inside: a pill, the full tag on every part, no segment tooltips', async () => {
+    renderTag();
+    const modal = new NodeContentModal({} as App, node, {
+      ...linkContext(),
+      tagPosition: 'outside',
+    });
+    modal.open();
+    await vi.waitFor(() =>
+      expect(modal.contentEl.querySelector('.mind-mapper-tag-segment')).not.toBeNull(),
+    );
+    expect(modal.contentEl.querySelector('.mind-mapper-tag-segment[aria-label]')).toBeNull();
+    modal.close();
+  });
 });

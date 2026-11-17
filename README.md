@@ -9,7 +9,7 @@ Full guide: [docs/user-manual.md](docs/user-manual.md)
 ## Features
 
 - **Live companion:** open the map next to the note; edits show up in the map after Obsidian saves the note (about 2 s), and pan, zoom, selection and collapsed branches are kept
-- **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself; nested tags as two-part pills (`#project/alpha` | `backend`), tags in the branch color, tags at the end of a node in a row below its box (or inside it, per setting or note)
+- **Real content:** code with highlighting, tables, math, callouts, Mermaid diagrams, task checkboxes (read-only) and image thumbnails, rendered by Obsidian itself; tags as colored text in place (a nested tag as `#project / alpha / backend`), or as pills with the tags at the end of a node in a row below its box or inside it (setting "Tags", or per note)
 - **Layouts:** a balanced circle layout by default, plus left-to-right, right-to-left, top-to-bottom, bottom-to-top and a kanban board (columns with cards and their counts); per note via frontmatter, or for the open map from the control bar
 - **Color themes:** every main branch in its own color (`rainbow` by default, `ocean`, `forest`, your `accent` color or plain gray), with filled first-level nodes and a large root; per note or as default, or for the open map from the control bar; follows light and dark mode
 - **Navigation:** double click a node to jump to its line, links open like in Obsidian with page preview, tags open the tag search, links to headings and blocks in the same note are drawn as dashed lines
@@ -76,7 +76,7 @@ The key `D` drills in and out without a hotkey (see [Drill down](#drill-down)); 
 - Double click a node: jump to its line in the note (in the note's tab, else a split next to the map)
 - Round button on a node's edge: collapse / expand its branch (shows the number of hidden nodes when collapsed)
 - Links inside nodes behave like in Obsidian: click opens (`Ctrl/Cmd` + click or middle click: new tab), `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
-- Click a tag inside a node (also either part of a nested tag): opens the search with that tag (`tag:#project/alpha/backend`), like in reading view; needs Obsidian's core plugin "Search"
+- Click a tag inside a node: opens the search with that tag (`tag:#project/alpha/backend`), like in reading view; with tags as text each level of a nested tag is its own search (`#project`, `alpha`, `backend`); needs Obsidian's core plugin "Search"
 - Links to a heading or block in the same note (`[[#Heading]]`, `[[#A#B]]`, `[[#^id]]`, `[[This note#Heading]]`) are drawn as dashed lines between the nodes; a collapsed end attaches to its nearest visible ancestor
 - Click a dashed link line: highlight the connection (both end nodes ringed, the dashed line thicker and drawn above the nodes); click the empty canvas, a node or another line to end it; selecting a node never highlights its links
 - Double click a dashed link line: jump to the line in the note where the link is written

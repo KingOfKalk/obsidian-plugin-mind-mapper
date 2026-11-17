@@ -88,9 +88,10 @@ export const de: Messages = {
   defaultThemeName: 'Standard-Farbschema',
   defaultThemeDesc:
     'Färbt jeden Hauptast und alles darunter in einer eigenen Farbe, für Notizen ohne mind-mapper-theme im Frontmatter.',
-  tagPositionName: 'Tag-Position',
+  tagPositionName: 'Tags',
   tagPositionDesc:
-    'Wohin die Tags am Ende eines Knotens kommen: in eine Zeile unter dem Kasten oder in ihn hinein. Für Notizen ohne mind-mapper-tags im Frontmatter.',
+    'Wie Tags aussehen und wohin sie kommen: als Text an Ort und Stelle, als Pillen in einer Zeile unter dem Kasten oder als Pillen im Kasten. Für Notizen ohne mind-mapper-tags im Frontmatter.',
+  tagPositionText: 'Text',
   tagPositionOutside: 'Außerhalb',
   tagPositionInside: 'Innerhalb',
   fitMaxZoomName: 'Maximaler Zoom beim Einpassen',

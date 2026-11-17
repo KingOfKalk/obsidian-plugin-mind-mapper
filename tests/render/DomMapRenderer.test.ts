@@ -3,6 +3,7 @@ import { COUNT_BUBBLE, countBubbleWidth } from '../../src/layout/kanban';
 import type { MapLayout, PositionedNode } from '../../src/layout/types';
 import type { MindMapNode } from '../../src/parser/types';
 import { DomMapRenderer, RENDER_BUDGET } from '../../src/render/DomMapRenderer';
+import { markTrailingTags, setTextTags, splitNestedTags } from '../../src/render/nestedTags';
 import { useGerman } from '../helpers';
 
 function node(id: string, kind: MindMapNode['kind'] = 'heading', label = id): MindMapNode {
@@ -1518,8 +1519,9 @@ describe('element IDs (issue #33)', () => {
   });
 });
 
-// Issue #103: which nodes may show their trailing tags in a row below the box.
-test('tag position: a canvas class; is-tags-outside on side-aligned text nodes below the root', () => {
+// Issues #103 and #105: the tags mode is a canvas class; only `outside` moves trailing tags into a
+// row below the box (is-tags-outside on side-aligned text nodes below the root).
+test('tags mode: a canvas class, text by default; is-tags-outside only with outside', () => {
   const { parent, renderer } = setup();
   const block = { ...layout.nodes[2]!, node: node('R/C', 'block'), y: 60 };
   const centered = { ...layout.nodes[2]!, node: node('R/D'), y: 120, align: 'center' as const };
@@ -1530,7 +1532,12 @@ test('tag position: a canvas class; is-tags-outside on side-aligned text nodes b
     [...parent.querySelectorAll<HTMLElement>('.mind-mapper-node.is-tags-outside')].map(
       (el) => el.dataset.nodeId,
     );
+  expect(canvas?.classList.contains('mind-mapper-tags-text')).toBe(true);
+  expect(outside()).toEqual([]);
+  expect(renderer.setTagPosition('text')).toBe(false);
+  expect(renderer.setTagPosition('outside')).toBe(true);
   expect(canvas?.classList.contains('mind-mapper-tags-outside')).toBe(true);
+  expect(canvas?.classList.contains('mind-mapper-tags-text')).toBe(false);
   expect(outside()).toEqual(['R/A', 'R/B', 'R/E']);
   expect(renderer.setTagPosition('inside')).toBe(true);
   expect(renderer.setTagPosition('inside')).toBe(false);
@@ -1539,4 +1546,51 @@ test('tag position: a canvas class; is-tags-outside on side-aligned text nodes b
   expect(outside()).toEqual([]);
   renderer.setTagPosition('outside');
   expect(outside()).toEqual(['R/A', 'R/B', 'R/E']);
+  renderer.setTagPosition('text');
+  expect(outside()).toEqual([]);
+});
+
+test('switching the tags mode updates the rendered tags (labels, tag row ID)', () => {
+  const { parent, renderer } = setup();
+  renderer.setLayout(layout);
+  const content = parent.querySelector<HTMLElement>('.mind-mapper-node-content') as HTMLElement;
+  content.createEl('p', { text: 'Run ' }).createEl('a', {
+    cls: 'tag',
+    text: '#team/dev',
+    attr: { href: '#team/dev' },
+  });
+  splitNestedTags(content);
+  markTrailingTags(content);
+  const wrapper = content.querySelector('.mind-mapper-trailing-tags');
+  const labels = () =>
+    [...content.querySelectorAll('.mind-mapper-tag-segment')].map((s) =>
+      s.getAttribute('aria-label'),
+    );
+  renderer.setTagPosition('outside');
+  setTextTags(content, false);
+  expect(wrapper?.getAttribute('data-mm-id')).toBe('node.tags');
+  renderer.setTagPosition('text');
+  expect(wrapper?.hasAttribute('data-mm-id')).toBe(false);
+  expect(labels()).toEqual(['#team', '#team/dev']);
+  renderer.setTagPosition('inside');
+  expect(wrapper?.getAttribute('data-mm-id')).toBe('node.tags');
+  expect(labels()).toEqual([null, null]);
+});
+
+test('a click on the slash of a tag in text mode selects the node; on a segment it does not', () => {
+  const { parent, renderer, hooks } = hooked();
+  const select = hooks.select;
+  renderer.setLayout(layout);
+  const content = parent.querySelector<HTMLElement>('.mind-mapper-node-content') as HTMLElement;
+  content.createEl('a', { cls: 'tag', text: '#a/b', attr: { href: '#a/b' } });
+  splitNestedTags(content);
+  const click = (el: Element) => el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  click(content.querySelector('.mind-mapper-tag-segment')!);
+  expect(select).not.toHaveBeenCalled();
+  click(content.querySelector('.mind-mapper-tag-slash')!);
+  expect(select).toHaveBeenCalledTimes(1);
+  // In a pill mode a tag is a link everywhere.
+  renderer.setTagPosition('inside');
+  click(content.querySelector('.mind-mapper-tag-slash')!);
+  expect(select).toHaveBeenCalledTimes(1);
 });

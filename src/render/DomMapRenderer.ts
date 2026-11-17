@@ -7,7 +7,7 @@ import { COUNT_BUBBLE, countBubbleWidth } from '../layout/kanban';
 import type { MapLayout, PositionedNode, Side, TextAlign } from '../layout/types';
 import { isImageOnly } from '../layout/nodeSize';
 import type { MindMapNode } from '../parser/types';
-import type { TagPosition } from '../tagPositions';
+import { DEFAULT_TAG_POSITION, type TagPosition, tagPositionClass } from '../tagPositions';
 import type { MapThemeName } from '../themeNames';
 import {
   contentCap,
@@ -17,6 +17,7 @@ import {
   SpatialIndex,
   worldViewport,
 } from './culling';
+import { isTagSlash, setTextTags } from './nestedTags';
 import { branchAttr, levelAttr, subtaskAttr, themeClass } from './themes';
 import { IDENTITY, type Transform, transformCss } from './viewport';
 
@@ -109,7 +110,7 @@ export class DomMapRenderer {
   private frame: number | null = null;
   private skeletonD: string | null = null;
   private theme: MapThemeName = 'none';
-  private tagPosition: TagPosition = 'outside';
+  private tagPosition: TagPosition = DEFAULT_TAG_POSITION;
 
   constructor(
     parentEl: HTMLElement,
@@ -381,8 +382,9 @@ export class DomMapRenderer {
   }
 
   /**
-   * Spec "Tag position" (issue #103): one class on the canvas; styles.css moves the trailing tags of a
-   * node's last line out of the box (outside) or keeps them in it. Returns whether it changed (node
+   * Spec "Tags setting" (issues #103, #105): one class on the canvas; styles.css shows tags as text,
+   * or moves the trailing tags of a node's last line out of the box (outside) or keeps them in it.
+   * The rendered tags follow (tooltips, tag row ID). Returns whether it changed (node
    * sizes change with it: measure again).
    */
   setTagPosition(position: TagPosition): boolean {
@@ -393,6 +395,7 @@ export class DomMapRenderer {
     for (const [id, dom] of this.nodes) {
       const rect = this.rects.get(id);
       if (rect) this.setTagsOutside(dom.el, rect, isBlock(dom.node));
+      setTextTags(dom.contentEl, position === 'text');
     }
     return true;
   }
@@ -568,7 +571,8 @@ export class DomMapRenderer {
     const target = event.target as Node | null;
     // instanceOf, not instanceof: works for nodes of popout windows too.
     if (!target?.instanceOf(Element)) return null;
-    if (target.closest(NOT_A_NODE_CLICK)) return null;
+    // The `/` of a tag in text mode is text, not a link (issue #105).
+    if (target.closest(NOT_A_NODE_CLICK) && !isTagSlash(target)) return null;
     const nodeEl = target.closest<HTMLElement>('.mind-mapper-node');
     return nodeEl?.dataset.nodeId ?? null;
   }
@@ -742,10 +746,6 @@ export class DomMapRenderer {
 /** Code, tables, callouts, quotes, math and single image embeds: they keep their own alignment. */
 function isBlock(node: MindMapNode): boolean {
   return node.kind === 'block' || isImageOnly(node.markdown);
-}
-
-function tagPositionClass(position: TagPosition): string {
-  return `mind-mapper-tags-${position}`;
 }
 
 /** The two paths of a drawn cross-link: the dashed line and its invisible hit path after it. */

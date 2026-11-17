@@ -23,8 +23,9 @@ export const THEME_LABELS: Readonly<Record<MapThemeName, MessageKey>> = {
   accent: 'themeAccent',
 };
 
-/** Dropdown labels of the tag positions (issue #103). */
+/** Dropdown labels of the tags modes (issues #103, #105). */
 export const TAG_POSITION_LABELS: Readonly<Record<TagPosition, MessageKey>> = {
+  text: 'tagPositionText',
   outside: 'tagPositionOutside',
   inside: 'tagPositionInside',
 };

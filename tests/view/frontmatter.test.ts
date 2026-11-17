@@ -13,7 +13,7 @@ test('valid layout and title', () => {
     layout: 'top-to-bottom',
     collapsed: false,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
 });
@@ -24,7 +24,7 @@ test('absent keys use the defaults without warnings', () => {
     layout: 'left-to-right',
     collapsed: false,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
   expect(readMapOptions({ tags: ['x'] }, 'circle-clockwise', true)).toEqual({
@@ -32,7 +32,7 @@ test('absent keys use the defaults without warnings', () => {
     layout: 'circle-clockwise',
     collapsed: true,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
 });
@@ -63,7 +63,7 @@ test.each(['', '   '])('empty title %j falls back silently', (value) => {
     layout: 'circle-clockwise',
     collapsed: false,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
 });
@@ -105,7 +105,7 @@ test('the old mind_map_* keys are ignored', () => {
     layout: 'circle-clockwise',
     collapsed: false,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
 });
@@ -121,7 +121,7 @@ test.each([
     layout: 'circle-clockwise',
     collapsed,
     theme: 'none',
-    tags: 'outside',
+    tags: 'text',
     invalid: [],
   });
 });
@@ -202,7 +202,7 @@ test.each(['none', 'rainbow', 'ocean', 'forest', 'accent'] as const)(
       layout: 'circle-clockwise',
       collapsed: false,
       theme,
-      tags: 'outside',
+      tags: 'text',
       invalid: [],
     });
   },
@@ -231,32 +231,34 @@ test.each([
 });
 
 // Issue #103: the tag position per note.
-test.each(['outside', 'inside'] as const)('mind-mapper-tags %s overrides the setting', (tags) => {
-  const other = tags === 'outside' ? 'inside' : 'outside';
-  const options = readMapOptions(
-    { 'mind-mapper-tags': tags },
-    'circle-clockwise',
-    false,
-    'none',
-    other,
-  );
-  expect(options.tags).toBe(tags);
-  expect(options.invalid).toEqual([]);
-});
+test.each(['text', 'outside', 'inside'] as const)(
+  'mind-mapper-tags %s overrides the setting',
+  (tags) => {
+    const other = tags === 'inside' ? 'outside' : 'inside';
+    const options = readMapOptions(
+      { 'mind-mapper-tags': tags },
+      'circle-clockwise',
+      false,
+      'none',
+      other,
+    );
+    expect(options.tags).toBe(tags);
+    expect(options.invalid).toEqual([]);
+  },
+);
 
-test('without mind-mapper-tags the setting applies; the default is outside', () => {
+test('without mind-mapper-tags the setting applies; the default is text', () => {
   expect(readMapOptions({}, 'circle-clockwise', false, 'none', 'inside').tags).toBe('inside');
   expect(readMapOptions(undefined, 'circle-clockwise', false, 'none', 'outside').tags).toBe(
     'outside',
   );
-  expect(readMapOptions({ 'mind-mapper-tags': null }, 'circle-clockwise', false).tags).toBe(
-    'outside',
-  );
+  expect(readMapOptions({ 'mind-mapper-tags': null }, 'circle-clockwise', false).tags).toBe('text');
 });
 
 test.each([
   ['below', 'below'],
   ['Outside', 'Outside'],
+  ['Text', 'Text'],
   [3, '3'],
   [false, 'false'],
   [['inside'], 'inside'],

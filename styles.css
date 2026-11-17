@@ -195,7 +195,7 @@
 
 /* Plain tags in branch colors look like the value part of a pill: outlined. An inset shadow, not a
    border: the same size in every theme (a theme switch does not measure again). */
-.mind-mapper-canvas:not(.mind-mapper-theme-none)
+.mind-mapper-canvas:not(.mind-mapper-theme-none, .mind-mapper-tags-text)
   .mind-mapper-node[data-branch]
   a.tag:not(.mind-mapper-tag) {
   box-shadow: inset 0 0 0 1px var(--tag-color);
@@ -205,8 +205,8 @@
 /* Nested tags (issue #57, src/render/nestedTags.ts): a two-part pill like a GitLab scoped label,
    the scope filled, the value outlined, in the tag colors above. The value sits on the canvas
    background below the tag tint, so it reads on filled nodes too. */
-a.tag.mind-mapper-tag,
-a.tag.mind-mapper-tag:hover {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) a.tag.mind-mapper-tag,
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) a.tag.mind-mapper-tag:hover {
   display: inline-flex;
   overflow: hidden;
   padding: 0;
@@ -215,30 +215,79 @@ a.tag.mind-mapper-tag:hover {
   vertical-align: baseline;
 }
 
-.mind-mapper-tag-scope,
-.mind-mapper-tag-value {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) .mind-mapper-tag-scope,
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) .mind-mapper-tag-value {
   padding: var(--tag-padding-y) var(--tag-padding-x);
 }
 
-.mind-mapper-tag-scope {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) .mind-mapper-tag-scope {
   padding-inline-end: calc(var(--tag-padding-x) * 0.6);
   background: var(--tag-color);
   color: var(--background-primary);
 }
 
-.mind-mapper-tag-value {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) .mind-mapper-tag-value {
   padding-inline-start: calc(var(--tag-padding-x) * 0.6);
   background: var(--tag-background);
   color: var(--mind-mapper-tag-text, var(--tag-color));
 }
 
-a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside)
+  a.tag.mind-mapper-tag:hover
+  .mind-mapper-tag-value {
   background: var(--tag-background-hover);
 }
 
 /* The `/` stays in the text (copying gives the full tag) but takes no room. */
-.mind-mapper-tag-separator {
+:where(.mind-mapper-tags-outside, .mind-mapper-tags-inside) .mind-mapper-tag-separator {
   font-size: 0;
+}
+
+/* Tags as text (issue #105, tags mode `text`, class on the canvas and on the content overlay):
+   a tag is highlighted text where it stands, in the node's branch color (theme none and the root:
+   Obsidian's tag color), without background, border or padding. Obsidian's tag variables are
+   cleared as well, so its hover state adds no box. `inline-block` keeps a tag on one line (it
+   breaks inside only when it alone is wider than the node). */
+.mind-mapper-tags-text a.tag,
+.mind-mapper-tags-text a.tag:hover {
+  --tag-background: none;
+  --tag-background-hover: none;
+  --tag-border-width: 0px;
+  --tag-padding-x: 0;
+  --tag-padding-y: 0;
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--mind-mapper-tag-text, var(--tag-color));
+  font-size: inherit;
+  font-weight: inherit;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+/* A nested tag shows as `#test / brat / wurst`: the `/` dimmed with a little room on each side.
+   The room is margin, not text: copying gives `#test/brat/wurst`. */
+.mind-mapper-tags-text .mind-mapper-tag-slash {
+  margin-inline: 0.25em;
+  opacity: 0.5;
+}
+
+/* Hover: only the hovered level is underlined (a plain tag is one level: the whole tag). */
+.mind-mapper-tags-text a.tag:not(.mind-mapper-tag):hover,
+.mind-mapper-tags-text .mind-mapper-tag-segment:hover {
+  text-decoration: underline;
+}
+
+.mind-mapper-tags-text a.tag.mind-mapper-tag {
+  cursor: inherit;
+}
+
+.mind-mapper-tags-text .mind-mapper-tag-segment {
+  cursor: var(--cursor-link, pointer);
 }
 
 /* Trailing tags (issue #92, markTrailingTags): the tags at the end of a paragraph, heading or
@@ -247,22 +296,28 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
    text and blocks keep them inline. The content stretches to its node (a kanban card is wider
    than its text), but not under a column header's count bubble; the view measures it without
    the stretch (`is-measuring`, src/view/nodeMeasurer.ts). */
-.mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
   .mind-mapper-node-content.has-trailing-tags:not(.is-measuring) {
   min-width: calc(100% - var(--mind-mapper-count-space, 0px));
 }
 
-.mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error):is(.is-align-left, .is-align-right)
   :is(p, h1, h2, h3, h4, h5, h6, li):has(> .mind-mapper-trailing-tags) {
   display: flow-root;
 }
 
-.mind-mapper-node:not(.is-block, .is-render-error).is-align-left .mind-mapper-trailing-tags {
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error).is-align-left
+  .mind-mapper-trailing-tags {
   float: right;
   margin-inline-start: var(--size-4-2);
 }
 
-.mind-mapper-node:not(.is-block, .is-render-error).is-align-right .mind-mapper-trailing-tags {
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error).is-align-right
+  .mind-mapper-trailing-tags {
   float: left;
   margin-inline-end: var(--size-4-2);
 }
@@ -270,14 +325,16 @@ a.tag.mind-mapper-tag:hover .mind-mapper-tag-value {
 /* A task's checkbox hangs into the item's start margin. Right-aligned, the tags take the item's
    start edge instead (the node's edge) and leave the checkbox room after them (not when they
    are in the tag row below the box, see below). */
-.mind-mapper-node:not(.is-block, .is-render-error, .is-tags-outside).is-align-right
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error, .is-tags-outside).is-align-right
   .task-list-item:has(> .mind-mapper-trailing-tags),
 .mind-mapper-node.is-tags-outside.is-align-right
   .task-list-item:has(> .mind-mapper-trailing-tags:not(.is-last-line)) {
   margin-inline-start: 0;
 }
 
-.mind-mapper-node:not(.is-block, .is-render-error).is-align-right
+:where(.mind-mapper-canvas:not(.mind-mapper-tags-text))
+  .mind-mapper-node:not(.is-block, .is-render-error).is-align-right
   .task-list-item
   > .mind-mapper-trailing-tags {
   margin-inline-end: calc(var(--size-4-2) + var(--checkbox-size) * 1.5);
