@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.9.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.8.0...1.9.0) (2026-11-17)
+
+
+### Features
+
+* **render:** show tags as text in place with a search per level ([#107](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/107)) ([003c6aa](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/003c6aa60d3a242ac86d9bcb65061033c4331e1d))
+
+
+### Documentation
+
+* regenerate docs images for the tags mode text ([#111](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/111)) ([5b3619f](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/5b3619f8d855ab91d669bbfdc5fc4283d667136f))
+* rename the MVP spec to docs/spec.md ([#110](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/issues/110)) ([a918f9e](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/commit/a918f9ecb568d343b6b950920224db06cea2493c))
+
 ## [1.8.0](https://github.com/KingOfKalk/obsidian-plugin-mind-mapper/compare/1.7.0...1.8.0) (2026-11-13)
 
 
