@@ -57,7 +57,7 @@ The plugin uses the public API wherever there is one. These details are undocume
   - Guard: only public, typed API; undocumented is only that the workspace skips an Esc already marked as handled
   - Fallback: Obsidian's default (Esc makes the last note tab active); nothing breaks. E2E: `e2e/specs/escape.e2e.ts`
 - Tag click through `app.internalPlugins` (`openTagSearch` in `src/render/linkHandling.ts`)
-  - Why: no public API opens the tag search; reading view opens it on a tag click, so the map does the same through the search core plugin (`getEnabledPluginById('global-search').openGlobalSearch('tag:…')`)
+  - Why: no public API opens the tag search; reading view opens it on a tag click, so the map does the same through the search core plugin (`getEnabledPluginById('global-search').openGlobalSearch('tag:…')`); in tags mode `text` the query is the level of the clicked segment (`data-mm-search`, issue #105)
   - Guard: every step is optional-chained, the method is checked with `typeof`; the private shape is typed locally (`InternalPlugins`, `GlobalSearch`)
   - Fallback: with the search core plugin off or the API gone the click does nothing and is not swallowed. E2E: `e2e/specs/tags.e2e.ts`
 - The `D` key (`src/view/MindMapView.ts`, `key` in `src/view/drillDown.ts`)

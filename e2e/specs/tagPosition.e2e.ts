@@ -1,10 +1,15 @@
 import { browser, expect } from '@wdio/globals';
-import { byId, mouseOnNode, openMindMap, settle, writeNote } from '../helpers';
+import { byId, mouseOnNode, openMindMap, setTagsSetting, settle, writeNote } from '../helpers';
 
 /**
- * Issue #103: the tag position. Outside (the default): the trailing tags of a node's last line in
+ * Issues #103 and #105: the tags mode. These specs run with the setting `outside` (set below; the
+ * default is `text`, see the end of this file): the trailing tags of a node's last line in
  * a row below its box, at the edge opposite the text; the layout spaces nodes by box and row.
  */
+
+before(async function () {
+  await setTagsSetting('outside');
+});
 
 interface Box {
   left: number;
@@ -476,5 +481,47 @@ describe('tag rows in the kanban layout (issue #103)', function () {
     expect(two.box.top).toBeGreaterThan(sub.pills[0]!.bottom);
     expect(await collisions()).toEqual([]);
     expect(await browser.$$(byId('node.tags')).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// Issue #105: the default `text` moves nothing.
+describe('tags mode text (issue #105)', function () {
+  before(async function () {
+    await setTagsSetting('text');
+    await openMindMap(ISSUE_99);
+    await useLayout(null);
+    await settle();
+  });
+
+  after(async function () {
+    await setTagsSetting('outside');
+  });
+
+  it("#99's note: the tag stays in the text on the line, no row below the box", async function () {
+    const backup = await geometry(BACKUP);
+    expect(backup.row).toBeNull();
+    expect(backup.lines).toBe(1);
+    const [pill] = backup.pills;
+    // In the box, not at its right edge: it follows the text.
+    expect(pill!.bottom).toBeLessThanOrEqual(backup.box.bottom);
+    expect(pill!.right).toBeLessThan(backup.box.right);
+    expect(await browser.$$(byId('node.tags')).length).toBe(0);
+  });
+
+  it('right-aligned text: the tag follows the text, nothing moves to the other edge', async function () {
+    await useLayout('right-to-left');
+    const backup = await geometry(BACKUP);
+    const [pill] = backup.pills;
+    expect(backup.row).toBeNull();
+    expect(pill!.left).toBeGreaterThan(backup.box.left);
+    expect(near(pill!.right, backup.box.right, 20)).toBe(true);
+    await useLayout(null);
+  });
+
+  it('frontmatter outside: the row comes back; removing it returns to text', async function () {
+    await setFrontmatter(ISSUE_99, 'mind-mapper-tags', 'outside');
+    expect((await geometry(BACKUP)).row).not.toBeNull();
+    await setFrontmatter(ISSUE_99, 'mind-mapper-tags', null);
+    expect((await geometry(BACKUP)).row).toBeNull();
   });
 });

@@ -237,3 +237,15 @@ export async function setWindowSize(width: number, height: number): Promise<void
     { timeout: 5000, timeoutMsg: `window is not ${width} x ${height}` },
   );
 }
+
+/** Sets the "Tags" setting (issues #103, #105); open maps pick it up. */
+export async function setTagsSetting(mode: 'text' | 'outside' | 'inside'): Promise<void> {
+  await browser.executeObsidian(async ({ app }, value) => {
+    const plugins = (
+      app as unknown as {
+        plugins: { plugins: Record<string, { updateSettings(patch: object): Promise<void> }> };
+      }
+    ).plugins.plugins;
+    await plugins['mind-mapper']!.updateSettings({ tagPosition: value });
+  }, mode);
+}

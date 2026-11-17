@@ -17,7 +17,7 @@ Headings, lists and blocks become nodes; edit the note and the map follows.
 
 - [[Feature tour]]: nearly every feature of the map in one note
 - [[Simple note]]: a small everyday note, a good first map
-- [[Nested tags]]: plain and nested tags (`#project/alpha/backend` as a two-part pill)
+- [[Nested tags]]: plain and nested tags (`#project/alpha/backend` as text with a search per level; pills in the tags modes "Outside" and "Inside")
 
 ## Folders
 

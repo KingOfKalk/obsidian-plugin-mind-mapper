@@ -220,3 +220,37 @@ test('release clears the pending render timeout', () => {
   renderer.release(contentEl);
   expect(vi.getTimerCount()).toBe(0);
 });
+
+// Issue #105: the tags mode of the map the content sits in.
+describe('tags mode text (issue #105)', () => {
+  function renderTrailingTag() {
+    vi.spyOn(MarkdownRenderer, 'render').mockImplementation((_a, _m, el) => {
+      const p = el.createEl('p', { text: 'Book the venue ' });
+      p.createEl('a', { cls: 'tag', text: '#area/events', attr: { href: '#area/events' } });
+      return Promise.resolve();
+    });
+  }
+
+  test('segments carry their search target as tooltip, there is no tag row ID', async () => {
+    renderTrailingTag();
+    const { renderer, nodeEl, contentEl } = setup();
+    nodeEl.addClass('mind-mapper-tags-text');
+    await renderer.render(node('Book the venue #area/events'), contentEl);
+    const segments = Array.from(contentEl.querySelectorAll('.mind-mapper-tag-segment'));
+    expect(segments.map((s) => s.getAttribute('aria-label'))).toEqual(['#area', '#area/events']);
+    expect(contentEl.querySelector('.mind-mapper-trailing-tags')?.hasAttribute('data-mm-id')).toBe(
+      false,
+    );
+  });
+
+  test('in the pill modes: no segment tooltips, the tag row keeps node.tags', async () => {
+    renderTrailingTag();
+    const { renderer, nodeEl, contentEl } = setup();
+    nodeEl.addClass('mind-mapper-tags-outside');
+    await renderer.render(node('Book the venue #area/events'), contentEl);
+    expect(contentEl.querySelector('.mind-mapper-tag-segment[aria-label]')).toBeNull();
+    expect(contentEl.querySelector('.mind-mapper-trailing-tags')?.getAttribute('data-mm-id')).toBe(
+      'node.tags',
+    );
+  });
+});

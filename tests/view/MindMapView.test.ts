@@ -1507,7 +1507,7 @@ describe('color themes', () => {
   });
 });
 
-describe('tag position (issue #103)', () => {
+describe('tags mode (issues #103, #105)', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
@@ -1516,9 +1516,12 @@ describe('tag position (issue #103)', () => {
     return [...(canvas?.classList ?? [])].filter((c) => c.startsWith('mind-mapper-tags-'));
   }
 
-  test('the setting gives the tag position of notes without mind-mapper-tags (default outside); a change applies', async () => {
+  test('the setting gives the tags mode of notes without mind-mapper-tags (default text); a change applies', async () => {
     const settings = { ...LTR_SETTINGS };
     const { view } = await openWith('live-before', { settings: () => settings });
+    expect(position(view)).toEqual(['mind-mapper-tags-text']);
+    settings.tagPosition = 'outside';
+    view.refresh();
     expect(position(view)).toEqual(['mind-mapper-tags-outside']);
     settings.tagPosition = 'inside';
     view.refresh();
@@ -1531,7 +1534,7 @@ describe('tag position (issue #103)', () => {
     expect(position(view)).toEqual(['mind-mapper-tags-inside']);
     change(ws, 'Note.md', 'live-before');
     await vi.advanceTimersByTimeAsync(300);
-    expect(position(view)).toEqual(['mind-mapper-tags-outside']);
+    expect(position(view)).toEqual(['mind-mapper-tags-text']);
   });
 
   test('an unknown mind-mapper-tags falls back to the setting with a notice', async () => {

@@ -1,5 +1,5 @@
 import { LAYOUT_NAMES, type MapLayoutName } from './layout/types';
-import { TAG_POSITIONS, type TagPosition } from './tagPositions';
+import { DEFAULT_TAG_POSITION, TAG_POSITIONS, type TagPosition } from './tagPositions';
 import { type MapThemeName, THEME_NAMES } from './themeNames';
 
 export interface MindMapSettings {
@@ -8,7 +8,7 @@ export interface MindMapSettings {
   startCollapsed: boolean;
   /** Color theme for notes without `mind-mapper-theme`. */
   defaultTheme: MapThemeName;
-  /** Tag position for notes without `mind-mapper-tags` (issue #103). */
+  /** Tags mode for notes without `mind-mapper-tags` (issue #103). */
   tagPosition: TagPosition;
   maxNodeWidth: number;
   maxNodeHeight: number;
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: MindMapSettings = {
   defaultLayout: 'circle-clockwise',
   startCollapsed: false,
   defaultTheme: 'rainbow',
-  tagPosition: 'outside',
+  tagPosition: DEFAULT_TAG_POSITION,
   maxNodeWidth: 320,
   maxNodeHeight: 240,
   siblingGap: 12,

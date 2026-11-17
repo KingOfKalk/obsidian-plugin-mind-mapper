@@ -1,6 +1,7 @@
 import { Component, type ItemView, type WorkspaceLeaf } from 'obsidian';
 import { attachLinkHandling, HOVER_SOURCE_ID } from '../../src/render/linkHandling';
 import { LeafRecency } from '../../src/leafRecency';
+import { splitNestedTags } from '../../src/render/nestedTags';
 
 interface FakeLeaf {
   view: { getViewType(): string };
@@ -290,4 +291,78 @@ describe('tag click opens the tag search (issue #77)', () => {
     addTag(nodeEl, '#solo').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
     expect(workspace.trigger).not.toHaveBeenCalled();
   });
+});
+
+// Issue #105: in tags mode `text` every level of a nested tag is its own search.
+describe('tag click per level in text mode (issue #105)', () => {
+  /** A nested tag as `splitNestedTags` builds it, inside a map with tags mode `text`. */
+  function textTag(nodeEl: HTMLElement, mode = 'text'): HTMLElement {
+    nodeEl.addClass(`mind-mapper-tags-${mode}`);
+    const a = nodeEl.createEl('a', {
+      cls: 'tag',
+      text: '#test/brat/wurst',
+      attr: { href: '#test/brat/wurst' },
+    });
+    splitNestedTags(nodeEl);
+    return a;
+  }
+
+  const segment = (a: HTMLElement, text: string): HTMLElement =>
+    Array.from(a.querySelectorAll<HTMLElement>('.mind-mapper-tag-segment')).find(
+      (el) => el.textContent === text,
+    ) as HTMLElement;
+
+  test('each segment opens the search for its level', () => {
+    const { internalPlugins, openGlobalSearch } = searchPlugin();
+    const { nodeEl, onNavigate } = setup([], null, internalPlugins);
+    const a = textTag(nodeEl);
+    click(segment(a, '#test'));
+    click(segment(a, 'brat'));
+    click(segment(a, 'wurst'));
+    expect(openGlobalSearch.mock.calls).toEqual([
+      ['tag:#test'],
+      ['tag:#test/brat'],
+      ['tag:#test/brat/wurst'],
+    ]);
+    expect(onNavigate).toHaveBeenCalledTimes(3);
+  });
+
+  test('the slash is not a tag click: no search, the click goes on to the node', () => {
+    const { internalPlugins, openGlobalSearch } = searchPlugin();
+    const { nodeEl, nodeClicks, onNavigate } = setup([], null, internalPlugins);
+    const a = textTag(nodeEl);
+    const event = click(a.querySelector<HTMLElement>('.mind-mapper-tag-slash') as HTMLElement);
+    click(a.querySelector<HTMLElement>('.mind-mapper-tag-separator') as HTMLElement);
+    click(a);
+    expect(openGlobalSearch).not.toHaveBeenCalled();
+    expect(onNavigate).not.toHaveBeenCalled();
+    // The link's own navigation is off; the click still reaches the node.
+    expect(event.defaultPrevented).toBe(true);
+    expect(nodeClicks).toHaveBeenCalledTimes(3);
+  });
+
+  test('a plain tag is one segment: the full tag, as before', () => {
+    const { internalPlugins, openGlobalSearch } = searchPlugin();
+    const { nodeEl } = setup([], null, internalPlugins);
+    nodeEl.addClass('mind-mapper-tags-text');
+    const a = addTag(nodeEl, '#solo');
+    splitNestedTags(nodeEl);
+    click(a);
+    expect(openGlobalSearch).toHaveBeenCalledWith('tag:#solo');
+  });
+
+  test.each(['outside', 'inside'])(
+    'the pill mode %s searches the full tag on every part',
+    (mode) => {
+      const { internalPlugins, openGlobalSearch } = searchPlugin();
+      const { nodeEl } = setup([], null, internalPlugins);
+      const a = textTag(nodeEl, mode);
+      click(segment(a, 'brat'));
+      click(a.querySelector<HTMLElement>('.mind-mapper-tag-value') as HTMLElement);
+      expect(openGlobalSearch.mock.calls).toEqual([
+        ['tag:#test/brat/wurst'],
+        ['tag:#test/brat/wurst'],
+      ]);
+    },
+  );
 });

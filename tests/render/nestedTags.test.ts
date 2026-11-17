@@ -1,4 +1,7 @@
 import {
+  isTagSlash,
+  setTextTags,
+  tagLevels,
   LAST_LINE_CLASS,
   markTrailingTags,
   splitNestedTags,
@@ -250,5 +253,80 @@ describe('trailing tags of the last line (issue #103)', () => {
     expect(el.querySelector('h2 .mind-mapper-trailing-tags')?.hasAttribute('data-mm-id')).toBe(
       false,
     );
+  });
+});
+
+// Issue #105: tags as text in place, one search target per level.
+describe('tag segments and the text mode (issue #105)', () => {
+  test('tagLevels: one search target per level, the # belongs to the first', () => {
+    expect(tagLevels('#test/brat/wurst')).toEqual([
+      { text: '#test', target: '#test' },
+      { text: 'brat', target: '#test/brat' },
+      { text: 'wurst', target: '#test/brat/wurst' },
+    ]);
+    expect(tagLevels('#solo')).toEqual([{ text: '#solo', target: '#solo' }]);
+  });
+
+  test('a nested tag has one segment per level and a slash between them, text unchanged', () => {
+    const el = document.createElement('div');
+    tag(el, '#test/brat/wurst');
+    splitNestedTags(el);
+    const a = el.querySelector('a.tag');
+    const segments = Array.from(a?.querySelectorAll('.mind-mapper-tag-segment') ?? []);
+    expect(segments.map((s) => [s.textContent, s.getAttribute('data-mm-search')])).toEqual([
+      ['#test', '#test'],
+      ['brat', '#test/brat'],
+      ['wurst', '#test/brat/wurst'],
+    ]);
+    expect(a?.querySelectorAll('.mind-mapper-tag-slash').length).toBe(2);
+    // The pill parts stay: scope + value, so the pill modes look as before.
+    expect(a?.querySelector('.mind-mapper-tag-scope')?.textContent).toBe('#test/brat');
+    expect(a?.querySelector('.mind-mapper-tag-value')?.textContent).toBe('wurst');
+    expect(a?.textContent).toBe('#test/brat/wurst');
+  });
+
+  test('text mode: every segment has its search target as tooltip; the pill modes have none', () => {
+    const el = document.createElement('div');
+    tag(el, '#test/brat/wurst');
+    splitNestedTags(el);
+    const labels = () =>
+      Array.from(el.querySelectorAll('.mind-mapper-tag-segment')).map((s) =>
+        s.getAttribute('aria-label'),
+      );
+    expect(labels()).toEqual([null, null, null]);
+    setTextTags(el, true);
+    expect(labels()).toEqual(['#test', '#test/brat', '#test/brat/wurst']);
+    // The tag itself keeps the full tag for screen readers.
+    expect(el.querySelector('a.tag')?.getAttribute('aria-label')).toBe('#test/brat/wurst');
+    setTextTags(el, false);
+    expect(labels()).toEqual([null, null, null]);
+  });
+
+  test('text mode: no tag row, so no node.tags ID; the pill modes have it', () => {
+    const el = document.createElement('div');
+    block(el, 'p', 'Refactor run ', '#team/dev');
+    markTrailingTags(el);
+    const wrapper = el.querySelector('.mind-mapper-trailing-tags');
+    expect(wrapper?.getAttribute('data-mm-id')).toBe('node.tags');
+    setTextTags(el, true);
+    expect(wrapper?.hasAttribute('data-mm-id')).toBe(false);
+    setTextTags(el, false);
+    expect(wrapper?.getAttribute('data-mm-id')).toBe('node.tags');
+  });
+
+  test('isTagSlash: the slash and the tag between segments, not a segment', () => {
+    const el = document.createElement('div');
+    el.className = 'mind-mapper-tags-text';
+    tag(el, '#test/brat');
+    splitNestedTags(el);
+    const a = el.querySelector<HTMLElement>('a.tag') as HTMLElement;
+    expect(isTagSlash(a.querySelector('.mind-mapper-tag-slash, .mind-mapper-tag-separator')!)).toBe(
+      true,
+    );
+    expect(isTagSlash(a)).toBe(true);
+    expect(isTagSlash(a.querySelector('.mind-mapper-tag-segment')!)).toBe(false);
+    // Not in text mode: a pill is one link everywhere.
+    el.className = 'mind-mapper-tags-outside';
+    expect(isTagSlash(a)).toBe(false);
   });
 });

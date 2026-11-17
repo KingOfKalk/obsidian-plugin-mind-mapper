@@ -71,15 +71,18 @@ Make the note active, then use one of:
 | Image embed `![[image.png]]` on its own | a node with a thumbnail |
 | Image inside text, a table or a callout (e.g. an icon `![[icon.png\|16]]`) | keeps its own size, at most the node width |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
-| Tag `#solo` | like in reading view with smaller corners; a click opens the tag search |
-| Nested tag `#project/alpha/backend` | a two-part pill: the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
+| Tag `#solo` | highlighted text where it stands (in the tags modes "Outside" and "Inside": a pill like in reading view with smaller corners); a click opens the tag search |
+| Nested tag `#project/alpha/backend` | shown as written, `#project/alpha/backend`, the `/` dimmed; every level is its own search (see below). In the tags modes "Outside" and "Inside": a two-part pill, the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
 - Tags in a node take the color of its branch (in every color theme but "none"; the root and the full content overlay keep your theme's tag colors)
-- Tags at the end of a node's text go into a row below its box, 4 px apart from it, at the edge opposite the text: under the right edge of a node on the right side, under the left edge on the left side. The box holds only the text, so a tag never pushes the text onto an extra line. Several tags stay in one row, in the order of the note; a row longer than the max node width wraps, every row at the same edge. In kanban the row sits below the card, subtask or column header at its right edge
+- Tags (setting "Tags", or `mind-mapper-tags` per note; default "Text"):
+  - "Text": tags are highlighted text exactly where you wrote them, without background or border. Nothing moves: no tag row, no tags pushed to an edge. They follow the text alignment of the node like any other word, and a tag never breaks across two lines: it moves to the next line as a whole. A nested tag `#test/brat/wurst` shows as written, with the `/` dimmed
+  - "Outside" and "Inside": tags are pills, and the tags at the end of a node move to its edge, see below
+- With "Outside", tags at the end of a node's text go into a row below its box, 4 px apart from it, at the edge opposite the text: under the right edge of a node on the right side, under the left edge on the left side. The box holds only the text, so a tag never pushes the text onto an extra line. Several tags stay in one row, in the order of the note; a row longer than the max node width wraps, every row at the same edge. In kanban the row sits below the card, subtask or column header at its right edge
   - Stay in the box: tags in the middle of a sentence, tags at the end of an earlier paragraph of the node, the root's tags, the tags of centered nodes (top → bottom, bottom → top) and of blocks, and the tags of a clipped node (open the full content to see them)
-  - Tag position "Inside" (setting, or `mind-mapper-tags: inside` per note): the tags at the end of a line stay in the box at the side opposite the text: at the right edge of a left-aligned node, at the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card, on a column header before the card count. At the max node width they may wrap onto a line of their own
+  - Tags "Inside" (setting, or `mind-mapper-tags: inside` per note): the tags at the end of a line stay in the box at the side opposite the text: at the right edge of a left-aligned node, at the left edge of a right-aligned one; centered text keeps them in place, as do tags in the middle of a sentence; in kanban they sit at the right edge of the card, on a column header before the card count. At the max node width they may wrap onto a line of their own
 
 - Large content is clipped at the max node size with a fade; the expand icon in the node's corner shows all of it in an overlay (`Esc` closes it)
 
@@ -107,7 +110,9 @@ Day 1: old town.        <- stays a paragraph, the divider is a line
 ### Links
 
 - Links in nodes work like in Obsidian: click opens, `Ctrl/Cmd` + click or a middle click opens in a new tab, `Ctrl/Cmd` + hover shows the page preview (like in other plugin views; Obsidian's core plugin "Page preview" in Settings → Core plugins lets you change the modifier)
-- Click a tag in a node or in the full content overlay: the search opens with that tag (`tag:#solo`; for a nested tag the full tag, `tag:#project/alpha/backend`, whichever part you click), like in reading view
+- Click a tag in a node or in the full content overlay: the search opens with that tag (`tag:#solo`), like in reading view
+  - Nested tag with "Text" (the default): every level is its own search: `#project` opens `tag:#project`, `alpha` opens `tag:#project/alpha`, `backend` opens `tag:#project/alpha/backend` (Obsidian's tag search also finds the nested tags below, so `tag:#project` finds all three). Hovering underlines only that level and its tooltip shows what it searches for. A click on a `/` selects the node, like a click on text
+  - Nested tag as a pill ("Outside", "Inside"): the full tag, `tag:#project/alpha/backend`, whichever part you click
   - Needs Obsidian's core plugin "Search" (on by default); when it is off, a tag click does nothing
 - Links to a heading or block in the same note are also drawn as dashed lines between the two nodes:
   - `[[#Heading]]`, `[[#Heading#Subheading]]`, `[[#^block-id]]`, `[[This note#Heading]]`
@@ -323,7 +328,7 @@ To show a map differently for a moment, e.g. while presenting, change its layout
 | `mind-mapper-layout` | one of the [layouts](#layouts) | setting "Default layout" |
 | `mind-mapper-collapsed` | `true` or `false` (a checkbox in Properties) | setting "Start collapsed" |
 | `mind-mapper-theme` | one of the [color themes](#color-themes) | setting "Default theme" |
-| `mind-mapper-tags` | `outside` (tags at the end of a node in a row below its box) or `inside` (in the box) | setting "Tag position" |
+| `mind-mapper-tags` | `text` (tags as text where they are), `outside` (pills, tags at the end of a node in a row below its box) or `inside` (pills, in the box) | setting "Tags" |
 
 ```yaml
 ---
@@ -338,7 +343,7 @@ mind-mapper-tags: inside
 - Only the frontmatter at the very top of the note counts
 - A missing key or a key without a value uses the default silently
 - An invalid value uses the default and shows a notice once per note and value (per session), e.g. `Mind Mapper: unknown mind-mapper-layout "sideways" in Note.md, using circle-clockwise`
-  - Invalid: an unknown layout, color theme or tag position, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
+  - Invalid: an unknown layout, color theme or tags mode, a title that is not text (a number, a list), a `mind-mapper-collapsed` that is not `true`/`false` (`yes`, `"true"`, `1`)
 
 ## Settings
 
@@ -349,7 +354,7 @@ Settings → Mind Mapper (in the Community plugins part of the sidebar), in four
 | Map | Default layout | dropdown | the seven [layouts](#layouts), labeled like in the control bar menu | Balanced clockwise | for notes without `mind-mapper-layout` |
 | Map | Start collapsed | toggle | on / off | off | for notes without `mind-mapper-collapsed` |
 | Map | Default theme | dropdown | None, Rainbow, Ocean, Forest, Accent color | Rainbow | [color theme](#color-themes) for notes without `mind-mapper-theme` |
-| Map | Tag position | dropdown | Outside, Inside | Outside | where the tags at the end of a node go ([nodes](#nodes)): in a row below its box, or inside it; for notes without `mind-mapper-tags` |
+| Map | Tags | dropdown | Text, Outside, Inside | Text | how tags look and where they go ([nodes](#nodes)): as text in place, as pills in a row below the box, or as pills inside it; for notes without `mind-mapper-tags` |
 | Map | Max zoom for fit | slider, steps of 25 % | 100–400 % | 150 % | how far Fit to view enlarges a small map; large maps shrink to fit |
 | Nodes | Max node width | slider, steps of 10 px | 160–800 px | 320 px | wider content is clipped with a fade |
 | Nodes | Max node height | slider, steps of 10 px | 120–800 px | 240 px | taller content is clipped with a fade |
@@ -421,7 +426,7 @@ Find them in the command palette under "Mind Mapper: …". None has a default ho
 | A line of text became a heading | a `---` directly under it (see [Dividers](#dividers)); add a blank line above the `---` or use `***` |
 | Notice `Mind Mapper: unknown mind-mapper-layout …` | the layout name is misspelled; use one of the [layouts](#layouts) |
 | Notice `Mind Mapper: unknown mind-mapper-theme …` | the theme name is misspelled; use one of the [color themes](#color-themes), in lower case |
-| Notice `Mind Mapper: unknown mind-mapper-tags …` | use `outside` or `inside`, in lower case |
+| Notice `Mind Mapper: unknown mind-mapper-tags …` | use `text`, `outside` or `inside`, in lower case |
 | Notice `Mind Mapper: mind-mapper-collapsed … is not true or false …` | use `true` or `false` without quotes, or the checkbox in Properties |
 | Notice `Mind Mapper: mind-mapper-title … is not text …` | the title is a number or a list; quote it: `mind-mapper-title: "2026"` |
 | Notice `Open a Markdown note first` | the ribbon icon needs an active Markdown note |

@@ -1,6 +1,7 @@
 import { type App, type Component, type HoverParent, Keymap, type WorkspaceLeaf } from 'obsidian';
 import { VIEW_TYPE_MIND_MAP } from '../constants';
 import { type LeafRecency, pickNoteLeaf } from '../leafRecency';
+import { isTagSlash, tagSearchTarget } from './nestedTags';
 
 /** Hover source id registered with the page preview core plugin. */
 export const HOVER_SOURCE_ID = VIEW_TYPE_MIND_MAP;
@@ -39,7 +40,8 @@ export interface LinkContext {
  * Internal links inside `container` behave like in Obsidian: click opens (Ctrl/Cmd click and
  * middle click: new tab), hover shows page preview. A plain click opens in the most recent note
  * leaf, or a split when there is none, never in the map leaf. A click on a tag (with or without
- * modifier) opens the tag search, like reading view; middle click on a tag does nothing. Other
+ * modifier) opens the tag search, like reading view (in tags mode text: for the clicked level of a
+ * nested tag, issue #105; a click on its `/` is no tag click); middle click on a tag does nothing. Other
  * links (external, footnotes) are left to Obsidian.
  */
 export function attachLinkHandling(container: HTMLElement, ctx: LinkContext): void {
@@ -50,8 +52,16 @@ export function attachLinkHandling(container: HTMLElement, ctx: LinkContext): vo
     (event) => {
       const tag = linkFrom(event, TAG);
       if (tag) {
+        const clicked = event.target as Element;
+        // Text mode (issue #105): the `/` of a nested tag is text. Not a search; the click goes on
+        // to the node, but not to the link's own navigation.
+        if (isTagSlash(clicked)) {
+          event.preventDefault();
+          return;
+        }
         // Not stopped: the renderer ignores clicks on links, so the selection stays as it was.
-        if (!openTagSearch(ctx.app, tagText(tag))) return;
+        // The tag of the clicked segment in text mode, else the full tag.
+        if (!openTagSearch(ctx.app, tagSearchTarget(tag, clicked))) return;
         event.preventDefault();
         ctx.onNavigate?.();
         return;
@@ -129,11 +139,6 @@ function linkFrom(event: Event, selector: string): HTMLElement | null {
   // instanceOf, not instanceof: works for nodes of popout windows too.
   if (!target?.instanceOf(HTMLElement)) return null;
   return target.closest<HTMLElement>(selector);
-}
-
-/** The full tag (`#project/alpha/backend`): the href Obsidian set, also for a nested-tag pill. */
-function tagText(tag: HTMLElement): string {
-  return tag.getAttribute('href') ?? tag.textContent ?? '';
 }
 
 function linkText(link: HTMLElement): string {

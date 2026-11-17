@@ -10,7 +10,8 @@ import { setElementId } from '../elementIds';
 import type { MindMapNode } from '../parser/types';
 import type { LeafRecency } from '../leafRecency';
 import { attachLinkHandling } from './linkHandling';
-import { splitNestedTags } from './nestedTags';
+import { setTextTags, splitNestedTags } from './nestedTags';
+import { type TagPosition, tagPositionClass } from '../tagPositions';
 import { disableCheckboxes } from './NodeContentRenderer';
 
 export interface ModalLinkContext {
@@ -18,6 +19,8 @@ export interface ModalLinkContext {
   hoverParent: HoverParent;
   mapLeaf: WorkspaceLeaf | null;
   recency: LeafRecency;
+  /** The tags mode of the map (issue #105): the overlay shows tags the same way. */
+  tagPosition: TagPosition;
   /** After an internal link in the overlay opened (e.g. leave full screen). */
   onNavigate?: () => void;
 }
@@ -37,7 +40,11 @@ export class NodeContentModal extends Modal {
   override async onOpen(): Promise<void> {
     this.owner.load();
     setElementId(this.modalEl, 'modal.node-content');
-    this.contentEl.addClass('mind-mapper-full-content', 'markdown-rendered');
+    this.contentEl.addClass(
+      'mind-mapper-full-content',
+      'markdown-rendered',
+      tagPositionClass(this.link.tagPosition),
+    );
     attachLinkHandling(this.contentEl, {
       ...this.link,
       app: this.app,
@@ -57,6 +64,7 @@ export class NodeContentModal extends Modal {
       );
       disableCheckboxes(this.contentEl);
       splitNestedTags(this.contentEl);
+      setTextTags(this.contentEl, this.link.tagPosition === 'text');
     } catch (error) {
       console.error('Mind Mapper: full content render failed', error);
       this.contentEl.setText(this.node.markdown);

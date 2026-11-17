@@ -34,24 +34,32 @@
   - Callout (decided): one node, rendered as in Obsidian
   - Block ID `^id`: hidden in the node
   - Skip: frontmatter, comments `%% %%`, HTML blocks, footnote definitions; footnote references stay as text
-- Nested tags (decided, issue #57): a tag with a `/` becomes a two-part pill, like a GitLab scoped label
+- Nested tags (decided, issue #57): in the pill modes (setting "Tags" `outside` and `inside`, see below) a tag with a `/` becomes a two-part pill, like a GitLab scoped label; in the default mode `text` it stays text with one segment per level
   - Split at the last `/`: scope = `#` and everything before it, value = the last segment (`#obsidian/test` -> `#obsidian` + `test`, `#project/alpha/backend` -> `#project/alpha` + `backend`); tags without `/` keep Obsidian's look
   - Look: scope filled, value outlined and lighter; the value sits on the canvas background, so it reads on filled nodes (level 1, kanban column headers)
-- Tags in the map (decided, issue #92): plain tags and nested-tag pills in node content and the content overlay; editor and reading view unchanged
+- Tags in the map (decided, issue #92; the look below is for the pill modes, see "Tags setting" for `text`): plain tags and nested-tag pills in node content and the content overlay; editor and reading view unchanged
   - Corners: small (`--radius-s`), like the rest of the map
   - Colors: in color themes that color branches (all but `none`), a tag in a node takes the node's branch color: the scope filled with it and background-colored text, the value a light tint of it (12 %) with branch-colored text and border; a plain tag looks like the value (outlined, drawn as an inset shadow, so a theme switch does not change sizes). Readability (decided on PR #94): on every level the branch color is mixed towards the text color (`--text-normal`: darker in light mode, lighter in dark mode), a quarter for the scope and outlines, 40 % for the text of values and plain tags, so light branch colors (yellow, green, cyan) stay readable and the scope stands out from a filled level 1 node. Theme `none`, the root and the content overlay keep Obsidian's tag colors (`--tag-*`)
   - Trailing tags: tags at the end of a paragraph, heading or list item (after its last text, one or several) sit on the side opposite the node's text alignment (see "Text alignment"): left-aligned text -> at the right edge, right-aligned -> at the left edge; centered text (e.g. the root in circle layouts) and blocks keep them inline; tags in the middle of a sentence, inside formatting, before a line break or without text before them stay inline. They share the last line when there is room, else they wrap to their own line, still on that side. In kanban: at the right edge of the card; on column headers before the count bubble. The node is measured without this stretch (a node never grows because of it)
-  - Only in the map (node content and the content overlay), not in the editor or reading view; always on, no setting
-- Tag position (decided, issue #103): where the trailing tags of a node's last line go. Setting "Tag position" (Map group: Outside / Inside, default Outside) and frontmatter `mind-mapper-tags: outside | inside` per note; no control bar element
-  - `inside`: the trailing tags as above (1.7.0, issue #92)
-  - `outside` (default): the trailing tags at the end of the node's last line (same detection; with nothing after them in the node) leave the box for a tag row (`node.tags`) 4 px below it, flush with the edge opposite the text: right side (left-aligned text) at the right edge, left side at the left edge. No connection to the box other than its position; lines, collapse toggle and dividers sit at the sides as before
+  - Only in the map (node content and the content overlay), not in the editor or reading view; the tag look is chosen by the setting "Tags"
+- Tags setting (decided, issues #103 and #105): how tags look and where trailing tags go. Setting "Tags" (Map group: Text / Outside / Inside, default Text; formerly "Tag position" with Outside / Inside, default Outside) and frontmatter `mind-mapper-tags: text | outside | inside` per note; no control bar element; the stored key stays `tagPosition` (users with a stored value keep it, only users without one get `text`)
+  - `text` (default, issue #105): tags are highlighted, clickable text in place, no pills and nothing moves
+    - Position: the tags stay where they are in the text: no trailing-tags float, no tag row (`node.tags`), no extra layout footprint; they follow the node's text alignment like any other word (left, right, centered); a tag never breaks inside itself (`#test/brat/wurst` stays on one line and moves to the next line as a whole; a tag wider than the node overflows it)
+    - Look: no background, border or padding; text in the node's branch color (the same mix towards `--text-normal` as the text of pills, for readability); theme `none`, the root and the content overlay use Obsidian's tag color (`--tag-color`)
+    - A nested tag `#test/brat/wurst` shows as written, `#test/brat/wurst`, with the `/` dimmed and no space around it; copying gives `#test/brat/wurst`; no two-part pill split
+    - Click per level: `#test` (the `#` belongs to the first segment) opens the search `tag:#test`, `brat` `tag:#test/brat`, `wurst` `tag:#test/brat/wurst` (Obsidian's tag search also matches nested tags, so `#test` finds everything below it); the `/` is not clickable, a click on it selects the node like a click on text; a plain tag `#test` is one segment (as before)
+    - Hover: only the hovered segment is underlined and its tooltip shows its search target (`#test/brat`); `aria-label` stays the full tag
+    - The content overlay follows the setting: in text mode the same text look and per-level click
+  - `outside` and `inside` are the pill modes: pills as described under "Tags in the map" and "Nested tags", the click on either half of a nested-tag pill searches the full tag
+  - `inside` (pill mode): the trailing tags as above (issue #92)
+  - `outside` (pill mode): the trailing tags at the end of the node's last line (same detection; with nothing after them in the node) leave the box for a tag row (`node.tags`) 4 px below it, flush with the edge opposite the text: right side (left-aligned text) at the right edge, left side at the left edge. No connection to the box other than its position; lines, collapse toggle and dividers sit at the sides as before
     - The box is sized without them (no extra wrapping: the text keeps its line, issue #99)
     - Several tags: one row in the order of the note (duplicates as written), 4 px between them; a row wider than the max node width (not the box width) wraps into more rows, every row at the same edge. A row wider than its box reaches past the box's text-side edge
     - Stay inside (in the box, as with `inside`): tags in the middle of a sentence; trailing tags of earlier lines (a multi-paragraph node); the root and the drilled-in center (the laid-out root); centered text (top → bottom, bottom → top) and blocks, which have no edge opposite their text or a line there; a clipped node (its fade would hide the row; it shows none and gets no room for one, the content overlay shows the full content)
     - Layout: nodes are spaced by their footprint (box, gap, rows): siblings stack below the rows; a single child stays level with its parent's box; a child column moves away from its parent by the widest row reaching past its box towards the parent, and the lines curve in the level gap and run straight at the box's middle into the box, so no line, divider or other node crosses a row. Edges attach to the box. Culling and fit to view include the rows
     - Kanban: the row below the card, subtask or column header (the count bubble stays in the header), at the right edge; rows count towards the column width (capped at the max node width) and the stack
     - Tag look, branch colors, click (tag search), tooltip and `aria-label`: as inside; a click between the tags of a row selects the node
-  - Still Obsidian's tag (`a.tag`, href unchanged), so a click does what it does on any tag in a node (opens the tag search with the full tag); the full tag is the tooltip and `aria-label`; the `/` stays in the text, hidden (copying gives the full tag)
+  - Still Obsidian's tag (`a.tag`, href unchanged); in the pill modes a click opens the tag search with the full tag on either half, the full tag is the tooltip and `aria-label`, and the `/` stays in the text, hidden (copying gives the full tag); in text mode see above (the `/` visible, dimmed; one search per level)
 - Dividers (decided): thematic breaks in any form (`---`, `***`, `___`, also with spaces like `- - -`; cache type `thematicBreak`) are not nodes; they are drawn between sibling nodes
   - A divider marks the next node, heading or not, under whatever parent that node lands in (for a heading: after the heading stack pops); it is shown if that parent already has at least one child before it
   - Ignored: before a parent's first child, after the last child (no next node)
@@ -78,7 +86,7 @@
     - Double click on a line: jump to the source line of the link (like a node double click); no fit
   - All other links (internal, external): clickable, with hover preview, same behavior as in Obsidian; click does not propagate to the node
     - Wired by the plugin: click handler with `workspace.openLinkText` (modifier keys open in new tab / split), hover preview via `registerHoverLinkSource` and the `hover-link` event
-  - Tags (decided, issue #77): a click on a tag in a node or in the content overlay (plain tag or either part of a nested-tag pill) opens the global search with `tag:#<full tag>` (`tag:#project/alpha/backend`), like reading view
+  - Tags (decided, issues #77 and #105): a click on a tag in a node or in the content overlay (plain tag or either part of a nested-tag pill) opens the global search with `tag:#<full tag>` (`tag:#project/alpha/backend`), like reading view; in tags mode `text` each level of a nested tag opens its own search (`tag:#project`, `tag:#project/alpha`, ...), a click on the `/` selects the node
     - Like reading view: Ctrl/Cmd, Shift or Alt click do the same as a plain click; middle click does nothing; no hover preview
     - A link like any other in a node: no node click (the selection stays as it was); in the overlay it closes the overlay; from full screen, full screen closes
     - No public API for it: uses the search core plugin through Obsidian's private `app.internalPlugins` (`getEnabledPluginById('global-search')?.openGlobalSearch`), guarded; with the search core plugin disabled or the API missing nothing happens, no error
@@ -142,7 +150,7 @@ Project (root, H1)
 | `mind-mapper-layout` | text (enum) | `circle-clockwise`, `circle-counter-clockwise`, `left-to-right`, `right-to-left`, `top-to-bottom`, `bottom-to-top`, `kanban` | plugin setting (initially `circle-clockwise`) |
 | `mind-mapper-collapsed` | checkbox (YAML boolean) | `true`, `false` | plugin setting "Start collapsed" (initially `false`) |
 | `mind-mapper-theme` | text (enum) | `none`, `rainbow`, `ocean`, `forest`, `accent` | plugin setting "Default theme" (initially `rainbow`) |
-| `mind-mapper-tags` | text (enum) | `outside`, `inside` | plugin setting "Tag position" (initially `outside`) |
+| `mind-mapper-tags` | text (enum) | `text`, `outside`, `inside` | plugin setting "Tags" (initially `text`) |
  
 - Light and dark (decided): the map always follows the active Obsidian theme via CSS variables; no per-note light/dark override. `mind-mapper-theme` only picks a color theme (see Color themes)
 - Validation
@@ -153,12 +161,12 @@ Project (root, H1)
   - `mind-mapper-tags` not in the list (case-sensitive): fall back to the plugin setting
   - Absent keys and keys without a value fall back silently
   - Show a notice once per note and invalid value, not on every save
-- Plugin settings tab: global defaults for layout, start collapsed, color theme and tag position, frontmatter overrides per note
-  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, tag position, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
+- Plugin settings tab: global defaults for layout, start collapsed, color theme and tags, frontmatter overrides per note
+  - Declarative settings (Obsidian's `getSettingDefinitions`), in groups with headings: Map (default layout, start collapsed, default theme, tags, max zoom for fit), Nodes (max node width and height), Spacing (sibling gap, level gap), About (plugin version, link to the repository, link to the issue tracker)
   - Numeric settings are Obsidian's built-in sliders over their allowed range (steps: 10 px; sibling gap 2 px), showing the value in px, with "Restore default"; saved values are sanitized (clamped) as before
   - "Max zoom for fit" is a slider in percent (100–400, steps of 25, default 150), shown as "150%" (German "150 %" with a no-break space); saved values stay
   - "Default theme" is a dropdown: the values are the theme names, the labels are translated
-  - "Tag position" is a dropdown: the values are `outside` and `inside`, the labels ("Outside", "Inside") are translated
+  - "Tags" is a dropdown: the values are `text`, `outside` and `inside`, the labels ("Text", "Outside", "Inside") are translated
   - Settings changed outside this window (Obsidian Sync, another window or vault copy writing `data.json`; `onExternalSettingsChange`) are reloaded, sanitized and applied to open maps like a change in the tab, without saving again
 ## Color themes (decided)
  

@@ -1,4 +1,5 @@
-import { setElementId } from '../elementIds';
+import { ELEMENT_ID_ATTR, setElementId } from '../elementIds';
+import { tagPositionClass } from '../tagPositions';
 
 /** A nested tag split at its last `/` (GitLab's scoped label rule, issue #57). */
 export interface TagParts {
@@ -17,11 +18,38 @@ export function splitTag(tag: string): TagParts | null {
   return { scope, value };
 }
 
+/** One level of a tag: what is shown and the tag it searches for (issue #105). */
+export interface TagLevel {
+  /** `#project`, `alpha`, `backend` (the `#` belongs to the first level). */
+  text: string;
+  /** `#project`, `#project/alpha`, `#project/alpha/backend`. */
+  target: string;
+}
+
+/** `#project/alpha/backend` -> one level per segment, each with its own search target. */
+export function tagLevels(tag: string): TagLevel[] {
+  const levels: TagLevel[] = [];
+  let target = '';
+  for (const segment of tag.split('/')) {
+    target = target === '' ? segment : `${target}/${segment}`;
+    levels.push({ text: segment, target });
+  }
+  return levels;
+}
+
+/** Search target of a segment (`#project/alpha`); read by the click handler. */
+export const SEGMENT_TARGET_ATTR = 'data-mm-search';
+
+const SEGMENT_CLASS = 'mind-mapper-tag-segment';
+const SLASH_CLASS = 'mind-mapper-tag-slash';
+
 /**
- * Nested tags rendered by Obsidian (`a.tag`) become a two-part pill: scope + value, styled by
- * styles.css with Obsidian's tag colors. The link itself stays (href, Obsidian's handling); the
- * `/` stays in its text, hidden, so its text and a copy are still the full tag. Plain tags keep
- * their look. Idempotent.
+ * Nested tags rendered by Obsidian (`a.tag`) get the structure for both looks. Pill modes: scope +
+ * value, styled by styles.css with Obsidian's tag colors. Text mode (issue #105): the same spans
+ * as one segment per level with the `/` between them (`span.mind-mapper-tag-segment`, its search
+ * target in `data-mm-search`). The link itself stays (href, Obsidian's handling); every `/` stays
+ * in the text, so its text and a copy are still the full tag. Plain tags keep their look.
+ * Idempotent.
  */
 export function splitNestedTags(el: HTMLElement): void {
   for (const a of Array.from(el.querySelectorAll<HTMLElement>('a.tag'))) {
@@ -29,15 +57,73 @@ export function splitNestedTags(el: HTMLElement): void {
     const tag = a.textContent ?? '';
     const parts = splitTag(tag);
     if (!parts) continue;
+    const levels = tagLevels(tag);
+    const value = levels.pop();
     a.empty();
-    a.createSpan({ cls: 'mind-mapper-tag-scope', text: parts.scope });
-    a.createSpan({ cls: 'mind-mapper-tag-separator', text: '/' });
-    a.createSpan({ cls: 'mind-mapper-tag-value', text: parts.value });
+    const scope = a.createSpan({ cls: 'mind-mapper-tag-scope' });
+    levels.forEach((level, i) => {
+      if (i > 0) scope.createSpan({ cls: SLASH_CLASS, text: '/' });
+      appendSegment(scope, level);
+    });
+    a.createSpan({ cls: `mind-mapper-tag-separator ${SLASH_CLASS}`, text: '/' });
+    if (value) appendSegment(a, value, 'mind-mapper-tag-value');
     a.addClass('mind-mapper-tag');
     // Obsidian shows aria-label as tooltip: the full tag on hover and for screen readers.
     a.setAttribute('aria-label', tag);
     setElementId(a, 'node.tag');
   }
+}
+
+function appendSegment(parent: HTMLElement, level: TagLevel, cls = ''): void {
+  const segment = parent.createSpan({ cls: `${SEGMENT_CLASS} ${cls}`.trim(), text: level.text });
+  segment.setAttribute(SEGMENT_TARGET_ATTR, level.target);
+  setElementId(segment, 'node.tag-segment');
+}
+
+/**
+ * Applies the tags mode to rendered content (issue #105). `text`: each segment's tooltip is its
+ * search target (Obsidian shows the closest `aria-label`; the tag keeps the full tag for screen
+ * readers) and there is no tag row, so no `node.tags` ID. The pill modes: the full tag is the
+ * tooltip everywhere and the last line's wrapper is the tag row. Idempotent; cheap.
+ */
+export function setTextTags(el: HTMLElement, text: boolean): void {
+  for (const segment of Array.from(el.querySelectorAll<HTMLElement>(`.${SEGMENT_CLASS}`))) {
+    const target = segment.getAttribute(SEGMENT_TARGET_ATTR);
+    if (text && target !== null) {
+      if (segment.getAttribute('aria-label') !== target) segment.setAttribute('aria-label', target);
+    } else if (segment.hasAttribute('aria-label')) {
+      segment.removeAttribute('aria-label');
+    }
+  }
+  for (const row of Array.from(el.querySelectorAll<HTMLElement>(`.${LAST_LINE_CLASS}`))) {
+    if (!text) setElementId(row, 'node.tags');
+    else if (row.hasAttribute(ELEMENT_ID_ATTR)) row.removeAttribute(ELEMENT_ID_ATTR);
+  }
+}
+
+/** Whether `el` is inside a map (or overlay) in tags mode `text`. */
+export function inTextMode(el: Element): boolean {
+  return el.closest(`.${tagPositionClass('text')}`) !== null;
+}
+
+/**
+ * In text mode, a click on a nested tag that is not on one of its segments (the `/` or the space
+ * around it) is a click on text, not on a tag (issue #105): no search, the node gets the click.
+ */
+export function isTagSlash(target: Element): boolean {
+  const tag = target.closest('a.tag.mind-mapper-tag');
+  return tag !== null && inTextMode(tag) && target.closest(`.${SEGMENT_CLASS}`) === null;
+}
+
+/**
+ * The tag a click on `tag` searches for: in text mode the level of the clicked segment
+ * (`#project/alpha`), else the full tag (`#project/alpha/backend`, the href Obsidian set).
+ */
+export function tagSearchTarget(tag: HTMLElement, target: Element): string {
+  const full = tag.getAttribute('href') ?? tag.textContent ?? '';
+  if (!inTextMode(tag)) return full;
+  const segment = target.closest(`.${SEGMENT_CLASS}`);
+  return segment?.getAttribute(SEGMENT_TARGET_ATTR) ?? full;
 }
 
 /** On a content element with trailing tags: it may stretch to its node (styles.css, issue #92). */

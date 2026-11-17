@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import { LAYOUT_NAMES, type MapLayoutName } from '../layout/types';
-import { TAG_POSITIONS, type TagPosition } from '../tagPositions';
+import { DEFAULT_TAG_POSITION, TAG_POSITIONS, type TagPosition } from '../tagPositions';
 import { type MapThemeName, THEME_NAMES } from '../themeNames';
 
 export type MapOptionKey =
@@ -18,7 +18,7 @@ export interface MapOptions {
   collapsed: boolean;
   /** `mind-mapper-theme`, else the "Default theme" setting. */
   theme: MapThemeName;
-  /** `mind-mapper-tags`, else the "Tag position" setting (issue #103). */
+  /** `mind-mapper-tags`, else the "Tags" setting (issues #103, #105). */
   tags: TagPosition;
   /** Values that were ignored; shown once per note and value (spec "Frontmatter"). */
   invalid: { key: MapOptionKey; value: string }[];
@@ -35,7 +35,7 @@ export function readMapOptions(
   defaultLayout: MapLayoutName,
   startCollapsed: boolean,
   defaultTheme: MapThemeName = 'none',
-  defaultTags: TagPosition = 'outside',
+  defaultTags: TagPosition = DEFAULT_TAG_POSITION,
 ): MapOptions {
   const invalid: MapOptions['invalid'] = [];
   const rawTitle = frontmatter?.['mind-mapper-title'];

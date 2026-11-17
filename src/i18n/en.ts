@@ -80,9 +80,10 @@ export const en = {
   defaultThemeName: 'Default theme',
   defaultThemeDesc:
     'Colors each first-level branch and everything below it, for notes without mind-mapper-theme in their frontmatter.',
-  tagPositionName: 'Tag position',
+  tagPositionName: 'Tags',
   tagPositionDesc:
-    'Where the tags at the end of a node go: in a row below its box, or inside it. For notes without mind-mapper-tags in their frontmatter.',
+    'How tags look and where they go: as text in place, as pills in a row below the box, or as pills inside it. For notes without mind-mapper-tags in their frontmatter.',
+  tagPositionText: 'Text',
   tagPositionOutside: 'Outside',
   tagPositionInside: 'Inside',
   fitMaxZoomName: 'Max zoom for fit',
