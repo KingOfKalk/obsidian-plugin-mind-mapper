@@ -6,6 +6,7 @@ import {
   openMindMap,
   openNote,
   setObsidianLanguage,
+  setTagsSetting,
   settle,
   waitForAnimation,
   waitForCache,
@@ -612,15 +613,20 @@ describe('screenshots', function () {
 
   // Issue #57: nested tags as two-part pills (plain, two and three levels; in filled level 1
   // headings and kanban column headers): light, dark and loud palette, the map and its nodes up close;
-  // issue #92: branch colors, and Obsidian's tag colors in theme "none".
-  for (const [mode, loud, theme] of [
-    ['light', false, 'rainbow'],
-    ['dark', false, 'rainbow'],
-    ['light', true, 'rainbow'],
-    ['light', false, 'none'],
+  // issue #92: branch colors, and Obsidian's tag colors in theme "none"; issue #105: the default is
+  // tags as text (`nested-tags-*`), the pills are the tags mode `outside` (`nested-tags-*-pills`).
+  for (const [mode, loud, theme, position] of [
+    ['light', false, 'rainbow', 'text'],
+    ['dark', false, 'rainbow', 'text'],
+    ['light', true, 'rainbow', 'text'],
+    ['light', false, 'none', 'text'],
+    ['light', false, 'rainbow', 'outside'],
+    ['dark', false, 'rainbow', 'outside'],
   ] as const) {
-    const label = loud ? 'loud' : theme === 'none' ? 'none' : mode;
+    const base = loud ? 'loud' : theme === 'none' ? 'none' : mode;
+    const label = position === 'text' ? base : `${base}-pills`;
     it(`nested tags ${label}`, async function () {
+      await setTagsSetting(position);
       await useTheme(theme, mode);
       await openMindMap('demo/Nested tags.md');
       await settle();
@@ -670,6 +676,53 @@ describe('screenshots', function () {
             (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(null);
           }
         });
+      };
+      if (loud) await withLoudPalette(shoot);
+      else await shoot();
+    });
+  }
+
+  // Issue #105: tags as text in place (the default): the sentence of the issue, nested tags with
+  // their dimmed slashes, both text alignments, a hovered level; light, dark and loud palette.
+  for (const [mode, loud] of [
+    ['light', false],
+    ['dark', false],
+    ['light', true],
+  ] as const) {
+    const label = loud ? 'loud' : mode;
+    it(`tags as text ${label}`, async function () {
+      await setTagsSetting('text');
+      await useTheme('rainbow', mode);
+      await writeNote('tags-as-text.md', tagsAsTextNote());
+      await openMindMap('tags-as-text.md');
+      await settle();
+      const name = `${dir}/tags-as-text-${label}`;
+      const shoot = async () => {
+        await saveFullScreenShot(`${name}.png`);
+        await browser.executeObsidian(({ app }) => {
+          for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+            (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(
+              'right-to-left',
+            );
+          }
+        });
+        await settle();
+        await saveFullScreenShot(`${name}-right-to-left.png`);
+        await browser.executeObsidian(({ app }) => {
+          for (const leaf of app.workspace.getLeavesOfType('mind-mapper-view')) {
+            (leaf.view as unknown as { chooseLayout(l: string | null): void }).chooseLayout(null);
+          }
+        });
+        await settle();
+        // Up close at 100 %, the second level of the nested tag hovered.
+        await browser.executeObsidianCommand('mind-mapper:toggle-full-screen');
+        await clickNodeEndingWith('wurst');
+        await browser.executeObsidianCommand('mind-mapper:reset-zoom');
+        await waitForAnimation();
+        await browser.$('a.tag[href="#test/brat/wurst"] [data-mm-search="#test/brat"]').moveTo();
+        await browser.pause(300);
+        await browser.saveScreenshot(`${name}-100.png`);
+        await browser.keys('Escape');
       };
       if (loud) await withLoudPalette(shoot);
       else await shoot();
@@ -1033,6 +1086,21 @@ function tagRowsNote(position: 'outside' | 'inside'): string {
     '## Ideas #idea',
     '- Short #a/b #c',
     '- A longer idea that wraps onto a second line in its node #x/y',
+    '',
+  ].join('\n');
+}
+
+/** Issue #105: the sentence of the issue, a nested tag per level, trailing and plain tags. */
+function tagsAsTextNote(): string {
+  return [
+    '# Tags as text',
+    '## lorem ipsum #tag dolor sit #tag/sub whatever #tag/sub/suib',
+    '## Backlog #status/open',
+    '- Write the spec #project/alpha/backend',
+    '- Fix the login #bug',
+    '## Done #status/closed',
+    '## Levels #test/brat/wurst',
+    '- Ship it #release/v1',
     '',
   ].join('\n');
 }

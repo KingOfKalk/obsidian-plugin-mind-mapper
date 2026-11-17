@@ -1,7 +1,13 @@
 import { browser, expect } from '@wdio/globals';
-import { leafSummary, openMindMap, settle, writeNote } from '../helpers';
+import { leafSummary, openMindMap, setTagsSetting, settle, writeNote } from '../helpers';
 
-/** Issue #57: nested tags in node content as two-part pills (scope + value). */
+/** Issue #57: nested tags in node content as two-part pills (scope + value). The pill modes (`outside`,
+ * `inside`) are tested below with the setting `outside`; the text mode (issue #105, the default) at
+ * the end of this file. */
+before(async function () {
+  await setTagsSetting('outside');
+});
+
 const NOTE = 'demo/Nested tags.md';
 const PARAGRAPH = '.mind-mapper-node[data-node-id="Nested tags/#1"]';
 
@@ -496,5 +502,205 @@ describe('tag colors and corners (issue #92)', function () {
       color: none.resolved[BG],
       valueColor: none.resolved[TAG],
     });
+  });
+});
+
+/**
+ * Issue #105: tags mode `text` (the default): tags are text in place; a nested tag is
+ * `#test / brat / wurst` with one search per level; the `/` selects the node.
+ */
+const TEXT_NOTE = 'tags-as-text.md';
+const TEXT_NOTE_TEXT = [
+  '---',
+  'mind-mapper-theme: rainbow',
+  '---',
+  '# Tags as text',
+  '',
+  '## lorem ipsum #tag dolor sit #tag/sub whatever #test/brat/wurst',
+  '',
+  '## Plain #solo',
+  '',
+].join('\n');
+const NESTED = 'a.tag[href="#test/brat/wurst"]';
+const SEGMENTS = `${NESTED} .mind-mapper-tag-segment`;
+const ROOT_CONTENT = '.mind-mapper-node.is-root .mind-mapper-node-content';
+
+interface Part {
+  text: string;
+  kind: 'segment' | 'slash';
+  left: number;
+  right: number;
+  top: number;
+  label: string | null;
+  decoration: string;
+  marginLeft: number;
+  marginRight: number;
+}
+
+/** The visible parts of the nested tag, left to right: its segments and its slashes. */
+function parts(): Promise<Part[]> {
+  return browser.execute((sel) => {
+    const a = document.querySelector<HTMLElement>(sel);
+    if (!a) throw new Error(`no tag ${sel}`);
+    const selector = '.mind-mapper-tag-segment, .mind-mapper-tag-slash';
+    return Array.from(a.querySelectorAll<HTMLElement>(selector))
+      .map((el) => {
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return {
+          text: el.textContent ?? '',
+          kind: el.classList.contains('mind-mapper-tag-segment')
+            ? ('segment' as const)
+            : ('slash' as const),
+          left: rect.left,
+          right: rect.right,
+          top: Math.round(rect.top),
+          label: el.getAttribute('aria-label'),
+          decoration: style.textDecorationLine,
+          marginLeft: parseFloat(style.marginLeft),
+          marginRight: parseFloat(style.marginRight),
+        };
+      })
+      .sort((x, y) => x.left - y.left);
+  }, NESTED);
+}
+
+/** A click on the root, then on `selector`; the search query and the selected node afterwards. */
+async function clickAfterRoot(selector: string) {
+  await setSearchQuery('');
+  await browser.$(ROOT_CONTENT).click();
+  await browser.$(selector).click();
+  await browser.pause(500);
+  return { query: await searchQuery(), selected: await selectedNode() };
+}
+
+describe('tags mode text (issue #105)', function () {
+  before(async function () {
+    await setTagsSetting('text');
+    await writeNote(TEXT_NOTE, TEXT_NOTE_TEXT);
+    await openMindMap(TEXT_NOTE);
+    await settle();
+  });
+
+  after(async function () {
+    await setTagsSetting('outside');
+  });
+
+  it('tags stay in place: no tag row, no float, no pill look', async function () {
+    expect(
+      await browser.execute(() =>
+        Array.from(document.querySelector('.mind-mapper-canvas')?.classList ?? []).filter((c) =>
+          c.startsWith('mind-mapper-tags-'),
+        ),
+      ),
+    ).toEqual(['mind-mapper-tags-text']);
+    expect(await browser.$$('[data-mm-id="node.tags"]').length).toBe(0);
+    const look = await browser.execute((sel) => {
+      const a = document.querySelector<HTMLElement>(sel);
+      if (!a) throw new Error('no tag');
+      const style = getComputedStyle(a);
+      const wrapper = a.closest<HTMLElement>('.mind-mapper-trailing-tags');
+      return {
+        background: style.backgroundColor,
+        border: style.borderTopWidth,
+        padding: style.paddingLeft,
+        shadow: style.boxShadow,
+        float: wrapper ? getComputedStyle(wrapper).float : null,
+        position: wrapper ? getComputedStyle(wrapper).position : null,
+      };
+    }, NESTED);
+    expect(look).toEqual({
+      background: 'rgba(0, 0, 0, 0)',
+      border: '0px',
+      padding: '0px',
+      shadow: 'none',
+      float: 'none',
+      position: 'static',
+    });
+  });
+
+  it('a nested tag reads #test / brat / wurst on one line; its text is the full tag', async function () {
+    const list = await parts();
+    expect(list.map((p) => p.text)).toEqual(['#test', '/', 'brat', '/', 'wurst']);
+    expect(new Set(list.map((p) => p.top)).size).toBe(1);
+    // Room around a slash is margin, not text.
+    for (const slash of list.filter((p) => p.kind === 'slash')) {
+      expect(slash.marginLeft).toBeGreaterThan(0);
+      expect(slash.marginRight).toBeGreaterThan(0);
+    }
+    for (let i = 1; i < list.length; i++) expect(list[i]!.left).toBeGreaterThan(list[i - 1]!.right);
+    expect(await browser.execute((sel) => document.querySelector(sel)?.textContent, NESTED)).toBe(
+      '#test/brat/wurst',
+    );
+  });
+
+  it('each segment has its search target as tooltip text; the tag keeps the full tag', async function () {
+    const list = await parts();
+    expect(list.filter((p) => p.kind === 'segment').map((p) => p.label)).toEqual([
+      '#test',
+      '#test/brat',
+      '#test/brat/wurst',
+    ]);
+    expect(await browser.$(NESTED).getAttribute('aria-label')).toBe('#test/brat/wurst');
+  });
+
+  it('hover underlines only the hovered segment', async function () {
+    const segments = await browser.$$(SEGMENTS);
+    await segments[1]!.moveTo();
+    const decorations = (await parts())
+      .filter((p) => p.kind === 'segment')
+      .map((p) => p.decoration);
+    expect(decorations[0]).not.toContain('underline');
+    expect(decorations[1]).toContain('underline');
+    expect(decorations[2]).not.toContain('underline');
+    await browser.$(ROOT_CONTENT).moveTo();
+  });
+
+  it('a click on a segment opens the search for its level; the selection stays', async function () {
+    const segments = await browser.$$(SEGMENTS);
+    expect(segments.length).toBe(3);
+    const root = await browser.execute(
+      () => document.querySelector<HTMLElement>('.mind-mapper-node.is-root')?.dataset.nodeId,
+    );
+    const levels = [];
+    for (const segment of ['#test', 'brat', 'wurst']) {
+      const result = await clickAfterRoot(`${SEGMENTS}[data-mm-search$="${segment}"]`);
+      levels.push(result.query);
+      expect(result.selected).toBe(root);
+    }
+    expect(levels).toEqual(['tag:#test', 'tag:#test/brat', 'tag:#test/brat/wurst']);
+  });
+
+  it('a click on a slash is a click on the text: no search, the node is selected', async function () {
+    const root = await browser.execute(
+      () => document.querySelector<HTMLElement>('.mind-mapper-node.is-root')?.dataset.nodeId,
+    );
+    for (const slash of [
+      `${NESTED} .mind-mapper-tag-scope > .mind-mapper-tag-slash`,
+      `${NESTED} .mind-mapper-tag-separator`,
+    ]) {
+      const result = await clickAfterRoot(slash);
+      expect(result.query).toBe('');
+      expect(result.selected).toBeDefined();
+      expect(result.selected).not.toBe(root);
+    }
+  });
+
+  it('a plain tag is one segment: the whole tag, as before', async function () {
+    expect((await clickAfterRoot('a.tag[href="#solo"]')).query).toBe('tag:#solo');
+  });
+
+  it('switching to a pill mode brings the pills and the tag row back, and back', async function () {
+    await setTagsSetting('outside');
+    await settle();
+    expect(await browser.$$('[data-mm-id="node.tags"]').length).toBeGreaterThan(0);
+    expect((await parts()).filter((p) => p.kind === 'segment').map((p) => p.label)).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    await setTagsSetting('text');
+    await settle();
+    expect(await browser.$$('[data-mm-id="node.tags"]').length).toBe(0);
   });
 });
