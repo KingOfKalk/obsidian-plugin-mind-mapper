@@ -215,12 +215,12 @@ Project (root, H1)
 | 4 | 2, 4, 8, 10 |
 | 6 | 1:30, 3, 4:30, 7:30, 9, 10:30 |
  
-- Algorithm (decided for MVP): bounding-box tidy tree
+- Algorithm (decided): bounding-box tidy tree
   - Each subtree is a box, sibling boxes are stacked, parent centered on the extent of its children
   - Overlap-free by construction
-  - Sibling gap and level gap: constants until M4, then plugin settings
+  - Sibling gap and level gap: plugin settings
 - Optional later: tighter contour-based packing for variable node sizes (non-layered tidy tree, e.g. van der Ploeg 2014); same interface, internal swap, only if maps look too sparse
-- Edges: cubic bezier from parent edge to child edge; no routing or crossing avoidance in MVP
+- Edges: cubic bezier from parent edge to child edge; no routing or crossing avoidance
 - Text alignment: text nodes (headings, paragraphs, list items) sit flush towards the edge their line attaches to
   - Right side: left-aligned; left side: right-aligned; `top-to-bottom`, `bottom-to-top`: centered
   - Root: centered in circle and vertical layouts, right-aligned in `left-to-right`, left-aligned in `right-to-left`
@@ -236,8 +236,8 @@ Project (root, H1)
   - No collapse toggles on nodes: collapse only via the control bar and commands; "Collapse all" leaves root and column headers (an overview with counts); a collapse state from another layout stays in effect
   - Dividers: between two columns a vertical dashed line in the middle of the widened gap, from the top of the headers to the end of the longer of the two columns; between two cards or two subtasks a horizontal dashed line in the widened gap (the gap there plus the divider gap), across the whole column
   - Unchanged: link lines, drill-down (the center becomes the headline, its children the columns), color themes, smooth camera, full screen
-  - Later (not MVP): lane backgrounds, clickable counts, per-column collapse
-## MVP features
+  - Later: lane backgrounds, clickable counts, per-column collapse
+## Features
  
 - Open
   - Command palette: "Open as mind map" (only available for markdown files)
@@ -294,7 +294,7 @@ Project (root, H1)
   - Two separate commands "Collapse all" and "Expand all" stay, so a hotkey always does the same
 - Commands and hotkeys (decided)
   - Every control is also a command: zoom in, zoom out, fit to view, reset to 100%, back to root, collapse all, expand all, toggle full screen, change layout…, next layout, change color theme…, next color theme, drill down into selection, drill out one level, show the whole map
-  - Each command is registered in the same milestone as its control
+  - Each command is registered together with its control
   - Commands use `checkCallback` and act on the active mind map view; hidden when no mind map view is active
   - No default hotkeys (Obsidian plugin guidelines discourage them because of conflicts); users assign their own
   - README lists the commands with suggested bindings
@@ -379,7 +379,7 @@ Project (root, H1)
   - `ResizeObserver` per rendered node catches late size changes (images, Mermaid, math, other plugins' post processors)
   - Size changes trigger a debounced re-layout that keeps the viewport anchored on the selected node, else the view center
   - Measured sizes are cached by size variant (root or not, max node width and height) plus the node's markdown string
-- Rendering (decided): SVG / DOM for MVP
+- Rendering (decided): SVG / DOM
   - Own pan/zoom (or d3-zoom), node content via `MarkdownRenderer.render` (not the deprecated `renderMarkdown`), theming via Obsidian CSS variables
   - The view talks to the concrete DOM renderer (no renderer interface); a three.js renderer for very large maps stays a future option and would extract one
 - Performance (decided)
@@ -389,61 +389,9 @@ Project (root, H1)
   - Render cache by markdown and measured size cache by size variant plus markdown, reused on live update
   - Verified with a benchmark harness on generated notes (frame times logged, compared against a baseline) plus a manual gate; no fps assertions in CI, they are flaky
 - Platform (decided): desktop only (`isDesktopOnly: true`); `minAppVersion` 1.15.0, the newest public Obsidian release (betas do not count); it unlocks the declarative settings API, so the settings appear in Obsidian's settings search
-## Suggested milestones
- 
-Each milestone ends in something installable and usable in a real vault. Order is by risk and value: the parser and layout core first, polish last.
- 
-- M0 - Walking skeleton
-  - Plugin loads in Obsidian, empty view opens via command palette (markdown files only)
-  - View state persistence (`getState` / `setState`) from the start
-  - Dev loop: hot reload into a test vault, CI with lint, unit tests, build, release workflow (GitHub release + BRAT installable)
-  - Value: installable from day one, every later milestone ships via BRAT
-- M1 - Outline map
-  - Parser: headings only (cache + text), root rules without `mind-mapper-title` (H1 or file name), skipped levels, occurrence-indexed heading IDs
-  - Worked example as first fixture
-  - Layout: `left-to-right` bounding-box tidy tree with fixed node size, constant gaps, bezier edges
-  - Renderer: plain text nodes, pan and zoom like Canvas, fit to view on open
-  - Floating controls with their commands: zoom in, zoom out, fit to view, reset to 100%
-  - Value: a usable overview map of any note's structure; parser and layout core are tested and in place
-- M2 - Full content
-  - Parser: paragraphs, lists, task lists, containers, blocks, embeds, skip rules
-  - Nodes rendered via `MarkdownRenderer.render` with child components and cleanup
-  - Estimated sizes, measure on render, `ResizeObserver`, anchored re-layout, `css-change` re-measure
-  - Max node size with clipping, expand icon and overlay; embed rewriting; disabled checkboxes
-  - Link click handling and hover preview wired
-  - Render failure fallback
-  - Performance spike: generated 1,000 and 5,000 node notes, validate that estimate-then-measure works before building further
-  - Value: real notes render as they look in Obsidian; the main technical risk (render + measure + layout at scale) is retired
-- M3 - Live companion
-  - Live update via the `changed` event, debounce, generation token, viewport and selection kept
-  - Stable node IDs, render cache by markdown, size cache by size variant plus markdown
-  - Collapse/expand: node toggle plus collapse all and expand all commands
-  - Selection, double click jump to source with the target leaf rules
-  - Rename, delete, loading and empty states
-  - Value: the map is useful while writing, not only for reading
-- M4 - Map look
-  - `circle-clockwise` and `circle-counter-clockwise` layouts, remaining linear directions
-  - Frontmatter `mind-mapper-title` and `mind-mapper-layout`, validation with once-per-value notice
-  - Settings tab: default layout, start collapsed, max node size, sibling and level gap
-  - `circle-clockwise` becomes the default
-  - Contour-based packing only if maps look too sparse
-  - Value: the promised balanced map; per-note configuration
-- M5 - Navigation and polish
-  - Cross-connection lines for heading and block links, collapsed-ancestor rule, culling-safe
-  - Back to root and full screen (workspace overlay) with their commands, file menu entry, ribbon icon
-  - Popout window support
-  - Value: feature-complete MVP for daily use
-- M6 - Scale
-  - Viewport culling with child component unloading, benchmark harness, tuning against the 1,000 / 5,000 node target
-  - Value: large notes stay smooth; performance target is verified, not assumed
-- M7 - Release
-  - Plugin id `mind-mapper` (the id must not contain "obsidian"), name "Mind Mapper"; check for name clashes with existing mind map plugins
-  - Community submission checklist: LICENSE, `manifest.json`, `versions.json`, release assets (`main.js`, `manifest.json`, `styles.css`)
-  - README with screenshots, command list with suggested hotkeys, settings docs
-  - Value: public release, feedback loop with real users
 ## Open topics
  
-No open design decisions for MVP scope. The following facts are unverified and should be checked with small spikes or fixtures early (M1/M2):
+No open design decisions. The following facts are unverified and should be checked with small spikes or fixtures:
  
 - Obsidian's heading link resolution: text normalization and behavior with duplicate headings
 - Whether `ListItemCache` positions include continuation content and nested items

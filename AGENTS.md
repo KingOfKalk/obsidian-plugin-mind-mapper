@@ -4,11 +4,10 @@
 
 - Obsidian plugin "Mind Mapper" (TypeScript): shows any Markdown note as a live mind map.
 - Desktop only, read-only map, follows the note while you write.
-- Spec: [docs/mvp.md](docs/mvp.md) (binding). User docs: [README.md](README.md).
+- Spec: [docs/spec.md](docs/spec.md) (binding). User docs: [README.md](README.md).
 
 ## Rules
 
-- This is an MVP.
 - Work via issues and pull requests: open or claim an issue, branch `<type>/<issue-number>-<slug>` in a worktree, open a PR. The owner merges; PRs are squash-merged and only things that are tested and working.
 - This environment is a devcontainer, set up for development of TypeScript projects.
 - TDD: write the failing test first, see it fail for the right reason, then implement.
@@ -20,7 +19,7 @@
 - Never push to `main` directly. Never force-push. Never commit on `main`. Never merge a PR (the owner does).
 - After a merge, run `npm run dev:build` in the main checkout to update the sandbox vault.
 - No AI attribution in commits, branch names, issues or PRs.
-- MVP scope: YAGNI. Do not add features the spec does not list.
+- Scope: YAGNI. Do not add features the spec does not list.
 - Obsidian plugin guidelines:
   - No default hotkeys for commands.
   - Popout-safe DOM: use `el.doc` / `el.win` / `instanceOf` instead of `document` / `window` / `instanceof`.
