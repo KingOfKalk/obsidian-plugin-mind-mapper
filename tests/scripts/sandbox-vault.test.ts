@@ -226,7 +226,7 @@ describe('docs in the sandbox vault', () => {
     const docs = tmp();
     write(join(docs, 'user-manual.md'), '# Manual\n![x](images/manual/a.png)');
     write(join(docs, 'developer.md'), '# Developer');
-    write(join(docs, 'mvp.md'), 'spec');
+    write(join(docs, 'spec.md'), 'spec');
     write(join(docs, 'going-public.md'), 'plan');
     write(join(docs, 'plans', 'plan.md'), 'plan');
     write(join(docs, 'images', 'hero.png'), 'hero');

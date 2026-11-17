@@ -4,7 +4,7 @@ Work happens through issues and pull requests on [GitHub](https://github.com/Kin
 
 ## Before You Start
 
-- Read [AGENTS.md](AGENTS.md) (rules) and [docs/mvp.md](docs/mvp.md) (binding spec).
+- Read [AGENTS.md](AGENTS.md) (rules) and [docs/spec.md](docs/spec.md) (binding spec).
 - Set up and run things as described in [docs/developer.md](docs/developer.md).
 - Open an issue first (bug report or feature request template), or claim an existing one. Wait for a go before starting larger changes: the scope is small on purpose (a read-only live map of a note).
 - Name parts of the plugin by their ID from [docs/ui-elements.md](docs/ui-elements.md) in issues, pull requests and reviews (`controls.fit`, `node.toggle`); the ID names what an element is and never changes with its state, the state is `data-mm-state` (`[data-mm-id="node.toggle"][data-mm-state="collapsed"]`).
