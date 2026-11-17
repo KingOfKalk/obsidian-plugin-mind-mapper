@@ -72,13 +72,13 @@ Make the note active, then use one of:
 | Image inside text, a table or a callout (e.g. an icon `![[icon.png\|16]]`) | keeps its own size, at most the node width |
 | Other embeds (`![[Note]]`, PDF, audio, video) | a plain link, the content is not shown |
 | Tag `#solo` | highlighted text where it stands (in the tags modes "Outside" and "Inside": a pill like in reading view with smaller corners); a click opens the tag search |
-| Nested tag `#project/alpha/backend` | shown as `#project / alpha / backend`, the `/` dimmed with a little room around it; every level is its own search (see below). In the tags modes "Outside" and "Inside": a two-part pill, the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
+| Nested tag `#project/alpha/backend` | shown as written, `#project/alpha/backend`, the `/` dimmed; every level is its own search (see below). In the tags modes "Outside" and "Inside": a two-part pill, the scope `#project/alpha` filled, the value after the last `/` (`backend`) outlined; hover shows the full tag |
 | Block ID `^id` | hidden in the node |
 | Frontmatter, comments `%% %%`, HTML blocks, footnote definitions | left out |
 
 - Tags in a node take the color of its branch (in every color theme but "none"; the root and the full content overlay keep your theme's tag colors)
 - Tags (setting "Tags", or `mind-mapper-tags` per note; default "Text"):
-  - "Text": tags are highlighted text exactly where you wrote them, without background or border. Nothing moves: no tag row, no tags pushed to an edge. They follow the text alignment of the node like any other word, and a tag never breaks across two lines (unless it alone is wider than the node). A nested tag `#test/brat/wurst` shows as `#test / brat / wurst`; the room around the `/` is only display, copying gives `#test/brat/wurst`
+  - "Text": tags are highlighted text exactly where you wrote them, without background or border. Nothing moves: no tag row, no tags pushed to an edge. They follow the text alignment of the node like any other word, and a tag never breaks across two lines: it moves to the next line as a whole. A nested tag `#test/brat/wurst` shows as written, with the `/` dimmed
   - "Outside" and "Inside": tags are pills, and the tags at the end of a node move to its edge, see below
 - With "Outside", tags at the end of a node's text go into a row below its box, 4 px apart from it, at the edge opposite the text: under the right edge of a node on the right side, under the left edge on the left side. The box holds only the text, so a tag never pushes the text onto an extra line. Several tags stay in one row, in the order of the note; a row longer than the max node width wraps, every row at the same edge. In kanban the row sits below the card, subtask or column header at its right edge
   - Stay in the box: tags in the middle of a sentence, tags at the end of an earlier paragraph of the node, the root's tags, the tags of centered nodes (top → bottom, bottom → top) and of blocks, and the tags of a clipped node (open the full content to see them)

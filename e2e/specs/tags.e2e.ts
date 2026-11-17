@@ -507,7 +507,7 @@ describe('tag colors and corners (issue #92)', function () {
 
 /**
  * Issue #105: tags mode `text` (the default): tags are text in place; a nested tag is
- * `#test / brat / wurst` with one search per level; the `/` selects the node.
+ * `#test/brat/wurst` with one search per level; the `/` selects the node.
  */
 const TEXT_NOTE = 'tags-as-text.md';
 const TEXT_NOTE_TEXT = [
@@ -605,6 +605,7 @@ describe('tags mode text (issue #105)', function () {
         border: style.borderTopWidth,
         padding: style.paddingLeft,
         shadow: style.boxShadow,
+        whiteSpace: style.whiteSpace,
         float: wrapper ? getComputedStyle(wrapper).float : null,
         position: wrapper ? getComputedStyle(wrapper).position : null,
       };
@@ -614,21 +615,23 @@ describe('tags mode text (issue #105)', function () {
       border: '0px',
       padding: '0px',
       shadow: 'none',
+      whiteSpace: 'nowrap',
       float: 'none',
       position: 'static',
     });
   });
 
-  it('a nested tag reads #test / brat / wurst on one line; its text is the full tag', async function () {
+  it('a nested tag reads #test/brat/wurst on one line; its text is the full tag', async function () {
     const list = await parts();
     expect(list.map((p) => p.text)).toEqual(['#test', '/', 'brat', '/', 'wurst']);
     expect(new Set(list.map((p) => p.top)).size).toBe(1);
-    // Room around a slash is margin, not text.
+    // No room around a slash: the tag reads as written.
     for (const slash of list.filter((p) => p.kind === 'slash')) {
-      expect(slash.marginLeft).toBeGreaterThan(0);
-      expect(slash.marginRight).toBeGreaterThan(0);
+      expect(slash.marginLeft).toBe(0);
+      expect(slash.marginRight).toBe(0);
     }
-    for (let i = 1; i < list.length; i++) expect(list[i]!.left).toBeGreaterThan(list[i - 1]!.right);
+    for (let i = 1; i < list.length; i++)
+      expect(list[i]!.left).toBeGreaterThanOrEqual(list[i - 1]!.right - 0.5);
     expect(await browser.execute((sel) => document.querySelector(sel)?.textContent, NESTED)).toBe(
       '#test/brat/wurst',
     );

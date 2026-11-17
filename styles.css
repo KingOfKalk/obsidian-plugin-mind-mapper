@@ -246,8 +246,8 @@
 /* Tags as text (issue #105, tags mode `text`, class on the canvas and on the content overlay):
    a tag is highlighted text where it stands, in the node's branch color (theme none and the root:
    Obsidian's tag color), without background, border or padding. Obsidian's tag variables are
-   cleared as well, so its hover state adds no box. `inline-block` keeps a tag on one line (it
-   breaks inside only when it alone is wider than the node). */
+   cleared as well, so its hover state adds no box. A tag never breaks inside itself: it moves to
+   the next line as a whole (`inline-block`, `nowrap`). */
 .mind-mapper-tags-text a.tag,
 .mind-mapper-tags-text a.tag:hover {
   --tag-background: none;
@@ -256,7 +256,6 @@
   --tag-padding-x: 0;
   --tag-padding-y: 0;
   display: inline-block;
-  max-width: 100%;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -265,14 +264,12 @@
   color: var(--mind-mapper-tag-text, var(--tag-color));
   font-size: inherit;
   font-weight: inherit;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   text-decoration: none;
 }
 
-/* A nested tag shows as `#test / brat / wurst`: the `/` dimmed with a little room on each side.
-   The room is margin, not text: copying gives `#test/brat/wurst`. */
+/* A nested tag shows as written, `#test/brat/wurst`, with the `/` dimmed. */
 .mind-mapper-tags-text .mind-mapper-tag-slash {
-  margin-inline: 0.25em;
   opacity: 0.5;
 }
 
